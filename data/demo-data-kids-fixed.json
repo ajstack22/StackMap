@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "exportDate": "2025-01-24T18:45:00.000Z",
+  "exportDate": "2025-01-14T18:45:00.000Z",
   "exportedItems": {
     "users": true,
     "activityCards": true,
@@ -12,21 +12,21 @@
       "name": "Atlas",
       "icon": "🌎",
       "createdAt": "2025-01-01T09:00:00.000Z",
-      "lastActive": "2025-01-24T15:00:00.000Z",
-      "lastModified": 1756050000000,
+      "lastActive": "2025-01-12T15:00:00.000Z",
+      "lastModified": 1736850000000,
       "settings": {
         "theme": "#2196F3"
       },
       "days": {
         "today": {
-          "lastModified": 1756050000000,
+          "lastModified": 1736850000000,
           "activities": [
             {
               "id": "atlas-1",
               "text": "Brush teeth",
               "icon": "🦷",
               "completed": true,
-              "completedAt": 1756049400000,
+              "completedAt": 1736849400000,
               "completedBy": "demo-device",
               "pinned": false,
               "order": 0
@@ -36,7 +36,7 @@
               "text": "Get dressed",
               "icon": "👕",
               "completed": true,
-              "completedAt": 1756049700000,
+              "completedAt": 1736849700000,
               "completedBy": "demo-device",
               "pinned": false,
               "order": 1
@@ -46,7 +46,7 @@
               "text": "Eat breakfast",
               "icon": "🥞",
               "completed": true,
-              "completedAt": 1756050000000,
+              "completedAt": 1736850000000,
               "completedBy": "demo-device",
               "pinned": true,
               "order": 2
@@ -135,8 +135,8 @@
       "name": "Mappy",
       "icon": "🗺",
       "createdAt": "2025-01-05T14:30:00.000Z",
-      "lastActive": "2025-01-24T10:00:00.000Z",
-      "lastModified": 1756050000000,
+      "lastActive": "2025-01-12T10:00:00.000Z",
+      "lastModified": 1736850000000,
       "settings": {
         "theme": "#4CAF50"
       },
@@ -154,8 +154,8 @@
       "name": "Desty",
       "icon": "📍",
       "createdAt": "2025-01-08T08:00:00.000Z",
-      "lastActive": "2025-01-24T20:00:00.000Z",
-      "lastModified": 1756050000000,
+      "lastActive": "2025-01-11T20:00:00.000Z",
+      "lastModified": 1736850000000,
       "settings": {
         "theme": "#F44336"
       },

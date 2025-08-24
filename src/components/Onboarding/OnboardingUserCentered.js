@@ -205,6 +205,9 @@ const OnboardingUserCentered = ({
       }
 
       await syncService.initialize(phraseToUse);
+      
+      // Add a small delay to ensure initialization is complete
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       const pullResult = await syncService.pullData();
 
@@ -221,16 +224,30 @@ const OnboardingUserCentered = ({
         throw new Error('Failed to decrypt sync data');
       }
 
+      // Add detailed logging for debugging
+      console.log('[OnboardingUserCentered] Decrypted data structure:', {
+        hasUsers: !!decryptedData.users,
+        usersType: typeof decryptedData.users,
+        userKeys: decryptedData.users ? Object.keys(decryptedData.users) : [],
+      });
+
       const users = decryptedData.users || {};
-      const validUsers = Object.keys(users).filter(id => !users[id].deleted);
+      const validUsers = Object.keys(users).filter(id => {
+        const user = users[id];
+        // Check if user exists and is not deleted
+        return user && !user.deleted;
+      });
       const userCount = validUsers.length;
       
       // Validate that we have users data
       if (userCount === 0) {
         console.error('[OnboardingUserCentered] No valid users in decrypted data:', {
           totalUsers: Object.keys(users).length,
-          deletedUsers: Object.keys(users).filter(id => users[id].deleted).length,
+          deletedUsers: Object.keys(users).filter(id => users[id] && users[id].deleted).length,
+          nullUsers: Object.keys(users).filter(id => !users[id]).length,
+          rawUsers: JSON.stringify(users, null, 2),
         });
+        
         throw new Error('No active users found in sync data');
       }
       

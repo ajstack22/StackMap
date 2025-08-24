@@ -372,14 +372,16 @@ export const repairSyncedData = (data: any): SyncData => {
               activity.text = 'Untitled Activity';
             }
 
-            // Ensure required fields with defaults
+            // Preserve ALL fields first, then ensure required fields
             const cleanActivity = {
+              ...activity,  // Preserve ALL existing fields
+              // Then ensure/override only required fields
               id:
                 activity.id ||
                 `repaired_${Date.now()}_${Math.random()
                   .toString(36)
                   .substr(2, 9)}`,
-              text: activity.text,
+              text: activity.text || 'Untitled Activity',
               icon: activity.icon || '',
               completed:
                 typeof activity.completed === 'boolean'
@@ -388,35 +390,6 @@ export const repairSyncedData = (data: any): SyncData => {
               pinned:
                 typeof activity.pinned === 'boolean' ? activity.pinned : false,
             };
-
-            // Copy over any other valid fields (like order, completedAt, etc)
-            if (activity.order !== undefined)
-              (cleanActivity as any).order = activity.order;
-            if (activity.completedAt !== undefined)
-              (cleanActivity as any).completedAt = activity.completedAt;
-            if (activity.completedBy !== undefined)
-              (cleanActivity as any).completedBy = activity.completedBy;
-            // CRITICAL: Preserve uncompletedAt and uncompletedBy for conflict resolution
-            if (activity.uncompletedAt !== undefined)
-              (cleanActivity as any).uncompletedAt = activity.uncompletedAt;
-            if (activity.uncompletedBy !== undefined)
-              (cleanActivity as any).uncompletedBy = activity.uncompletedBy;
-            // CRITICAL: Preserve modification timestamps for conflict resolution
-            if (activity.modifiedAt !== undefined)
-              (cleanActivity as any).modifiedAt = activity.modifiedAt;
-            if (activity.lastModified !== undefined)
-              (cleanActivity as any).lastModified = activity.lastModified;
-            // Preserve deletion metadata (even though deleted activities are filtered)
-            // These might be needed for recently deleted items
-            if (activity.deletedAt !== undefined)
-              (cleanActivity as any).deletedAt = activity.deletedAt;
-            if (activity.deletedBy !== undefined)
-              (cleanActivity as any).deletedBy = activity.deletedBy;
-            // Preserve category for library activities
-            if (activity.category !== undefined)
-              (cleanActivity as any).category = activity.category;
-            if (activity.description !== undefined)
-              (cleanActivity as any).description = activity.description;
 
             return cleanActivity;
           })

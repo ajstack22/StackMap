@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "exportDate": "2025-01-24T18:45:00.000Z",
+  "exportDate": "2025-01-14T18:45:00.000Z",
   "exportedItems": {
     "users": true,
     "activityCards": true,
@@ -12,22 +12,18 @@
       "name": "Atlas",
       "icon": "🌎",
       "createdAt": "2025-01-01T09:00:00.000Z",
-      "lastActive": "2025-01-24T15:00:00.000Z",
-      "lastModified": 1756050000000,
+      "lastActive": "2025-01-12T15:00:00.000Z",
       "settings": {
         "theme": "#2196F3"
       },
       "days": {
         "today": {
-          "lastModified": 1756050000000,
           "activities": [
             {
               "id": "atlas-1",
               "text": "Brush teeth",
               "icon": "🦷",
               "completed": true,
-              "completedAt": 1756049400000,
-              "completedBy": "demo-device",
               "pinned": false,
               "order": 0
             },
@@ -36,8 +32,6 @@
               "text": "Get dressed",
               "icon": "👕",
               "completed": true,
-              "completedAt": 1756049700000,
-              "completedBy": "demo-device",
               "pinned": false,
               "order": 1
             },
@@ -46,8 +40,6 @@
               "text": "Eat breakfast",
               "icon": "🥞",
               "completed": true,
-              "completedAt": 1756050000000,
-              "completedBy": "demo-device",
               "pinned": true,
               "order": 2
             },
@@ -94,7 +86,7 @@
             {
               "id": "atlas-9",
               "text": "Playground",
-              "icon": "🏃",
+              "icon": "🛝",
               "completed": false,
               "pinned": false,
               "order": 8
@@ -102,7 +94,7 @@
             {
               "id": "atlas-10",
               "text": "Speech therapy",
-              "icon": "🗣",
+              "icon": "💬",
               "completed": false,
               "pinned": false,
               "order": 9
@@ -110,7 +102,7 @@
             {
               "id": "atlas-11",
               "text": "Quiet time",
-              "icon": "🤫",
+              "icon": "🧘",
               "completed": false,
               "pinned": false,
               "order": 10
@@ -118,7 +110,7 @@
             {
               "id": "atlas-12",
               "text": "Bedtime routine",
-              "icon": "🛏",
+              "icon": "🌙",
               "completed": false,
               "pinned": false,
               "order": 11
@@ -133,10 +125,9 @@
     "user-mappy": {
       "id": "user-mappy",
       "name": "Mappy",
-      "icon": "🗺",
+      "icon": "🗺️",
       "createdAt": "2025-01-05T14:30:00.000Z",
-      "lastActive": "2025-01-24T10:00:00.000Z",
-      "lastModified": 1756050000000,
+      "lastActive": "2025-01-12T10:00:00.000Z",
       "settings": {
         "theme": "#4CAF50"
       },
@@ -154,8 +145,7 @@
       "name": "Desty",
       "icon": "📍",
       "createdAt": "2025-01-08T08:00:00.000Z",
-      "lastActive": "2025-01-24T20:00:00.000Z",
-      "lastModified": 1756050000000,
+      "lastActive": "2025-01-11T20:00:00.000Z",
       "settings": {
         "theme": "#F44336"
       },
@@ -169,74 +159,27 @@
       }
     }
   },
+  "currentUser": "user-atlas",
+  "currentDay": "today",
+  "activityCards": [],
+  "libraryTemplates": [],
   "library": {
     "categories": [
       {
-        "id": "morning",
-        "name": "Morning Routine",
-        "icon": "🌅",
-        "activities": [
-          { "id": "lib-morning-1", "text": "Wake up", "icon": "⏰" },
-          { "id": "lib-morning-2", "text": "Make bed", "icon": "🛏" },
-          { "id": "lib-morning-3", "text": "Wash face", "icon": "💧" },
-          { "id": "lib-morning-4", "text": "Brush teeth", "icon": "🦷" },
-          { "id": "lib-morning-5", "text": "Get dressed", "icon": "👕" },
-          { "id": "lib-morning-6", "text": "Eat breakfast", "icon": "🥞" }
-        ]
-      },
-      {
-        "id": "school",
-        "name": "School Activities",
-        "icon": "📚",
-        "activities": [
-          { "id": "lib-school-1", "text": "Pack backpack", "icon": "🎒" },
-          { "id": "lib-school-2", "text": "Homework", "icon": "✏️" },
-          { "id": "lib-school-3", "text": "Reading", "icon": "📖" },
-          { "id": "lib-school-4", "text": "Math practice", "icon": "🔢" },
-          { "id": "lib-school-5", "text": "Science project", "icon": "🔬" },
-          { "id": "lib-school-6", "text": "Art class", "icon": "🎨" }
-        ]
-      },
-      {
-        "id": "playtime",
-        "name": "Play & Fun",
-        "icon": "🎮",
-        "activities": [
-          { "id": "lib-play-1", "text": "Playground", "icon": "🏃" },
-          { "id": "lib-play-2", "text": "Video games", "icon": "🎮" },
-          { "id": "lib-play-3", "text": "Board games", "icon": "🎲" },
-          { "id": "lib-play-4", "text": "Drawing", "icon": "✏️" },
-          { "id": "lib-play-5", "text": "Building blocks", "icon": "🧱" },
-          { "id": "lib-play-6", "text": "Puzzle time", "icon": "🧩" }
-        ]
-      },
-      {
-        "id": "chores",
-        "name": "Chores & Help",
-        "icon": "🧹",
-        "activities": [
-          { "id": "lib-chore-1", "text": "Clean room", "icon": "🧹" },
-          { "id": "lib-chore-2", "text": "Put away toys", "icon": "🧸" },
-          { "id": "lib-chore-3", "text": "Feed pet", "icon": "🐕" },
-          { "id": "lib-chore-4", "text": "Water plants", "icon": "🌱" },
-          { "id": "lib-chore-5", "text": "Set table", "icon": "🍽" },
-          { "id": "lib-chore-6", "text": "Take out trash", "icon": "🗑" }
-        ]
-      },
-      {
-        "id": "evening",
-        "name": "Evening Routine",
-        "icon": "🌙",
-        "activities": [
-          { "id": "lib-evening-1", "text": "Dinner", "icon": "🍝" },
-          { "id": "lib-evening-2", "text": "Bath time", "icon": "🛁" },
-          { "id": "lib-evening-3", "text": "Pajamas", "icon": "👔" },
-          { "id": "lib-evening-4", "text": "Brush teeth", "icon": "🦷" },
-          { "id": "lib-evening-5", "text": "Story time", "icon": "📚" },
-          { "id": "lib-evening-6", "text": "Bedtime", "icon": "🛏" }
-        ]
+        "id": "my-templates",
+        "name": "My Templates",
+        "icon": "⭐",
+        "activities": []
       }
     ],
     "userAddedActivityIds": []
+  },
+  "globalSettings": {
+    "currentTheme": "#2196F3",
+    "bannerPosition": "top",
+    "defaultView": "normal",
+    "displayMode": "numbers",
+    "enableDayManagement": true,
+    "pinEnabled": false
   }
 }
