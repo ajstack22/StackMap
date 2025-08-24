@@ -372,51 +372,41 @@ export const repairSyncedData = (data: any): SyncData => {
               activity.text = 'Untitled Activity';
             }
 
-            // Ensure required fields with defaults
-            const cleanActivity = {
-              id:
-                activity.id ||
-                `repaired_${Date.now()}_${Math.random()
-                  .toString(36)
-                  .substr(2, 9)}`,
-              text: activity.text,
-              icon: activity.icon || '',
-              completed:
-                typeof activity.completed === 'boolean'
-                  ? activity.completed
-                  : false,
-              pinned:
-                typeof activity.pinned === 'boolean' ? activity.pinned : false,
-            };
-
-            // Copy over any other valid fields (like order, completedAt, etc)
-            if (activity.order !== undefined)
-              (cleanActivity as any).order = activity.order;
-            if (activity.completedAt !== undefined)
-              (cleanActivity as any).completedAt = activity.completedAt;
-            if (activity.completedBy !== undefined)
-              (cleanActivity as any).completedBy = activity.completedBy;
-            // CRITICAL: Preserve uncompletedAt and uncompletedBy for conflict resolution
-            if (activity.uncompletedAt !== undefined)
-              (cleanActivity as any).uncompletedAt = activity.uncompletedAt;
-            if (activity.uncompletedBy !== undefined)
-              (cleanActivity as any).uncompletedBy = activity.uncompletedBy;
-            // CRITICAL: Preserve modification timestamps for conflict resolution
-            if (activity.modifiedAt !== undefined)
-              (cleanActivity as any).modifiedAt = activity.modifiedAt;
-            if (activity.lastModified !== undefined)
-              (cleanActivity as any).lastModified = activity.lastModified;
-            // Preserve deletion metadata (even though deleted activities are filtered)
-            // These might be needed for recently deleted items
-            if (activity.deletedAt !== undefined)
-              (cleanActivity as any).deletedAt = activity.deletedAt;
-            if (activity.deletedBy !== undefined)
-              (cleanActivity as any).deletedBy = activity.deletedBy;
-            // Preserve category for library activities
-            if (activity.category !== undefined)
-              (cleanActivity as any).category = activity.category;
-            if (activity.description !== undefined)
-              (cleanActivity as any).description = activity.description;
+            // Start with all existing fields to preserve unknown/future fields
+            const cleanActivity: any = { ...activity };
+            
+            // Then ensure required fields have valid values (override if needed)
+            cleanActivity.id = activity.id || 
+              `repaired_${Date.now()}_${Math.random()
+                .toString(36)
+                .substr(2, 9)}`;
+            cleanActivity.text = activity.text || 'Untitled Activity';
+            cleanActivity.icon = activity.icon || '';
+            
+            // Fix boolean fields - coerce to proper boolean type
+            // This prevents validation failures from string "true"/"false" values
+            if (activity.completed !== undefined) {
+              cleanActivity.completed = activity.completed === true || 
+                activity.completed === 'true' || 
+                activity.completed === 1;
+            } else {
+              cleanActivity.completed = false;
+            }
+            
+            if (activity.pinned !== undefined) {
+              cleanActivity.pinned = activity.pinned === true || 
+                activity.pinned === 'true' || 
+                activity.pinned === 1;
+            } else {
+              cleanActivity.pinned = false;
+            }
+            
+            // Remove any fields that explicitly break validation
+            // but keep all other unknown fields for forward compatibility
+            delete cleanActivity.deleted; // Will be filtered anyway
+            delete cleanActivity.name; // Legacy field
+            delete cleanActivity.title; // Legacy field  
+            delete cleanActivity.emoji; // Legacy field
 
             return cleanActivity;
           })
