@@ -1239,12 +1239,23 @@ class SyncService {
     if ('templates' in data || 'activityCategories' in data) {
       throw new Error('Version 3 data detected. Please upgrade to version 4.');
     }
+    
+    // Debug: Log what we're about to restore
+    console.log('[Sync] restoreData - incoming data:', {
+      userCount: users ? Object.keys(users).length : 0,
+      validUsers: users ? Object.keys(users).filter(id => !users[id]?.deleted).length : 0,
+      currentUser,
+      currentDay,
+      hasGlobalSettings: !!globalSettings,
+      hasLibrary: !!library,
+    });
+    
     // Debug: Log user activities
     if (users) {
-      Object.entries(users).forEach(([_userId, user]) => {
-        // const todayActivities = user.days?.today?.activities?.length || 0;
-        // const tomorrowActivities = user.days?.tomorrow?.activities?.length || 0;
-        user.days?.today?.activities?.length || 0;
+      Object.entries(users).forEach(([userId, user]) => {
+        const todayActivities = user.days?.today?.activities?.length || 0;
+        const tomorrowActivities = user.days?.tomorrow?.activities?.length || 0;
+        console.log(`[Sync] User ${userId} (${user.name}): today=${todayActivities}, tomorrow=${tomorrowActivities}`);
       });
     }
     // DEBUG: Log data size without stringifying the whole thing
@@ -1274,9 +1285,11 @@ class SyncService {
     const settingsStore = require('../../stores/useSettingsStore.js').default;
     const libraryStore = require('../../stores/useLibraryStore.js').default;
     // Update user store
+    console.log('[Sync] Updating stores with restored data');
     userStore.getState().setUsers(users || {});
     userStore.getState().setCurrentUser(finalCurrentUser);
     userStore.getState().setCurrentDay(finalCurrentDay);
+    
     // Update settings store
     // Get current local banner position to preserve it (device-specific setting)
     const currentBannerPosition = settingsStore.getState().bannerPosition;
@@ -1293,6 +1306,7 @@ class SyncService {
           ? hasCompletedOnboarding
           : currentState.hasCompletedOnboarding,
     });
+    
     // Update library store
     libraryStore.getState().setLibrary(
       library || {
@@ -1301,9 +1315,16 @@ class SyncService {
       },
     );
     libraryStore.getState().setLibraryTemplates(libraryTemplates || []);
-    // DEBUG: Verify what was actually set (if needed, uncomment below)
-    // const afterState = useAppStore.getState();
-    // const afterUserActivities = afterState.users[afterState.currentUser]?.days?.[afterState.currentDay]?.activities || [];
+    
+    // DEBUG: Verify what was actually set
+    const afterState = useAppStore.getState();
+    const afterUserActivities = afterState.users[afterState.currentUser]?.days?.[afterState.currentDay]?.activities || [];
+    console.log('[Sync] Store update complete:', {
+      usersSet: Object.keys(afterState.users).length,
+      currentUser: afterState.currentUser,
+      currentDay: afterState.currentDay,
+      currentUserActivities: afterUserActivities.length,
+    });
   }
   /**
    * Merge remote data with local data

@@ -957,8 +957,61 @@ const App = () => {
       // Check if we have imported data passed directly from onboarding (new sync import flow)
       // OR if we completed abbreviated onboarding with sync
       if (onboardingData?.importedData || onboardingData?.syncCompleted) {
+        console.log('[handleOnboardingComplete] Processing sync import:', {
+          hasImportedData: !!onboardingData?.importedData,
+          syncCompleted: !!onboardingData?.syncCompleted,
+          userCount: onboardingData?.importedData ? Object.keys(onboardingData.importedData.users || {}).length : 0
+        });
 
-        // Wait a moment to ensure stores are updated from sync
+        // If we have imported data, restore it NOW before marking onboarding complete
+        if (onboardingData?.importedData) {
+          const importedData = onboardingData.importedData;
+          
+          // Log what we're about to restore
+          console.log('[handleOnboardingComplete] Restoring imported data:', {
+            userCount: Object.keys(importedData.users || {}).length,
+            currentUser: importedData.currentUser,
+            version: importedData.version
+          });
+          
+          // Restore users and settings immediately using proper store methods
+          if (importedData.users && Object.keys(importedData.users).length > 0) {
+            setUsers(importedData.users);
+            
+            // Set current user from imported data
+            const currentUserId = importedData.currentUser || Object.keys(importedData.users)[0];
+            if (currentUserId && importedData.users[currentUserId]) {
+              setCurrentUser(currentUserId);
+              setCurrentDay(importedData.currentDay || 'today');
+              
+              // Restore theme and other settings
+              if (importedData.globalSettings) {
+                if (importedData.globalSettings.currentTheme) {
+                  const validTheme = validateTheme(importedData.globalSettings.currentTheme);
+                  setCurrentTheme(validTheme);
+                }
+                if (importedData.globalSettings.soundEnabled !== undefined) {
+                  setSoundEnabled(importedData.globalSettings.soundEnabled);
+                }
+                if (importedData.globalSettings.taskCelebration) {
+                  setTaskCelebration(importedData.globalSettings.taskCelebration);
+                }
+                if (importedData.globalSettings.routineCelebration) {
+                  setRoutineCelebration(importedData.globalSettings.routineCelebration);
+                }
+              }
+              
+              // Restore library if present
+              if (importedData.library) {
+                updateLibraryCategories(importedData.library.categories || []);
+              }
+              
+              console.log('[handleOnboardingComplete] Data restored successfully');
+            }
+          }
+        }
+
+        // Wait a moment to ensure stores are updated
         // This prevents the initialization effect from detecting "no users" and restarting onboarding
         setTimeout(() => {
           // Get the current state from the store
@@ -966,12 +1019,11 @@ const App = () => {
           console.log('[handleOnboardingComplete] Delayed completion - users:', Object.keys(currentUsers).length);
           
           // Now mark onboarding as complete
-          // Trust that sync has provided the users or will provide them shortly
           setHasCompletedOnboarding(true);
           setShowOnboarding(false);
           showToast({ message: 'Data synced successfully' });
 
-        }, 1500); // Give sync service more time to update stores
+        }, 500); // Reduced delay since we're restoring data synchronously
         
         return; // Return here to prevent creating duplicate users below
       }

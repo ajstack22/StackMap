@@ -287,15 +287,29 @@ export const repairSyncedData = (data: any): SyncData => {
       id => repaired.users[id] && !repaired.users[id].deleted,
     );
 
-    // If no valid users exist, create a default user
+    // If no valid users exist, create a default user ONLY if this is genuinely empty data
+    // Don't create a default user if this looks like a data restoration issue
     if (validUserIds.length === 0) {
-      const defaultUserId = repaired.currentUser || 'user_1';
-      repaired.users[defaultUserId] = {
-        name: 'User',
-        icon: '👤',
-        days: {},
-      };
-      repaired.currentUser = defaultUserId;
+      console.warn('[dataValidator] No valid users found, checking if this is a sync import issue');
+      
+      // Check if there are any users at all (even deleted ones)
+      const hasAnyUsers = Object.keys(repaired.users).length > 0;
+      
+      // If there are users but they're all deleted, this might be intentional
+      // Don't automatically create a default user
+      if (hasAnyUsers) {
+        console.log('[dataValidator] Found deleted users only, not creating default user');
+      } else {
+        // Only create default user if truly no users exist
+        console.log('[dataValidator] Creating default user - no users found at all');
+        const defaultUserId = repaired.currentUser || 'user_1';
+        repaired.users[defaultUserId] = {
+          name: 'User',
+          icon: '👤',
+          days: {},
+        };
+        repaired.currentUser = defaultUserId;
+      }
     } else {
       // Ensure currentUser points to a valid (non-deleted) user
       if (

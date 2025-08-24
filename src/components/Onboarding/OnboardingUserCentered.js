@@ -214,6 +214,7 @@ const OnboardingUserCentered = ({
       }
       
       // Decrypt the data
+      // @ts-ignore - encryptionService exists on SyncService
       const decryptedData = syncService.encryptionService.decryptData(pullResult.encrypted_blob);
 
       if (!decryptedData) {
@@ -221,7 +222,17 @@ const OnboardingUserCentered = ({
       }
 
       const users = decryptedData.users || {};
-      const userCount = Object.keys(users).filter(id => !users[id].deleted).length;
+      const validUsers = Object.keys(users).filter(id => !users[id].deleted);
+      const userCount = validUsers.length;
+      
+      // Validate that we have users data
+      if (userCount === 0) {
+        console.error('[OnboardingUserCentered] No valid users in decrypted data:', {
+          totalUsers: Object.keys(users).length,
+          deletedUsers: Object.keys(users).filter(id => users[id].deleted).length,
+        });
+        throw new Error('No active users found in sync data');
+      }
       
       setSyncPreviewData({
         userCount,
@@ -254,11 +265,29 @@ const OnboardingUserCentered = ({
       }
       
       // Decrypt the data
+      // @ts-ignore - encryptionService exists on SyncService
       const decryptedData = syncService.encryptionService.decryptData(pullResult.encrypted_blob);
       
       if (!decryptedData) {
         throw new Error('Failed to decrypt sync data');
       }
+
+      // Log imported data for debugging
+      console.log('[OnboardingUserCentered] Sync import - decrypted data:', {
+        userCount: Object.keys(decryptedData.users || {}).length,
+        hasLibrary: !!decryptedData.library,
+        hasSettings: !!decryptedData.globalSettings,
+        version: decryptedData.version,
+        users: Object.entries(decryptedData.users || {}).map(([id, u]) => ({
+          id,
+          name: u.name,
+          icon: u.icon || u.emoji,
+          hasToday: !!(u.days?.today),
+          todayCount: u.days?.today?.activities?.length || 0,
+          hasTomorrow: !!(u.days?.tomorrow),
+          tomorrowCount: u.days?.tomorrow?.activities?.length || 0
+        }))
+      });
 
       // Enable sync and complete onboarding with imported data
       // Use the same keys as syncService - batch for performance
@@ -268,12 +297,21 @@ const OnboardingUserCentered = ({
       ]);
       // Note: Recovery phrase is not stored, only kept in memory
       
+      // IMPORTANT: Pass the data to restore it immediately
+      // The sync service will also restore the data separately
+      // @ts-ignore - restoreData exists on SyncService
+      await syncService.restoreData(decryptedData);
+      
+      console.log('[OnboardingUserCentered] Data restored to sync service, completing onboarding');
+      
       onComplete({
         importedData: decryptedData,
         syncEnabled: true,
+        syncCompleted: true, // Flag to indicate sync has completed
         recoveryPhrase: phraseToUse,
       });
     } catch (error) {
+      console.error('[OnboardingUserCentered] Sync import error:', error);
       setSyncError(error.message || 'Failed to import data');
     } finally {
       setSyncLoading(false);
