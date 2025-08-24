@@ -10,7 +10,7 @@ This single command deploys to ALL platforms with automatic version increment an
 ### Platform-Specific Options
 ```bash
 ./scripts/deploy-all.sh --android --ios  # Android + iOS only
-./scripts/deploy-all.sh --web --prod     # Web production only
+./scripts/deploy-all.sh --web           # Web to qual staging
 ./scripts/deploy-all.sh --ios-device     # iOS physical device
 ./scripts/deploy-all.sh --skip-tests    # Skip tests for emergency deploy
 ```
@@ -52,33 +52,24 @@ cd android && ./gradlew bundleRelease
 ```
 
 ### Web Deployment
+
+#### Stage 1: Deploy to Qual (Staging)
 ```bash
-./scripts/deploy-web.sh qual  # Staging (stackmap.app/qual)
-./scripts/deploy-web.sh prod  # Production (stackmap.app)
+./scripts/deploy-web.sh qual  # Builds and deploys to stackmap.app/qual
 ```
 
-**Branch System:**
-- `main`: Source code only (no build files)
-- `deploy-qual`: Qual build artifacts
-- `deploy-prod`: Production build artifacts
-
-**Manual Process:**
+#### Stage 2: Promote Qual to Production
 ```bash
-# Build
-NODE_ENV=production npm run build:web
+./scripts/simple-deploy.sh       # Sync qual to production
+./scripts/simple-deploy.sh rollback  # Rollback if needed
+```
 
-# Files go in ROOT (not web/build/)
-cp web/build/*.* .
-cp -r web/build/fonts .
-cp -r web/build/icons .
+**Production URL:** https://stackmap.app/
+**Staging URL:** https://stackmap.app/qual/
 
-# Deploy via branch
-git checkout deploy-qual
-git add . && git commit -m "Deploy to qual"
-git push
-
-# Server pull
-ssh stackmap-cpanel "cd ~/public_html/qual && git pull"
+**Manual SSH Access:**
+```bash
+ssh stackmap-cpanel  # Requires SSH key setup
 ```
 
 ## 🔄 Version Management
