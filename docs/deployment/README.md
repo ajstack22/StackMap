@@ -78,6 +78,36 @@ ssh stackmap-cpanel  # Requires SSH key setup
 - **Unified:** Single version across all platforms
 - **Files Updated:** `package.json`, `app.json`, iOS `Info.plist`
 
+## 📝 Commit Message Management
+The deployment script automatically creates descriptive commit messages using `PENDING_CHANGES.md`:
+
+### How It Works
+1. **Before deployment**, update `PENDING_CHANGES.md`:
+   ```markdown
+   # Pending Changes
+   
+   ## Title: Fix critical sync bug with timestamp preservation
+   
+   ### Changes Made:
+   - Fixed sync issue where activities reverted state
+   - Added preservation of timestamp metadata fields
+   - Improved conflict resolution reliability
+   ```
+
+2. **During deployment**, the script:
+   - Extracts the title from `## Title:` line
+   - Extracts description from `### Changes Made:` section
+   - Creates commit message: `2025.08.24.1 - Fix critical sync bug with timestamp preservation`
+   - Includes the full description in the commit body
+
+3. **After successful commit**, the script clears `PENDING_CHANGES.md` for next deployment
+
+### Benefits
+- **Consistent Format:** Version number always at the beginning
+- **Descriptive History:** Git log shows meaningful change summaries
+- **Auto-cleanup:** File resets after each deployment
+- **Fallback:** If no title provided, uses default "Deployment version bump"
+
 ## 🧪 Testing Integration
 - **Automatic:** Essential tests run before every deployment
 - **Skip for Emergency:** Use `--skip-tests` flag

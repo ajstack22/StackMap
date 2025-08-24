@@ -396,6 +396,25 @@ export const repairSyncedData = (data: any): SyncData => {
               (cleanActivity as any).completedAt = activity.completedAt;
             if (activity.completedBy !== undefined)
               (cleanActivity as any).completedBy = activity.completedBy;
+            // CRITICAL: Preserve uncompletedAt and uncompletedBy for conflict resolution
+            if (activity.uncompletedAt !== undefined)
+              (cleanActivity as any).uncompletedAt = activity.uncompletedAt;
+            if (activity.uncompletedBy !== undefined)
+              (cleanActivity as any).uncompletedBy = activity.uncompletedBy;
+            // CRITICAL: Preserve modification timestamps for conflict resolution
+            if (activity.modifiedAt !== undefined)
+              (cleanActivity as any).modifiedAt = activity.modifiedAt;
+            if (activity.lastModified !== undefined)
+              (cleanActivity as any).lastModified = activity.lastModified;
+            // Preserve deletion metadata (even though deleted activities are filtered)
+            // These might be needed for recently deleted items
+            if (activity.deletedAt !== undefined)
+              (cleanActivity as any).deletedAt = activity.deletedAt;
+            if (activity.deletedBy !== undefined)
+              (cleanActivity as any).deletedBy = activity.deletedBy;
+            // Preserve category for library activities
+            if (activity.category !== undefined)
+              (cleanActivity as any).category = activity.category;
             if (activity.description !== undefined)
               (cleanActivity as any).description = activity.description;
 

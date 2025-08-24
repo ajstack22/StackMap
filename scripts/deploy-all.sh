@@ -115,12 +115,44 @@ fi
 source "$SCRIPT_DIR/version-increment.sh"
 increment_version
 
-# Commit version increment immediately so deploy-with-tracking.sh has clean git
+# Commit version increment with title from PENDING_CHANGES.md if available
 echo "Committing version increment..."
+
+# Check if PENDING_CHANGES.md has a title to use
+COMMIT_TITLE=""
+COMMIT_DESCRIPTION=""
+if [ -f "PENDING_CHANGES.md" ]; then
+    # Extract the title (line starting with "## Title:")
+    TITLE_LINE=$(grep "^## Title:" PENDING_CHANGES.md | sed 's/## Title: //' | sed 's/^[[:space:]]*//')
+    
+    # Extract the changes description (everything after "### Changes Made:")
+    if grep -q "### Changes Made:" PENDING_CHANGES.md; then
+        COMMIT_DESCRIPTION=$(awk '/### Changes Made:/{flag=1; next} flag' PENDING_CHANGES.md | head -20)
+    fi
+    
+    if [ -n "$TITLE_LINE" ]; then
+        # Use version number + title from PENDING_CHANGES.md
+        COMMIT_TITLE="$NEW_VERSION - $TITLE_LINE"
+        echo "📋 Using title from PENDING_CHANGES.md: $TITLE_LINE"
+    else
+        # Fallback to default version bump message
+        COMMIT_TITLE="$NEW_VERSION - Deployment version bump"
+    fi
+else
+    # Fallback to default version bump message
+    COMMIT_TITLE="$NEW_VERSION - Deployment version bump"
+fi
+
 git add -f package.json app.json src/utils/version.js ios/StackMapNative/Info.plist
 if ! git diff --cached --quiet; then
-    git commit -m "$NEW_VERSION - Deployment version bump"
-    echo "✅ Version committed: $NEW_VERSION"
+    if [ -n "$COMMIT_DESCRIPTION" ]; then
+        # Commit with title and description
+        git commit -m "$COMMIT_TITLE" -m "$COMMIT_DESCRIPTION"
+    else
+        # Commit with just title
+        git commit -m "$COMMIT_TITLE"
+    fi
+    echo "✅ Version committed: $COMMIT_TITLE"
 else
     echo "No version changes to commit"
 fi

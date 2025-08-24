@@ -2,9 +2,15 @@
 
 ## 🚀 DEPLOYMENT - ALWAYS USE THIS
 ```bash
+# First, update PENDING_CHANGES.md with your changes:
+# ## Title: Your descriptive title here
+# ### Changes Made:
+# - List of changes...
+
 ./scripts/deploy-all.sh  # Deploys to ALL platforms with auto version increment + tests
 ./scripts/deploy-all.sh --skip-tests  # Emergency deploy without tests
 ```
+**Commit Messages:** Update `PENDING_CHANGES.md` before deploying for descriptive commit messages
 **For all deployment details:** See `docs/deployment/README.md`
 **Testing approach:** See `docs/testing/simple-testing-guide.md`
 
