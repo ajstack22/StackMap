@@ -283,6 +283,45 @@ class SyncService {
     };
   }
   /**
+   * Initialize sync for data import (doesn't pull/overwrite existing data)
+   */
+  async initializeForImport(recoveryPhrase) {
+    try {
+      console.log('[Sync] Initialize for import - skipping data pull');
+      
+      // Generate sync ID from recovery phrase
+      const syncId = await this.generateSyncId(recoveryPhrase);
+      this.syncId = syncId;
+      
+      // Initialize encryption with fixed salt
+      const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+      await encryptionService.initialize(recoveryPhrase, syncId, fixedSalt);
+      
+      // Enable sync and store state
+      this.syncEnabled = true;
+      await AsyncStorage.setItem('@sync_enabled', 'true');
+      await AsyncStorage.setItem('@sync_id', syncId);
+      
+      // Don't pull data, don't restore data, just mark current state as synced
+      // The data has already been imported and set in the stores
+      changeTracker.markAsSynced();
+      
+      // Start periodic sync but skip the initial pull
+      this.startPeriodicSync(true); // true = skip initial sync
+      
+      return {
+        syncId,
+        recoveryPhrase,
+        isNewSync: false,
+      };
+    } catch (error) {
+      console.error('[Sync] Initialize for import failed:', error);
+      this.syncId = null;
+      throw error;
+    }
+  }
+
+  /**
    * Initialize sync with a new or existing sync group
    */
   async initialize(recoveryPhrase = null) {
@@ -1652,7 +1691,7 @@ class SyncService {
   /**
    * Start periodic background sync
    */
-  startPeriodicSync() {
+  startPeriodicSync(skipInitialSync = false) {
     // Clear any existing interval
     this.stopPeriodicSync();
     // Only start if sync is enabled
@@ -1663,8 +1702,12 @@ class SyncService {
     }
     // Start transaction cleanup
     this.startTransactionCleanup();
-    // Run immediate sync on load
-    this.syncWithQueue();
+    // Run immediate sync on load (unless we're importing data)
+    if (!skipInitialSync) {
+      this.syncWithQueue();
+    } else {
+      console.log('[Sync] Skipping initial sync (data just imported)');
+    }
     // Only set up interval if periodic sync is enabled
     if (this.usePeriodicSync) {
       this.syncInterval = setInterval(() => {

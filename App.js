@@ -619,9 +619,12 @@ const App = () => {
 
       // Initialize default user if none exists and onboarding is complete
       // IMPORTANT: Never create a default user if we're showing onboarding
+      // ALSO: Check the store directly to avoid race conditions with React state
+      const storeUsers = useAppStore.getState().users;
       if (
         hasCompletedOnboarding &&
         Object.keys(users).length === 0 &&
+        Object.keys(storeUsers).length === 0 && // Double-check the store
         !showOnboarding
       ) {
         // Check if sync is enabled - if so, wait for sync to provide users
@@ -1022,23 +1025,37 @@ const App = () => {
               }
               
               console.log('[handleOnboardingComplete] Data restored successfully');
+              
+              // NOW enable sync after data is restored
+              if (onboardingData?.recoveryPhrase) {
+                console.log('[handleOnboardingComplete] Enabling sync with imported data');
+                // Use initializeForImport to avoid pulling and overwriting
+                syncService.initializeForImport(onboardingData.recoveryPhrase).catch(error => {
+                  console.error('[handleOnboardingComplete] Failed to enable sync:', error);
+                });
+              }
             }
           }
         }
 
-        // Wait a moment to ensure stores are updated
-        // This prevents the initialization effect from detecting "no users" and restarting onboarding
+        // Wait a moment to ensure stores are updated AND React has re-rendered
+        // This prevents the initialization effect from detecting "no users" and creating defaults
         setTimeout(() => {
           // Get the current state from the store
           const currentUsers = useAppStore.getState().users;
           console.log('[handleOnboardingComplete] Delayed completion - users:', Object.keys(currentUsers).length);
+          
+          // Double-check we have users before completing
+          if (Object.keys(currentUsers).length === 0) {
+            console.error('[handleOnboardingComplete] WARNING: No users after import!');
+          }
           
           // Now mark onboarding as complete
           setHasCompletedOnboarding(true);
           setShowOnboarding(false);
           showToast({ message: 'Data synced successfully' });
 
-        }, 500); // Reduced delay since we're restoring data synchronously
+        }, 500); // This delay ensures React has time to re-render with new users
         
         return; // Return here to prevent creating duplicate users below
       }

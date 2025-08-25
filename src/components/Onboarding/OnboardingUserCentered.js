@@ -306,7 +306,18 @@ const OnboardingUserCentered = ({
     try {
       const phraseToUse = recoveryPhrase.trim().replace(/\s+/g, '');
       
-      await syncService.initialize(phraseToUse);
+      // Initialize temporarily just to decrypt (don't enable sync yet)
+      const syncId = await syncService.generateSyncId(phraseToUse);
+      const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+      
+      // Initialize encryption without enabling sync
+      // @ts-ignore - encryptionService exists
+      await syncService.encryptionService.initialize(phraseToUse, syncId, fixedSalt);
+      
+      // Set syncId temporarily so pullData works
+      syncService.syncId = syncId;
+      
+      // Pull the encrypted data
       const pullResult = await syncService.pullData();
       
       if (!pullResult || !pullResult.encrypted_blob) {
@@ -338,18 +349,12 @@ const OnboardingUserCentered = ({
         }))
       });
 
-      // Enable sync and complete onboarding with imported data
-      // Use the same keys as syncService - batch for performance
-      await DeferredStorage.multiSet([
-        ['@sync_enabled', 'true'],
-        ['@sync_id', syncService.syncId]
-      ]);
-      // Note: Recovery phrase is not stored, only kept in memory
+      // IMPORTANT: Pass the data to onComplete FIRST before enabling sync
+      // This ensures the data is in the stores before sync starts
+      console.log('[OnboardingUserCentered] Passing imported data to onComplete');
       
-      // IMPORTANT: Pass the data to restore it immediately
-      // The sync service will also restore the data separately
-      // @ts-ignore - restoreData exists on SyncService
-      await syncService.restoreData(decryptedData);
+      // Don't restore via syncService - let onComplete handle it
+      // Don't enable sync yet - let it happen after data is restored
       
       console.log('[OnboardingUserCentered] Data restored to sync service, completing onboarding');
       
