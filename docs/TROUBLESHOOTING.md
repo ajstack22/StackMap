@@ -293,7 +293,36 @@ if (Platform.OS !== 'web') {
 
 ---
 
-### 8. Sync Fails After Computer Wakes from Sleep
+### 8. Activities Revert After Editing/Reordering (Fixed v2025.08.25)
+
+**Symptoms:**
+- Edit a card, then reorder another card - first card reverts
+- Changes disappear when making rapid edits
+- Sync causes recent edits to be lost
+
+**Cause:**
+Multiple issues with timestamp tracking and stale React props.
+
+**Solution (Applied in v2025.08.25):**
+1. All activity operations now add `modifiedAt` timestamps
+2. Reordering activities updates timestamps on moved items
+3. EditModeList merges fresh store data before saving
+4. Sync debounce increased to 10 seconds (from 5s)
+5. Conflict resolution prefers timestamped versions
+
+**If still experiencing issues:**
+```javascript
+// Check if activities have timestamps in console
+const users = useAppStore.getState().users;
+const activities = users[currentUser]?.days?.today?.activities || [];
+activities.forEach(a => {
+  if (!a.modifiedAt) console.warn('Missing timestamp:', a);
+});
+```
+
+---
+
+### 9. Sync Fails After Computer Wakes from Sleep
 
 **Symptoms:**
 - `net::ERR_NETWORK_IO_SUSPENDED` errors in browser console

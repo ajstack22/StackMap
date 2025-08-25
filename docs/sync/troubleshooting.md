@@ -79,6 +79,7 @@ This comprehensive guide covers troubleshooting for StackMap's complex sync arch
 #### Symptoms
 - Make changes on device, but after sync old data reappears
 - Client shows changes briefly, then reverts
+- Reordering activities causes other cards to revert (v2025.08.25 fix)
 
 #### Root Causes & Solutions
 
@@ -92,15 +93,43 @@ This comprehensive guide covers troubleshooting for StackMap's complex sync arch
   ```
 - **Solution**: Check conflict resolution in `/src/services/sync/conflictResolver.js`
 
-**B. Timing Issues During Sync**
+**B. Missing or Incorrect Timestamps** (Fixed v2025.08.25)
+- **Problem**: Activities without `modifiedAt` timestamps lose in conflict resolution
+- **Solution**: All activity operations now add timestamps:
+  - Edit: Adds `modifiedAt: Date.now()`
+  - Add from library: Adds `modifiedAt: Date.now()`
+  - Reorder: Updates `modifiedAt` for moved items
+  - Import: Activities default to `modifiedAt: 0`
+- **Conflict Resolution**: Timestamped activities always win over non-timestamped
+
+**C. Timing Issues During Sync**
 - **Problem**: Changes made during active sync get lost
-- **Solution**: Increase debounce delay or add sync locking
-- **Key timings**:
-  - Debounce: 5 seconds after change
+- **Solution**: Increased debounce delay to prevent self-conflicts
+- **Key timings** (Updated v2025.08.24):
+  - Debounce: 10 seconds after change (increased from 5s)
   - Periodic sync: Every 30 seconds
+  - Skip window: 5 seconds after push (prevents immediate pull)
   - Network retry: 2 second delay
 
-**C. Store Update Race Conditions**
+**D. Stale Props in React Components** (Fixed v2025.08.25)
+- **Problem**: EditModeList uses stale props when reordering quickly after edit
+- **Solution**: onUpdate handler merges fresh store data before saving:
+  ```javascript
+  // Get fresh data from store to avoid stale data issues
+  const freshUsers = useAppStore.getState().users;
+  const freshActivities = freshUsers[currentUser]?.days?.[currentDay]?.activities || [];
+  
+  // Merge with reordered array, preferring fresher timestamps
+  const mergedActivities = newActivities.map(a => {
+    const freshActivity = freshMap.get(a.id);
+    if (freshActivity && (freshActivity.modifiedAt || 0) > (a.modifiedAt || 0)) {
+      return freshActivity;
+    }
+    return a;
+  });
+  ```
+
+**E. Store Update Race Conditions**
 - **Problem**: Multiple state updates interfering
 - **Solution**: Ensure atomic updates and proper store methods
 

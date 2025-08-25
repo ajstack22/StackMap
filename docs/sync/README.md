@@ -7,7 +7,7 @@
 **StackMap uses the complex sync architecture** - the simplified version was reverted in August 2025 due to AsyncStorage issues.
 
 ### Architecture Overview
-- **Strategy**: Last-write-wins with conflict resolution
+- **Strategy**: Last-write-wins with timestamp-based conflict resolution (v2025.08.25+)
 - **Components**: Full service with queue, throttling, network monitoring (9 supporting modules)
 - **Service File**: `/src/services/sync/syncService.js` (~2200 lines)
 - **URL Format**: `stackmap.app/?sync=<32-char-hex>`
@@ -152,7 +152,8 @@ Response:
               "text": "Activity",
               "icon": "emoji",
               "completed": false,
-              "pinned": false
+              "pinned": false,
+              "modifiedAt": 1724601600000
             }
           ]
         }
@@ -176,7 +177,31 @@ Response:
 ### Field Normalization Rules
 - **Activities**: Use `text` (not name/title), `icon` (not emoji)
 - **Users**: `icon` required, `name` as string only
+- **Timestamps**: `modifiedAt` field for conflict resolution (defaults to 0)
 - **Always include fallbacks**: `activity.text || activity.name || activity.title`
+
+## 🔄 Conflict Resolution (v2025.08.25+)
+
+### Timestamp-Based Resolution
+Activities use `modifiedAt` timestamps for conflict resolution during sync:
+
+1. **When timestamps differ**: Higher timestamp wins (most recent edit)
+2. **When only one has timestamp**: Timestamped version wins
+3. **When neither has timestamp**: Falls back to content comparison
+4. **Default value**: Activities without timestamps default to `modifiedAt: 0`
+
+### Activity Operations That Update Timestamps
+- **Edit activity**: Sets `modifiedAt: Date.now()`
+- **Add from library**: Sets `modifiedAt: Date.now()`
+- **Reorder activities**: Updates `modifiedAt` for moved items
+- **Toggle completion**: Sets `modifiedAt: Date.now()`
+- **Import data**: Activities get `modifiedAt: 0` if missing
+
+### Sync Timing to Prevent Self-Conflicts
+- **Debounce**: 10 seconds after last change (increased from 5s)
+- **Skip window**: 5 seconds after push (prevents immediate pull-back)
+- **Periodic sync**: Every 30 seconds when enabled
+- **Merge strategy**: Fresh store data merged with incoming changes
 
 ## 🔧 Service Architecture
 

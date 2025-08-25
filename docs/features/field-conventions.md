@@ -73,9 +73,16 @@ The normalization layer ensures backwards compatibility with all variations.
   "completed": false,
   "pinned": true,
   "order": 0,
-  "description": "2 minutes"
+  "description": "2 minutes",
+  "modifiedAt": 1724601600000
 }
 ```
+
+### Timestamp Fields (v2025.08.25+):
+- **USE**: `modifiedAt` for activity modification timestamps
+- **FALLBACK**: `lastModified` (historical, deprecated)
+- **DEFAULT**: `0` if no timestamp present
+- **PURPOSE**: Conflict resolution during sync (higher timestamp wins)
 
 ### Valid User Structure:
 ```json

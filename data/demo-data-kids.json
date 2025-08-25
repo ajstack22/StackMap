@@ -25,7 +25,8 @@
               "icon": "🦷",
               "completed": true,
               "pinned": false,
-              "order": 0
+              "order": 0,
+              "modifiedAt": 0
             },
             {
               "id": "atlas-2",
@@ -33,7 +34,8 @@
               "icon": "👕",
               "completed": true,
               "pinned": false,
-              "order": 1
+              "order": 1,
+              "modifiedAt": 0
             },
             {
               "id": "atlas-3",
@@ -41,7 +43,8 @@
               "icon": "🥞",
               "completed": true,
               "pinned": true,
-              "order": 2
+              "order": 2,
+              "modifiedAt": 0
             },
             {
               "id": "atlas-4",
@@ -49,7 +52,8 @@
               "icon": "💊",
               "completed": false,
               "pinned": true,
-              "order": 3
+              "order": 3,
+              "modifiedAt": 0
             },
             {
               "id": "atlas-5",
@@ -57,7 +61,8 @@
               "icon": "📖",
               "completed": false,
               "pinned": false,
-              "order": 4
+              "order": 4,
+              "modifiedAt": 0
             },
             {
               "id": "atlas-6",
@@ -65,7 +70,8 @@
               "icon": "🔢",
               "completed": false,
               "pinned": false,
-              "order": 5
+              "order": 5,
+              "modifiedAt": 0
             },
             {
               "id": "atlas-7",
@@ -73,7 +79,8 @@
               "icon": "🍎",
               "completed": false,
               "pinned": false,
-              "order": 6
+              "order": 6,
+              "modifiedAt": 0
             },
             {
               "id": "atlas-8",
@@ -81,7 +88,8 @@
               "icon": "🎨",
               "completed": false,
               "pinned": false,
-              "order": 7
+              "order": 7,
+              "modifiedAt": 0
             },
             {
               "id": "atlas-9",
@@ -89,7 +97,8 @@
               "icon": "🛝",
               "completed": false,
               "pinned": false,
-              "order": 8
+              "order": 8,
+              "modifiedAt": 0
             },
             {
               "id": "atlas-10",
@@ -97,7 +106,8 @@
               "icon": "💬",
               "completed": false,
               "pinned": false,
-              "order": 9
+              "order": 9,
+              "modifiedAt": 0
             },
             {
               "id": "atlas-11",
@@ -105,7 +115,8 @@
               "icon": "🧘",
               "completed": false,
               "pinned": false,
-              "order": 10
+              "order": 10,
+              "modifiedAt": 0
             },
             {
               "id": "atlas-12",
@@ -113,7 +124,8 @@
               "icon": "🌙",
               "completed": false,
               "pinned": false,
-              "order": 11
+              "order": 11,
+              "modifiedAt": 0
             }
           ]
         },

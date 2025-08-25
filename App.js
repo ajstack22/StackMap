@@ -4527,7 +4527,7 @@ Users: ${userNames} (${userCount} total)
                   const mergedActivities = newActivities.map(a => {
                     const freshActivity = freshMap.get(a.id);
                     // If we have fresher data (higher modifiedAt), use it
-                    if (freshActivity && freshActivity.modifiedAt > (a.modifiedAt || 0)) {
+                    if (freshActivity && (freshActivity.modifiedAt || 0) > (a.modifiedAt || 0)) {
                       return freshActivity;
                     }
                     return a;
