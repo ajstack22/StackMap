@@ -726,18 +726,18 @@ class ConflictResolver {
                 const remoteHasTimestamp = !!(remoteActivity.modifiedAt || remoteActivity.lastModified);
 
                 if (!localHasTimestamp && remoteHasTimestamp) {
-                  // Local has no timestamp, remote does - prefer local (user's current edits)
+                  // Local has no timestamp, remote does - prefer remote (it's been edited more recently)
                   const {
                     completedAt,
                     completedBy,
                     uncompletedAt,
                     uncompletedBy,
                     completed,
-                    ...cleanLocal
-                  } = localActivity;
-                  baseActivity = cleanLocal;
+                    ...cleanRemote
+                  } = remoteActivity;
+                  baseActivity = cleanRemote;
                 } else if (localHasTimestamp && !remoteHasTimestamp) {
-                  // Local has timestamp, remote doesn't - prefer local (timestamped version)
+                  // Local has timestamp, remote doesn't - prefer local (it's been edited more recently)
                   const {
                     completedAt,
                     completedBy,
