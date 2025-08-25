@@ -976,6 +976,7 @@ const App = () => {
           
           // Restore users and settings immediately using proper store methods
           if (importedData.users && Object.keys(importedData.users).length > 0) {
+            // First set the users
             setUsers(importedData.users);
             
             // Set current user from imported data
@@ -983,6 +984,14 @@ const App = () => {
             if (currentUserId && importedData.users[currentUserId]) {
               setCurrentUser(currentUserId);
               setCurrentDay(importedData.currentDay || 'today');
+              
+              // Force a state update to ensure activities are visible
+              // This helps React re-render with the new data
+              setTimeout(() => {
+                const state = useAppStore.getState();
+                // Trigger a minimal state update to force re-render
+                state.setCurrentDay(state.currentDay);
+              }, 100);
               
               // Restore theme and other settings
               if (importedData.globalSettings) {
@@ -1003,7 +1012,13 @@ const App = () => {
               
               // Restore library if present
               if (importedData.library) {
+                setLibrary(importedData.library);
                 updateLibraryCategories(importedData.library.categories || []);
+              }
+              
+              // Restore library templates if present
+              if (importedData.libraryTemplates) {
+                setLibraryTemplates(importedData.libraryTemplates);
               }
               
               console.log('[handleOnboardingComplete] Data restored successfully');

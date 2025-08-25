@@ -204,20 +204,48 @@ const OnboardingUserCentered = ({
         throw new Error('Invalid sync code format');
       }
 
+      console.log('[OnboardingSync] Initializing sync...');
       await syncService.initialize(phraseToUse);
 
-      const pullResult = await syncService.pullData();
+      // Try pulling with retries for race conditions
+      let pullResult = null;
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (!pullResult && attempts < maxAttempts) {
+        attempts++;
+        console.log(`[OnboardingSync] Pull attempt ${attempts}/${maxAttempts}`);
+        
+        pullResult = await syncService.pullData();
+        
+        if (!pullResult || !pullResult.encrypted_blob) {
+          console.warn(`[OnboardingSync] Pull attempt ${attempts} returned:`, {
+            hasResult: !!pullResult,
+            hasBlob: !!(pullResult?.encrypted_blob),
+            status: pullResult?.success,
+            message: pullResult?.message
+          });
+          
+          if (attempts < maxAttempts) {
+            // Wait before retry to allow other devices to complete push
+            console.log('[OnboardingSync] Waiting 2 seconds before retry...');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+        }
+      }
 
       if (!pullResult || !pullResult.encrypted_blob) {
-//         console.error('[Onboarding] No data found. pullResult:', pullResult);
-        throw new Error('No data found for this sync code');
+        console.error('[OnboardingSync] Failed to get sync data after', attempts, 'attempts');
+        throw new Error('No data found for this sync code. The sync group may still be initializing.');
       }
       
       // Decrypt the data
+      console.log('[OnboardingSync] Decrypting sync data...');
       // @ts-ignore - encryptionService exists on SyncService
       const decryptedData = syncService.encryptionService.decryptData(pullResult.encrypted_blob);
 
       if (!decryptedData) {
+        console.error('[OnboardingSync] Decryption failed');
         throw new Error('Failed to decrypt sync data');
       }
 
@@ -225,11 +253,21 @@ const OnboardingUserCentered = ({
       const validUsers = Object.keys(users).filter(id => !users[id].deleted);
       const userCount = validUsers.length;
       
+      console.log('[OnboardingSync] Decrypted data contains:', {
+        userCount,
+        totalUsers: Object.keys(users).length,
+        deletedUsers: Object.keys(users).filter(id => users[id].deleted).length,
+        hasLibrary: !!(decryptedData.library?.categories?.length > 0),
+        version: decryptedData.version
+      });
+      
       // Validate that we have users data
       if (userCount === 0) {
-        console.error('[OnboardingUserCentered] No valid users in decrypted data:', {
-          totalUsers: Object.keys(users).length,
-          deletedUsers: Object.keys(users).filter(id => users[id].deleted).length,
+        console.error('[OnboardingSync] No valid users found - Details:', {
+          totalUserIds: Object.keys(users).length,
+          deletedCount: Object.keys(users).filter(id => users[id].deleted).length,
+          hasUsersObject: !!users,
+          usersIsEmpty: Object.keys(users).length === 0
         });
         throw new Error('No active users found in sync data');
       }
@@ -243,7 +281,18 @@ const OnboardingUserCentered = ({
         hasLibrary: decryptedData.library && decryptedData.library.categories?.length > 0,
       });
     } catch (error) {
-      setSyncError(error.message || 'Failed to fetch sync data');
+      console.error('[OnboardingSync] Error:', error);
+      
+      // Provide more helpful error messages
+      if (error.message.includes('No data found')) {
+        setSyncError('Sync group is still being set up. Please wait a moment and try again.');
+      } else if (error.message.includes('No active users')) {
+        setSyncError('The sync group appears to be empty. Please verify the sync code and try again.');
+      } else if (error.message.includes('Invalid sync code')) {
+        setSyncError('The sync code format is invalid. Please check and try again.');
+      } else {
+        setSyncError(error.message || 'Failed to fetch sync data');
+      }
     } finally {
       setSyncLoading(false);
     }
