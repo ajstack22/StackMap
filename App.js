@@ -1871,11 +1871,13 @@ const App = () => {
 
         if (!activity.completed) {
           // Completing the activity - add timestamp and device info
+          const timestamp = Date.now();
           const newActivity = {
             ...activity,
             completed: true,
-            completedAt: Date.now(),
+            completedAt: timestamp,
             completedBy: deviceId,
+            modifiedAt: timestamp, // Critical for merge conflict resolution
           };
           // console.log(`[TOGGLE] Marking complete - New: completed=true, completedAt=${newActivity.completedAt}`);
           return newActivity;
@@ -1883,11 +1885,13 @@ const App = () => {
           // Uncompleting the activity - remove completion info but track when it was uncompleted
           const { completedAt, completedBy, ...activityWithoutCompletion } =
             activity;
+          const timestamp = Date.now();
           const newActivity = {
             ...activityWithoutCompletion,
             completed: false,
-            uncompletedAt: Date.now(), // Track when it was marked incomplete for sync
+            uncompletedAt: timestamp, // Track when it was marked incomplete for sync
             uncompletedBy: deviceId,
+            modifiedAt: timestamp, // Critical for merge conflict resolution
           };
           // console.log(`[TOGGLE] Marking incomplete - New: completed=false, uncompletedAt=${newActivity.uncompletedAt}`);
           return newActivity;
@@ -1980,7 +1984,7 @@ const App = () => {
 
     // Update current day's activity
     const updatedActivities = activities.map(a =>
-      a.id === id ? { ...a, pinned: newPinnedState } : a,
+      a.id === id ? { ...a, pinned: newPinnedState, modifiedAt: Date.now() } : a,
     );
     updateUserActivities(currentUser, currentDay, updatedActivities);
 
