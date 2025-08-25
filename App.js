@@ -4516,14 +4516,31 @@ Users: ${userNames} (${userCount} total)
                       : 8,
                 }}
                 onUpdate={newActivities => {
+                  // Get fresh data from store to avoid stale data issues
+                  const freshUsers = useAppStore.getState().users;
+                  const freshActivities = freshUsers[currentUser]?.days?.[currentDay]?.activities || [];
+                  
+                  // Create a map of fresh activities for quick lookup
+                  const freshMap = new Map(freshActivities.map(a => [a.id, a]));
+                  
+                  // Merge reordered array with fresh data to preserve recent edits
+                  const mergedActivities = newActivities.map(a => {
+                    const freshActivity = freshMap.get(a.id);
+                    // If we have fresher data (higher modifiedAt), use it
+                    if (freshActivity && freshActivity.modifiedAt > (a.modifiedAt || 0)) {
+                      return freshActivity;
+                    }
+                    return a;
+                  });
+                  
                   // Filter out deleted items before saving
-                  const activeActivities = newActivities.filter(
+                  const activeActivities = mergedActivities.filter(
                     a => !a.deleted,
                   );
-                  updateUserActivities(currentUser, currentDay, newActivities);
+                  updateUserActivities(currentUser, currentDay, mergedActivities);
                   // Update the users state to persist the change
-                  if (currentUser && users[currentUser]) {
-                    const updatedUsers = { ...users };
+                  if (currentUser && freshUsers[currentUser]) {
+                    const updatedUsers = { ...freshUsers };
                     if (!updatedUsers[currentUser].days) {
                       updatedUsers[currentUser].days = {};
                     }
