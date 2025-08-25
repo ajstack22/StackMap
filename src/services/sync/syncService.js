@@ -1054,7 +1054,8 @@ class SyncService {
     const currentState = {
       version: 4,
       currentDay: userState.currentDay || 'today',
-      currentUser: userState.currentUser,
+      // DON'T sync currentUser - it should be device-specific for multi-user families
+      // currentUser: userState.currentUser,
       users: users,
       library: libraryState.library || {
         categories: [
@@ -1287,7 +1288,20 @@ class SyncService {
     // Update user store
     console.log('[Sync] Updating stores with restored data');
     userStore.getState().setUsers(users || {});
-    userStore.getState().setCurrentUser(finalCurrentUser);
+    
+    // PRESERVE local currentUser if one exists - it's device-specific
+    const localCurrentUser = userStore.getState().currentUser;
+    if (!localCurrentUser || !users[localCurrentUser]) {
+      // Only set currentUser if:
+      // 1. We don't have a local selection (!localCurrentUser), OR
+      // 2. Our local selection doesn't exist in the synced users
+      const availableUsers = Object.keys(users || {});
+      if (availableUsers.length > 0) {
+        userStore.getState().setCurrentUser(availableUsers[0]);
+      }
+    }
+    // If we have a valid local currentUser, keep it (don't change anything)
+    
     userStore.getState().setCurrentDay(finalCurrentDay);
     
     // Update settings store
