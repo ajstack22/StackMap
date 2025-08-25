@@ -2,11 +2,14 @@ import { Platform, Vibration } from 'react-native';
 
 /**
  * Reorder an array by moving an item from one index to another
+ * Also updates modifiedAt timestamp for sync conflict resolution
  */
 export const reorderArray = (array, fromIndex, toIndex) => {
   const result = [...array];
   const [removed] = result.splice(fromIndex, 1);
-  result.splice(toIndex, 0, removed);
+  // Add timestamp to the moved item for sync conflict resolution
+  const movedItem = { ...removed, modifiedAt: Date.now() };
+  result.splice(toIndex, 0, movedItem);
   return result;
 };
 

@@ -1944,10 +1944,11 @@ const App = () => {
 
     if (newIndex < 0 || newIndex >= currentState.length) return;
 
-    // Swap activities
+    // Swap activities and update timestamps for sync
+    const timestamp = Date.now();
     [newActivities[index], newActivities[newIndex]] = [
-      newActivities[newIndex],
-      newActivities[index],
+      { ...newActivities[newIndex], modifiedAt: timestamp },
+      { ...newActivities[index], modifiedAt: timestamp },
     ];
 
     // Single update using setUsers only - avoid double updates
@@ -2221,6 +2222,8 @@ const App = () => {
   const reorderActivities = (fromIndex, toIndex) => {
     const newActivities = [...activities];
     const [movedActivity] = newActivities.splice(fromIndex, 1);
+    // Update timestamp when reordering for sync conflict resolution
+    movedActivity.modifiedAt = Date.now();
     newActivities.splice(toIndex, 0, movedActivity);
     updateUserActivities(currentUser, currentDay, newActivities);
 
