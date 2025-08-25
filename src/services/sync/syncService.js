@@ -91,7 +91,7 @@ class SyncService {
   syncIntervalDuration = 30000; // 30 seconds - disabled by default
   usePeriodicSync = false; // New flag to control periodic sync
   syncOnChange = true; // Sync after changes (with debounce)
-  changeDebounceDelay = 5000; // 5 seconds after last change
+  changeDebounceDelay = 10000; // 10 seconds after last change (increased to avoid self-conflicts)
   // Sync timing
   lastSyncAttempt  = null;
   lastSyncSuccess  = null;

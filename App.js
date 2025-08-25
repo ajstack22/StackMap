@@ -5116,6 +5116,7 @@ Users: ${userNames} (${userCount} total)
             description: activity.description || '', // Explicitly preserve description
             completed: false,
             pinned: false,
+            modifiedAt: Date.now(), // Add timestamp for sync conflict resolution
           };
 
           const updatedActivities = [...activities, newActivity];
@@ -5548,6 +5549,7 @@ Users: ${userNames} (${userCount} total)
             pinned: false,
             deleted: false,
             type: 'task',
+            modifiedAt: Date.now(), // Add timestamp for sync conflict resolution
           };
           updateUserActivities(currentUser, currentDay, [
             ...activities,
