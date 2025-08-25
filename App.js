@@ -1034,6 +1034,20 @@ const App = () => {
                   console.error('[handleOnboardingComplete] Failed to enable sync:', error);
                 });
               }
+              
+              // CRITICAL: Clear syncSetupPhrase to prevent duplicate modal
+              if (syncSetupPhrase) {
+                console.log('[handleOnboardingComplete] Clearing sync setup phrase to prevent duplicate modal');
+                setSyncSetupPhrase(null);
+                
+                // Also clean the URL to remove the sync parameter
+                if (Platform.OS === 'web' && window.history) {
+                  const url = new URL(window.location);
+                  url.searchParams.delete('sync');
+                  window.history.replaceState({}, '', url.toString());
+                  console.log('[handleOnboardingComplete] Cleaned sync parameter from URL');
+                }
+              }
             }
           }
         }
