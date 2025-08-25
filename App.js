@@ -1468,6 +1468,7 @@ const App = () => {
           icon: '👋',
           description: 'Tap activities to mark them complete',
           pinned: false,
+          modifiedAt: timestamp, // Add timestamp for sync conflict resolution
         },
         {
           id: `${timestamp}_2_${randomId}`,
@@ -1477,66 +1478,74 @@ const App = () => {
           description:
             'Use the edit button to add, remove, and organize activities',
           pinned: false,
+          modifiedAt: timestamp, // Add timestamp for sync conflict resolution
         },
         {
           id: `${timestamp}_3`,
           text: 'Switch Users',
           title: 'Switch Users',
-          emoji: '👤',
+          icon: '👤', // Changed from emoji to icon for consistency
           description: 'Tap your user pill to switch users or check-in',
           pinned: false,
+          modifiedAt: timestamp, // Add timestamp for sync conflict resolution
         },
         {
           id: `${timestamp}_4`,
           text: 'Share with Providers',
           title: 'Share with Providers',
-          emoji: '🔗',
+          icon: '🔗', // Changed from emoji to icon for consistency
           description:
             'Share your activities with caregivers via QR code or link',
           pinned: false,
+          modifiedAt: timestamp, // Add timestamp for sync conflict resolution
         },
         {
           id: `${timestamp}_5`,
           text: 'Sync Across Devices',
           title: 'Sync Across Devices',
-          emoji: '🔄',
+          icon: '🔄', // Changed from emoji to icon for consistency
           description: 'Keep your data synced with zero-knowledge encryption',
           pinned: false,
+          modifiedAt: timestamp, // Add timestamp for sync conflict resolution
         },
         {
           id: `${timestamp}_6`,
           text: 'Import & Export',
           title: 'Import & Export',
-          emoji: '📦',
+          icon: '📦', // Changed from emoji to icon for consistency
           description: 'Backup your data or transfer between devices',
           pinned: false,
+          modifiedAt: timestamp, // Add timestamp for sync conflict resolution
         },
         {
           id: `${timestamp}_7`,
           text: 'Preferences',
           title: 'Preferences',
-          emoji: '🎨',
+          icon: '🎨', // Changed from emoji to icon for consistency
           description:
             'Tap the palette icon to customize colors, animations, and display',
           pinned: false,
+          modifiedAt: timestamp, // Add timestamp for sync conflict resolution
         },
         {
           id: `${timestamp}_8`,
           text: 'Activities',
           title: 'Activities',
-          emoji: '📋',
+          icon: '📋', // Changed from emoji to icon for consistency
           description:
             'Tap the + icon to add new activities and build your library',
           pinned: false,
+          modifiedAt: timestamp, // Add timestamp for sync conflict resolution
         },
         {
           id: `${timestamp}_9`,
           text: 'Day',
           title: 'Day',
-          emoji: '📅',
+          icon: '📅', // Changed from emoji to icon for consistency
           description:
             'Use the calendar icon to plan tomorrow or review past days',
           pinned: false,
+          modifiedAt: timestamp, // Add timestamp for sync conflict resolution
         },
         {
           id: `${timestamp}_10`,

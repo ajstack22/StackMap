@@ -720,9 +720,35 @@ class ConflictResolver {
                   localActivity.modifiedAt || localActivity.lastModified || 0;
                 const remoteModified =
                   remoteActivity.modifiedAt || remoteActivity.lastModified || 0;
+                
+                // Special handling for missing timestamps
+                const localHasTimestamp = !!(localActivity.modifiedAt || localActivity.lastModified);
+                const remoteHasTimestamp = !!(remoteActivity.modifiedAt || remoteActivity.lastModified);
 
-                if (localModified > remoteModified) {
-                  // Local has newer changes - use local as base for non-completion fields
+                if (!localHasTimestamp && remoteHasTimestamp) {
+                  // Local has no timestamp, remote does - prefer local (user's current edits)
+                  const {
+                    completedAt,
+                    completedBy,
+                    uncompletedAt,
+                    uncompletedBy,
+                    completed,
+                    ...cleanLocal
+                  } = localActivity;
+                  baseActivity = cleanLocal;
+                } else if (localHasTimestamp && !remoteHasTimestamp) {
+                  // Local has timestamp, remote doesn't - prefer local (timestamped version)
+                  const {
+                    completedAt,
+                    completedBy,
+                    uncompletedAt,
+                    uncompletedBy,
+                    completed,
+                    ...cleanLocal
+                  } = localActivity;
+                  baseActivity = cleanLocal;
+                } else if (localModified > remoteModified) {
+                  // Both have timestamps, local is newer
                   const {
                     completedAt,
                     completedBy,
@@ -733,7 +759,7 @@ class ConflictResolver {
                   } = localActivity;
                   baseActivity = cleanLocal;
                 } else if (remoteModified > localModified) {
-                  // Remote has newer changes - use remote as base for non-completion fields
+                  // Both have timestamps, remote is newer
                   const {
                     completedAt,
                     completedBy,
