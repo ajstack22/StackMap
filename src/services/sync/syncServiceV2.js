@@ -690,8 +690,39 @@ class SyncServiceV2 {
       // Store recovery phrase for future use
       await encryptionService.storeRecoveryPhrase(recoveryPhrase, syncId);
       
-      // Don't pull data, don't restore data - the data has already been imported
-      // Start sync timer to begin syncing the imported data
+      // CRITICAL: Do an immediate push of the imported data BEFORE starting the sync timer
+      // This ensures our imported data is on the server before any pull can happen
+      console.log('[SyncV2] Pushing imported data to server immediately');
+      
+      // Wait a moment for React state to fully propagate to Zustand stores
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      try {
+        const currentState = this.getCurrentState();
+        
+        // Verify we have actual data to push
+        if (!currentState.users || Object.keys(currentState.users).length === 0) {
+          console.error('[SyncV2] WARNING: No users found in store after import! Aborting sync initialization.');
+          throw new Error('No data found in stores after import');
+        }
+        
+        console.log('[SyncV2] Pushing imported data:', {
+          userCount: Object.keys(currentState.users).length,
+          hasLibrary: !!currentState.library
+        });
+        
+        // Push the imported data
+        const newVersion = await this.push(currentState);
+        this.lastVersion = newVersion;
+        await AsyncStorage.setItem('@sync_version', newVersion.toString());
+        
+        console.log('[SyncV2] Imported data pushed successfully, version:', newVersion);
+      } catch (pushError) {
+        console.error('[SyncV2] Failed to push imported data:', pushError);
+        // Don't throw - we still want to enable sync even if initial push fails
+      }
+      
+      // NOW start sync timer after the initial push
       this.startSyncTimer();
       
       console.log('[SyncV2] Sync enabled for imported data');

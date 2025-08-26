@@ -1032,9 +1032,15 @@ const App = () => {
               if (onboardingData?.recoveryPhrase) {
                 console.log('[handleOnboardingComplete] Enabling sync with imported data');
                 // Use initializeForImport to avoid pulling and overwriting
-                syncService.initializeForImport(onboardingData.recoveryPhrase).catch(error => {
+                // IMPORTANT: We need to await this to ensure the initial push happens
+                // before any other operations
+                try {
+                  await syncService.initializeForImport(onboardingData.recoveryPhrase);
+                  console.log('[handleOnboardingComplete] Sync initialized successfully with imported data');
+                } catch (error) {
                   console.error('[handleOnboardingComplete] Failed to enable sync:', error);
-                });
+                  // Continue even if sync fails - data is already imported
+                }
               }
               
               // CRITICAL: Clear syncSetupPhrase to prevent duplicate modal
