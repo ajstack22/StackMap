@@ -10,9 +10,10 @@ import crdtSyncService from './syncServiceV2';
 const syncService = crdtSyncService;
 console.log('[Sync] Using CRDT-based sync (conflict-free, 800 lines)');
 
-// Keep old implementations available for emergency rollback if needed
-import complexSyncService from './syncService';
-import simpleSyncService from './simpleSyncService';
+// Old implementations removed - using V2 CRDT exclusively
+// If rollback is needed, uncomment these lines:
+// import complexSyncService from './syncService';
+// import simpleSyncService from './simpleSyncService';
 
 // Development helpers for testing and emergency rollback
 if (__DEV__ && typeof window !== 'undefined') {
@@ -23,11 +24,11 @@ if (__DEV__ && typeof window !== 'undefined') {
     testModule.default.runTests();
   };
   
-  // Emergency rollback to old sync if needed
+  // Emergency rollback disabled - old sync services not imported
   window.useOldSync = () => {
-    console.warn('⚠️ Emergency rollback to complex sync - for debugging only!');
-    console.warn('This requires modifying src/services/sync/index.js');
-    return 'To rollback: Change line 10 to: const syncService = complexSyncService;';
+    console.warn('⚠️ Old sync services have been removed');
+    console.warn('To rollback: Uncomment imports in src/services/sync/index.js');
+    return 'V2 CRDT sync is the only implementation available';
   };
   
   // Check sync status

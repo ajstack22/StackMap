@@ -381,6 +381,15 @@ class SyncServiceV2 {
   async createSyncGroup(syncId, salt) {
     const deviceId = await encryptionService.getDeviceId();
     const currentState = this.getCurrentState();
+    
+    // Debug log to see what data we're syncing
+    console.log('[SyncV2] Creating sync group with state:', {
+      userCount: Object.keys(currentState.users || {}).length,
+      userIds: Object.keys(currentState.users || {}),
+      hasLibrary: !!currentState.library,
+      currentUser: currentState.currentUser
+    });
+    
     const encryptedBlob = encryptionService.encryptData(currentState);
     
     eventLogger.logSync('CREATE_GROUP', { 
