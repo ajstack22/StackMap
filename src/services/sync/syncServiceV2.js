@@ -95,11 +95,11 @@ class SyncServiceV2 {
    */
   async _initializeOnStartup() {
     try {
-      // Restore saved state
+      // Restore saved state - use original keys for compatibility
       const [enabled, syncId, version] = await Promise.all([
-        AsyncStorage.getItem('@sync_enabled_v2'),
+        AsyncStorage.getItem('@sync_enabled'), // Original key
         AsyncStorage.getItem('@sync_id'),
-        AsyncStorage.getItem('@sync_version_v2')
+        AsyncStorage.getItem('@sync_version')  // Original key
       ]);
 
       if (enabled === 'true' && syncId) {
@@ -209,11 +209,11 @@ class SyncServiceV2 {
         this.lastVersion = existingData.version;
       }
 
-      // Save state
+      // Save state - use original keys for compatibility
       await AsyncStorage.multiSet([
-        ['@sync_enabled_v2', 'true'],
+        ['@sync_enabled', 'true'],
         ['@sync_id', this.syncId],
-        ['@sync_version_v2', this.lastVersion.toString()]
+        ['@sync_version', this.lastVersion.toString()]
       ]);
 
       this.syncEnabled = true;
@@ -245,8 +245,8 @@ class SyncServiceV2 {
     this.stopSyncTimer();
     
     await AsyncStorage.multiRemove([
-      '@sync_enabled_v2',
-      '@sync_version_v2'
+      '@sync_enabled',
+      '@sync_version'
     ]);
     
     eventLogger.logSync('DISABLED', {});
@@ -292,7 +292,7 @@ class SyncServiceV2 {
     }
 
     // Check if encryption is initialized
-    if (!encryptionService.isInitialized || !encryptionService.isInitialized()) {
+    if (!encryptionService.masterKey) {
       console.warn('[SyncV2] Skipping sync - encryption not initialized');
       return;
     }
@@ -337,7 +337,7 @@ class SyncServiceV2 {
       const newVersion = await this.push(stateToSync);
       this.lastVersion = newVersion;
       
-      await AsyncStorage.setItem('@sync_version_v2', newVersion.toString());
+      await AsyncStorage.setItem('@sync_version', newVersion.toString());
       
       this.lastSyncSuccess = Date.now();
       this.updateSyncStatus('success');
@@ -567,9 +567,9 @@ class SyncServiceV2 {
       // Enable sync and store state
       this.syncEnabled = true;
       await AsyncStorage.multiSet([
-        ['@sync_enabled_v2', 'true'],
+        ['@sync_enabled', 'true'],
         ['@sync_id', this.syncId],
-        ['@sync_version_v2', '0']
+        ['@sync_version', '0']
       ]);
       
       // Store recovery phrase for future use
