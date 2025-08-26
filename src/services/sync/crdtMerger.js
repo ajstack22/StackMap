@@ -82,6 +82,11 @@ class CRDTMerger {
       icon: this.isCRDT(activity.icon) ? activity.icon :
             this.toCRDT(activity.icon, activity.modifiedAt || 0, deviceId),
       
+      // Convert description field (if present)
+      description: activity.description !== undefined ? 
+        (this.isCRDT(activity.description) ? activity.description :
+         this.toCRDT(activity.description, activity.modifiedAt || 0, deviceId)) : undefined,
+      
       // Handle completion state specially
       completed: this.createCompletionCRDT(activity, deviceId),
       
@@ -149,6 +154,11 @@ class CRDTMerger {
       pinned: this.fromCRDT(crdtActivity.pinned),
       deleted: this.fromCRDT(crdtActivity.deleted)
     };
+    
+    // Add description if present
+    if (crdtActivity.description !== undefined) {
+      activity.description = this.fromCRDT(crdtActivity.description);
+    }
 
     // Add timestamps based on completion state
     const completionCRDT = crdtActivity.completed;
@@ -210,8 +220,25 @@ class CRDTMerger {
       icon: this.mergeCRDTValues(localCRDT.icon, remoteCRDT.icon),
       completed: this.mergeCRDTValues(localCRDT.completed, remoteCRDT.completed),
       pinned: this.mergeCRDTValues(localCRDT.pinned, remoteCRDT.pinned),
-      deleted: this.mergeCRDTValues(localCRDT.deleted, remoteCRDT.deleted)
+      deleted: this.mergeCRDTValues(localCRDT.deleted, remoteCRDT.deleted),
+      // Handle description as CRDT if present
+      description: (localCRDT.description || remoteCRDT.description) ? 
+        this.mergeCRDTValues(localCRDT.description, remoteCRDT.description) : undefined
     };
+    
+    // Preserve any other additional non-CRDT fields (future compatibility)
+    Object.keys(localCRDT).forEach(key => {
+      if (!mergedCRDT.hasOwnProperty(key) && key !== 'modifiedAt' && key !== 'completedAt' && 
+          key !== 'uncompletedAt' && key !== 'deletedAt') {
+        mergedCRDT[key] = localCRDT[key];
+      }
+    });
+    Object.keys(remoteCRDT).forEach(key => {
+      if (!mergedCRDT.hasOwnProperty(key) && key !== 'modifiedAt' && key !== 'completedAt' && 
+          key !== 'uncompletedAt' && key !== 'deletedAt') {
+        mergedCRDT[key] = remoteCRDT[key];
+      }
+    });
 
     // Convert back to regular format
     const merged = this.activityFromCRDT(mergedCRDT);
@@ -239,40 +266,59 @@ class CRDTMerger {
       deviceId
     });
 
-    // Create a map of remote activities for quick lookup
+    // Create maps for quick lookup
+    const localMap = new Map();
+    localActivities.forEach(activity => {
+      if (activity && activity.id) {
+        localMap.set(activity.id, activity);
+      }
+    });
+    
     const remoteMap = new Map();
     remoteActivities.forEach(activity => {
       if (activity && activity.id) {
         remoteMap.set(activity.id, activity);
       }
     });
-
-    // Process activities in local order first (preserves user's arrangement)
-    localActivities.forEach((localActivity, index) => {
-      if (!localActivity || !localActivity.id) return;
+    
+    // Determine which order to use based on most recent modification
+    // If remote has more recent changes overall, use remote order
+    const localMaxTime = Math.max(...localActivities.map(a => a?.modifiedAt || 0), 0);
+    const remoteMaxTime = Math.max(...remoteActivities.map(a => a?.modifiedAt || 0), 0);
+    const useRemoteOrder = remoteMaxTime > localMaxTime;
+    
+    // Process activities in the determined order
+    const primaryActivities = useRemoteOrder ? remoteActivities : localActivities;
+    const primaryMap = useRemoteOrder ? localMap : remoteMap;
+    
+    primaryActivities.forEach((primaryActivity, index) => {
+      if (!primaryActivity || !primaryActivity.id) return;
       
-      const remoteActivity = remoteMap.get(localActivity.id);
-      if (remoteActivity) {
-        // Merge the two versions
-        const merged = this.mergeActivities(localActivity, remoteActivity, deviceId);
+      const otherActivity = primaryMap.get(primaryActivity.id);
+      if (otherActivity) {
+        // Merge the two versions - always pass local first, remote second
+        const localAct = useRemoteOrder ? otherActivity : primaryActivity;
+        const remoteAct = useRemoteOrder ? primaryActivity : otherActivity;
+        const merged = this.mergeActivities(localAct, remoteAct, deviceId);
         if (merged && !merged.deleted) {
           mergedActivities.push(merged);
-          processedIds.add(localActivity.id);
+          processedIds.add(primaryActivity.id);
         }
       } else {
-        // Only exists locally
-        if (!localActivity.deleted) {
-          mergedActivities.push(localActivity);
-          processedIds.add(localActivity.id);
+        // Only exists in primary
+        if (!primaryActivity.deleted) {
+          mergedActivities.push(primaryActivity);
+          processedIds.add(primaryActivity.id);
         }
       }
     });
 
-    // Add any remote activities that weren't in local (new activities from other devices)
-    remoteActivities.forEach(remoteActivity => {
-      if (remoteActivity && remoteActivity.id && !processedIds.has(remoteActivity.id)) {
-        if (!remoteActivity.deleted) {
-          mergedActivities.push(remoteActivity);
+    // Add any activities that weren't in primary (new activities from other source)
+    const secondaryActivities = useRemoteOrder ? localActivities : remoteActivities;
+    secondaryActivities.forEach(secondaryActivity => {
+      if (secondaryActivity && secondaryActivity.id && !processedIds.has(secondaryActivity.id)) {
+        if (!secondaryActivity.deleted) {
+          mergedActivities.push(secondaryActivity);
         }
       }
     });
