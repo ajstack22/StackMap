@@ -3418,12 +3418,7 @@ This will replace all your current data.`,
           setUsers(validatedUsers);
 
           // Force refresh on iOS after import/sync
-          if (Platform.OS === 'ios') {
-            setTimeout(() => {
-              // Force a re-render by updating a dummy state
-              setRefreshKey(prev => prev + 1);
-            }, 100);
-          }
+          // The state update and setTimeout below helps iOS render correctly
 
           // Verify the users were set correctly
           setTimeout(() => {
