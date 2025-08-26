@@ -12,7 +12,7 @@ class CRDTMerger {
   toCRDT(value, timestamp, deviceId) {
     return {
       value,
-      timestamp: timestamp || Date.now(),
+      timestamp: timestamp || 0,  // Use 0 as default, not Date.now()
       device: deviceId || 'unknown'
     };
   }
@@ -42,8 +42,8 @@ class CRDTMerger {
     }
 
     // Convert to CRDT format if needed
-    const localCRDT = this.isCRDT(local) ? local : this.toCRDT(local, 0, 'local');
-    const remoteCRDT = this.isCRDT(remote) ? remote : this.toCRDT(remote, 0, 'remote');
+    const localCRDT = this.isCRDT(local) ? local : this.toCRDT(local, Date.now(), 'local');
+    const remoteCRDT = this.isCRDT(remote) ? remote : this.toCRDT(remote, Date.now() - 1, 'remote');
 
     // Last-write-wins: compare timestamps
     if (localCRDT.timestamp > remoteCRDT.timestamp) {
@@ -76,21 +76,21 @@ class CRDTMerger {
       id: activity.id,
       // Convert text field
       text: this.isCRDT(activity.text) ? activity.text : 
-            this.toCRDT(activity.text, activity.modifiedAt, deviceId),
+            this.toCRDT(activity.text, activity.modifiedAt || 0, deviceId),
       
       // Convert icon field
       icon: this.isCRDT(activity.icon) ? activity.icon :
-            this.toCRDT(activity.icon, activity.modifiedAt, deviceId),
+            this.toCRDT(activity.icon, activity.modifiedAt || 0, deviceId),
       
       // Handle completion state specially
       completed: this.createCompletionCRDT(activity, deviceId),
       
       // Convert other fields
       pinned: this.isCRDT(activity.pinned) ? activity.pinned :
-              this.toCRDT(!!activity.pinned, activity.modifiedAt, deviceId),
+              this.toCRDT(!!activity.pinned, activity.modifiedAt || 0, deviceId),
       
       deleted: this.isCRDT(activity.deleted) ? activity.deleted :
-               this.toCRDT(!!activity.deleted, activity.deletedAt || activity.modifiedAt, deviceId)
+               this.toCRDT(!!activity.deleted, activity.deletedAt || activity.modifiedAt || 0, deviceId)
     };
 
     // Preserve any additional fields
@@ -124,7 +124,7 @@ class CRDTMerger {
       value = false;
     } else {
       // No timestamps or equal - use current state with modifiedAt
-      timestamp = activity.modifiedAt || Date.now();
+      timestamp = activity.modifiedAt || 0;
       value = !!activity.completed;
     }
 
@@ -229,9 +229,15 @@ class CRDTMerger {
    * Merge activity arrays
    */
   mergeActivityArrays(localActivities = [], remoteActivities = [], deviceId) {
-    const activityMap = new Map();
     const mergedActivities = [];
     const processedIds = new Set();
+
+    // Log the merge operation
+    eventLogger.log('ACTIVITY_MERGE', 'START', {
+      localCount: localActivities.length,
+      remoteCount: remoteActivities.length,
+      deviceId
+    });
 
     // Create a map of remote activities for quick lookup
     const remoteMap = new Map();
@@ -242,7 +248,7 @@ class CRDTMerger {
     });
 
     // Process activities in local order first (preserves user's arrangement)
-    localActivities.forEach(localActivity => {
+    localActivities.forEach((localActivity, index) => {
       if (!localActivity || !localActivity.id) return;
       
       const remoteActivity = remoteMap.get(localActivity.id);
@@ -269,6 +275,12 @@ class CRDTMerger {
           mergedActivities.push(remoteActivity);
         }
       }
+    });
+
+    eventLogger.log('ACTIVITY_MERGE', 'COMPLETE', {
+      mergedCount: mergedActivities.length,
+      localOrder: localActivities.map(a => a?.id).filter(Boolean),
+      mergedOrder: mergedActivities.map(a => a?.id).filter(Boolean)
     });
 
     return mergedActivities;

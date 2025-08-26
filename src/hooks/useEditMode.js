@@ -10,18 +10,22 @@ import {
 export const useEditMode = (initialActivities, onUpdate) => {
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [undoStack, setUndoStack] = useState([]);
+  
+  // Use ref to always have current activities
+  const activitiesRef = useRef(initialActivities);
+  activitiesRef.current = initialActivities;
 
   const updateActivities = useCallback(
     newActivities => {
-      // Save for undo
-      setUndoStack(prev => [...prev, initialActivities].slice(-10)); // Keep last 10
+      // Save for undo using current activities from ref
+      setUndoStack(prev => [...prev, activitiesRef.current].slice(-10)); // Keep last 10
 
       // Notify parent
       if (onUpdate) {
         onUpdate(newActivities);
       }
     },
-    [initialActivities, onUpdate],
+    [onUpdate], // Remove initialActivities from dependencies
   );
 
   const handleMoveUp = useCallback(
@@ -104,8 +108,8 @@ export const useEditMode = (initialActivities, onUpdate) => {
   }, []);
 
   const selectAll = useCallback(() => {
-    setSelectedItems(new Set(initialActivities.map(a => a.id)));
-  }, [initialActivities]);
+    setSelectedItems(new Set(activitiesRef.current.map(a => a.id)));
+  }, []);
 
   const clearSelection = useCallback(() => {
     setSelectedItems(new Set());
