@@ -420,6 +420,12 @@ class SyncServiceV2 {
       this.deviceId = await encryptionService.getDeviceId();
     }
     
+    // Log what we're sending for debugging
+    console.log('[SyncV2] Pull request:', {
+      sync_id: this.syncId,
+      device_id: this.deviceId
+    });
+    
     try {
       const response = await fetch(`${getApiBaseUrl()}/pull.php`, {
         method: 'POST',
