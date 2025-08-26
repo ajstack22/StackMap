@@ -1777,31 +1777,32 @@ const DataModal = ({
             )}
 
             {/* Toggle button for key visibility */}
-            <TouchableOpacity
-              style={styles.toggleKeyButton}
-              onPress={() => setShowRecoveryPhrase(!showRecoveryPhrase)}
-            >
-              <Icon 
-                name={showRecoveryPhrase ? "visibility-off" : "visibility"} 
-                size={20} 
-                color={theme.primary} 
+            <View style={styles.keyToggleContainer}>
+              <ModalButton
+                theme={theme}
+                variant="secondary"
+                label={showRecoveryPhrase ? 'Hide Key' : 'Show Key'}
+                icon={showRecoveryPhrase ? "visibility-off" : "visibility"}
+                onPress={() => setShowRecoveryPhrase(!showRecoveryPhrase)}
+                compact
               />
-              <Text style={styles.toggleKeyButtonText}>
-                {showRecoveryPhrase ? 'Hide Key' : 'Show Key'}
-              </Text>
-            </TouchableOpacity>
+            </View>
 
             {/* Action buttons - Always visible */}
-            <View style={styles.keyActionButtons}>
-              <TouchableOpacity
-                style={[styles.keyActionButton, styles.primaryActionButton]}
+            <View style={styles.keyActionButtonRow}>
+              <ModalButton
+                theme={theme}
+                variant="primary"
+                label="Copy Key"
+                icon="content-copy"
                 onPress={() => copyToClipboard(syncRecoveryPhrase, 'Sync key copied!')}
-              >
-                <Icon name="content-copy" size={20} color="white" />
-                <Text style={[styles.keyActionButtonText, styles.primaryButtonText]}>Copy Key</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.keyActionButton, styles.primaryActionButton]}
+                style={styles.syncActionButton}
+              />
+              <ModalButton
+                theme={theme}
+                variant="primary"
+                label="Copy URL"
+                icon="link"
                 onPress={() => {
                   let syncUrl;
                   if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -1818,10 +1819,8 @@ const DataModal = ({
                   }
                   copyToClipboard(syncUrl, 'Sync URL copied!');
                 }}
-              >
-                <Icon name="link" size={20} color="white" />
-                <Text style={[styles.keyActionButtonText, styles.primaryButtonText]}>Copy URL</Text>
-              </TouchableOpacity>
+                style={styles.syncActionButton}
+              />
             </View>
 
             {/* QR Code - Always visible */}
