@@ -105,7 +105,7 @@ class SyncServiceV2 {
       if (enabled === 'true' && syncId) {
         this.syncEnabled = true;
         this.syncId = syncId;
-        this.lastVersion = parseInt(version) || 0;
+        this.lastVersion = parseInt(version, 10) || 0;
         this.deviceId = await encryptionService.getDeviceId();
         
         // Try to get the stored recovery phrase and initialize encryption
@@ -502,12 +502,12 @@ class SyncServiceV2 {
    */
   getCurrentState() {
     // Import stores dynamically to avoid circular dependencies
-    const { useAppStore, useUserStore, useSettingsStore, useLibraryStore } = require('../../stores');
+    const { useUserStore, useSettingsStore, useLibraryStore } = require('../../stores');
     
     const userStore = useUserStore.getState();
     const settingsStore = useSettingsStore.getState();
     const libraryStore = useLibraryStore.getState();
-    const appStore = useAppStore.getState();
+    // Get current state from all stores
     
     return {
       users: userStore.users,
@@ -571,47 +571,6 @@ class SyncServiceV2 {
     return this.syncEnabled;
   }
 
-  // Initialize for import (skip initial sync)
-  async initializeForImport(recoveryPhrase) {
-    try {
-      eventLogger.logSync('INITIALIZE_FOR_IMPORT', {});
-      
-      // Generate sync ID from recovery phrase
-      this.syncId = await this.generateSyncId(recoveryPhrase);
-      this.deviceId = await encryptionService.getDeviceId();
-      
-      // Initialize encryption with fixed salt
-      const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
-      await encryptionService.initialize(recoveryPhrase, this.syncId, fixedSalt);
-      
-      // Enable sync and store state
-      this.syncEnabled = true;
-      await AsyncStorage.multiSet([
-        ['@sync_enabled', 'true'],
-        ['@sync_id', this.syncId],
-        ['@sync_version', '0']
-      ]);
-      
-      // Store recovery phrase for future use
-      await encryptionService.storeRecoveryPhrase(recoveryPhrase, this.syncId);
-      
-      // Start sync timer but don't trigger immediate sync
-      // The imported data will sync on next interval
-      this.startSyncTimer();
-      
-      eventLogger.logSync('IMPORT_INITIALIZED', { syncId: this.syncId });
-      
-      return {
-        syncId: this.syncId,
-        recoveryPhrase,
-        isNewSync: false
-      };
-    } catch (error) {
-      console.error('[SyncV2] Initialize for import failed:', error);
-      this.syncId = null;
-      throw error;
-    }
-  }
 
   // Check if user has auto-update shares
   async hasAutoUpdateShares(userId) {
@@ -1133,7 +1092,7 @@ class SyncServiceV2 {
     console.log('[SyncV2] Retry failed called');
     if (this.syncEnabled) {
       try {
-        const result = await this.performSync();
+        await this.performSync();
         return { success: true, message: 'Sync completed' };
       } catch (error) {
         console.error('[SyncV2] Retry failed error:', error);
