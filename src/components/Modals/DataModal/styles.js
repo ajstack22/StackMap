@@ -458,6 +458,8 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e0e0e0',
     gap: SPACING.sm,
+    minWidth: 140,
+    flex: 0,
   },
   syncActionText: {
     fontSize: 15,
@@ -920,10 +922,6 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: SPACING.md,
     gap: SPACING.sm,
-  },
-  syncActionButton: {
-    minWidth: 140,
-    flex: 0,
   },
   shareKeyContainer: {
     flexDirection: 'row',
