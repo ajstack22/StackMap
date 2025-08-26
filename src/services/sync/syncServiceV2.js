@@ -42,6 +42,7 @@ class SyncServiceV2 {
     this.deviceId = null;
     this.lastVersion = 0;
     this.syncTimer = null;
+    this.syncDebounceTimer = null;
     this.syncInProgress = false;
     this.pendingSync = false;
     
@@ -251,6 +252,12 @@ class SyncServiceV2 {
     this.syncEnabled = false;
     this.stopSyncTimer();
     
+    // Clear any pending sync debounce
+    if (this.syncDebounceTimer) {
+      clearTimeout(this.syncDebounceTimer);
+      this.syncDebounceTimer = null;
+    }
+    
     await AsyncStorage.multiRemove([
       '@sync_enabled',
       '@sync_version'
@@ -265,9 +272,9 @@ class SyncServiceV2 {
   startSyncTimer() {
     this.stopSyncTimer();
     this.syncTimer = setInterval(() => {
-      if (this.pendingSync) {
-        this.performSync();
-      }
+      // Always perform sync to pull updates, not just when we have pending changes
+      // This ensures all devices get updates even if they haven't made changes
+      this.performSync();
     }, this.SYNC_INTERVAL);
   }
 
@@ -289,9 +296,23 @@ class SyncServiceV2 {
       // Return resolved promise for compatibility with callers expecting a Promise
       return Promise.resolve();
     }
-    this.pendingSync = true;
+    
     eventLogger.logSync('REQUESTED', {});
-    // Return resolved promise since sync happens asynchronously via timer
+    
+    // Clear any existing debounce timer
+    if (this.syncDebounceTimer) {
+      clearTimeout(this.syncDebounceTimer);
+    }
+    
+    // Debounce sync requests (wait 2 seconds for multiple rapid changes)
+    // This prevents excessive syncing during rapid edits
+    this.syncDebounceTimer = setTimeout(() => {
+      this.performSync().catch(error => {
+        console.error('[SyncV2] Sync failed:', error);
+      });
+    }, 2000);
+    
+    // Return resolved promise since sync happens asynchronously
     return Promise.resolve();
   }
 
