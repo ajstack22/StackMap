@@ -420,21 +420,10 @@ class SyncServiceV2 {
       this.deviceId = await encryptionService.getDeviceId();
     }
     
-    // Log what we're sending for debugging
-    console.log('[SyncV2] Pull request:', {
-      sync_id: this.syncId,
-      device_id: this.deviceId
-    });
-    
     try {
-      const response = await fetch(`${getApiBaseUrl()}/pull.php`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          sync_id: this.syncId,
-          device_id: this.deviceId
-        })
-      });
+      // Send parameters as query params, not POST body (matching original service)
+      const url = `${getApiBaseUrl()}/pull.php?sync_id=${this.syncId}&device_id=${this.deviceId}&current_version=${this.lastVersion || 0}`;
+      const response = await fetch(url);
 
       if (!response.ok) {
         // 404 means sync doesn't exist yet (expected for new syncs)
