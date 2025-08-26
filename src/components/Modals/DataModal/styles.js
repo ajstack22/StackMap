@@ -904,6 +904,27 @@ export const styles = StyleSheet.create({
   copyIconButton: {
     padding: SPACING.xs,
   },
+  syncKeyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+    gap: SPACING.sm,
+  },
+  toggleKeyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: SPACING.sm,
+    marginVertical: SPACING.sm,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+    gap: SPACING.xs,
+  },
+  toggleKeyButtonText: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#333',
+  },
   keyActionButtons: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -915,14 +936,30 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: SPACING.sm,
+    paddingHorizontal: SPACING.md,
     borderRadius: 8,
     backgroundColor: '#f5f5f5',
     gap: SPACING.xs,
+    flex: 1,
+    justifyContent: 'center',
+    maxWidth: 150,
+  },
+  primaryActionButton: {
+    backgroundColor: '#007AFF',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   keyActionButtonText: {
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#333',
+  },
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   shareKeyContainer: {
     flexDirection: 'row',

@@ -93,7 +93,7 @@ const DataModal = ({
   const [recoveryInput, setRecoveryInput] = useState('');
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncError, setSyncError] = useState('');
-  const [showRecoveryPhrase, setShowRecoveryPhrase] = useState(false);
+  const [showRecoveryPhrase, setShowRecoveryPhrase] = useState(true); // Show by default
   const [showDisableSyncConfirm, setShowDisableSyncConfirm] = useState(false);
   const [showDeleteServerDataConfirm, setShowDeleteServerDataConfirm] =
     useState(false);
@@ -843,6 +843,51 @@ const DataModal = ({
     }
   };
 
+  // Safe clipboard copy helper
+  const copyToClipboard = async (text, successMessage) => {
+    try {
+      if (Platform.OS === 'web') {
+        // Web: Use a safer approach that handles focus issues
+        if (navigator.clipboard && window.isSecureContext) {
+          // Modern approach with fallback
+          await navigator.clipboard.writeText(text).catch(() => {
+            // Fallback: Create temporary textarea
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            document.execCommand('copy');
+            textArea.remove();
+          });
+        } else {
+          // Fallback for older browsers
+          const textArea = document.createElement('textarea');
+          textArea.value = text;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          document.execCommand('copy');
+          textArea.remove();
+        }
+      } else {
+        // Mobile: Use React Native clipboard
+        const Clipboard = require('@react-native-clipboard/clipboard').default;
+        Clipboard.setString(text);
+      }
+      showToast({ message: successMessage });
+    } catch (error) {
+      console.error('Clipboard copy failed:', error);
+      showToast({ message: 'Failed to copy. Please select and copy manually.', type: 'error' });
+    }
+  };
+
   // Handle sync enable
   const handleEnableSync = async () => {
     // Set loading immediately to give instant feedback
@@ -857,7 +902,7 @@ const DataModal = ({
         setSyncEnabled(true);
         setSyncId(result.syncId);
         setSyncRecoveryPhrase(result.recoveryPhrase);
-        setShowRecoveryPhrase(true);
+        setShowRecoveryPhrase(true); // Keep showing it
 
         if (onSyncStatusChange) {
           onSyncStatusChange(true);
@@ -1713,111 +1758,97 @@ const DataModal = ({
             </Text>
           </View>
 
-          {showRecoveryPhrase && (
-            <View style={styles.recoveryPhraseCard}>
+          {/* Sync Key Card - Always show buttons and QR, optionally show key text */}
+          <View style={styles.recoveryPhraseCard}>
+            <View style={styles.syncKeyHeader}>
               <Icon name="warning" size={20} color="#ff9800" />
               <Text style={styles.recoveryPhraseWarning}>
                 Save this sync key! You'll need it to sync other devices.
               </Text>
+            </View>
+
+            {/* Key text with toggle */}
+            {showRecoveryPhrase && (
               <View style={styles.recoveryPhraseContainer}>
                 <Text style={styles.recoveryPhrase} selectable>
                   {syncRecoveryPhrase}
                 </Text>
               </View>
+            )}
 
-              <View style={styles.keyActionButtons}>
-                <TouchableOpacity
-                  style={styles.keyActionButton}
-                  onPress={() => {
-                    if (Platform.OS === 'web') {
-                      navigator.clipboard.writeText(syncRecoveryPhrase);
-                    } else {
-                      const Clipboard =
-                        require('@react-native-clipboard/clipboard').default;
-                      Clipboard.setString(syncRecoveryPhrase);
-                    }
-                    showToast({ message: 'Sync key copied!' });
-                  }}
-                >
-                  <Icon name="content-copy" size={18} color={theme.primary} />
-                  <Text style={styles.keyActionButtonText}>Copy Key</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.keyActionButton}
-                  onPress={() => {
-                    let syncUrl;
-                    if (
-                      Platform.OS === 'web' &&
-                      typeof window !== 'undefined'
-                    ) {
-                      const basePath = window.location.pathname.endsWith('/')
-                        ? window.location.pathname
-                        : window.location.pathname + '/';
-                      syncUrl = `${
-                        window.location.origin
-                      }${basePath}?sync=${encodeURIComponent(
-                        syncRecoveryPhrase,
-                      )}`;
-                      navigator.clipboard.writeText(syncUrl);
-                    } else {
-                      // For mobile, use a fixed URL
-                      syncUrl = `https://stackmap.app/?sync=${encodeURIComponent(
-                        syncRecoveryPhrase,
-                      )}`;
-                      const Clipboard =
-                        require('@react-native-clipboard/clipboard').default;
-                      Clipboard.setString(syncUrl);
-                    }
-                    showToast({ message: 'Sync URL copied!' });
-                  }}
-                >
-                  <Icon name="link" size={18} color={theme.primary} />
-                  <Text style={styles.keyActionButtonText}>Copy URL</Text>
-                </TouchableOpacity>
-              </View>
+            {/* Toggle button for key visibility */}
+            <TouchableOpacity
+              style={styles.toggleKeyButton}
+              onPress={() => setShowRecoveryPhrase(!showRecoveryPhrase)}
+            >
+              <Icon 
+                name={showRecoveryPhrase ? "visibility-off" : "visibility"} 
+                size={20} 
+                color={theme.primary} 
+              />
+              <Text style={styles.toggleKeyButtonText}>
+                {showRecoveryPhrase ? 'Hide Key' : 'Show Key'}
+              </Text>
+            </TouchableOpacity>
 
-              {/* QR Code - Always visible */}
-              <View style={styles.qrCodeContainer}>
-                <QRCode
-                  value={(() => {
-                    if (
-                      Platform.OS === 'web' &&
-                      typeof window !== 'undefined'
-                    ) {
-                      // Ensure path ends with trailing slash to avoid redirects
-                      const basePath = window.location.pathname.endsWith('/')
-                        ? window.location.pathname
-                        : window.location.pathname + '/';
-                      return `${
-                        window.location.origin
-                      }${basePath}?sync=${encodeURIComponent(
-                        syncRecoveryPhrase,
-                      )}`;
-                    } else {
-                      // For mobile, use a fixed URL
-                      return `https://stackmap.app/?sync=${encodeURIComponent(
-                        syncRecoveryPhrase,
-                      )}`;
-                    }
-                  })()}
-                  size={200}
-                  backgroundColor="#ffffff"
-                  color="#000000"
-                />
-              </View>
+            {/* Action buttons - Always visible */}
+            <View style={styles.keyActionButtons}>
+              <TouchableOpacity
+                style={[styles.keyActionButton, styles.primaryActionButton]}
+                onPress={() => copyToClipboard(syncRecoveryPhrase, 'Sync key copied!')}
+              >
+                <Icon name="content-copy" size={20} color="white" />
+                <Text style={[styles.keyActionButtonText, styles.primaryButtonText]}>Copy Key</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.keyActionButton, styles.primaryActionButton]}
+                onPress={() => {
+                  let syncUrl;
+                  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                    const basePath = window.location.pathname.endsWith('/')
+                      ? window.location.pathname
+                      : window.location.pathname + '/';
+                    syncUrl = `${window.location.origin}${basePath}?sync=${encodeURIComponent(
+                      syncRecoveryPhrase,
+                    )}`;
+                  } else {
+                    syncUrl = `https://stackmap.app/?sync=${encodeURIComponent(
+                      syncRecoveryPhrase,
+                    )}`;
+                  }
+                  copyToClipboard(syncUrl, 'Sync URL copied!');
+                }}
+              >
+                <Icon name="link" size={20} color="white" />
+                <Text style={[styles.keyActionButtonText, styles.primaryButtonText]}>Copy URL</Text>
+              </TouchableOpacity>
             </View>
-          )}
+
+            {/* QR Code - Always visible */}
+            <View style={styles.qrCodeContainer}>
+              <QRCode
+                value={(() => {
+                  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                    const basePath = window.location.pathname.endsWith('/')
+                      ? window.location.pathname
+                      : window.location.pathname + '/';
+                    return `${window.location.origin}${basePath}?sync=${encodeURIComponent(
+                      syncRecoveryPhrase,
+                    )}`;
+                  } else {
+                    return `https://stackmap.app/?sync=${encodeURIComponent(
+                      syncRecoveryPhrase,
+                    )}`;
+                  }
+                })()}
+                size={200}
+                backgroundColor="#ffffff"
+                color="#000000"
+              />
+            </View>
+          </View>
 
           <View style={styles.inPanelButtonContainer}>
-            <ModalButton
-              theme={theme}
-              variant="secondary"
-              label={showRecoveryPhrase ? 'Hide Sync Key' : 'Show Sync Key'}
-              icon="key"
-              onPress={() => setShowRecoveryPhrase(!showRecoveryPhrase)}
-              fullWidth
-            />
-
             <ModalButton
               theme={theme}
               variant="danger"
