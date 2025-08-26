@@ -10,6 +10,7 @@ import util from 'tweetnacl-util';
 import encryptionService from './encryptionService';
 import crdtMerger from './crdtMerger';
 import eventLogger from './eventLogger';
+import dataMigrator from './dataMigrator';
 import { normalizeSyncData } from '../../utils/dataNormalizer';
 
 // Type helpers for tweetnacl-util
@@ -131,15 +132,15 @@ class SyncServiceV2 {
               syncId: this.syncId,
               version: this.lastVersion 
             });
-            console.warn('[SyncV2] Sync enabled but recovery phrase not found');
+            if (__DEV__) console.warn('[SyncV2] Sync enabled but recovery phrase not found');
           }
         } catch (encryptError) {
-          console.error('[SyncV2] Failed to initialize encryption:', encryptError);
+          if (__DEV__) console.error('[SyncV2] Failed to initialize encryption:', encryptError);
           // Don't start sync if encryption fails
         }
       }
     } catch (error) {
-      console.error('[SyncV2] Initialization failed:', error);
+      if (__DEV__) console.error('[SyncV2] Initialization failed:', error);
     }
   }
 
@@ -184,7 +185,7 @@ class SyncServiceV2 {
         existingData = await this.pull();
       } catch (pullError) {
         // Log the error but continue - might be a new sync or temporary issue
-        console.warn('[SyncV2] Pull during enable failed:', pullError.message);
+        if (__DEV__) console.warn('[SyncV2] Pull during enable failed:', pullError.message);
         existingData = null;
       }
       
@@ -240,7 +241,7 @@ class SyncServiceV2 {
         recoveryPhrase: recoveryPhrase
       };
     } catch (error) {
-      console.error('[SyncV2] Enable failed:', error);
+      if (__DEV__) console.error('[SyncV2] Enable failed:', error);
       throw error;
     }
   }
@@ -308,7 +309,7 @@ class SyncServiceV2 {
     // This prevents excessive syncing during rapid edits
     this.syncDebounceTimer = setTimeout(() => {
       this.performSync().catch(error => {
-        console.error('[SyncV2] Sync failed:', error);
+        if (__DEV__) console.error('[SyncV2] Sync failed:', error);
       });
     }, 2000);
     
@@ -326,7 +327,7 @@ class SyncServiceV2 {
 
     // Check if encryption is initialized
     if (!encryptionService.masterKey) {
-      console.warn('[SyncV2] Skipping sync - encryption not initialized');
+      if (__DEV__) console.warn('[SyncV2] Skipping sync - encryption not initialized');
       return;
     }
 
@@ -409,7 +410,7 @@ class SyncServiceV2 {
     const currentState = this.getCurrentState();
     
     // Debug log to see what data we're syncing
-    console.log('[SyncV2] Creating sync group with state:', {
+    if (__DEV__) console.log('[SyncV2] Creating sync group with state:', {
       userCount: Object.keys(currentState.users || {}).length,
       userIds: Object.keys(currentState.users || {}),
       hasLibrary: !!currentState.library,
@@ -472,7 +473,7 @@ class SyncServiceV2 {
         // 400 is a bad request - log it but throw error for debugging
         if (response.status === 400) {
           const errorText = await response.text();
-          console.error('[SyncV2] Pull got 400 error:', errorText, 'for syncId:', this.syncId);
+          if (__DEV__) console.error('[SyncV2] Pull got 400 error:', errorText, 'for syncId:', this.syncId);
           eventLogger.logSync('PULL_BAD_REQUEST', { 
             status: response.status,
             syncId: this.syncId,
@@ -566,18 +567,25 @@ class SyncServiceV2 {
   async applyState(state) {
     const { useUserStore, useSettingsStore, useLibraryStore } = require('../../stores');
     
-    // Update stores
-    useUserStore.getState().setUsers(state.users || {});
-    useUserStore.getState().setCurrentUser(state.currentUser);
-    useUserStore.getState().setCurrentDay(state.currentDay || 'today');
+    // Check if data needs migration from old format
+    const migratedState = await dataMigrator.checkAndMigrate(state, this.deviceId);
     
-    if (state.library) {
-      useLibraryStore.getState().setLibrary(state.library);
+    // Update stores with migrated data
+    useUserStore.getState().setUsers(migratedState.users || {});
+    useUserStore.getState().setCurrentUser(migratedState.currentUser);
+    useUserStore.getState().setCurrentDay(migratedState.currentDay || 'today');
+    
+    if (migratedState.library) {
+      useLibraryStore.getState().setLibrary(migratedState.library);
     }
     
-    if (state.globalSettings) {
-      useSettingsStore.getState().updateSettings(state.globalSettings);
+    if (migratedState.globalSettings) {
+      useSettingsStore.getState().updateSettings(migratedState.globalSettings);
     }
+    
+    // Force refresh on iOS after sync
+    // Note: iOS sometimes needs a forced re-render after sync
+    // This is handled in App.js after sync completes
     
     eventLogger.logSync('STATE_APPLIED', {
       userCount: Object.keys(state.users || {}).length
@@ -626,7 +634,7 @@ class SyncServiceV2 {
         try {
           await this.updateShare(share.token, userId);
         } catch (error) {
-          console.error(`Failed to update share: ${error.message}`);
+          if (__DEV__) console.error(`Failed to update share: ${error.message}`);
         }
       })
     );

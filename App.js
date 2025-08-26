@@ -131,6 +131,7 @@ import useSyncStore from './src/stores/useSyncStore';
 import encryptionService from './src/services/sync/encryptionService';
 import syncService from './src/services/sync';
 import eventLogger from './src/services/sync/eventLogger';
+import dataMigrator from './src/services/sync/dataMigrator';
 import './src/utils/stateDebugger'; // Add state change tracking
 
 // Import utilities
@@ -3375,16 +3376,19 @@ This will replace all your current data.`,
         // Allow state to settle before importing new data
         await new Promise(resolve => setTimeout(resolve, 50));
 
+        // Check if data needs migration from old format
+        const migratedData = await dataMigrator.checkAndMigrate(importData, 'import');
+        
         // Restore selected users
-        if (importData.users && Object.keys(importData.users).length > 0) {
+        if (migratedData.users && Object.keys(migratedData.users).length > 0) {
           console.log(
             'Restoring users from import:',
-            Object.keys(importData.users),
+            Object.keys(migratedData.users),
           );
 
           // Validate and clean user data before importing
           const validatedUsers = {};
-          Object.entries(importData.users).forEach(([userId, user]) => {
+          Object.entries(migratedData.users).forEach(([userId, user]) => {
             // Log what we're receiving
             console.log(
               `[IMPORT] Processing user ${userId}:`,
@@ -3413,6 +3417,14 @@ This will replace all your current data.`,
           );
           setUsers(validatedUsers);
 
+          // Force refresh on iOS after import/sync
+          if (Platform.OS === 'ios') {
+            setTimeout(() => {
+              // Force a re-render by updating a dummy state
+              setRefreshKey(prev => prev + 1);
+            }, 100);
+          }
+
           // Verify the users were set correctly
           setTimeout(() => {
             const storeState = useAppStore.getState();
@@ -3427,7 +3439,7 @@ This will replace all your current data.`,
           setCurrentUser(userIds[0]);
 
           const userData = validatedUsers[userIds[0]];
-          setCurrentDay(userData.currentDay || 'today');
+          setCurrentDay(migratedData.currentDay || userData.currentDay || 'today');
 
           const userActivities =
             userData.days?.[userData.currentDay || 'today']?.activities || [];
@@ -3454,28 +3466,28 @@ This will replace all your current data.`,
         }
 
         // Restore library (v4 format)
-        if (importData.library) {
+        if (migratedData.library) {
           // v4 format with library object
-          setLibrary(importData.library);
-          if (importData.library.categories) {
-            updateLibraryCategories(importData.library.categories);
+          setLibrary(migratedData.library);
+          if (migratedData.library.categories) {
+            updateLibraryCategories(migratedData.library.categories);
           }
         }
         // NO v3 SUPPORT - templates field should not exist
 
         // Restore library templates if present
-        if (importData.libraryTemplates) {
-          setLibraryTemplates(importData.libraryTemplates);
+        if (migratedData.libraryTemplates) {
+          setLibraryTemplates(migratedData.libraryTemplates);
         }
 
         // Restore global settings
-        if (importData.globalSettings) {
-          if (importData.globalSettings.currentTheme) {
-            const theme = importData.globalSettings.currentTheme;
+        if (migratedData.globalSettings) {
+          if (migratedData.globalSettings.currentTheme) {
+            const theme = migratedData.globalSettings.currentTheme;
             if (theme) setCurrentTheme(theme);
           }
-          if (importData.globalSettings.bannerPosition) {
-            setBannerPosition(importData.globalSettings.bannerPosition);
+          if (migratedData.globalSettings.bannerPosition) {
+            setBannerPosition(migratedData.globalSettings.bannerPosition);
           }
         }
       } else {

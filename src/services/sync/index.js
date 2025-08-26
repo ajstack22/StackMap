@@ -8,7 +8,9 @@ import crdtSyncService from './syncServiceV2';
 
 // Use CRDT sync as the default
 const syncService = crdtSyncService;
-console.log('[Sync] Using CRDT-based sync (conflict-free, 800 lines)');
+if (__DEV__) {
+  console.log('[Sync] Using CRDT-based sync (conflict-free, 800 lines)');
+}
 
 // Old implementations removed - using V2 CRDT exclusively
 // If rollback is needed, uncomment these lines:
