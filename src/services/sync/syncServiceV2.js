@@ -402,10 +402,7 @@ class SyncServiceV2 {
    */
   getCurrentState() {
     // Import stores dynamically to avoid circular dependencies
-    const { useAppStore } = require('../../stores');
-    const { useUserStore } = require('../../stores/useUserStore');
-    const { useSettingsStore } = require('../../stores/useSettingsStore');
-    const { useLibraryStore } = require('../../stores/useLibraryStore');
+    const { useAppStore, useUserStore, useSettingsStore, useLibraryStore } = require('../../stores');
     
     const userStore = useUserStore.getState();
     const settingsStore = useSettingsStore.getState();
@@ -432,9 +429,7 @@ class SyncServiceV2 {
    * Apply state to stores
    */
   async applyState(state) {
-    const { useUserStore } = require('../../stores/useUserStore');
-    const { useSettingsStore } = require('../../stores/useSettingsStore');
-    const { useLibraryStore } = require('../../stores/useLibraryStore');
+    const { useUserStore, useSettingsStore, useLibraryStore } = require('../../stores');
     
     // Update stores
     useUserStore.getState().setUsers(state.users || {});
