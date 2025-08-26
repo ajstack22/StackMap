@@ -210,9 +210,17 @@ const DataModal = ({
         setSyncEnabled(true);
         
         const id = await syncService.getSyncId();
-        const phrase = await syncService.getRecoveryPhrase();
+        let phrase = await syncService.getRecoveryPhrase();
+        
+        // If phrase is null and we have a syncId, try to reload after a short delay
+        // This can happen if the encryption service isn't fully initialized
+        if (!phrase && id) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          phrase = await syncService.getRecoveryPhrase();
+        }
+        
         setSyncId(id);
-        setSyncRecoveryPhrase(phrase);
+        setSyncRecoveryPhrase(phrase || '');
         
         // Optionally verify it exists on server in the background
         // but don't disable the UI if it fails (might just be creating)
@@ -1765,7 +1773,7 @@ const DataModal = ({
             {showRecoveryPhrase && (
               <View style={styles.recoveryPhraseContainer}>
                 <Text style={styles.recoveryPhrase} selectable>
-                  {syncRecoveryPhrase}
+                  {syncRecoveryPhrase || 'Loading sync key...'}
                 </Text>
               </View>
             )}
@@ -1789,7 +1797,13 @@ const DataModal = ({
                 variant="primary"
                 label="Copy Key"
                 icon="content-copy"
-                onPress={() => copyToClipboard(syncRecoveryPhrase, 'Sync key copied!')}
+                onPress={() => {
+                  if (!syncRecoveryPhrase) {
+                    showToast({ message: 'Sync key not available', type: 'error' });
+                    return;
+                  }
+                  copyToClipboard(syncRecoveryPhrase, 'Sync key copied!');
+                }}
                 style={styles.syncActionButton}
               />
               <ModalButton
@@ -1798,6 +1812,10 @@ const DataModal = ({
                 label="Copy URL"
                 icon="link"
                 onPress={() => {
+                  if (!syncRecoveryPhrase) {
+                    showToast({ message: 'Sync key not available', type: 'error' });
+                    return;
+                  }
                   let syncUrl;
                   if (Platform.OS === 'web' && typeof window !== 'undefined') {
                     const basePath = window.location.pathname.endsWith('/')
@@ -1821,6 +1839,9 @@ const DataModal = ({
             <View style={styles.qrCodeContainer}>
               <QRCode
                 value={(() => {
+                  if (!syncRecoveryPhrase) {
+                    return 'https://stackmap.app';
+                  }
                   if (Platform.OS === 'web' && typeof window !== 'undefined') {
                     const basePath = window.location.pathname.endsWith('/')
                       ? window.location.pathname

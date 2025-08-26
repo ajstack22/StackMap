@@ -581,10 +581,15 @@ class SyncServiceV2 {
   }
 
   // Get recovery phrase (if available)
-  getRecoveryPhrase() {
-    // For security, we don't store the recovery phrase
-    // User must save it when creating/joining
-    return null;
+  async getRecoveryPhrase() {
+    if (!this.syncId) return null;
+    try {
+      // Retrieve the stored recovery phrase for the current sync ID
+      return await encryptionService.getStoredRecoveryPhrase(this.syncId);
+    } catch (error) {
+      console.error('[SyncV2] Failed to get recovery phrase:', error);
+      return null;
+    }
   }
 
   // Get sync ID
