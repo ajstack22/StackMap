@@ -62,13 +62,38 @@ class SyncServiceV2 {
     this.encryptionService = encryptionService;
     
     // Initialize on construction
-    this.initialize();
+    this._initializeOnStartup();
   }
 
   /**
-   * Initialize service
+   * Initialize with recovery phrase - for backward compatibility with onboarding
+   * @param {string} recoveryPhrase - Optional recovery phrase to initialize with
    */
-  async initialize() {
+  async initialize(recoveryPhrase = null) {
+    // If recovery phrase is provided, this is being called from onboarding
+    // Use enable() functionality instead
+    if (recoveryPhrase) {
+      // Don't fully enable sync, just set up encryption for pulling data
+      // This matches the original sync service behavior for onboarding
+      const syncId = await this.generateSyncId(recoveryPhrase);
+      this.syncId = syncId;
+      this.deviceId = await encryptionService.getDeviceId();
+      
+      // Initialize encryption
+      const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+      await encryptionService.initialize(recoveryPhrase, syncId, fixedSalt);
+      
+      return { syncId, recoveryPhrase };
+    }
+    
+    // Otherwise, do the normal startup initialization
+    return this._initializeOnStartup();
+  }
+  
+  /**
+   * Initialize service on startup (original initialize method)
+   */
+  async _initializeOnStartup() {
     try {
       // Restore saved state
       const [enabled, syncId, version] = await Promise.all([

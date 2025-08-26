@@ -230,37 +230,48 @@ class CRDTMerger {
    */
   mergeActivityArrays(localActivities = [], remoteActivities = [], deviceId) {
     const activityMap = new Map();
+    const mergedActivities = [];
+    const processedIds = new Set();
 
-    // Add all remote activities first
+    // Create a map of remote activities for quick lookup
+    const remoteMap = new Map();
     remoteActivities.forEach(activity => {
       if (activity && activity.id) {
-        activityMap.set(activity.id, activity);
+        remoteMap.set(activity.id, activity);
       }
     });
 
-    // Merge with local activities
+    // Process activities in local order first (preserves user's arrangement)
     localActivities.forEach(localActivity => {
       if (!localActivity || !localActivity.id) return;
       
-      const remoteActivity = activityMap.get(localActivity.id);
+      const remoteActivity = remoteMap.get(localActivity.id);
       if (remoteActivity) {
         // Merge the two versions
         const merged = this.mergeActivities(localActivity, remoteActivity, deviceId);
         if (merged && !merged.deleted) {
-          activityMap.set(localActivity.id, merged);
-        } else if (merged && merged.deleted) {
-          // Remove if deleted
-          activityMap.delete(localActivity.id);
+          mergedActivities.push(merged);
+          processedIds.add(localActivity.id);
         }
       } else {
         // Only exists locally
         if (!localActivity.deleted) {
-          activityMap.set(localActivity.id, localActivity);
+          mergedActivities.push(localActivity);
+          processedIds.add(localActivity.id);
         }
       }
     });
 
-    return Array.from(activityMap.values());
+    // Add any remote activities that weren't in local (new activities from other devices)
+    remoteActivities.forEach(remoteActivity => {
+      if (remoteActivity && remoteActivity.id && !processedIds.has(remoteActivity.id)) {
+        if (!remoteActivity.deleted) {
+          mergedActivities.push(remoteActivity);
+        }
+      }
+    });
+
+    return mergedActivities;
   }
 
   /**
