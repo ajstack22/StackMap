@@ -80,12 +80,34 @@ class SyncServiceV2 {
         this.lastVersion = parseInt(version) || 0;
         this.deviceId = await encryptionService.getDeviceId();
         
-        eventLogger.logSync('INITIALIZED', { 
-          syncId: this.syncId,
-          version: this.lastVersion 
-        });
-        
-        this.startSyncTimer();
+        // Try to get the stored recovery phrase and initialize encryption
+        try {
+          const recoveryPhrase = await encryptionService.getStoredRecoveryPhrase(syncId);
+          if (recoveryPhrase) {
+            // Initialize encryption with the stored recovery phrase
+            const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+            await encryptionService.initialize(recoveryPhrase, syncId, fixedSalt);
+            
+            eventLogger.logSync('INITIALIZED', { 
+              syncId: this.syncId,
+              version: this.lastVersion,
+              encryptionReady: true
+            });
+            
+            this.startSyncTimer();
+          } else {
+            // Recovery phrase not found - sync is enabled but can't decrypt
+            // Don't start sync timer until encryption is properly initialized
+            eventLogger.logSync('INITIALIZED_NO_KEY', { 
+              syncId: this.syncId,
+              version: this.lastVersion 
+            });
+            console.warn('[SyncV2] Sync enabled but recovery phrase not found');
+          }
+        } catch (encryptError) {
+          console.error('[SyncV2] Failed to initialize encryption:', encryptError);
+          // Don't start sync if encryption fails
+        }
       }
     } catch (error) {
       console.error('[SyncV2] Initialization failed:', error);
@@ -238,6 +260,12 @@ class SyncServiceV2 {
    */
   async performSync(retryCount = 0) {
     if (!this.syncEnabled || !this.syncId || this.syncInProgress) {
+      return;
+    }
+
+    // Check if encryption is initialized
+    if (!encryptionService.isInitialized || !encryptionService.isInitialized()) {
+      console.warn('[SyncV2] Skipping sync - encryption not initialized');
       return;
     }
 
