@@ -676,6 +676,21 @@ class SyncServiceV2 {
     return this.syncId;
   }
 
+  // Sync method (backward compatibility with original service)
+  async sync() {
+    if (!this.syncEnabled) {
+      throw new Error('Sync not enabled');
+    }
+    
+    try {
+      await this.performSync();
+      return { success: true };
+    } catch (error) {
+      console.error('[SyncV2] Sync failed:', error);
+      throw error;
+    }
+  }
+
   // Manual sync trigger
   async manualSync() {
     if (!this.syncEnabled) {
