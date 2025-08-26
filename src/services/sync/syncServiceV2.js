@@ -606,6 +606,50 @@ class SyncServiceV2 {
     }
   }
 
+  // Alias for backward compatibility
+  async performManualSync() {
+    return this.manualSync();
+  }
+
+  // Verify if sync exists on server
+  async verifySyncExists() {
+    if (!this.syncId) return false;
+    
+    try {
+      const response = await this.pull();
+      return response !== null;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  // Delete all data from server
+  async deleteFromServer() {
+    if (!this.syncEnabled || !this.syncId) {
+      throw new Error('Sync not enabled');
+    }
+
+    try {
+      const response = await fetch(`${this.API_URL}/delete.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sync_id: this.syncId })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete from server');
+      }
+
+      // Disable sync after deletion
+      await this.disable();
+      
+      return { success: true };
+    } catch (error) {
+      console.error('[SyncV2] Delete from server failed:', error);
+      throw error;
+    }
+  }
+
   /**
    * Sharing functionality
    */

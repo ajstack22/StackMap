@@ -1112,13 +1112,7 @@ const DataModal = ({
 
   // Handle copy share URL
   const handleCopyShareUrl = () => {
-    if (Platform.OS === 'web') {
-      navigator.clipboard.writeText(shareUrl);
-    } else {
-      const Clipboard = require('@react-native-clipboard/clipboard').default;
-      Clipboard.setString(shareUrl);
-    }
-    showToast({ message: 'Link copied to clipboard!' });
+    copyToClipboard(shareUrl, 'Link copied to clipboard!');
   };
 
   // Handle delete share
@@ -2230,30 +2224,23 @@ const DataModal = ({
               <Text style={styles.shareInfoValue} selectable numberOfLines={1}>
                 {shareToken}
               </Text>
-              <View style={styles.keyActionButtons}>
-                <TouchableOpacity
-                  style={styles.keyActionButton}
-                  onPress={() => {
-                    if (Platform.OS === 'web') {
-                      navigator.clipboard.writeText(shareToken);
-                    } else {
-                      const Clipboard =
-                        require('@react-native-clipboard/clipboard').default;
-                      Clipboard.setString(shareToken);
-                    }
-                    showToast({ message: 'Share key copied!' });
-                  }}
-                >
-                  <Icon name="content-copy" size={18} color={theme.primary} />
-                  <Text style={styles.keyActionButtonText}>Copy Key</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.keyActionButton}
+              <View style={styles.keyActionButtonRow}>
+                <ModalButton
+                  theme={theme}
+                  variant="secondary"
+                  label="Copy Key"
+                  icon="content-copy"
+                  onPress={() => copyToClipboard(shareToken, 'Share key copied!')}
+                  compact
+                />
+                <ModalButton
+                  theme={theme}
+                  variant="secondary"
+                  label="Copy URL"
+                  icon="link"
                   onPress={handleCopyShareUrl}
-                >
-                  <Icon name="link" size={18} color={theme.primary} />
-                  <Text style={styles.keyActionButtonText}>Copy URL</Text>
-                </TouchableOpacity>
+                  compact
+                />
               </View>
             </View>
 
