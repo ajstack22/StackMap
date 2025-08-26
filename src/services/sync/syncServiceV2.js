@@ -335,18 +335,41 @@ class SyncServiceV2 {
   async pull() {
     if (!this.syncId) return null;
     
-    const response = await fetch(`${getApiBaseUrl()}/pull.php`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sync_id: this.syncId })
-    });
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/pull.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sync_id: this.syncId })
+      });
 
-    if (!response.ok) {
-      if (response.status === 404) return null;
-      throw new Error(`Pull failed: ${response.status}`);
+      if (!response.ok) {
+        // 404 means sync doesn't exist yet (expected for new syncs)
+        // 400 might mean invalid sync_id format or server issue
+        // Both should return null during enable() to create new sync
+        if (response.status === 404 || response.status === 400) {
+          eventLogger.logSync('PULL_NOT_FOUND', { 
+            status: response.status,
+            syncId: this.syncId 
+          });
+          return null;
+        }
+        throw new Error(`Pull failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      eventLogger.logSync('PULL_SUCCESS', { 
+        version: data.version,
+        hasData: !!data.encrypted_blob 
+      });
+      return data;
+    } catch (error) {
+      // Network errors should also return null during enable
+      if (error.message && error.message.includes('fetch')) {
+        eventLogger.logNetwork('PULL_NETWORK_ERROR', { error: error.message });
+        return null;
+      }
+      throw error;
     }
-
-    return await response.json();
   }
 
   /**
