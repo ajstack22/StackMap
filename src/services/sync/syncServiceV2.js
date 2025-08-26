@@ -285,9 +285,14 @@ class SyncServiceV2 {
    * Request sync (debounced)
    */
   requestSync() {
-    if (!this.syncEnabled) return;
+    if (!this.syncEnabled) {
+      // Return resolved promise for compatibility with callers expecting a Promise
+      return Promise.resolve();
+    }
     this.pendingSync = true;
     eventLogger.logSync('REQUESTED', {});
+    // Return resolved promise since sync happens asynchronously via timer
+    return Promise.resolve();
   }
 
   /**
