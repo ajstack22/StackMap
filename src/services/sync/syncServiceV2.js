@@ -663,6 +663,43 @@ class SyncServiceV2 {
     };
   }
 
+  // Initialize sync for data import (doesn't pull/overwrite existing data)
+  async initializeForImport(recoveryPhrase) {
+    try {
+      console.log('[SyncV2] Initialize for import - skipping data pull');
+      
+      // Generate sync ID from recovery phrase
+      const syncId = await this.generateSyncId(recoveryPhrase);
+      this.syncId = syncId;
+      this.deviceId = await encryptionService.getDeviceId();
+      
+      // Initialize encryption with fixed salt
+      const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+      await encryptionService.initialize(recoveryPhrase, syncId, fixedSalt);
+      
+      // Enable sync and store state
+      this.syncEnabled = true;
+      await AsyncStorage.multiSet([
+        ['@sync_enabled', 'true'],
+        ['@sync_id', syncId],
+        ['@sync_version', '0'] // Start at 0 since we haven't synced yet
+      ]);
+      
+      // Store recovery phrase for future use
+      await encryptionService.storeRecoveryPhrase(recoveryPhrase, syncId);
+      
+      // Don't pull data, don't restore data - the data has already been imported
+      // Start sync timer to begin syncing the imported data
+      this.startSyncTimer();
+      
+      console.log('[SyncV2] Sync enabled for imported data');
+      return { syncId, recoveryPhrase };
+    } catch (error) {
+      console.error('[SyncV2] Initialize for import failed:', error);
+      throw error;
+    }
+  }
+
   // Get recovery phrase (if available)
   async getRecoveryPhrase() {
     if (!this.syncId) return null;
@@ -1089,6 +1126,21 @@ class SyncServiceV2 {
   // Get pending conflicts (always empty for CRDT)
   getPendingConflicts() {
     return [];
+  }
+
+  // Retry failed sync operations (called by SyncStatusIndicator)
+  async retryFailed() {
+    console.log('[SyncV2] Retry failed called');
+    if (this.syncEnabled) {
+      try {
+        const result = await this.performSync();
+        return { success: true, message: 'Sync completed' };
+      } catch (error) {
+        console.error('[SyncV2] Retry failed error:', error);
+        return { success: false, message: error.message };
+      }
+    }
+    return { success: false, message: 'Sync not enabled' };
   }
 }
 
