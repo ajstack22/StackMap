@@ -176,8 +176,11 @@ class SyncServiceV2 {
       // Store recovery phrase for future use
       await encryptionService.storeRecoveryPhrase(recoveryPhrase, this.syncId);
       
-      // Return recovery phrase so user can save it
-      return recoveryPhrase;
+      // Return object with sync info (matching original sync service)
+      return {
+        syncId: this.syncId,
+        recoveryPhrase: recoveryPhrase
+      };
     } catch (error) {
       console.error('[SyncV2] Enable failed:', error);
       throw error;
@@ -554,7 +557,11 @@ class SyncServiceV2 {
 
   // Join sync group with recovery phrase
   async join(recoveryPhrase) {
-    return this.enable(recoveryPhrase);
+    const result = await this.enable(recoveryPhrase);
+    return {
+      ...result,
+      isNewSync: false
+    };
   }
 
   // Create new sync group
@@ -565,8 +572,12 @@ class SyncServiceV2 {
     // Enable will handle creating the sync group
     await this.enable(recoveryPhrase);
     
-    // Return the recovery phrase for the user to save
-    return recoveryPhrase;
+    // Return object with sync info like the original sync service
+    return {
+      syncId: this.syncId,
+      recoveryPhrase: recoveryPhrase,
+      isNewSync: true
+    };
   }
 
   // Get recovery phrase (if available)
@@ -574,6 +585,11 @@ class SyncServiceV2 {
     // For security, we don't store the recovery phrase
     // User must save it when creating/joining
     return null;
+  }
+
+  // Get sync ID
+  getSyncId() {
+    return this.syncId;
   }
 
   // Manual sync trigger
