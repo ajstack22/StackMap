@@ -7,15 +7,21 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 /**
  * Reorder an array by moving an item from one index to another
- * Also updates modifiedAt timestamp for sync conflict resolution
+ * Updates all items with an orderChangedAt timestamp for proper sync
  */
 export const reorderArray = (array, fromIndex, toIndex) => {
   const result = [...array];
   const [removed] = result.splice(fromIndex, 1);
-  // Add timestamp to the moved item for sync conflict resolution
-  const movedItem = { ...removed, modifiedAt: Date.now() };
-  result.splice(toIndex, 0, movedItem);
-  return result;
+  result.splice(toIndex, 0, removed);
+  
+  // Mark the entire array as having its order changed
+  // This ensures the sort order syncs properly
+  const orderTimestamp = Date.now();
+  return result.map((item, index) => ({
+    ...item,
+    orderChangedAt: orderTimestamp,
+    sortIndex: index
+  }));
 };
 
 /**

@@ -281,44 +281,72 @@ class CRDTMerger {
       }
     });
     
-    // Determine which order to use based on most recent modification
-    // If remote has more recent changes overall, use remote order
-    const localMaxTime = Math.max(...localActivities.map(a => a?.modifiedAt || 0), 0);
-    const remoteMaxTime = Math.max(...remoteActivities.map(a => a?.modifiedAt || 0), 0);
-    const useRemoteOrder = remoteMaxTime > localMaxTime;
+    // Check if either side has explicit reorder timestamps
+    const localOrderTime = Math.max(...localActivities.map(a => a?.orderChangedAt || 0), 0);
+    const remoteOrderTime = Math.max(...remoteActivities.map(a => a?.orderChangedAt || 0), 0);
     
-    // Process activities in the determined order
-    const primaryActivities = useRemoteOrder ? remoteActivities : localActivities;
-    const primaryMap = useRemoteOrder ? localMap : remoteMap;
+    // Use the order with the most recent reorder operation
+    const useRemoteOrder = remoteOrderTime > localOrderTime;
     
-    primaryActivities.forEach((primaryActivity, index) => {
-      if (!primaryActivity || !primaryActivity.id) return;
+    if (useRemoteOrder && remoteActivities.some(a => a?.sortIndex !== undefined)) {
+      // Remote has newer order - sort by sortIndex if available
+      const sortedRemote = [...remoteActivities].sort((a, b) => 
+        (a?.sortIndex ?? Number.MAX_VALUE) - (b?.sortIndex ?? Number.MAX_VALUE)
+      );
       
-      const otherActivity = primaryMap.get(primaryActivity.id);
-      if (otherActivity) {
-        // Merge the two versions - always pass local first, remote second
-        const localAct = useRemoteOrder ? otherActivity : primaryActivity;
-        const remoteAct = useRemoteOrder ? primaryActivity : otherActivity;
-        const merged = this.mergeActivities(localAct, remoteAct, deviceId);
-        if (merged && !merged.deleted) {
-          mergedActivities.push(merged);
-          processedIds.add(primaryActivity.id);
+      sortedRemote.forEach(remoteActivity => {
+        if (!remoteActivity || !remoteActivity.id) return;
+        
+        const localActivity = localMap.get(remoteActivity.id);
+        if (localActivity) {
+          // Merge field values using CRDT, but keep remote position
+          const merged = this.mergeActivities(localActivity, remoteActivity, deviceId);
+          if (merged && !merged.deleted) {
+            mergedActivities.push(merged);
+            processedIds.add(remoteActivity.id);
+          }
+        } else {
+          // Only exists remotely
+          if (!remoteActivity.deleted) {
+            mergedActivities.push(remoteActivity);
+            processedIds.add(remoteActivity.id);
+          }
         }
-      } else {
-        // Only exists in primary
-        if (!primaryActivity.deleted) {
-          mergedActivities.push(primaryActivity);
-          processedIds.add(primaryActivity.id);
+      });
+    } else {
+      // Use local order or remote order as-is if no sortIndex
+      const primaryActivities = useRemoteOrder ? remoteActivities : localActivities;
+      const otherMap = useRemoteOrder ? localMap : remoteMap;
+      
+      primaryActivities.forEach(primaryActivity => {
+        if (!primaryActivity || !primaryActivity.id) return;
+        
+        const otherActivity = otherMap.get(primaryActivity.id);
+        if (otherActivity) {
+          // Merge the two versions
+          const localAct = useRemoteOrder ? otherActivity : primaryActivity;
+          const remoteAct = useRemoteOrder ? primaryActivity : otherActivity;
+          const merged = this.mergeActivities(localAct, remoteAct, deviceId);
+          if (merged && !merged.deleted) {
+            mergedActivities.push(merged);
+            processedIds.add(primaryActivity.id);
+          }
+        } else {
+          // Only exists in primary
+          if (!primaryActivity.deleted) {
+            mergedActivities.push(primaryActivity);
+            processedIds.add(primaryActivity.id);
+          }
         }
-      }
-    });
-
-    // Add any activities that weren't in primary (new activities from other source)
-    const secondaryActivities = useRemoteOrder ? localActivities : remoteActivities;
-    secondaryActivities.forEach(secondaryActivity => {
-      if (secondaryActivity && secondaryActivity.id && !processedIds.has(secondaryActivity.id)) {
-        if (!secondaryActivity.deleted) {
-          mergedActivities.push(secondaryActivity);
+      });
+    }
+    
+    // Add any activities that weren't processed (new items from other source)
+    const processedSource = useRemoteOrder ? localActivities : remoteActivities;
+    processedSource.forEach(activity => {
+      if (activity && activity.id && !processedIds.has(activity.id)) {
+        if (!activity.deleted) {
+          mergedActivities.push(activity);
         }
       }
     });
