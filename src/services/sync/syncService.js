@@ -24,6 +24,7 @@ import {
   repairSyncedData,
   validateIncrementalSync,
 } from './dataValidator';
+import eventLogger from './eventLogger';
 // Types imported but not all used directly - kept for documentation
 /**
  * Get API base URL based on environment
@@ -740,12 +741,14 @@ class SyncService {
   async sync() {
     // Check if sync is already in progress
     if (this.syncInProgress) {
+      eventLogger.logSync('SKIP_IN_PROGRESS', { reason: 'sync already running' });
       return new Promise((resolve, reject) => {
         this.syncQueue.push({ resolve, reject });
       });
     }
     // Set sync lock
     this.syncInProgress = true;
+    eventLogger.logSync('START', { timestamp: Date.now() });
     try {
       // Wait for initialization if needed
       if (!this.initialized) {
@@ -776,7 +779,11 @@ class SyncService {
       // This prevents immediately overwriting our own changes
       const timeSinceLastPush = this.lastPushTime ? Date.now() - this.lastPushTime : Infinity;
       if (timeSinceLastPush < 5000) {
-
+        eventLogger.logTiming('SKIP_RECENT_PUSH', { 
+          timeSinceLastPush, 
+          threshold: 5000,
+          lastVersion: this.lastSyncVersion 
+        });
         // Don't pull or push, just return success with current version
         // This prevents the rapid pull-push cycle that causes overwrites
         this.updateSyncStatus('success');
@@ -789,6 +796,7 @@ class SyncService {
       }
       
       // Pull latest data
+      eventLogger.logSync('PULL_START', { currentVersion: this.lastSyncVersion });
       const remoteData = await this.pullData();
       // If pullData returns null and we have a lastSyncVersion > 0, it means the sync was deleted on server
       if (remoteData === null && this.lastSyncVersion > 0) {
@@ -799,6 +807,11 @@ class SyncService {
         );
       }
       if (remoteData && remoteData.version > this.lastSyncVersion) {
+        eventLogger.logSync('REMOTE_NEWER', { 
+          remoteVersion: remoteData.version,
+          localVersion: this.lastSyncVersion,
+          versionDiff: remoteData.version - this.lastSyncVersion
+        });
         // Decrypt remote data
         let decryptedData = encryptionService.decryptData(
           remoteData.encrypted_blob,
@@ -868,16 +881,29 @@ class SyncService {
         // Use remote data directly - no normalization needed (v3 support removed)
         const normalizedRemoteData = decryptedData;
         // Detect conflicts
+        eventLogger.logConflict('DETECT_START', { 
+          localUserCount: Object.keys(localState.users || {}).length,
+          remoteUserCount: Object.keys(normalizedRemoteData.users || {}).length 
+        });
         const conflicts = conflictResolver.detectConflicts(
           localState,
           normalizedRemoteData,
           this.lastSyncSuccess || 0,
         );
+        eventLogger.logConflict('DETECT_COMPLETE', { 
+          conflictCount: conflicts.length,
+          conflictTypes: conflicts.length > 0 ? conflicts.map(c => c.type || 'unknown').join(',') : 'none' 
+        });
         if (conflicts.length > 0) {
           try {
             // Auto-resolve all conflicts (no user intervention)
             // If we pushed recently, give more weight to local changes
             const preferLocal = this.lastPushTime && (Date.now() - this.lastPushTime < 30000);
+            eventLogger.logConflict('RESOLVE_START', { 
+              preferLocal,
+              timeSinceLastPush: this.lastPushTime ? Date.now() - this.lastPushTime : null,
+              strategy: 'last-write-wins'
+            });
             
             const resolutionResult =
               await conflictResolver.resolveConflicts(conflicts, {
@@ -942,7 +968,12 @@ class SyncService {
         this.lastSyncVersion = remoteData.version;
       }
       // Push our current state
+      eventLogger.logSync('PUSH_START', { version: this.lastSyncVersion });
       const pushResult = await this.pushData();
+      eventLogger.logSync('PUSH_SUCCESS', { 
+        newVersion: pushResult.version,
+        versionIncrement: pushResult.version - this.lastSyncVersion 
+      });
       
       // IMPORTANT: Update our local version to match what we just pushed
       // This prevents immediately pulling and overwriting our own changes

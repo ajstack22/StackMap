@@ -32,6 +32,32 @@ This comprehensive guide covers troubleshooting for StackMap's complex sync arch
 
 ---
 
+## ⚠️ Critical Issue - August 25, 2025
+
+### Completion State Reversion (~30 seconds)
+**Severity**: CRITICAL - Data loss
+**Version**: 2025.08.25.x
+
+**Symptoms**:
+- Mark multiple cards complete
+- After ~30 seconds, all revert to incomplete
+- Occurs even on single device (no other devices syncing)
+- Matches the 30-second periodic sync interval
+
+**Suspected Causes**:
+1. Periodic sync pulling stale data from server
+2. Timestamp comparison logic failing
+3. Conflict resolution preferring older state
+4. Race condition between push and periodic pull
+
+**Temporary Workaround**:
+- Disable periodic sync (not recommended for multi-device)
+- Wait > 10 seconds between bulk completions
+
+**Investigation Needed**: See `/docs/sync/SYNC_INVESTIGATION_PROMPT_PACK.md`
+
+---
+
 ## 🎯 Common Issues & Solutions
 
 ### Issue 1: Activities Not Syncing Between Devices

@@ -130,6 +130,7 @@ import useSyncStore from './src/stores/useSyncStore';
 // Import services
 import encryptionService from './src/services/sync/encryptionService';
 import syncService from './src/services/sync';
+import eventLogger from './src/services/sync/eventLogger';
 import './src/utils/stateDebugger'; // Add state change tracking
 
 // Import utilities
@@ -1913,6 +1914,13 @@ const App = () => {
 
     const newActivities = currentState.map(activity => {
       if (activity.id === id) {
+        // Log the toggle operation without user content
+        eventLogger.logActivity(!activity.completed ? 'COMPLETE' : 'UNCOMPLETE', {
+          activityId: id,
+          wasCompleted: !!activity.completed,
+          hadCompletedAt: !!activity.completedAt,
+          hadUncompletedAt: !!activity.uncompletedAt
+        });
         // console.log(`[TOGGLE] Activity ${id} - Previous: completed=${activity.completed}, completedAt=${activity.completedAt}, uncompletedAt=${activity.uncompletedAt}`);
 
         if (!activity.completed) {
