@@ -58,6 +58,9 @@ class SyncServiceV2 {
     // Listeners for UI updates
     this.statusListeners = new Set();
     
+    // Expose encryptionService for backward compatibility with onboarding
+    this.encryptionService = encryptionService;
+    
     // Initialize on construction
     this.initialize();
   }
@@ -415,6 +418,13 @@ class SyncServiceV2 {
       }
       throw error;
     }
+  }
+
+  /**
+   * Pull data - alias for backward compatibility with onboarding
+   */
+  async pullData() {
+    return this.pull();
   }
 
   /**
