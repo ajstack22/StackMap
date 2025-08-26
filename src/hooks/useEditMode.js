@@ -5,6 +5,7 @@ import {
   moveItemDown,
   batchDelete,
   triggerHaptic,
+  configureReorderAnimation,
 } from '../components/EditModeList/utils';
 
 export const useEditMode = (initialActivities, onUpdate) => {
@@ -33,50 +34,55 @@ export const useEditMode = (initialActivities, onUpdate) => {
       if (index <= 0) return;
 
       triggerHaptic('selection');
-      const newActivities = moveItemUp(initialActivities, index);
+      configureReorderAnimation(); // Smooth animation
+      const newActivities = moveItemUp(activitiesRef.current, index);
       updateActivities(newActivities);
     },
-    [initialActivities, updateActivities],
+    [updateActivities],
   );
 
   const handleMoveDown = useCallback(
     index => {
-      if (index >= initialActivities.length - 1) return;
+      if (index >= activitiesRef.current.length - 1) return;
 
       triggerHaptic('selection');
-      const newActivities = moveItemDown(initialActivities, index);
+      configureReorderAnimation(); // Smooth animation
+      const newActivities = moveItemDown(activitiesRef.current, index);
       updateActivities(newActivities);
     },
-    [initialActivities, updateActivities],
+    [updateActivities],
   );
 
   const handleReorder = useCallback(
     (fromIndex, toIndex) => {
       triggerHaptic('selection');
-      const newActivities = reorderArray(initialActivities, fromIndex, toIndex);
+      configureReorderAnimation(); // Smooth animation
+      const newActivities = reorderArray(activitiesRef.current, fromIndex, toIndex);
       updateActivities(newActivities);
     },
-    [initialActivities, updateActivities],
+    [updateActivities],
   );
 
   const handleDelete = useCallback(
     itemOrId => {
       triggerHaptic('warning');
+      configureReorderAnimation(); // Smooth animation for list adjustment
       const id = typeof itemOrId === 'object' ? itemOrId.id : itemOrId;
-      const newActivities = initialActivities.map(a =>
+      const newActivities = activitiesRef.current.map(a =>
         a.id === id ? { ...a, deleted: true, deletedAt: Date.now() } : a,
       );
       updateActivities(newActivities);
     },
-    [initialActivities, updateActivities],
+    [updateActivities],
   );
 
   const handleBatchDelete = useCallback(() => {
     if (selectedItems.size === 0) return;
 
     triggerHaptic('warning');
+    configureReorderAnimation(); // Smooth animation for batch delete
     const newActivities = batchDelete(
-      initialActivities,
+      activitiesRef.current,
       Array.from(selectedItems),
     );
     updateActivities(newActivities);

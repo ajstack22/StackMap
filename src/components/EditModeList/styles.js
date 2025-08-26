@@ -31,6 +31,9 @@ const baseStyles = {
       },
       web: {
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        // Smooth transitions for web
+        transition: 'all 0.25s ease-in-out',
+        willChange: 'transform',
       },
     }),
   },

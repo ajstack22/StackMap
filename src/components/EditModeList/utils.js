@@ -1,4 +1,9 @@
-import { Platform, Vibration } from 'react-native';
+import { Platform, Vibration, LayoutAnimation, UIManager } from 'react-native';
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 /**
  * Reorder an array by moving an item from one index to another
@@ -60,4 +65,42 @@ export const triggerHaptic = (type = 'selection') => {
   // To enable:
   // 1. Add <uses-permission android:name="android.permission.VIBRATE" /> to AndroidManifest.xml
   // 2. Uncomment the code below
+};
+
+/**
+ * Configure smooth animations for list reordering
+ * Uses a spring animation for natural movement
+ */
+export const configureReorderAnimation = () => {
+  // Custom animation configuration for smooth reordering
+  const customAnimation = {
+    duration: 250, // Slightly longer than 200ms for smoother feel
+    create: {
+      type: LayoutAnimation.Types.easeInEaseOut,
+      property: LayoutAnimation.Properties.opacity,
+      duration: 200,
+    },
+    update: {
+      type: LayoutAnimation.Types.spring,
+      springDamping: 0.8, // Gentle spring for natural movement
+      duration: 250,
+    },
+    delete: {
+      type: LayoutAnimation.Types.easeInEaseOut,
+      property: LayoutAnimation.Properties.opacity,
+      duration: 200,
+    },
+  };
+  
+  // Use platform-appropriate animation
+  if (Platform.OS === 'ios') {
+    // iOS: Use preset for best performance
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  } else if (Platform.OS === 'android') {
+    // Android: Use custom config if enabled
+    LayoutAnimation.configureNext(customAnimation);
+  } else {
+    // Web: LayoutAnimation not supported, will use CSS transitions
+    // See styles.js for web-specific transition styles
+  }
 };

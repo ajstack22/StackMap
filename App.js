@@ -4574,28 +4574,17 @@ Users: ${userNames} (${userCount} total)
                       : 8,
                 }}
                 onUpdate={newActivities => {
-                  // Get fresh data from store to avoid stale data issues
+                  // When reordering, the newActivities array IS the source of truth
+                  // Don't try to merge with "fresh" data as that causes order to be lost
                   const freshUsers = useAppStore.getState().users;
-                  const freshActivities = freshUsers[currentUser]?.days?.[currentDay]?.activities || [];
-                  
-                  // Create a map of fresh activities for quick lookup
-                  const freshMap = new Map(freshActivities.map(a => [a.id, a]));
-                  
-                  // Merge reordered array with fresh data to preserve recent edits
-                  const mergedActivities = newActivities.map(a => {
-                    const freshActivity = freshMap.get(a.id);
-                    // If we have fresher data (higher modifiedAt), use it
-                    if (freshActivity && (freshActivity.modifiedAt || 0) > (a.modifiedAt || 0)) {
-                      return freshActivity;
-                    }
-                    return a;
-                  });
                   
                   // Filter out deleted items before saving
-                  const activeActivities = mergedActivities.filter(
+                  const activeActivities = newActivities.filter(
                     a => !a.deleted,
                   );
-                  updateUserActivities(currentUser, currentDay, mergedActivities);
+                  
+                  updateUserActivities(currentUser, currentDay, activeActivities);
+                  
                   // Update the users state to persist the change
                   if (currentUser && freshUsers[currentUser]) {
                     const updatedUsers = { ...freshUsers };
