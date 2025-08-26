@@ -49,6 +49,15 @@ class SyncServiceV2 {
     this.SYNC_INTERVAL = 5000; // 5 seconds
     this.RETRY_DELAYS = [1000, 2000, 4000, 8000]; // Exponential backoff
     
+    // Status tracking
+    this.syncStatus = 'idle';
+    this.syncError = null;
+    this.lastSyncAttempt = null;
+    this.lastSyncSuccess = null;
+    
+    // Listeners for UI updates
+    this.statusListeners = new Set();
+    
     // Initialize on construction
     this.initialize();
   }
@@ -231,8 +240,10 @@ class SyncServiceV2 {
 
     this.syncInProgress = true;
     this.pendingSync = false;
+    this.lastSyncAttempt = Date.now();
     
     try {
+      this.updateSyncStatus('syncing');
       eventLogger.logSync('START', { version: this.lastVersion });
       
       // Get current local state
@@ -269,6 +280,8 @@ class SyncServiceV2 {
       
       await AsyncStorage.setItem('@sync_version_v2', newVersion.toString());
       
+      this.lastSyncSuccess = Date.now();
+      this.updateSyncStatus('success');
       eventLogger.logSync('SUCCESS', { newVersion });
       
       this.syncInProgress = false;
@@ -276,6 +289,7 @@ class SyncServiceV2 {
       
     } catch (error) {
       this.syncInProgress = false;
+      this.updateSyncStatus('error', error.message);
       
       // Retry with exponential backoff
       if (retryCount < this.RETRY_DELAYS.length) {
@@ -861,6 +875,72 @@ class SyncServiceV2 {
     
     this._lastShareKeyBytes = bytes;
     return token;
+  }
+
+  /**
+   * Status listener methods for UI updates
+   */
+
+  // Update sync status and notify listeners
+  updateSyncStatus(status, error = null) {
+    this.syncStatus = status;
+    this.syncError = error;
+    
+    const statusData = {
+      status,
+      error,
+      lastAttempt: this.lastSyncAttempt,
+      lastSuccess: this.lastSyncSuccess,
+      isOnline: true, // Simplified - assume online
+      queueStatus: { pending: 0, failed: 0 }, // Simplified queue status
+      hasConflicts: false, // CRDT has no conflicts
+      conflictCount: 0
+    };
+    
+    // Notify all listeners
+    this.statusListeners.forEach(callback => {
+      try {
+        callback(statusData);
+      } catch (err) {
+        console.error('Status listener error:', err);
+      }
+    });
+  }
+
+  // Add a sync status listener
+  addStatusListener(callback) {
+    this.statusListeners.add(callback);
+    
+    // Immediately send current status
+    callback({
+      status: this.syncStatus,
+      error: this.syncError,
+      lastAttempt: this.lastSyncAttempt,
+      lastSuccess: this.lastSyncSuccess,
+      isOnline: true,
+      queueStatus: { pending: 0, failed: 0 },
+      hasConflicts: false,
+      conflictCount: 0
+    });
+    
+    // Return unsubscribe function
+    return () => this.statusListeners.delete(callback);
+  }
+
+  // Remove a status listener
+  removeStatusListener(callback) {
+    this.statusListeners.delete(callback);
+  }
+
+  // Add conflict listener (no-op for CRDT - no conflicts possible)
+  addConflictListener(callback) {
+    // CRDT has no conflicts, so just return a no-op unsubscribe
+    return () => {};
+  }
+
+  // Get pending conflicts (always empty for CRDT)
+  getPendingConflicts() {
+    return [];
   }
 }
 
