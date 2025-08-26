@@ -178,7 +178,14 @@ class SyncServiceV2 {
       this.deviceId = await encryptionService.getDeviceId();
       
       // Check if sync group exists
-      const existingData = await this.pull();
+      let existingData = null;
+      try {
+        existingData = await this.pull();
+      } catch (pullError) {
+        // Log the error but continue - might be a new sync or temporary issue
+        console.warn('[SyncV2] Pull during enable failed:', pullError.message);
+        existingData = null;
+      }
       
       if (!existingData) {
         // New sync group - create it
@@ -408,23 +415,41 @@ class SyncServiceV2 {
   async pull() {
     if (!this.syncId) return null;
     
+    // Ensure we have a device ID
+    if (!this.deviceId) {
+      this.deviceId = await encryptionService.getDeviceId();
+    }
+    
     try {
       const response = await fetch(`${getApiBaseUrl()}/pull.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sync_id: this.syncId })
+        body: JSON.stringify({ 
+          sync_id: this.syncId,
+          device_id: this.deviceId
+        })
       });
 
       if (!response.ok) {
         // 404 means sync doesn't exist yet (expected for new syncs)
-        // 400 might mean invalid sync_id format or server issue
-        // Both should return null during enable() to create new sync
-        if (response.status === 404 || response.status === 400) {
+        if (response.status === 404) {
           eventLogger.logSync('PULL_NOT_FOUND', { 
             status: response.status,
             syncId: this.syncId 
           });
           return null;
+        }
+        // 400 is a bad request - log it but throw error for debugging
+        if (response.status === 400) {
+          const errorText = await response.text();
+          console.error('[SyncV2] Pull got 400 error:', errorText, 'for syncId:', this.syncId);
+          eventLogger.logSync('PULL_BAD_REQUEST', { 
+            status: response.status,
+            syncId: this.syncId,
+            error: errorText
+          });
+          // Don't return null for 400 - let caller handle it
+          throw new Error(`Pull failed with 400: ${errorText || 'Bad Request'}`);
         }
         throw new Error(`Pull failed: ${response.status}`);
       }
