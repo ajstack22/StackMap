@@ -239,8 +239,11 @@ class SyncServiceV2 {
         recoveryPhrase = encryptionService.generateRecoveryPhrase();
       }
       
-      // Generate sync ID from recovery phrase
-      this.syncId = await this.generateSyncId(recoveryPhrase);
+      // Only generate sync ID if we don't already have one
+      // This allows create() to pre-set the sync ID to ensure consistency
+      if (!this.syncId) {
+        this.syncId = await this.generateSyncId(recoveryPhrase);
+      }
       this.deviceId = await encryptionService.getDeviceId();
       
       // Check if sync group exists
@@ -802,14 +805,20 @@ class SyncServiceV2 {
     
     // Generate new recovery phrase and create new sync
     const recoveryPhrase = encryptionService.generateRecoveryPhrase();
-    console.log('[SyncV2] Creating new sync with generated recovery phrase');
     
-    // Enable will handle creating the sync group
+    // Generate sync ID HERE, ONCE - this is the source of truth
+    const syncId = await this.generateSyncId(recoveryPhrase);
+    
+    // Set it on the service so enable() uses THIS sync ID
+    this.syncId = syncId;
+    this.syncEnabled = false; // Not fully enabled yet, but we have the ID
+    
+    // Enable will use the existing this.syncId instead of generating a new one
     await this.enable(recoveryPhrase);
     
-    // Return object with sync info
+    // Return the values we generated - they MUST match because we generated them together
     return {
-      syncId: this.syncId,
+      syncId: syncId,
       recoveryPhrase: recoveryPhrase,
       isNewSync: true
     };
