@@ -160,6 +160,7 @@ const getAndroidModalBottomHeight = insets => {
 
 
 const App = () => {
+  console.log('BUILD CHECK v21 - Protection code included');
   // Reduced startup logging - only show once
   if (Platform.OS === 'web' && !window.__stackMapStartupLogged) {
 
