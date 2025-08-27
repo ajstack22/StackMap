@@ -287,10 +287,11 @@ class SyncServiceV2 {
           this._justJoinedSync = true;
           setTimeout(() => {
             this._justJoinedSync = false;
-          }, 5000); // Clear flag after 5 seconds
+          }, 10000); // Clear flag after 10 seconds (increased from 5)
         }
         
         this.lastVersion = existingData.version;
+        console.log('[SyncV2] Joined existing sync with version:', this.lastVersion);
       }
 
       // Save state - use original keys for compatibility
@@ -493,6 +494,12 @@ class SyncServiceV2 {
       // Pull remote data
       const remoteData = await this.pull();
       
+      console.log('[SyncV2] Sync comparison:', {
+        localVersion: this.lastVersion,
+        remoteVersion: remoteData?.version,
+        willMerge: remoteData && remoteData.version > this.lastVersion
+      });
+      
       let stateToSync;
       
       if (remoteData && remoteData.version > this.lastVersion) {
@@ -505,11 +512,31 @@ class SyncServiceV2 {
         const decryptedRemote = encryptionService.decryptData(remoteData.encrypted_blob);
         const normalizedRemote = normalizeSyncData(decryptedRemote);
         
+        // CRITICAL: Log what we're about to merge
+        console.log('[SyncV2] Merging remote data:', {
+          localUserCount: Object.keys(localState.users || {}).length,
+          remoteUserCount: Object.keys(normalizedRemote.users || {}).length,
+          localActivities: localState.users?.[localState.currentUser]?.days?.today?.activities?.length || 0,
+          remoteActivities: normalizedRemote.users?.[normalizedRemote.currentUser]?.days?.today?.activities?.length || 0
+        });
+        
         // Use CRDT merger for conflict-free merge
         stateToSync = crdtMerger.mergeStates(localState, normalizedRemote, this.deviceId);
         
-        // Apply merged state locally
-        await this.applyState(stateToSync);
+        // CRITICAL SAFETY CHECK: Never apply empty state that would delete all data
+        if (!stateToSync.users || Object.keys(stateToSync.users).length === 0) {
+          console.error('[SyncV2] CRITICAL: Merge resulted in empty state! Keeping local data');
+          console.error('[SyncV2] Debug info:', {
+            localUserCount: Object.keys(localState.users || {}).length,
+            remoteUserCount: Object.keys(normalizedRemote.users || {}).length,
+            mergedUserCount: Object.keys(stateToSync.users || {}).length
+          });
+          // Keep local state instead of applying empty merge
+          stateToSync = localState;
+        } else {
+          // Only apply if we have valid data
+          await this.applyState(stateToSync);
+        }
       } else {
         // Local is newer or same - use local
         stateToSync = localState;
