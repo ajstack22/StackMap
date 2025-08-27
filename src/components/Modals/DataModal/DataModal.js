@@ -925,10 +925,15 @@ const DataModal = ({
         // CRITICAL: Use create() for "Create New Sync" button
         // This ensures we get the right sync ID and recovery phrase
         const result = await syncService.create();
+        
+        // Immediately capture the frozen values to prevent any modification
+        const finalSyncId = result.syncId;
+        const finalRecoveryPhrase = result.recoveryPhrase;
 
+        // Set state with captured values from the frozen result
         setSyncEnabled(true);
-        setSyncId(result.syncId);
-        setSyncRecoveryPhrase(result.recoveryPhrase);
+        setSyncId(finalSyncId);
+        setSyncRecoveryPhrase(finalRecoveryPhrase);
         setShowRecoveryPhrase(true); // Keep showing it
 
         if (onSyncStatusChange) {

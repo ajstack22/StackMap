@@ -803,25 +803,29 @@ class SyncServiceV2 {
       await this.disable(); // This will clear all sync-related data
     }
     
-    // Generate new recovery phrase and create new sync
+    // Generate BOTH values immediately and store in immutable locals
     const recoveryPhrase = encryptionService.generateRecoveryPhrase();
-    
-    // Generate sync ID HERE, ONCE - this is the source of truth
     const syncId = await this.generateSyncId(recoveryPhrase);
     
-    // Set it on the service so enable() uses THIS sync ID
+    // Create immutable result BEFORE any async operations
+    // This ensures nothing can modify these values
+    const result = Object.freeze({
+      syncId: syncId,
+      recoveryPhrase: recoveryPhrase,
+      isNewSync: true
+    });
+    
+    // Now do the async work to actually enable sync
+    // Set the service state so enable() uses our sync ID
     this.syncId = syncId;
     this.syncEnabled = false; // Not fully enabled yet, but we have the ID
     
     // Enable will use the existing this.syncId instead of generating a new one
     await this.enable(recoveryPhrase);
     
-    // Return the values we generated - they MUST match because we generated them together
-    return {
-      syncId: syncId,
-      recoveryPhrase: recoveryPhrase,
-      isNewSync: true
-    };
+    // Return the frozen result that was created BEFORE async operations
+    // This guarantees the recovery phrase and sync ID match
+    return result;
   }
 
   // Initialize sync for data import (doesn't pull/overwrite existing data)
