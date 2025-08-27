@@ -59,6 +59,7 @@ class SyncServiceV2 {
     this.syncDebounceTimer = null;
     this.syncInProgress = false;
     this.pendingSync = false;
+    this._applyingRemoteState = false; // Flag to prevent sync during state application
     
     // Single consistent timing strategy
     this.SYNC_INTERVAL = 30000; // 30 seconds - less aggressive to avoid conflicts
@@ -286,28 +287,44 @@ class SyncServiceV2 {
         
         // Apply remote data if it has content
         if (decryptedData.users && Object.keys(decryptedData.users).length > 0) {
-          console.log('[SyncV2] Applying remote state to local stores');
+          console.log('[SyncV2] Joining existing sync - will replace local state with remote');
           
-          // CRITICAL FIX: Apply remote state directly without clearing first
-          // Clearing and re-applying can trigger store listeners that cause unwanted syncs
-          const { useUserStore, useLibraryStore } = require('../../stores');
-          
-          console.log('[SyncV2] Applying remote state (will replace local state)');
-          
-          // Apply the remote state directly - applyState will overwrite existing data
-          await this.applyState(decryptedData);
-          
-          // CRITICAL: Set a flag to prevent ANY sync operations after joining
-          // This prevents both push and pull operations
+          // CRITICAL: Set flags BEFORE applying state to prevent race conditions
+          // These flags must be active when store listeners fire
           this._justJoinedSync = true;
           this._joinedAt = Date.now();
-          console.log('[SyncV2] Set _justJoinedSync flag to prevent immediate sync');
+          this._applyingRemoteState = true;
           
-          // Clear flag after a longer delay to ensure state stabilizes
+          // Temporarily disable sync to prevent any sync operations
+          const wasSyncEnabled = this.syncEnabled;
+          this.syncEnabled = false;
+          console.log('[SyncV2] Disabled sync temporarily during join');
+          
+          // Clear local state completely before applying remote
+          const { useUserStore, useLibraryStore } = require('../../stores');
+          console.log('[SyncV2] Clearing local state before applying remote');
+          useUserStore.getState().setUsers({});
+          useUserStore.getState().setCurrentUser(null);
+          useLibraryStore.getState().setLibrary({});
+          
+          // Now apply the remote state cleanly - NO MERGE, just direct replacement
+          console.log('[SyncV2] Applying remote state (direct replacement, no merge)');
+          await this.applyState(decryptedData, true); // true = skip merge, direct apply
+          
+          // Clear the applying flag
+          this._applyingRemoteState = false;
+          
+          // Re-enable sync after a short delay
+          setTimeout(() => {
+            this.syncEnabled = wasSyncEnabled;
+            console.log('[SyncV2] Re-enabled sync after join');
+          }, 1000); // 1 second delay to let state settle
+          
+          // Keep the join flag active for longer
           setTimeout(() => {
             console.log('[SyncV2] Clearing _justJoinedSync flag');
             this._justJoinedSync = false;
-          }, 15000); // Increased to 15 seconds
+          }, 20000); // Increased to 20 seconds for extra safety
         }
         
         this.lastVersion = existingData.version;
@@ -467,6 +484,17 @@ class SyncServiceV2 {
    * Perform sync operation
    */
   async performSync(retryCount = 0) {
+    // CRITICAL: Check flags FIRST before any logging or operations
+    if (this._justJoinedSync || this._applyingRemoteState) {
+      const timeSinceJoin = this._joinedAt ? Date.now() - this._joinedAt : 0;
+      console.log('[SyncV2] Skipping sync - flags active', {
+        justJoined: this._justJoinedSync,
+        applyingRemote: this._applyingRemoteState,
+        timeSinceJoin
+      });
+      return;
+    }
+    
     console.log('[SyncV2] performSync called', {
       syncEnabled: this.syncEnabled,
       syncId: this.syncId,
@@ -492,17 +520,6 @@ class SyncServiceV2 {
     // This prevents the periodic sync from interfering with user changes
     if (this.syncDebounceTimer) {
       console.log('[SyncV2] Skipping periodic sync - pending changes being debounced');
-      return;
-    }
-
-    // CRITICAL: Don't push if we just joined a sync
-    // This prevents overwriting server data with potentially empty local state
-    if (this._justJoinedSync) {
-      const timeSinceJoin = Date.now() - (this._joinedAt || 0);
-      console.log('[SyncV2] Skipping sync - just joined, waiting for local state to stabilize', {
-        timeSinceJoin,
-        willClearIn: Math.max(0, 15000 - timeSinceJoin)
-      });
       return;
     }
 
@@ -779,6 +796,12 @@ class SyncServiceV2 {
       return this.lastVersion; // Return current version without pushing
     }
     
+    // SAFETY CHECK: Don't push if applying remote state
+    if (this._applyingRemoteState) {
+      console.warn('[SyncV2] Refusing to push - currently applying remote state');
+      return this.lastVersion;
+    }
+    
     // SAFETY CHECK: Don't push empty state
     const activityCount = Object.values(state.users || {}).reduce((sum, user) => 
       sum + Object.values(user.days || {}).reduce((daySum, day) => 
@@ -787,6 +810,28 @@ class SyncServiceV2 {
     if (activityCount === 0) {
       console.warn('[SyncV2] Refusing to push - no activities in state');
       return this.lastVersion; // Return current version without pushing
+    }
+    
+    // SAFETY CHECK: Detect starter data patterns
+    const allActivities = [];
+    Object.values(state.users || {}).forEach(user => {
+      Object.values(user.days || {}).forEach(day => {
+        if (day.activities) allActivities.push(...day.activities);
+      });
+    });
+    
+    // Check for known starter card patterns
+    const starterTexts = ['Welcome to StackMap! 🎉', 'Tap cards to complete', 'Long press to edit', 'Swipe down for more'];
+    const hasOnlyStarterCards = allActivities.length > 0 && 
+      allActivities.every(activity => 
+        starterTexts.includes(activity.text) || 
+        starterTexts.includes(activity.name) ||
+        starterTexts.includes(activity.title)
+      );
+    
+    if (hasOnlyStarterCards) {
+      console.warn('[SyncV2] Refusing to push - detected starter cards only');
+      return this.lastVersion;
     }
     
     const encrypted = encryptionService.encryptData(state);
@@ -849,13 +894,15 @@ class SyncServiceV2 {
 
   /**
    * Apply state to stores
+   * @param {boolean} skipMerge - If true, directly replace without merging
    */
-  async applyState(state) {
+  async applyState(state, skipMerge = false) {
     console.log('[SyncV2] applyState called with:', {
       userCount: Object.keys(state.users || {}).length,
       currentUser: state.currentUser,
       activities: state.users?.[state.currentUser]?.days?.today?.activities?.length || 0,
-      firstActivity: state.users?.[state.currentUser]?.days?.today?.activities?.[0]?.text
+      firstActivity: state.users?.[state.currentUser]?.days?.today?.activities?.[0]?.text,
+      skipMerge
     });
     
     const { useUserStore, useSettingsStore, useLibraryStore } = require('../../stores');

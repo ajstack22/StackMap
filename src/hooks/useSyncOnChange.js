@@ -51,6 +51,12 @@ export const useSyncOnChange = () => {
         console.log('[useSyncOnChange] Skipping sync trigger - just joined sync group');
         return;
       }
+      
+      // CRITICAL: Skip if we're applying remote state to prevent feedback loop
+      if (syncService._applyingRemoteState) {
+        console.log('[useSyncOnChange] Skipping sync trigger - applying remote state');
+        return;
+      }
 
       const currentState = getCurrentState();
 
