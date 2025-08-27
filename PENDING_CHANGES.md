@@ -1,12 +1,13 @@
 # Pending Changes
 
-## Title: v22 - Global Protection Flags to Block Device B Push
+## Title: Server-Side Protection Against Sync Data Loss
 
 ### Changes Made:
-- Added global window.__syncJustJoined and window.__syncJoinedAt flags
-- These persist across all modules regardless of webpack caching
-- Push function checks BOTH instance and global flags
-- 30-second hard block on pushing after joining sync
-- Alert messages show when protection is triggered
-- This bypasses webpack module caching issues entirely
+- HAR analysis revealed Device A pushes corrupted data after Device B joins
+- Client protection not working due to webpack build issues
+- Added SERVER-SIDE protection in push.php:
+  - Blocks push for 30 seconds after device first joins
+  - Validates version numbers to prevent jumps
+  - Returns HTTP 429 if device tries to push too soon
+- This protection works regardless of client code issues
 
