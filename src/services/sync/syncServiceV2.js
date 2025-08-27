@@ -22,18 +22,31 @@ const decodeUTF8 = (str) => util.decodeUTF8(str);
  * Get API base URL based on environment
  */
 const getApiBaseUrl = () => {
+  // Always use full URLs, never relative paths
+  const prodUrl = 'https://stackmap.app/api/sync';
+  const qualUrl = 'https://stackmap.app/qual/api/sync';
+  
+  // Development mode for native apps
   if (__DEV__ && (Platform.OS === 'ios' || Platform.OS === 'android')) {
-    return 'https://stackmap.app/qual/api/sync';
+    return qualUrl;
   }
+  
+  // Web platform
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    // Local development
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return 'https://stackmap.app/api/sync';
+      return prodUrl;
     }
+    // Qual/staging environment
     if (window.location.pathname.startsWith('/qual')) {
-      return 'https://stackmap.app/qual/api/sync';
+      return qualUrl;
     }
+    // Production
+    return prodUrl;
   }
-  return 'https://stackmap.app/api/sync';
+  
+  // Default to production for any other cases
+  return prodUrl;
 };
 
 class SyncServiceV2 {
@@ -104,6 +117,12 @@ class SyncServiceV2 {
         AsyncStorage.getItem('@sync_version')  // Original key
       ]);
 
+      console.log('[SyncV2] Initialize: loaded from AsyncStorage:', {
+        enabled,
+        syncId,
+        version
+      });
+
       if (enabled === 'true' && syncId) {
         this.syncEnabled = true;
         this.syncId = syncId;
@@ -161,6 +180,12 @@ class SyncServiceV2 {
     const syncId = Array.from(syncIdBytes, byte =>
       byte.toString(16).padStart(2, '0')
     ).join('');
+    
+    console.log('[SyncV2] Generated sync ID:', {
+      syncId,
+      recoveryPhraseLength: recoveryPhrase.length,
+      firstChars: recoveryPhrase.substring(0, 4) + '...' + recoveryPhrase.substring(recoveryPhrase.length - 4)
+    });
     
     return syncId;
   }
@@ -233,6 +258,12 @@ class SyncServiceV2 {
       }
 
       // Save state - use original keys for compatibility
+      console.log('[SyncV2] Saving sync state to AsyncStorage:', {
+        syncId: this.syncId,
+        enabled: true,
+        version: this.lastVersion
+      });
+      
       await AsyncStorage.multiSet([
         ['@sync_enabled', 'true'],
         ['@sync_id', this.syncId],
@@ -495,6 +526,14 @@ class SyncServiceV2 {
     try {
       // Send parameters as query params, not POST body (matching original service)
       const url = `${getApiBaseUrl()}/pull.php?sync_id=${this.syncId}&device_id=${this.deviceId}&current_version=${this.lastVersion || 0}`;
+      
+      console.log('[SyncV2] Pull request:', {
+        syncId: this.syncId,
+        deviceId: this.deviceId,
+        currentVersion: this.lastVersion || 0,
+        url: url.includes('qual') ? 'QUAL' : 'PROD'
+      });
+      
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -549,6 +588,14 @@ class SyncServiceV2 {
    */
   async push(state) {
     const encrypted = encryptionService.encryptData(state);
+    
+    console.log('[SyncV2] Push request:', {
+      syncId: this.syncId,
+      deviceId: this.deviceId,
+      version: this.lastVersion + 1,
+      hasData: !!state.users && Object.keys(state.users).length > 0,
+      url: getApiBaseUrl().includes('qual') ? 'QUAL' : 'PROD'
+    });
     
     const response = await fetch(`${getApiBaseUrl()}/push.php`, {
       method: 'POST',
@@ -783,6 +830,7 @@ class SyncServiceV2 {
 
   // Get sync ID
   getSyncId() {
+    console.log('[SyncV2] getSyncId called, returning:', this.syncId);
     return this.syncId;
   }
 

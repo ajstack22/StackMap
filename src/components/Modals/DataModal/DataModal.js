@@ -210,7 +210,10 @@ const DataModal = ({
         setSyncEnabled(true);
         
         const id = await syncService.getSyncId();
+        console.log('[DataModal] Got sync ID from service:', id);
+        
         let phrase = await syncService.getRecoveryPhrase();
+        console.log('[DataModal] Got recovery phrase:', phrase ? phrase.substring(0, 4) + '...' + phrase.substring(phrase.length - 4) : 'none');
         
         // If phrase is null and we have a syncId, try to reload after a short delay
         // This can happen if the encryption service isn't fully initialized
@@ -221,6 +224,7 @@ const DataModal = ({
         
         setSyncId(id);
         setSyncRecoveryPhrase(phrase || '');
+        console.log('[DataModal] Set state - syncId:', id, 'phrase:', phrase ? 'present' : 'missing');
         
         // Optionally verify it exists on server in the background
         // but don't disable the UI if it fails (might just be creating)

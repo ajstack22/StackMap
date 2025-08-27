@@ -71,15 +71,12 @@ build_ios_archive() {
     TIMESTAMP=$(date +%Y%m%d-%H%M%S)
     ARCHIVE_PATH="$HOME/Library/Developer/Xcode/Archives/$(date +%Y-%m-%d)/StackMapNative-$TIMESTAMP.xcarchive"
     
-    xcodebuild archive \
-        -workspace StackMapNative.xcworkspace \
-        -scheme StackMapNative \
-        -configuration Release \
-        -archivePath "$ARCHIVE_PATH" \
-        -destination 'generic/platform=iOS' \
-        CODE_SIGN_IDENTITY="Apple Distribution" \
-        DEVELOPMENT_TEAM="YOUR_TEAM_ID" \
-        -allowProvisioningUpdates
+        # Archive step removed as requested.
+    echo -e "${GREEN}✅ iOS project is ready for archiving.${NC}"
+    echo "To create the archive, open Xcode and follow these steps:"
+    echo "   1. Open the workspace: open ios/StackMapNative.xcworkspace"
+    echo "   2. Select 'Any iOS Device (arm64)' as the build target."
+    echo "   3. From the menu, choose 'Product' → 'Archive'."
     
     if [ -f "$ARCHIVE_PATH/Info.plist" ]; then
         echo -e "${GREEN}✅ Archive created successfully at:${NC}"
