@@ -830,10 +830,30 @@ class SyncServiceV2 {
 
   // Get recovery phrase (if available)
   async getRecoveryPhrase() {
-    if (!this.syncId) return null;
+    console.log('[SyncV2] getRecoveryPhrase called with syncId:', this.syncId);
+    
+    if (!this.syncId) {
+      console.log('[SyncV2] No sync ID available, returning null');
+      return null;
+    }
+    
     try {
       // Retrieve the stored recovery phrase for the current sync ID
-      return await encryptionService.getStoredRecoveryPhrase(this.syncId);
+      const phrase = await encryptionService.getStoredRecoveryPhrase(this.syncId);
+      
+      if (phrase) {
+        // Verify the phrase generates the correct sync ID
+        const generatedId = await this.generateSyncId(phrase);
+        if (generatedId !== this.syncId) {
+          console.error('[SyncV2] CRITICAL: Stored phrase generates different sync ID!', {
+            expectedId: this.syncId,
+            generatedId: generatedId,
+            phrasePreview: phrase.substring(0, 4) + '...' + phrase.substring(phrase.length - 4)
+          });
+        }
+      }
+      
+      return phrase;
     } catch (error) {
       console.error('[SyncV2] Failed to get recovery phrase:', error);
       return null;

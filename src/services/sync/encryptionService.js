@@ -328,6 +328,12 @@ class EncryptionService {
    */
   async storeRecoveryPhrase(recoveryPhrase, syncId) {
     try {
+      console.log('[Encryption] Storing recovery phrase for sync ID:', {
+        syncId,
+        phraseLength: recoveryPhrase.length,
+        phrasePreview: recoveryPhrase.substring(0, 4) + '...' + recoveryPhrase.substring(recoveryPhrase.length - 4)
+      });
+      
       // Generate a device-specific encryption key
       const deviceKey = await this.getDeviceKey();
 
