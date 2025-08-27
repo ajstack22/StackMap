@@ -202,8 +202,20 @@ class SyncServiceV2 {
         throw new Error('No data available to sync. Please ensure you have data before enabling sync.');
       }
       
+      // Check if sync is already enabled with a different recovery phrase
+      if (this.syncEnabled && this.syncId) {
+        console.warn('[SyncV2] Sync already enabled with ID:', this.syncId);
+        // Get the existing recovery phrase if we're re-enabling
+        const existingPhrase = await encryptionService.getStoredRecoveryPhrase(this.syncId);
+        if (existingPhrase && !recoveryPhrase) {
+          console.log('[SyncV2] Using existing recovery phrase for re-enable');
+          recoveryPhrase = existingPhrase;
+        }
+      }
+      
       // Generate recovery phrase if not provided
       if (!recoveryPhrase) {
+        console.log('[SyncV2] Generating new recovery phrase');
         recoveryPhrase = encryptionService.generateRecoveryPhrase();
       }
       

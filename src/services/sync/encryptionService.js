@@ -358,10 +358,17 @@ class EncryptionService {
    */
   async getStoredRecoveryPhrase(syncId) {
     try {
-      const encryptedData = await AsyncStorage.getItem(
-        `@sync_phrase_${syncId}`,
-      );
-      if (!encryptedData) return null;
+      const storageKey = `@sync_phrase_${syncId}`;
+      console.log('[Encryption] Getting stored recovery phrase for:', {
+        syncId,
+        storageKey
+      });
+      
+      const encryptedData = await AsyncStorage.getItem(storageKey);
+      if (!encryptedData) {
+        console.log('[Encryption] No stored phrase found for sync ID:', syncId);
+        return null;
+      }
 
       // Get device key
       const deviceKey = await this.getDeviceKey();
@@ -372,9 +379,18 @@ class EncryptionService {
       const encrypted = combined.slice(nacl.secretbox.nonceLength);
 
       const decrypted = nacl.secretbox.open(encrypted, nonce, deviceKey);
-      if (!decrypted) return null;
+      if (!decrypted) {
+        console.log('[Encryption] Failed to decrypt recovery phrase');
+        return null;
+      }
 
-      return util.encodeUTF8(decrypted);
+      const phrase = util.encodeUTF8(decrypted);
+      console.log('[Encryption] Successfully retrieved recovery phrase:', {
+        syncId,
+        phraseLength: phrase.length,
+        firstChars: phrase.substring(0, 4) + '...' + phrase.substring(phrase.length - 4)
+      });
+      return phrase;
     } catch (error) {
       if (__DEV__) {
         console.error('Failed to retrieve recovery phrase:', error);

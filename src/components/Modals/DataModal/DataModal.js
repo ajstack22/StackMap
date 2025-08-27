@@ -212,6 +212,14 @@ const DataModal = ({
         const id = await syncService.getSyncId();
         console.log('[DataModal] Got sync ID from service:', id);
         
+        // Also check what's in AsyncStorage directly
+        const storedId = await AsyncStorage.getItem('@sync_id');
+        console.log('[DataModal] Sync ID from AsyncStorage:', storedId);
+        
+        if (id !== storedId) {
+          console.warn('[DataModal] MISMATCH: Service sync ID !== stored sync ID');
+        }
+        
         let phrase = await syncService.getRecoveryPhrase();
         console.log('[DataModal] Got recovery phrase:', phrase ? phrase.substring(0, 4) + '...' + phrase.substring(phrase.length - 4) : 'none');
         
