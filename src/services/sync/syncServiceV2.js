@@ -766,46 +766,48 @@ class SyncServiceV2 {
 
   // Create new sync group
   async create() {
-    // CRITICAL: If sync is already enabled, return the existing info
-    // Don't generate a new recovery phrase!
-    if (this.syncEnabled && this.syncId) {
-      console.log('[SyncV2] create() called but sync already enabled, returning existing info');
-      const existingPhrase = await encryptionService.getStoredRecoveryPhrase(this.syncId);
+    // Check if there's an orphaned sync ID (ID exists but recovery phrase is missing/wrong)
+    const storedId = await AsyncStorage.getItem('@sync_id');
+    if (storedId) {
+      console.log('[SyncV2] Found existing sync ID in storage:', storedId);
+      const existingPhrase = await encryptionService.getStoredRecoveryPhrase(storedId);
       
-      if (!existingPhrase) {
-        console.error('[SyncV2] Sync enabled but recovery phrase not found for ID:', this.syncId);
-        // Try to recover by checking AsyncStorage for any stored phrases
-        const allKeys = await AsyncStorage.getAllKeys();
-        const phraseKeys = allKeys.filter(key => key.startsWith('@sync_phrase_'));
-        console.log('[SyncV2] Found phrase keys:', phraseKeys);
-        
-        throw new Error('Sync recovery phrase lost - please disable and re-enable sync');
+      if (existingPhrase) {
+        // Verify the phrase generates the correct sync ID
+        const generatedId = await this.generateSyncId(existingPhrase);
+        if (generatedId === storedId) {
+          // Everything is valid, return existing sync info
+          console.log('[SyncV2] Valid existing sync found, returning info');
+          this.syncId = storedId;
+          this.syncEnabled = true;
+          return {
+            syncId: storedId,
+            recoveryPhrase: existingPhrase,
+            isNewSync: false
+          };
+        } else {
+          console.error('[SyncV2] ORPHANED SYNC: Stored phrase generates wrong ID!', {
+            storedId: storedId,
+            generatedId: generatedId
+          });
+        }
+      } else {
+        console.error('[SyncV2] ORPHANED SYNC: No recovery phrase for stored ID:', storedId);
       }
       
-      // Verify the phrase generates the correct sync ID
-      const generatedId = await this.generateSyncId(existingPhrase);
-      if (generatedId !== this.syncId) {
-        console.error('[SyncV2] CRITICAL in create(): Stored phrase generates wrong sync ID!', {
-          activeId: this.syncId,
-          generatedId: generatedId
-        });
-        throw new Error('Sync recovery phrase mismatch - please disable and re-enable sync');
-      }
-      
-      return {
-        syncId: this.syncId,
-        recoveryPhrase: existingPhrase,
-        isNewSync: false
-      };
+      // We have an orphaned sync ID - clear it and create a new sync
+      console.log('[SyncV2] Clearing orphaned sync ID and creating new sync');
+      await this.disable(); // This will clear all sync-related data
     }
     
-    // Use encryption service to generate proper recovery phrase
+    // Generate new recovery phrase and create new sync
     const recoveryPhrase = encryptionService.generateRecoveryPhrase();
+    console.log('[SyncV2] Creating new sync with generated recovery phrase');
     
     // Enable will handle creating the sync group
     await this.enable(recoveryPhrase);
     
-    // Return object with sync info like the original sync service
+    // Return object with sync info
     return {
       syncId: this.syncId,
       recoveryPhrase: recoveryPhrase,

@@ -224,16 +224,18 @@ const DataModal = ({
         let phrase = await syncService.getRecoveryPhrase();
         console.log('[DataModal] Got recovery phrase:', phrase ? phrase.substring(0, 4) + '...' + phrase.substring(phrase.length - 4) : 'none');
         
-        // If phrase is null and we have a syncId, try to reload after a short delay
-        // This can happen if the encryption service isn't fully initialized
+        // If phrase is null and we have a syncId, it means we have an orphaned sync
+        // Don't show anything to the user - let them click "Create New Sync" which will handle it
         if (!phrase && id) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-          phrase = await syncService.getRecoveryPhrase();
+          console.warn('[DataModal] Orphaned sync detected - ID exists but no valid recovery phrase');
+          setSyncId('');
+          setSyncRecoveryPhrase('');
+          setSyncEnabled(false); // Show as disabled so user can create new sync
+        } else {
+          setSyncId(id);
+          setSyncRecoveryPhrase(phrase || '');
+          console.log('[DataModal] Set state - syncId:', id, 'phrase:', phrase ? 'present' : 'missing');
         }
-        
-        setSyncId(id);
-        setSyncRecoveryPhrase(phrase || '');
-        console.log('[DataModal] Set state - syncId:', id, 'phrase:', phrase ? 'present' : 'missing');
         
         // Optionally verify it exists on server in the background
         // but don't disable the UI if it fails (might just be creating)
@@ -246,6 +248,8 @@ const DataModal = ({
         });
       } else {
         setSyncEnabled(false);
+        setSyncId('');
+        setSyncRecoveryPhrase('');
       }
 
       setSyncStatusChecked(true);
@@ -931,14 +935,26 @@ const DataModal = ({
           onSyncStatusChange(true);
         }
 
-        // Show appropriate message based on whether sync was already enabled
+        // Show appropriate message based on whether sync was new or restored
         if (result.isNewSync) {
           showToast({ message: 'Sync enabled successfully!' });
         } else {
-          showToast({ message: 'Sync already enabled - displaying existing sync info' });
+          showToast({ message: 'Sync restored - displaying recovery phrase' });
         }
+        
+        // DON'T call checkSyncStatus here - it will overwrite the correct recovery phrase!
+        // The result from create() is the source of truth
       } catch (error) {
+        console.error('[DataModal] Failed to enable sync:', error);
         setSyncError(error.message || 'Failed to enable sync');
+        // CRITICAL: Clear all sync state if there's an error
+        setSyncEnabled(false);
+        setSyncId('');
+        setSyncRecoveryPhrase('');
+        showToast({
+          message: error.message || 'Failed to enable sync',
+          type: 'error',
+        });
       } finally {
         setSyncLoading(false);
       }
