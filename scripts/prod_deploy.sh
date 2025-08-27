@@ -66,41 +66,25 @@ build_ios_archive() {
     echo "Cleaning build folder..."
     xcodebuild clean -workspace StackMapNative.xcworkspace -scheme StackMapNative -configuration Release
     
-    # Build archive
-    echo "Building iOS archive..."
+    # Prepare iOS for manual archiving
+    echo "Preparing iOS for archive..."
     TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-    ARCHIVE_PATH="$HOME/Library/Developer/Xcode/Archives/$(date +%Y-%m-%d)/StackMapNative-$TIMESTAMP.xcarchive"
     
-        # Archive step removed as requested.
     echo -e "${GREEN}✅ iOS project is ready for archiving.${NC}"
-    echo "To create the archive, open Xcode and follow these steps:"
+    echo
+    echo "📱 To create the iOS archive:"
     echo "   1. Open the workspace: open ios/StackMapNative.xcworkspace"
-    echo "   2. Select 'Any iOS Device (arm64)' as the build target."
-    echo "   3. From the menu, choose 'Product' → 'Archive'."
-    
-    if [ -f "$ARCHIVE_PATH/Info.plist" ]; then
-        echo -e "${GREEN}✅ Archive created successfully at:${NC}"
-        echo "   $ARCHIVE_PATH"
-        echo
-        echo "📝 To distribute to App Store Connect:"
-        echo "   1. Open Xcode Organizer: open -b com.apple.dt.Xcode /Applications/Xcode.app"
-        echo "   2. Select the archive from today's date"
-        echo "   3. Click 'Distribute App'"
-        echo "   4. Select 'App Store Connect' → 'Upload'"
-        echo "   5. Follow the prompts to upload"
-        echo
-        echo "Or use xcodebuild to upload directly:"
-        echo "   xcodebuild -exportArchive -archivePath \"$ARCHIVE_PATH\" \\"
-        echo "     -exportOptionsPlist ios/ExportOptions.plist \\"
-        echo "     -exportPath \"$HOME/Desktop/StackMap-iOS-$TIMESTAMP\""
-    else
-        echo -e "${RED}❌ Archive build failed${NC}"
-        echo "To build manually:"
-        echo "   1. Open Xcode: open ios/StackMapNative.xcworkspace"
-        echo "   2. Select 'Any iOS Device' as target"
-        echo "   3. Product → Archive"
-        exit 1
-    fi
+    echo "   2. Select 'Any iOS Device (arm64)' as the build target"
+    echo "   3. From the menu, choose 'Product' → 'Archive'"
+    echo
+    echo "📝 After archiving, to distribute to App Store Connect:"
+    echo "   1. In Xcode Organizer, select the archive from today's date"
+    echo "   2. Click 'Distribute App'"
+    echo "   3. Select 'App Store Connect' → 'Upload'"
+    echo "   4. Follow the prompts to upload"
+    echo
+    echo "💡 Tip: Your archive will be saved to:"
+    echo "   $HOME/Library/Developer/Xcode/Archives/$(date +%Y-%m-%d)/StackMapNative-[timestamp].xcarchive"
     
     cd ..
 }
@@ -160,14 +144,21 @@ verify_api_urls() {
     echo -e "${YELLOW}🔍 Verifying API URLs for production builds...${NC}"
     
     # Check syncServiceV2.js
-    if grep -q "__DEV__.*qual/api" src/services/sync/syncServiceV2.js; then
-        echo -e "${GREEN}✅ Development builds use qual API${NC}"
+    if grep -q "qualUrl = 'https://stackmap.app/qual/api/sync'" src/services/sync/syncServiceV2.js; then
+        echo -e "${GREEN}✅ Qual URL configured correctly${NC}"
+    else
+        echo -e "${RED}⚠️  Warning: Could not verify qual API URL${NC}"
     fi
     
-    if grep -q "return 'https://stackmap.app/api/sync'" src/services/sync/syncServiceV2.js; then
-        echo -e "${GREEN}✅ Production builds will use production API${NC}"
+    if grep -q "prodUrl = 'https://stackmap.app/api/sync'" src/services/sync/syncServiceV2.js; then
+        echo -e "${GREEN}✅ Production URL configured correctly${NC}"
     else
         echo -e "${RED}⚠️  Warning: Could not verify production API URL${NC}"
+    fi
+    
+    # Check that production is the default
+    if grep -q "return prodUrl" src/services/sync/syncServiceV2.js; then
+        echo -e "${GREEN}✅ Production is default for mobile builds${NC}"
     fi
 }
 

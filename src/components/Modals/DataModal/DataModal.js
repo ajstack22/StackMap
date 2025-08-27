@@ -918,7 +918,9 @@ const DataModal = ({
     // Use setTimeout to ensure the UI updates before the async operation
     setTimeout(async () => {
       try {
-        const result = await syncService.enable();
+        // CRITICAL: Use create() for "Create New Sync" button
+        // This ensures we get the right sync ID and recovery phrase
+        const result = await syncService.create();
 
         setSyncEnabled(true);
         setSyncId(result.syncId);
@@ -929,7 +931,12 @@ const DataModal = ({
           onSyncStatusChange(true);
         }
 
-        showToast({ message: 'Sync enabled successfully!' });
+        // Show appropriate message based on whether sync was already enabled
+        if (result.isNewSync) {
+          showToast({ message: 'Sync enabled successfully!' });
+        } else {
+          showToast({ message: 'Sync already enabled - displaying existing sync info' });
+        }
       } catch (error) {
         setSyncError(error.message || 'Failed to enable sync');
       } finally {
