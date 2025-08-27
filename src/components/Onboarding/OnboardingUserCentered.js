@@ -529,19 +529,16 @@ const OnboardingUserCentered = ({
         await new Promise(resolve => setTimeout(resolve, 100));
       }
 
-      // Initialize will create the sync group if it doesn't exist
-      await syncService.initialize(syncCode);
+      // IMPORTANT: Use enable() instead of initialize() for creating new sync
+      // initialize() with a recovery phrase only sets up encryption, doesn't actually enable sync!
+      const syncResult = await syncService.enable(syncCode);
       
-      // Don't force sync here - the periodic sync will handle it
-      // Since we're not marking as synced in initialize for new syncs,
-      // the first periodic sync will push all the data
-      
-      // Use the same keys as syncService - batch for performance
-      await DeferredStorage.multiSet([
-        ['@sync_enabled', 'true'],
-        ['@sync_id', syncService.syncId]
-      ]);
-      // Note: Recovery phrase is not stored, only kept in memory
+      // No need to manually save to AsyncStorage - enable() handles all of that
+      // The enable() method will:
+      // 1. Set up encryption
+      // 2. Create sync group if new
+      // 3. Save state to AsyncStorage
+      // 4. Start sync timer
       
       setUserJourney(prev => ({ ...prev, syncEnabled: true }));
       animateStepTransition('syncSuccess');

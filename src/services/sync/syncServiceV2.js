@@ -213,6 +213,13 @@ class SyncServiceV2 {
         // Apply remote data if it has content
         if (decryptedData.users && Object.keys(decryptedData.users).length > 0) {
           await this.applyState(decryptedData);
+          
+          // CRITICAL: Set a flag to prevent immediate push after joining
+          // We just pulled and applied remote data, don't push back immediately
+          this._justJoinedSync = true;
+          setTimeout(() => {
+            this._justJoinedSync = false;
+          }, 5000); // Clear flag after 5 seconds
         }
         
         this.lastVersion = existingData.version;
@@ -328,6 +335,13 @@ class SyncServiceV2 {
     // Check if encryption is initialized
     if (!encryptionService.masterKey) {
       if (__DEV__) console.warn('[SyncV2] Skipping sync - encryption not initialized');
+      return;
+    }
+
+    // CRITICAL: Don't push if we just joined a sync
+    // This prevents overwriting server data with potentially empty local state
+    if (this._justJoinedSync) {
+      if (__DEV__) console.log('[SyncV2] Skipping sync - just joined, waiting for local state to stabilize');
       return;
     }
 
