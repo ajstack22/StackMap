@@ -944,6 +944,11 @@ const DataModal = ({
         setSyncId(finalSyncId);  // This sets the sync ID state
         setSyncRecoveryPhrase(finalRecoveryPhrase);  // This sets what gets DISPLAYED
         setShowRecoveryPhrase(true); // Keep showing it
+        
+        // Debug in production
+        if (!__DEV__ && Platform.OS === 'web') {
+          window.alert(`DataModal received:\nPhrase: ${finalRecoveryPhrase.substring(0, 8)}...\nSync ID: ${finalSyncId.substring(0, 8)}...`);
+        }
 
         if (onSyncStatusChange) {
           onSyncStatusChange(true);

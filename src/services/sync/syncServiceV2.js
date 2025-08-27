@@ -312,16 +312,10 @@ class SyncServiceV2 {
       // Start sync timer
       this.startSyncTimer();
       
-      // Store recovery phrase for future use
-      console.log('[SyncV2] About to store recovery phrase:', {
-        phraseToStore: recoveryPhrase,
-        syncIdToUse: this.syncId,
-        phraseLength: recoveryPhrase.length,
-        syncIdLength: this.syncId?.length
-      });
-      await encryptionService.storeRecoveryPhrase(recoveryPhrase, this.syncId);
+      // NOTE: Recovery phrase is already stored by encryptionService.initialize()
+      // No need to store it again here
       
-      // Immediately verify it was stored correctly
+      // Verify it was stored correctly
       const verifyStored = await encryptionService.getStoredRecoveryPhrase(this.syncId);
       if (verifyStored !== recoveryPhrase) {
         console.error('[SyncV2] CRITICAL: Recovery phrase storage verification failed!', {
@@ -880,6 +874,14 @@ class SyncServiceV2 {
     const finalStoredPhrase = await encryptionService.getStoredRecoveryPhrase(syncId);
     const finalGeneratedId = await this.generateSyncId(finalStoredPhrase);
     
+    const allMatch = (
+      result.syncId === syncId &&
+      result.recoveryPhrase === recoveryPhrase &&
+      finalStoredPhrase === recoveryPhrase &&
+      finalGeneratedId === syncId &&
+      this.syncId === syncId
+    );
+    
     console.log('[SyncV2] CREATE FINAL VERIFICATION:', {
       resultSyncId: result.syncId,
       resultPhrase: result.recoveryPhrase,
@@ -887,14 +889,15 @@ class SyncServiceV2 {
       generatedFromStored: finalGeneratedId,
       serviceSyncId: this.syncId,
       asyncStorageSyncId: await AsyncStorage.getItem('@sync_id'),
-      allMatch: (
-        result.syncId === syncId &&
-        result.recoveryPhrase === recoveryPhrase &&
-        finalStoredPhrase === recoveryPhrase &&
-        finalGeneratedId === syncId &&
-        this.syncId === syncId
-      )
+      allMatch: allMatch
     });
+    
+    // In production, use Alert for critical debugging since console.log is stripped
+    if (!__DEV__ && !allMatch) {
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert(`SYNC ID MISMATCH DETECTED!\nResult phrase: ${result.recoveryPhrase.substring(0, 8)}...\nResult sync ID: ${result.syncId.substring(0, 8)}...\nStored phrase: ${finalStoredPhrase?.substring(0, 8)}...\nGenerated ID: ${finalGeneratedId?.substring(0, 8)}...`);
+      }
+    }
     
     // Return the frozen result that was created BEFORE async operations
     // This guarantees the recovery phrase and sync ID match

@@ -32,9 +32,18 @@ class EncryptionService {
     // In production, use BIP39 wordlist for better UX
     const seedBytes = nacl.randomBytes(16);
     // Convert to hex string (no padding, URL-safe)
-    return Array.from(seedBytes, byte =>
+    const phrase = Array.from(seedBytes, byte =>
       byte.toString(16).padStart(2, '0'),
     ).join('');
+    
+    console.log('[Encryption] Generated new recovery phrase:', {
+      phrase: phrase,
+      length: phrase.length,
+      preview: phrase.substring(0, 8) + '...' + phrase.substring(phrase.length - 8),
+      stackTrace: new Error().stack.split('\n').slice(1, 4).join('\n')
+    });
+    
+    return phrase;
   }
 
   /**
@@ -125,6 +134,12 @@ class EncryptionService {
    * Initialize encryption with a recovery phrase
    */
   async initialize(recoveryPhrase, syncId, existingSalt = null) {
+    console.log('[Encryption] Initialize called with:', {
+      phrasePreview: recoveryPhrase.substring(0, 8) + '...' + recoveryPhrase.substring(recoveryPhrase.length - 8),
+      syncId: syncId,
+      hasSalt: !!existingSalt
+    });
+    
     // Use existing salt if provided, otherwise generate new one
     const { key, salt } = await this.deriveKeyFromPhrase(
       recoveryPhrase,
@@ -138,6 +153,7 @@ class EncryptionService {
 
     // Store encrypted recovery phrase for automatic restoration
     // We encrypt it with a device-specific key for security
+    console.log('[Encryption] Storing recovery phrase in initialize');
     await this.storeRecoveryPhrase(recoveryPhrase, syncId);
 
     return { syncId, salt };
