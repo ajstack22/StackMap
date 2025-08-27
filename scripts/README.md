@@ -1,125 +1,113 @@
-# StackMap Deployment Scripts
+# StackMap Scripts Directory
 
-This directory contains scripts to enforce deployment best practices and ensure quality releases.
+## Primary Deployment Scripts
 
-## Important Update (January 2025)
-
-The build process has been updated to keep build files in `web/build/` instead of copying them to the root directory. This prevents clutter and maintains a cleaner project structure.
-
-### Key Changes:
-
-1. **Build Output**: `npm run build:web` now outputs files to `web/build/` only
-2. **No Root Copies**: Files like `index.html` and `bundle.*.js` are no longer copied to the project root
-3. **Deployment Process**: The cPanel deployment now handles files from `web/build/` correctly
-
-### Deployment Flow:
-
-1. **Local Build**: Run `npm run build:web` - creates files in `web/build/`
-2. **Git Commit**: Commit the `web/build/` directory changes
-3. **Push to GitHub**: `git push origin main`
-4. **Automatic Deployment**: 
-   - GitHub webhook triggers cPanel to pull changes
-   - `cpanel-post-pull.sh` copies files from `web/build/` to the qual root
-   - Files are then available at https://stackmap.app/qual/
-
-### Scripts Updated:
-
-- `build-web.sh` - No longer copies to root, keeps files in `web/build/`
-- `cpanel-webhook.php` - Now runs post-pull script after git pull
-- `cpanel-post-pull.sh` - NEW: Handles copying from `web/build/` to qual root on cPanel
-
-## Quick Start
-
-After cloning the repository, run:
+### 🚀 Production Deployment (`prod_deploy.sh`)
 ```bash
-bash scripts/setup-git-hooks.sh
+./prod_deploy.sh all     # Full deploy: web + Android AAB + iOS archive
+./prod_deploy.sh web     # Deploy web only to production
+./prod_deploy.sh android # Build Android AAB for Play Store
+./prod_deploy.sh ios     # Build iOS archive for App Store
+./prod_deploy.sh rollback # Rollback web production
+./prod_deploy.sh         # Interactive menu
 ```
 
-This sets up git hooks that will validate your code before pushing to main.
-
-## Available Scripts
-
-### 🔍 `pre-deploy-check.sh`
-Validates that your code is ready for deployment:
-- Checks all required files exist
-- Validates no syntax errors
-- Ensures no uncommitted changes
-- Checks for security issues
-- Reminds you to run UAT tests
-
-**Usage:**
+### 🧪 Staging (Qual) Deployment (`qual_deploy.sh`)
 ```bash
-bash scripts/pre-deploy-check.sh
+./qual_deploy.sh         # Deploy to qual/staging environment
+./qual_deploy.sh --skip-tests  # Emergency deploy without tests
+./qual_deploy.sh --web   # Web only
+./qual_deploy.sh --android --ios  # Mobile only
 ```
 
-### 🚀 `deploy.sh`
-Complete deployment workflow that:
-- Runs all pre-deployment checks
-- Updates service worker cache version
-- Guides you through the deployment process
-- Provides post-deployment checklist
-
-**Usage:**
+### 🔧 Development Setup
 ```bash
-bash scripts/deploy.sh
+./setup-git-hooks.sh     # Install git hooks for the project
 ```
 
-### 🔧 `setup-git-hooks.sh`
-Configures git hooks for the repository:
-- Sets up pre-push validation
-- Ensures deployment standards are met
-- Prevents accidental bad pushes to main
+## Directory Organization
 
-**Usage:**
-```bash
-bash scripts/setup-git-hooks.sh
-```
+### 📁 Core Directories
 
-## Deployment Workflow
+- **react-native/** - Native mobile build and run scripts for React Native
+- **cleanup/** - Server and local cleanup utilities
+- **testing/** - Sync and integration test scripts
+- **utilities/** - Code analysis, validation, and helper scripts
+- **devices/** - Device management, screenshots, and Metro scripts
+- **icons/** - Icon and launch screen generation scripts
+- **archived-scripts/** - Old/deprecated scripts (reference only)
 
-1. **Make your changes** and test locally
-2. **Run UAT tests** at `tests/test-runner.html`
-3. **Commit your changes** to git
-4. **Run deployment script**: `bash scripts/deploy.sh`
-5. **Follow post-deployment checklist**
+## Quick Start Guide
 
-## Git Hooks
+### Deploy to Production
+1. Update `PENDING_CHANGES.md` with your changes
+2. Deploy to qual: `./qual_deploy.sh`
+3. Test at: https://stackmap.app/qual/
+4. Deploy to production: `./prod_deploy.sh all`
 
-The pre-push hook will:
-- Run automatically when pushing to main
-- Execute pre-deployment checks
-- Prevent push if checks fail
-- Can be bypassed with `--no-verify` (not recommended)
+### Build Mobile Apps
+- **Android**: `./prod_deploy.sh android` → Creates `.aab` file
+- **iOS**: `./prod_deploy.sh ios` → Creates `.xcarchive`
 
-## Adding New Checks
+### Version Management
+- Format: `YYYY.MM.DD.BUILD`
+- Automatically incremented by deployment scripts
+- Unified across all platforms
 
-To add new validation:
-1. Edit `pre-deploy-check.sh`
-2. Add your check function
-3. Update the summary section
-4. Document in this README
+## API Configuration
+
+| Environment | API URL |
+|------------|---------|
+| Production | `https://stackmap.app/api/sync` |
+| Development/Qual | `https://stackmap.app/qual/api/sync` |
+
+## Important Notes
+
+1. **Always update PENDING_CHANGES.md** before deploying for meaningful commit messages
+2. **API URLs are verified** before each build
+3. **Version increments automatically** - no manual updates needed
+4. **Production builds use production API** - verified in the build process
+5. **Git hooks** prevent accidental bad pushes to main
 
 ## Troubleshooting
 
-### "Permission denied" error
+### Permission Issues
 ```bash
 chmod +x scripts/*.sh
 ```
 
-### Git hook not running
+### Git Hook Not Running
 ```bash
-bash scripts/setup-git-hooks.sh
+./setup-git-hooks.sh
 ```
 
-### Bypassing checks (emergency only)
+### Emergency Bypass (not recommended)
 ```bash
 git push --no-verify
 ```
 
+## Script Categories
+
+### Recently Cleaned (Aug 2025)
+Moved 30+ outdated scripts to `archived-scripts/` to maintain clarity.
+
+### Active Scripts
+- **prod_deploy.sh** - Production deployment orchestrator
+- **qual_deploy.sh** - Staging deployment with tests
+- **setup-git-hooks.sh** - Development environment setup
+
+### Subdirectory Scripts
+- **react-native/** - 20+ scripts for native builds
+- **testing/** - Sync and integration tests
+- **utilities/** - Code quality and validation
+- **devices/** - Device and screenshot management
+- **icons/** - Asset generation
+- **cleanup/** - Maintenance utilities
+
 ## Best Practices
 
-1. **Always run tests** before deploying
-2. **Never bypass checks** unless absolutely necessary
-3. **Document new validation** when adding checks
-4. **Keep scripts updated** with new requirements
-5. **Run setup script** after cloning repo
+1. Run tests before deploying
+2. Use staging (qual) before production
+3. Document changes in PENDING_CHANGES.md
+4. Keep scripts executable: `chmod +x`
+5. Review archived scripts before creating new ones

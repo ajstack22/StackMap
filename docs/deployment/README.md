@@ -3,16 +3,24 @@
 
 ## 🚀 Quick Start - Deploy Everything
 ```bash
-./scripts/deploy-all.sh
+# Stage 1: Deploy to QUAL (staging)
+./scripts/qual_deploy.sh
+
+# Stage 2: Deploy to PRODUCTION
+./scripts/prod_deploy.sh all  # Web + Android AAB + iOS prep
 ```
-This single command deploys to ALL platforms with automatic version increment and runs essential tests.
 
 ### Platform-Specific Options
 ```bash
-./scripts/deploy-all.sh --android --ios  # Android + iOS only
-./scripts/deploy-all.sh --web           # Web to qual staging
-./scripts/deploy-all.sh --ios-device     # iOS physical device
-./scripts/deploy-all.sh --skip-tests    # Skip tests for emergency deploy
+./scripts/qual_deploy.sh --android --ios  # Android + iOS only to qual
+./scripts/qual_deploy.sh --web           # Web to qual staging
+./scripts/qual_deploy.sh --ios-device    # iOS physical device
+./scripts/qual_deploy.sh --skip-tests   # Skip tests for emergency deploy
+
+# Production options
+./scripts/prod_deploy.sh web      # Deploy web only
+./scripts/prod_deploy.sh android  # Build Android AAB only
+./scripts/prod_deploy.sh ios      # Prepare iOS for archive
 ```
 
 ## 📱 Platform Deployment Details
@@ -55,13 +63,13 @@ cd android && ./gradlew bundleRelease
 
 #### Stage 1: Deploy to Qual (Staging)
 ```bash
-./scripts/deploy-web.sh qual  # Builds and deploys to stackmap.app/qual
+./scripts/qual_deploy.sh --web  # Builds and deploys to stackmap.app/qual
 ```
 
 #### Stage 2: Promote Qual to Production
 ```bash
-./scripts/simple-deploy.sh       # Sync qual to production
-./scripts/simple-deploy.sh rollback  # Rollback if needed
+./scripts/prod_deploy.sh web       # Sync qual to production
+./scripts/prod_deploy.sh rollback  # Rollback if needed
 ```
 
 **Production URL:** https://stackmap.app/
@@ -176,4 +184,4 @@ ssh stackmap-cpanel "cd ~/public_html/qual && git checkout <commit-hash>"
 
 ---
 
-**Remember:** When in doubt, use `./scripts/deploy-all.sh` - it handles everything!
+**Remember:** Use `./scripts/qual_deploy.sh` for staging, then `./scripts/prod_deploy.sh all` for production!

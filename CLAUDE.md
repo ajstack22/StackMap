@@ -7,8 +7,9 @@
 # ### Changes Made:
 # - List of changes...
 
-./scripts/deploy-all.sh  # Deploys to ALL platforms with auto version increment + tests
-./scripts/deploy-all.sh --skip-tests  # Emergency deploy without tests
+./scripts/qual_deploy.sh  # Deploys to QUAL/staging with auto version increment + tests
+./scripts/prod_deploy.sh all  # Full production deploy (web + Android AAB + iOS prep)
+./scripts/prod_deploy.sh web  # Deploy web to production only
 ```
 **Commit Messages:** Update `PENDING_CHANGES.md` before deploying for descriptive commit messages
 **For all deployment details:** See `docs/deployment/README.md`

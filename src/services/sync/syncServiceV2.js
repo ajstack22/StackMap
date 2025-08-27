@@ -170,6 +170,13 @@ class SyncServiceV2 {
    */
   async enable(recoveryPhrase) {
     try {
+      // CRITICAL: Verify we have data before enabling sync
+      const testState = this.getCurrentState();
+      if (!testState.users || Object.keys(testState.users).length === 0) {
+        console.error('[SyncV2] Cannot enable sync - no users in store');
+        throw new Error('No data available to sync. Please ensure you have data before enabling sync.');
+      }
+      
       // Generate recovery phrase if not provided
       if (!recoveryPhrase) {
         recoveryPhrase = encryptionService.generateRecoveryPhrase();
@@ -356,6 +363,15 @@ class SyncServiceV2 {
       // Get current local state
       const localState = this.getCurrentState();
       
+      // CRITICAL SAFETY CHECK: Never push empty state
+      // This can happen due to race conditions during initialization
+      if (!localState.users || Object.keys(localState.users).length === 0) {
+        console.error('[SyncV2] SAFETY: Refusing to sync - no users in local state');
+        this.syncInProgress = false;
+        this.updateSyncStatus('error', 'No data to sync');
+        return;
+      }
+      
       // Pull remote data
       const remoteData = await this.pull();
       
@@ -422,6 +438,12 @@ class SyncServiceV2 {
   async createSyncGroup(syncId, salt) {
     const deviceId = await encryptionService.getDeviceId();
     const currentState = this.getCurrentState();
+    
+    // CRITICAL: Don't create sync with empty data
+    if (!currentState.users || Object.keys(currentState.users).length === 0) {
+      console.error('[SyncV2] ERROR: Cannot create sync group with no users');
+      throw new Error('No data available to sync. Please ensure you have created at least one user before enabling sync.');
+    }
     
     // Debug log to see what data we're syncing
     if (__DEV__) console.log('[SyncV2] Creating sync group with state:', {
