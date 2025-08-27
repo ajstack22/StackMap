@@ -50,12 +50,6 @@ const getApiBaseUrl = () => {
   return prodUrl;
 };
 
-// Global protection flag - v22
-if (typeof window !== 'undefined') {
-  window.__syncJustJoined = false;
-  window.__syncJoinedAt = 0;
-}
-
 class SyncServiceV2 {
   constructor() {
     this.syncEnabled = false;
@@ -302,15 +296,9 @@ class SyncServiceV2 {
           this._joinedAt = Date.now();
           this._applyingRemoteState = true;
           
-          // Set global flags too - v22
-          if (typeof window !== 'undefined') {
-            window.__syncJustJoined = true;
-            window.__syncJoinedAt = Date.now();
-          }
-          
           // Alert to make it clear what's happening (for debugging)
           if (typeof alert !== 'undefined') {
-            alert('DEBUG v22: Joining sync - all protection flags set');
+            alert('DEBUG v19: Joining sync - flags set, will disable sync temporarily');
           }
           
           // Temporarily disable sync to prevent any sync operations
@@ -808,21 +796,8 @@ class SyncServiceV2 {
    * Push data to server
    */
   async push(state) {
-    // CRITICAL v22: Check global flag too
-    if (typeof window !== 'undefined' && window.__syncJustJoined) {
-      if (Date.now() - window.__syncJoinedAt < 30000) {
-        alert('DEBUG v22: Push blocked by GLOBAL flag - just joined');
-        return this.lastVersion;
-      } else {
-        window.__syncJustJoined = false; // Clear after 30 seconds
-      }
-    }
-    
-    // CRITICAL v22: Block push for 30 seconds after joining
-    if (this._justJoinedSync || (this._joinedAt && Date.now() - this._joinedAt < 30000)) {
-      if (typeof alert !== 'undefined') {
-        alert('DEBUG v22: Push blocked - just joined sync');
-      }
+    // SAFETY CHECK: Don't push if we just joined
+    if (this._justJoinedSync) {
       console.warn('[SyncV2] Refusing to push - just joined sync group');
       return this.lastVersion; // Return current version without pushing
     }

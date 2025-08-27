@@ -1,11 +1,12 @@
 # Pending Changes
 
-## Title: Fix Webpack Cache Issue - Deploy Protection Code
+## Title: v22 - Global Protection Flags to Block Device B Push
 
 ### Changes Made:
-- Fixed webpack build cache preventing protection code from being included
-- Cleared all build caches (node_modules/.cache, .babel-cache, web/build)
-- Protection code now properly included (10 occurrences vs 1 in broken build)
-- Added BUILD CHECK v21 debug message to verify correct deployment
-- All sync protection mechanisms from v18-v20 now actually deployed
+- Added global window.__syncJustJoined and window.__syncJoinedAt flags
+- These persist across all modules regardless of webpack caching
+- Push function checks BOTH instance and global flags
+- 30-second hard block on pushing after joining sync
+- Alert messages show when protection is triggered
+- This bypasses webpack module caching issues entirely
 

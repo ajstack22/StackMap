@@ -160,7 +160,10 @@ const getAndroidModalBottomHeight = insets => {
 
 
 const App = () => {
-  console.log('BUILD CHECK v21 - Protection code included');
+  console.log('BUILD v22 - Global protection flags');
+  if (typeof window !== 'undefined') {
+    console.log('Global sync flags:', window.__syncJustJoined, window.__syncJoinedAt);
+  }
   // Reduced startup logging - only show once
   if (Platform.OS === 'web' && !window.__stackMapStartupLogged) {
 
