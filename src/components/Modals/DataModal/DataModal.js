@@ -929,11 +929,20 @@ const DataModal = ({
         // Immediately capture the frozen values to prevent any modification
         const finalSyncId = result.syncId;
         const finalRecoveryPhrase = result.recoveryPhrase;
+        
+        // DEBUG: Log to verify we're setting the right values (will be stripped in prod)
+        console.log('[DataModal] Setting sync values:', {
+          finalSyncId,
+          finalRecoveryPhrase,
+          syncIdLength: finalSyncId?.length,
+          phraseLength: finalRecoveryPhrase?.length
+        });
 
         // Set state with captured values from the frozen result
+        // CRITICAL: Make sure we're not swapping these!
         setSyncEnabled(true);
-        setSyncId(finalSyncId);
-        setSyncRecoveryPhrase(finalRecoveryPhrase);
+        setSyncId(finalSyncId);  // This sets the sync ID state
+        setSyncRecoveryPhrase(finalRecoveryPhrase);  // This sets what gets DISPLAYED
         setShowRecoveryPhrase(true); // Keep showing it
 
         if (onSyncStatusChange) {

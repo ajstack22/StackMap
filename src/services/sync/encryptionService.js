@@ -44,6 +44,11 @@ class EncryptionService {
     // Check if we have a cached key for this phrase+salt combo
     const cacheKey = `${recoveryPhrase}_${salt || 'default'}`;
     if (this.keyCache && this.keyCache[cacheKey]) {
+      console.log('[Encryption] Returning cached key for:', {
+        phrasePreview: recoveryPhrase.substring(0, 4) + '...',
+        saltPreview: salt ? (typeof salt === 'string' ? salt.substring(0, 8) : 'bytes') : 'default',
+        cacheKey: cacheKey.substring(0, 20) + '...'
+      });
       return this.keyCache[cacheKey];
     }
 
@@ -103,6 +108,14 @@ class EncryptionService {
     if (!this.keyCache) {
       this.keyCache = {};
     }
+    
+    console.log('[Encryption] Caching key derivation result:', {
+      phrasePreview: recoveryPhrase.substring(0, 4) + '...',
+      saltPreview: typeof salt === 'string' ? salt.substring(0, 8) + '...' : 'bytes',
+      cacheKey: cacheKey.substring(0, 20) + '...',
+      keyPreview: Array.from(result.key.slice(0, 4), b => b.toString(16).padStart(2, '0')).join('')
+    });
+    
     this.keyCache[cacheKey] = result;
 
     return result;

@@ -313,7 +313,25 @@ class SyncServiceV2 {
       this.startSyncTimer();
       
       // Store recovery phrase for future use
+      console.log('[SyncV2] About to store recovery phrase:', {
+        phraseToStore: recoveryPhrase,
+        syncIdToUse: this.syncId,
+        phraseLength: recoveryPhrase.length,
+        syncIdLength: this.syncId?.length
+      });
       await encryptionService.storeRecoveryPhrase(recoveryPhrase, this.syncId);
+      
+      // Immediately verify it was stored correctly
+      const verifyStored = await encryptionService.getStoredRecoveryPhrase(this.syncId);
+      if (verifyStored !== recoveryPhrase) {
+        console.error('[SyncV2] CRITICAL: Recovery phrase storage verification failed!', {
+          original: recoveryPhrase,
+          retrieved: verifyStored,
+          match: verifyStored === recoveryPhrase
+        });
+      } else {
+        console.log('[SyncV2] Recovery phrase storage verified successfully');
+      }
       
       // Return object with sync info (matching original sync service)
       return {
@@ -339,10 +357,25 @@ class SyncServiceV2 {
       this.syncDebounceTimer = null;
     }
     
-    await AsyncStorage.multiRemove([
+    // Get the sync ID before clearing it
+    const syncIdToRemove = this.syncId || await AsyncStorage.getItem('@sync_id');
+    
+    // Clear all sync-related data including the sync ID
+    const keysToRemove = [
       '@sync_enabled',
-      '@sync_version'
-    ]);
+      '@sync_version',
+      '@sync_id'  // CRITICAL: Must remove sync_id when disabling
+    ];
+    
+    // Also remove the recovery phrase for this sync ID
+    if (syncIdToRemove) {
+      keysToRemove.push(`@sync_phrase_${syncIdToRemove}`);
+    }
+    
+    await AsyncStorage.multiRemove(keysToRemove);
+    
+    // Clear in-memory state
+    this.syncId = null;
     
     eventLogger.logSync('DISABLED', {});
   }
@@ -807,11 +840,31 @@ class SyncServiceV2 {
     const recoveryPhrase = encryptionService.generateRecoveryPhrase();
     const syncId = await this.generateSyncId(recoveryPhrase);
     
+    // CRITICAL DEBUG: Log what we're about to return
+    console.log('[SyncV2] CREATE DEBUG:', {
+      recoveryPhrase: recoveryPhrase,
+      syncId: syncId,
+      phraseLength: recoveryPhrase.length,
+      syncIdLength: syncId.length,
+      phraseFirst4: recoveryPhrase.substring(0, 4),
+      syncIdFirst4: syncId.substring(0, 4)
+    });
+    
+    // CRITICAL TEST: Immediately verify the generation is correct
+    const verifyId = await this.generateSyncId(recoveryPhrase);
+    if (verifyId !== syncId) {
+      console.error('[SyncV2] CRITICAL BUG: generateSyncId is not deterministic!', {
+        original: syncId,
+        verify: verifyId
+      });
+    }
+    
     // Create immutable result BEFORE any async operations
     // This ensures nothing can modify these values
+    // CRITICAL FIX: Were we accidentally swapping these? Let's be ABSOLUTELY SURE
     const result = Object.freeze({
-      syncId: syncId,
-      recoveryPhrase: recoveryPhrase,
+      recoveryPhrase: recoveryPhrase,  // The 32-char hex we generated with randomBytes
+      syncId: syncId,  // The ID derived from the recovery phrase via PBKDF2
       isNewSync: true
     });
     
@@ -822,6 +875,26 @@ class SyncServiceV2 {
     
     // Enable will use the existing this.syncId instead of generating a new one
     await this.enable(recoveryPhrase);
+    
+    // CRITICAL VERIFICATION: Before returning, verify everything is correct
+    const finalStoredPhrase = await encryptionService.getStoredRecoveryPhrase(syncId);
+    const finalGeneratedId = await this.generateSyncId(finalStoredPhrase);
+    
+    console.log('[SyncV2] CREATE FINAL VERIFICATION:', {
+      resultSyncId: result.syncId,
+      resultPhrase: result.recoveryPhrase,
+      storedPhrase: finalStoredPhrase,
+      generatedFromStored: finalGeneratedId,
+      serviceSyncId: this.syncId,
+      asyncStorageSyncId: await AsyncStorage.getItem('@sync_id'),
+      allMatch: (
+        result.syncId === syncId &&
+        result.recoveryPhrase === recoveryPhrase &&
+        finalStoredPhrase === recoveryPhrase &&
+        finalGeneratedId === syncId &&
+        this.syncId === syncId
+      )
+    });
     
     // Return the frozen result that was created BEFORE async operations
     // This guarantees the recovery phrase and sync ID match
