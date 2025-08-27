@@ -40,11 +40,12 @@ try {
         exit();
     }
 
-    // Update device last seen
+    // Create or update device record
+    // IMPORTANT: This tracks when a device first joins
     $deviceStmt = $db->prepare("
-        UPDATE sync_devices 
-        SET last_seen = CURRENT_TIMESTAMP
-        WHERE device_id = ? AND sync_id = ?
+        INSERT INTO sync_devices (device_id, sync_id, device_name, created_at, last_seen)
+        VALUES (?, ?, 'Web Browser', NOW(), NOW())
+        ON DUPLICATE KEY UPDATE last_seen = NOW()
     ");
     $deviceStmt->execute([$device_id, $sync_id]);
 

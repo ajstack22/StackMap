@@ -1,13 +1,11 @@
 # Pending Changes
 
-## Title: Server-Side Protection Against Sync Data Loss
+## Title: Fix Server Protection - Track Devices on Pull
 
 ### Changes Made:
-- HAR analysis revealed Device A pushes corrupted data after Device B joins
-- Client protection not working due to webpack build issues
-- Added SERVER-SIDE protection in push.php:
-  - Blocks push for 30 seconds after device first joins
-  - Validates version numbers to prevent jumps
-  - Returns HTTP 429 if device tries to push too soon
-- This protection works regardless of client code issues
+- Fixed critical bug: devices weren't being tracked when they pulled
+- pull.php now creates device record on first pull (tracks join time)
+- push.php blocks ALL devices without record (new devices)
+- Extended protection window to 60 seconds (was too close at 30)
+- This ensures Device B cannot push immediately after joining
 

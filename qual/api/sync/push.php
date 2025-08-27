@@ -36,16 +36,26 @@ try {
     $deviceInfo = $joinCheckStmt->fetch(PDO::FETCH_ASSOC);
     
     if ($deviceInfo) {
-        // If device joined less than 30 seconds ago, block the push
-        if ($deviceInfo['seconds_since_join'] < 30) {
+        // If device joined less than 60 seconds ago, block the push
+        if ($deviceInfo['seconds_since_join'] < 60) {
             http_response_code(429); // Too Many Requests
             echo json_encode([
                 'success' => false, 
-                'error' => 'Device must wait 30 seconds after joining before pushing',
-                'seconds_to_wait' => 30 - $deviceInfo['seconds_since_join']
+                'error' => 'Device must wait 60 seconds after joining before pushing',
+                'seconds_to_wait' => 60 - $deviceInfo['seconds_since_join']
             ]);
             exit();
         }
+    } else {
+        // CRITICAL: Device doesn't exist yet - this is its first push after joining!
+        // Block it for safety - new devices should pull first, not push
+        http_response_code(429);
+        echo json_encode([
+            'success' => false,
+            'error' => 'New device must wait before first push',
+            'seconds_to_wait' => 60
+        ]);
+        exit();
     }
     
     // PROTECTION: Check for corrupted version numbers
