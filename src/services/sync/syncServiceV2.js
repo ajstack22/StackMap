@@ -268,6 +268,7 @@ class SyncServiceV2 {
         await this.createSyncGroup(this.syncId, salt);
       } else {
         // Existing sync group - join it
+        console.log('[SyncV2] Joining existing sync group');
         const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
         await encryptionService.initialize(
           recoveryPhrase,
@@ -277,17 +278,36 @@ class SyncServiceV2 {
         
         // Verify we can decrypt
         const decryptedData = encryptionService.decryptData(existingData.encrypted_blob);
+        console.log('[SyncV2] Decrypted remote data:', {
+          userCount: Object.keys(decryptedData.users || {}).length,
+          version: existingData.version,
+          currentUser: decryptedData.currentUser
+        });
         
         // Apply remote data if it has content
         if (decryptedData.users && Object.keys(decryptedData.users).length > 0) {
+          console.log('[SyncV2] Applying remote state to local stores');
+          
+          // CRITICAL FIX: Apply remote state directly without clearing first
+          // Clearing and re-applying can trigger store listeners that cause unwanted syncs
+          const { useUserStore, useLibraryStore } = require('../../stores');
+          
+          console.log('[SyncV2] Applying remote state (will replace local state)');
+          
+          // Apply the remote state directly - applyState will overwrite existing data
           await this.applyState(decryptedData);
           
-          // CRITICAL: Set a flag to prevent immediate push after joining
-          // We just pulled and applied remote data, don't push back immediately
+          // CRITICAL: Set a flag to prevent ANY sync operations after joining
+          // This prevents both push and pull operations
           this._justJoinedSync = true;
+          this._joinedAt = Date.now();
+          console.log('[SyncV2] Set _justJoinedSync flag to prevent immediate sync');
+          
+          // Clear flag after a longer delay to ensure state stabilizes
           setTimeout(() => {
+            console.log('[SyncV2] Clearing _justJoinedSync flag');
             this._justJoinedSync = false;
-          }, 10000); // Clear flag after 10 seconds (increased from 5)
+          }, 15000); // Increased to 15 seconds
         }
         
         this.lastVersion = existingData.version;
@@ -383,6 +403,11 @@ class SyncServiceV2 {
     this.stopSyncTimer();
     console.log('[SyncV2] Starting sync timer with interval:', this.SYNC_INTERVAL);
     this.syncTimer = setInterval(() => {
+      // Skip periodic sync if we just joined
+      if (this._justJoinedSync) {
+        console.log('[SyncV2] Skipping periodic sync - just joined sync group');
+        return;
+      }
       console.log('[SyncV2] Periodic sync timer fired');
       // Always perform sync to pull updates, not just when we have pending changes
       // This ensures all devices get updates even if they haven't made changes
@@ -407,6 +432,12 @@ class SyncServiceV2 {
   requestSync(options = {}) {
     if (!this.syncEnabled) {
       // Return resolved promise for compatibility with callers expecting a Promise
+      return Promise.resolve();
+    }
+    
+    // CRITICAL: Don't allow sync requests if we just joined
+    if (this._justJoinedSync) {
+      console.log('[SyncV2] Ignoring sync request - just joined sync group');
       return Promise.resolve();
     }
     
@@ -467,7 +498,11 @@ class SyncServiceV2 {
     // CRITICAL: Don't push if we just joined a sync
     // This prevents overwriting server data with potentially empty local state
     if (this._justJoinedSync) {
-      console.log('[SyncV2] Skipping sync - just joined, waiting for local state to stabilize');
+      const timeSinceJoin = Date.now() - (this._joinedAt || 0);
+      console.log('[SyncV2] Skipping sync - just joined, waiting for local state to stabilize', {
+        timeSinceJoin,
+        willClearIn: Math.max(0, 15000 - timeSinceJoin)
+      });
       return;
     }
 
@@ -481,6 +516,12 @@ class SyncServiceV2 {
       
       // Get current local state
       const localState = this.getCurrentState();
+      console.log('[SyncV2] performSync - Local state:', {
+        userCount: Object.keys(localState.users || {}).length,
+        currentUser: localState.currentUser,
+        hasLibrary: !!localState.library,
+        firstActivity: localState.users?.[localState.currentUser]?.days?.today?.activities?.[0]?.text
+      });
       
       // CRITICAL SAFETY CHECK: Never push empty state
       // This can happen due to race conditions during initialization
@@ -504,6 +545,10 @@ class SyncServiceV2 {
       
       if (remoteData && remoteData.version > this.lastVersion) {
         // Remote is newer - merge with CRDT
+        console.log('[SyncV2] Remote is newer, will merge:', {
+          localVersion: this.lastVersion,
+          remoteVersion: remoteData.version
+        });
         eventLogger.logSync('MERGING', { 
           localVersion: this.lastVersion,
           remoteVersion: remoteData.version 
@@ -513,15 +558,30 @@ class SyncServiceV2 {
         const normalizedRemote = normalizeSyncData(decryptedRemote);
         
         // CRITICAL: Log what we're about to merge
-        console.log('[SyncV2] Merging remote data:', {
-          localUserCount: Object.keys(localState.users || {}).length,
-          remoteUserCount: Object.keys(normalizedRemote.users || {}).length,
-          localActivities: localState.users?.[localState.currentUser]?.days?.today?.activities?.length || 0,
-          remoteActivities: normalizedRemote.users?.[normalizedRemote.currentUser]?.days?.today?.activities?.length || 0
+        console.log('[SyncV2] Pre-merge state comparison:', {
+          local: {
+            userCount: Object.keys(localState.users || {}).length,
+            currentUser: localState.currentUser,
+            activities: localState.users?.[localState.currentUser]?.days?.today?.activities?.length || 0,
+            firstActivity: localState.users?.[localState.currentUser]?.days?.today?.activities?.[0]?.text
+          },
+          remote: {
+            userCount: Object.keys(normalizedRemote.users || {}).length,
+            currentUser: normalizedRemote.currentUser,
+            activities: normalizedRemote.users?.[normalizedRemote.currentUser]?.days?.today?.activities?.length || 0,
+            firstActivity: normalizedRemote.users?.[normalizedRemote.currentUser]?.days?.today?.activities?.[0]?.text
+          }
         });
         
         // Use CRDT merger for conflict-free merge
         stateToSync = crdtMerger.mergeStates(localState, normalizedRemote, this.deviceId);
+        
+        // Log merge result
+        console.log('[SyncV2] Post-merge result:', {
+          userCount: Object.keys(stateToSync.users || {}).length,
+          activities: stateToSync.users?.[stateToSync.currentUser]?.days?.today?.activities?.length || 0,
+          firstActivity: stateToSync.users?.[stateToSync.currentUser]?.days?.today?.activities?.[0]?.text
+        });
         
         // CRITICAL SAFETY CHECK: Never apply empty state that would delete all data
         if (!stateToSync.users || Object.keys(stateToSync.users).length === 0) {
@@ -533,17 +593,29 @@ class SyncServiceV2 {
           });
           // Keep local state instead of applying empty merge
           stateToSync = localState;
+        } else if (stateToSync.users?.[stateToSync.currentUser]?.days?.today?.activities?.length === 0 &&
+                   localState.users?.[localState.currentUser]?.days?.today?.activities?.length > 0) {
+          // CRITICAL: Don't wipe out activities
+          console.error('[SyncV2] CRITICAL: Merge would delete all activities! Keeping local data');
+          stateToSync = localState;
         } else {
           // Only apply if we have valid data
+          console.log('[SyncV2] Applying merged state to stores');
           await this.applyState(stateToSync);
         }
       } else {
         // Local is newer or same - use local
+        console.log('[SyncV2] Local is newer or same version, using local state');
         stateToSync = localState;
       }
       
       // Push merged state
+      console.log('[SyncV2] Pushing state to server with activities:', {
+        activityCount: stateToSync.users?.[stateToSync.currentUser]?.days?.today?.activities?.length || 0,
+        firstActivity: stateToSync.users?.[stateToSync.currentUser]?.days?.today?.activities?.[0]?.text
+      });
       const newVersion = await this.push(stateToSync);
+      console.log('[SyncV2] Push successful, new version:', newVersion);
       this.lastVersion = newVersion;
       
       await AsyncStorage.setItem('@sync_version', newVersion.toString());
@@ -701,6 +773,22 @@ class SyncServiceV2 {
    * Push data to server
    */
   async push(state) {
+    // SAFETY CHECK: Don't push if we just joined
+    if (this._justJoinedSync) {
+      console.warn('[SyncV2] Refusing to push - just joined sync group');
+      return this.lastVersion; // Return current version without pushing
+    }
+    
+    // SAFETY CHECK: Don't push empty state
+    const activityCount = Object.values(state.users || {}).reduce((sum, user) => 
+      sum + Object.values(user.days || {}).reduce((daySum, day) => 
+        daySum + (day.activities?.length || 0), 0), 0);
+    
+    if (activityCount === 0) {
+      console.warn('[SyncV2] Refusing to push - no activities in state');
+      return this.lastVersion; // Return current version without pushing
+    }
+    
     const encrypted = encryptionService.encryptData(state);
     
     console.log('[SyncV2] Push request:', {
@@ -708,6 +796,7 @@ class SyncServiceV2 {
       deviceId: this.deviceId,
       version: this.lastVersion + 1,
       hasData: !!state.users && Object.keys(state.users).length > 0,
+      activityCount,
       url: getApiBaseUrl().includes('qual') ? 'QUAL' : 'PROD'
     });
     
@@ -762,10 +851,23 @@ class SyncServiceV2 {
    * Apply state to stores
    */
   async applyState(state) {
+    console.log('[SyncV2] applyState called with:', {
+      userCount: Object.keys(state.users || {}).length,
+      currentUser: state.currentUser,
+      activities: state.users?.[state.currentUser]?.days?.today?.activities?.length || 0,
+      firstActivity: state.users?.[state.currentUser]?.days?.today?.activities?.[0]?.text
+    });
+    
     const { useUserStore, useSettingsStore, useLibraryStore } = require('../../stores');
     
     // Check if data needs migration from old format
     const migratedState = await dataMigrator.checkAndMigrate(state, this.deviceId);
+    
+    // Log what we're about to apply
+    console.log('[SyncV2] Applying migrated state:', {
+      userCount: Object.keys(migratedState.users || {}).length,
+      activities: migratedState.users?.[migratedState.currentUser]?.days?.today?.activities?.length || 0
+    });
     
     // Update stores with migrated data
     useUserStore.getState().setUsers(migratedState.users || {});

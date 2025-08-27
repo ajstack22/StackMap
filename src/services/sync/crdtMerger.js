@@ -366,6 +366,11 @@ class CRDTMerger {
   mergeUsers(localUsers = {}, remoteUsers = {}, deviceId) {
     const mergedUsers = {};
 
+    console.log('[CRDTMerger] mergeUsers start:', {
+      localUserIds: Object.keys(localUsers),
+      remoteUserIds: Object.keys(remoteUsers)
+    });
+
     // Get all unique user IDs
     const allUserIds = new Set([
       ...Object.keys(localUsers),
@@ -378,10 +383,12 @@ class CRDTMerger {
 
       if (!localUser && !remoteUser) return;
       if (!localUser) {
+        console.log(`[CRDTMerger] User ${userId} only exists remotely`);
         mergedUsers[userId] = remoteUser;
         return;
       }
       if (!remoteUser) {
+        console.log(`[CRDTMerger] User ${userId} only exists locally`);
         mergedUsers[userId] = localUser;
         return;
       }
@@ -465,10 +472,45 @@ class CRDTMerger {
    * Main merge function for complete state
    */
   mergeStates(localState, remoteState, deviceId) {
+    console.log('[CRDTMerger] mergeStates START:', {
+      local: {
+        userCount: Object.keys(localState.users || {}).length,
+        currentUser: localState.currentUser,
+        activities: localState.users?.[localState.currentUser]?.days?.today?.activities?.length || 0
+      },
+      remote: {
+        userCount: Object.keys(remoteState.users || {}).length,
+        currentUser: remoteState.currentUser,
+        activities: remoteState.users?.[remoteState.currentUser]?.days?.today?.activities?.length || 0
+      }
+    });
+
     eventLogger.logSync('CRDT_MERGE_START', {
       localUserCount: Object.keys(localState.users || {}).length,
       remoteUserCount: Object.keys(remoteState.users || {}).length
     });
+
+    // CRITICAL: If local has no meaningful data (e.g., just joined), prefer remote entirely
+    const localActivityCount = Object.values(localState.users || {}).reduce((sum, user) => 
+      sum + Object.values(user.days || {}).reduce((daySum, day) => 
+        daySum + (day.activities?.length || 0), 0), 0);
+    
+    const remoteActivityCount = Object.values(remoteState.users || {}).reduce((sum, user) => 
+      sum + Object.values(user.days || {}).reduce((daySum, day) => 
+        daySum + (day.activities?.length || 0), 0), 0);
+    
+    console.log('[CRDTMerger] Activity counts:', { localActivityCount, remoteActivityCount });
+    
+    // If local has no activities but remote does, just use remote state entirely
+    // This handles the case when Browser B joins and shouldn't merge its starter data
+    if (localActivityCount === 0 && remoteActivityCount > 0) {
+      console.log('[CRDTMerger] Local has no activities, using remote state entirely');
+      return {
+        ...remoteState,
+        currentUser: remoteState.currentUser || localState.currentUser,
+        currentDay: remoteState.currentDay || localState.currentDay
+      };
+    }
 
     const merged = {
       users: this.mergeUsers(localState.users, remoteState.users, deviceId),
@@ -477,6 +519,13 @@ class CRDTMerger {
       currentUser: localState.currentUser || remoteState.currentUser,
       currentDay: localState.currentDay || remoteState.currentDay
     };
+
+    console.log('[CRDTMerger] mergeStates COMPLETE:', {
+      mergedUserCount: Object.keys(merged.users).length,
+      mergedCurrentUser: merged.currentUser,
+      mergedActivities: merged.users?.[merged.currentUser]?.days?.today?.activities?.length || 0,
+      firstActivity: merged.users?.[merged.currentUser]?.days?.today?.activities?.[0]?.text
+    });
 
     eventLogger.logSync('CRDT_MERGE_COMPLETE', {
       mergedUserCount: Object.keys(merged.users).length,

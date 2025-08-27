@@ -43,7 +43,12 @@ export const useSyncOnChange = () => {
     const triggerSyncIfNeeded = () => {
       // Skip if sync is not enabled (check both property names for compatibility)
       if (!syncService.enabled && !syncService.syncEnabled) {
-
+        return;
+      }
+      
+      // CRITICAL: Skip if we just joined a sync to prevent race conditions
+      if (syncService._justJoinedSync) {
+        console.log('[useSyncOnChange] Skipping sync trigger - just joined sync group');
         return;
       }
 
