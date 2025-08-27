@@ -2121,6 +2121,7 @@ const App = () => {
       icon: activityEmoji,
       completed: false,
       pinned: false,
+      modifiedAt: Date.now(), // CRITICAL: Set timestamp for sync conflict resolution
       // Only add optional fields if they have values
     };
 
@@ -5613,6 +5614,7 @@ Users: ${userNames} (${userCount} total)
             pinned: false,
             deleted: false,
             type: 'task',
+            modifiedAt: Date.now(), // CRITICAL: Set timestamp for sync conflict resolution
             ...(activity.isPersonal && { isPersonal: true }),
           };
           updateUserActivities(currentUser, currentDay, [

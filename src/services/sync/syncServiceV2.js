@@ -61,8 +61,9 @@ class SyncServiceV2 {
     this.pendingSync = false;
     
     // Single consistent timing strategy
-    this.SYNC_INTERVAL = 5000; // 5 seconds
+    this.SYNC_INTERVAL = 30000; // 30 seconds - less aggressive to avoid conflicts
     this.RETRY_DELAYS = [1000, 2000, 4000, 8000]; // Exponential backoff
+    this.DEBOUNCE_DELAY = 5000; // 5 seconds after changes before syncing
     
     // Status tracking
     this.syncStatus = 'idle';
@@ -412,13 +413,14 @@ class SyncServiceV2 {
       clearTimeout(this.syncDebounceTimer);
     }
     
-    // Debounce sync requests (wait 2 seconds for multiple rapid changes)
-    // This prevents excessive syncing during rapid edits
+    // Debounce sync requests (wait for changes to settle)
+    // This prevents excessive syncing during rapid edits and ensures
+    // local changes are fully saved before syncing
     this.syncDebounceTimer = setTimeout(() => {
       this.performSync().catch(error => {
         if (__DEV__) console.error('[SyncV2] Sync failed:', error);
       });
-    }, 2000);
+    }, this.DEBOUNCE_DELAY);
     
     // Return resolved promise since sync happens asynchronously
     return Promise.resolve();
@@ -435,6 +437,13 @@ class SyncServiceV2 {
     // Check if encryption is initialized
     if (!encryptionService.masterKey) {
       if (__DEV__) console.warn('[SyncV2] Skipping sync - encryption not initialized');
+      return;
+    }
+
+    // CRITICAL: Don't sync if there's a pending debounced sync
+    // This prevents the periodic sync from interfering with user changes
+    if (this.syncDebounceTimer) {
+      if (__DEV__) console.log('[SyncV2] Skipping periodic sync - pending changes being debounced');
       return;
     }
 
