@@ -380,7 +380,9 @@ class SyncServiceV2 {
    */
   startSyncTimer() {
     this.stopSyncTimer();
+    console.log('[SyncV2] Starting sync timer with interval:', this.SYNC_INTERVAL);
     this.syncTimer = setInterval(() => {
+      console.log('[SyncV2] Periodic sync timer fired');
       // Always perform sync to pull updates, not just when we have pending changes
       // This ensures all devices get updates even if they haven't made changes
       this.performSync();
@@ -399,13 +401,15 @@ class SyncServiceV2 {
 
   /**
    * Request sync (debounced)
+   * @param {Object} options - Optional sync options (for compatibility with hook)
    */
-  requestSync() {
+  requestSync(options = {}) {
     if (!this.syncEnabled) {
       // Return resolved promise for compatibility with callers expecting a Promise
       return Promise.resolve();
     }
     
+    console.log('[SyncV2] Sync requested - will sync after debounce delay');
     eventLogger.logSync('REQUESTED', {});
     
     // Clear any existing debounce timer
@@ -417,6 +421,7 @@ class SyncServiceV2 {
     // This prevents excessive syncing during rapid edits and ensures
     // local changes are fully saved before syncing
     this.syncDebounceTimer = setTimeout(() => {
+      console.log('[SyncV2] Debounce timer fired - performing sync now');
       this.performSync().catch(error => {
         if (__DEV__) console.error('[SyncV2] Sync failed:', error);
       });
@@ -430,27 +435,38 @@ class SyncServiceV2 {
    * Perform sync operation
    */
   async performSync(retryCount = 0) {
+    console.log('[SyncV2] performSync called', {
+      syncEnabled: this.syncEnabled,
+      syncId: this.syncId,
+      syncInProgress: this.syncInProgress
+    });
+    
     if (!this.syncEnabled || !this.syncId || this.syncInProgress) {
+      console.log('[SyncV2] Skipping sync - not ready', {
+        syncEnabled: this.syncEnabled,
+        hasSyncId: !!this.syncId,
+        syncInProgress: this.syncInProgress
+      });
       return;
     }
 
     // Check if encryption is initialized
     if (!encryptionService.masterKey) {
-      if (__DEV__) console.warn('[SyncV2] Skipping sync - encryption not initialized');
+      console.warn('[SyncV2] Skipping sync - encryption not initialized');
       return;
     }
 
     // CRITICAL: Don't sync if there's a pending debounced sync
     // This prevents the periodic sync from interfering with user changes
     if (this.syncDebounceTimer) {
-      if (__DEV__) console.log('[SyncV2] Skipping periodic sync - pending changes being debounced');
+      console.log('[SyncV2] Skipping periodic sync - pending changes being debounced');
       return;
     }
 
     // CRITICAL: Don't push if we just joined a sync
     // This prevents overwriting server data with potentially empty local state
     if (this._justJoinedSync) {
-      if (__DEV__) console.log('[SyncV2] Skipping sync - just joined, waiting for local state to stabilize');
+      console.log('[SyncV2] Skipping sync - just joined, waiting for local state to stabilize');
       return;
     }
 
@@ -878,6 +894,15 @@ class SyncServiceV2 {
     
     // Enable will use the existing this.syncId instead of generating a new one
     await this.enable(recoveryPhrase);
+    
+    // CRITICAL: Force an immediate sync after creation to push current data
+    console.log('[SyncV2] Forcing immediate sync after creation');
+    try {
+      await this.performSync();
+      console.log('[SyncV2] Initial sync completed successfully');
+    } catch (error) {
+      console.error('[SyncV2] Initial sync failed:', error);
+    }
     
     // CRITICAL VERIFICATION: Before returning, verify everything is correct
     const finalStoredPhrase = await encryptionService.getStoredRecoveryPhrase(syncId);
