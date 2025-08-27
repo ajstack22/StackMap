@@ -1809,6 +1809,12 @@ const DataModal = ({
             <Text style={styles.standardTabDescription}>
               Your data is syncing across devices
             </Text>
+            {/* Debug info for sync state - v19 */}
+            <Text style={[styles.standardTabDescription, { fontSize: 11, marginTop: 5, color: '#888' }]}>
+              v19 Debug: JJ={syncService?._justJoinedSync ? 'YES' : 'NO'} | 
+              AR={syncService?._applyingRemoteState ? 'YES' : 'NO'} |
+              SE={syncService?.syncEnabled ? 'YES' : 'NO'}
+            </Text>
           </View>
 
           {/* Sync Key Card - Always show buttons and QR, optionally show key text */}

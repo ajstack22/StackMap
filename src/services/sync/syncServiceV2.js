@@ -295,6 +295,11 @@ class SyncServiceV2 {
           this._joinedAt = Date.now();
           this._applyingRemoteState = true;
           
+          // Alert to make it clear what's happening (for debugging)
+          if (typeof alert !== 'undefined') {
+            alert('DEBUG v19: Joining sync - flags set, will disable sync temporarily');
+          }
+          
           // Temporarily disable sync to prevent any sync operations
           const wasSyncEnabled = this.syncEnabled;
           this.syncEnabled = false;
