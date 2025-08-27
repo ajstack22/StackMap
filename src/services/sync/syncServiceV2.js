@@ -208,14 +208,28 @@ class SyncServiceV2 {
         // Get the existing recovery phrase
         const existingPhrase = await encryptionService.getStoredRecoveryPhrase(this.syncId);
         
-        // If we have an existing phrase and no new phrase was provided, use existing
         if (existingPhrase) {
+          // Verify the phrase generates the correct sync ID
+          const generatedId = await this.generateSyncId(existingPhrase);
+          if (generatedId !== this.syncId) {
+            console.error('[SyncV2] CRITICAL: Stored phrase generates wrong sync ID!', {
+              activeId: this.syncId,
+              generatedId: generatedId,
+              phrasePreview: existingPhrase.substring(0, 4) + '...'
+            });
+            // The stored phrase is wrong! We need to find the right one or fail
+            throw new Error('Sync recovery phrase mismatch - please disable and re-enable sync');
+          }
+          
           // CRITICAL: Return the existing sync info, don't create a new one!
           console.log('[SyncV2] Returning existing sync info');
           return {
             syncId: this.syncId,
             recoveryPhrase: existingPhrase
           };
+        } else {
+          console.error('[SyncV2] Sync enabled but no recovery phrase found!');
+          throw new Error('Sync recovery phrase not found - please disable and re-enable sync');
         }
       }
       
@@ -757,6 +771,27 @@ class SyncServiceV2 {
     if (this.syncEnabled && this.syncId) {
       console.log('[SyncV2] create() called but sync already enabled, returning existing info');
       const existingPhrase = await encryptionService.getStoredRecoveryPhrase(this.syncId);
+      
+      if (!existingPhrase) {
+        console.error('[SyncV2] Sync enabled but recovery phrase not found for ID:', this.syncId);
+        // Try to recover by checking AsyncStorage for any stored phrases
+        const allKeys = await AsyncStorage.getAllKeys();
+        const phraseKeys = allKeys.filter(key => key.startsWith('@sync_phrase_'));
+        console.log('[SyncV2] Found phrase keys:', phraseKeys);
+        
+        throw new Error('Sync recovery phrase lost - please disable and re-enable sync');
+      }
+      
+      // Verify the phrase generates the correct sync ID
+      const generatedId = await this.generateSyncId(existingPhrase);
+      if (generatedId !== this.syncId) {
+        console.error('[SyncV2] CRITICAL in create(): Stored phrase generates wrong sync ID!', {
+          activeId: this.syncId,
+          generatedId: generatedId
+        });
+        throw new Error('Sync recovery phrase mismatch - please disable and re-enable sync');
+      }
+      
       return {
         syncId: this.syncId,
         recoveryPhrase: existingPhrase,
@@ -848,27 +883,45 @@ class SyncServiceV2 {
 
   // Get recovery phrase (if available)
   async getRecoveryPhrase() {
-    console.log('[SyncV2] getRecoveryPhrase called with syncId:', this.syncId);
+    // CRITICAL: Always use the sync ID from AsyncStorage as source of truth
+    const storedId = await AsyncStorage.getItem('@sync_id');
+    const activeId = storedId || this.syncId;
     
-    if (!this.syncId) {
+    console.log('[SyncV2] getRecoveryPhrase called:', {
+      serviceId: this.syncId,
+      storedId: storedId,
+      usingId: activeId
+    });
+    
+    if (!activeId) {
       console.log('[SyncV2] No sync ID available, returning null');
       return null;
     }
     
+    // Update service sync ID if needed
+    if (storedId && storedId !== this.syncId) {
+      console.warn('[SyncV2] Updating service sync ID to match stored');
+      this.syncId = storedId;
+    }
+    
     try {
-      // Retrieve the stored recovery phrase for the current sync ID
-      const phrase = await encryptionService.getStoredRecoveryPhrase(this.syncId);
+      // Retrieve the stored recovery phrase for the active sync ID
+      const phrase = await encryptionService.getStoredRecoveryPhrase(activeId);
       
       if (phrase) {
         // Verify the phrase generates the correct sync ID
         const generatedId = await this.generateSyncId(phrase);
-        if (generatedId !== this.syncId) {
+        if (generatedId !== activeId) {
           console.error('[SyncV2] CRITICAL: Stored phrase generates different sync ID!', {
-            expectedId: this.syncId,
+            expectedId: activeId,
             generatedId: generatedId,
             phrasePreview: phrase.substring(0, 4) + '...' + phrase.substring(phrase.length - 4)
           });
+          // Return null instead of wrong phrase
+          return null;
         }
+      } else {
+        console.warn('[SyncV2] No recovery phrase found for sync ID:', activeId);
       }
       
       return phrase;
@@ -879,8 +932,20 @@ class SyncServiceV2 {
   }
 
   // Get sync ID
-  getSyncId() {
-    console.log('[SyncV2] getSyncId called, returning:', this.syncId);
+  async getSyncId() {
+    console.log('[SyncV2] getSyncId called, current value:', this.syncId);
+    
+    // CRITICAL: Always verify the sync ID matches what's in AsyncStorage
+    const storedId = await AsyncStorage.getItem('@sync_id');
+    if (storedId && storedId !== this.syncId) {
+      console.error('[SyncV2] CRITICAL: Sync ID mismatch!', {
+        serviceId: this.syncId,
+        storedId: storedId
+      });
+      // Use the stored ID as source of truth
+      this.syncId = storedId;
+    }
+    
     return this.syncId;
   }
 
