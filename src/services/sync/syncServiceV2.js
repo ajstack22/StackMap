@@ -892,11 +892,9 @@ class SyncServiceV2 {
       allMatch: allMatch
     });
     
-    // In production, use Alert for critical debugging since console.log is stripped
-    if (!__DEV__ && !allMatch) {
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        window.alert(`SYNC ID MISMATCH DETECTED!\nResult phrase: ${result.recoveryPhrase.substring(0, 8)}...\nResult sync ID: ${result.syncId.substring(0, 8)}...\nStored phrase: ${finalStoredPhrase?.substring(0, 8)}...\nGenerated ID: ${finalGeneratedId?.substring(0, 8)}...`);
-      }
+    // Log mismatch if detected (will be stripped in production)
+    if (!allMatch) {
+      console.error('[SyncV2] CRITICAL: Sync ID mismatch detected during creation!');
     }
     
     // Return the frozen result that was created BEFORE async operations
