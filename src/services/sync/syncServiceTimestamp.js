@@ -51,9 +51,9 @@ class SyncServiceTimestamp {
     this.currentRecoveryPhrase = null; // Store phrase in memory for current session
     
     // Timing configuration
-    this.SYNC_INTERVAL = 60000; // 60 seconds (reduce to avoid rate limiting)
+    this.SYNC_INTERVAL = 30000; // 30 seconds
     this.DEBOUNCE_DELAY = 5000; // 5 seconds
-    this.JOIN_PROTECTION_TIME = 61000; // 61 seconds
+    this.JOIN_PROTECTION_TIME = 5000; // 5 seconds - just enough to prevent race conditions
     this.rateLimitBackoff = 0; // Track rate limit backoff
     
     // Clock skew detection
@@ -430,12 +430,16 @@ class SyncServiceTimestamp {
       // Get current local state
       const localState = this.getCurrentState();
       
-      // Safety check - don't sync empty state
-      if (!localState.users || Object.keys(localState.users).length === 0) {
-        console.error('[SyncTS] Refusing to sync - no users in local state');
-        this.syncInProgress = false;
-        return;
-      }
+      // Debug log the state
+      console.log('[SyncTS] Current state check:', {
+        hasUsers: !!localState.users,
+        userCount: localState.users ? Object.keys(localState.users).length : 0,
+        currentUser: localState.currentUser,
+        storeUsers: useUserStore.getState().users ? Object.keys(useUserStore.getState().users).length : 0
+      });
+      
+      // Safety check - don't push empty state (but allow pull to get data)
+      const hasLocalData = localState.users && Object.keys(localState.users).length > 0;
       
       // Pull newer records from server
       const pullResponse = await fetch(
@@ -573,8 +577,8 @@ class SyncServiceTimestamp {
       const localTimestamp = this.getLatestLocalTimestamp(localState);
       const hasNewLocalChanges = localTimestamp > this.lastSyncTimestamp;
       
-      // Only push if we have actual changes
-      if (hasNewLocalChanges || stateChanged) {
+      // Only push if we have actual changes AND have data to push
+      if ((hasNewLocalChanges || stateChanged) && hasLocalData) {
         console.log('[SyncTS] Pushing changes - hasNewLocal:', hasNewLocalChanges, 'stateChanged:', stateChanged);
         // Use server timestamp if available, fallback to client timestamp
         const pushTimestamp = pullData.server_time || Date.now();
@@ -917,18 +921,25 @@ class SyncServiceTimestamp {
   startSyncTimer() {
     this.stopSyncTimer();
     
-    // Perform an initial sync after a short delay (unless protected)
+    // Perform an initial sync after protection period (or immediately if not protected)
+    const initialDelay = this._justJoinedSync ? 6000 : 2000; // Wait 6s if protected, 2s otherwise
     setTimeout(() => {
-      if (!this._justJoinedSync && this.syncEnabled) {
+      console.log('[SyncTS] Initial sync check - protected:', this._justJoinedSync, 'enabled:', this.syncEnabled);
+      if (this.syncEnabled) {
         console.log('[SyncTS] Performing initial sync after timer start');
-        this.performSync();
+        this.performSync().catch(err => {
+          console.error('[SyncTS] Initial sync failed:', err);
+        });
       }
-    }, 2000);
+    }, initialDelay);
     
-    // Then set up regular interval syncs
+    // Then set up regular interval syncs - performSync will handle protection checks
     this.syncTimer = setInterval(() => {
-      if (!this._justJoinedSync && this.syncEnabled) {
-        this.performSync();
+      console.log('[SyncTS] Timer tick - enabled:', this.syncEnabled);
+      if (this.syncEnabled) {
+        this.performSync().catch(err => {
+          console.error('[SyncTS] Interval sync failed:', err);
+        });
       }
     }, this.SYNC_INTERVAL);
   }
