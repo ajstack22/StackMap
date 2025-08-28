@@ -204,8 +204,11 @@ const OnboardingUserCentered = ({
         throw new Error('Invalid sync code format');
       }
 
-      console.log('[OnboardingSync] Initializing sync...');
-      await syncService.initialize(phraseToUse);
+      console.log('[OnboardingSync] Initializing sync for preview...');
+      const syncId = await syncService.generateSyncId(phraseToUse);
+      const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+      await encryptionService.initialize(phraseToUse, syncId, fixedSalt);
+      syncService.syncId = syncId; // Temporarily set for pullData
 
       // Try pulling with retries for race conditions
       let pullResult = null;
