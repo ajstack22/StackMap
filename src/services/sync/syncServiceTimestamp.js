@@ -218,41 +218,61 @@ class SyncServiceTimestamp {
         await encryptionService.initialize(recoveryPhrase, this.syncId, fixedSalt);
         await this.createSyncGroup();
       } else {
-        // Existing sync group - join it
+        // Existing sync group - join it properly
         console.log('[SyncTS] Joining existing sync group');
         const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
         await encryptionService.initialize(recoveryPhrase, this.syncId, fixedSalt);
+        
+        // Call join endpoint to register device
+        const joinResponse = await fetch(`${getApiBaseUrl()}/join_timestamp.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sync_id: this.syncId,
+            device_id: this.deviceId
+          })
+        });
+        
+        if (!joinResponse.ok) {
+          const error = await joinResponse.json();
+          throw new Error(error.error || 'Failed to join sync group');
+        }
+        
+        const joinData = await joinResponse.json();
         
         // Set protection flags
         this._justJoinedSync = true;
         this._joinedAt = Date.now();
         this._applyingRemoteState = true;
         
-        console.log('[SYNC_FIX_VERIFICATION] Protection active:', {
-          justJoined: this._justJoinedSync,
-          joinedAt: this._joinedAt,
-          willBlockFor: '61 seconds'
-        });
+        console.log('[SyncTS] Join protection active for', joinData.protection_seconds || 60, 'seconds');
         
-        // Apply the latest record's data
-        const latestRecord = existingRecords[existingRecords.length - 1];
+        // Apply the latest record's data from join response
+        const latestRecord = joinData.latest_record;
         const decryptedData = encryptionService.decryptData(latestRecord.encrypted_blob);
         
-        // Clear local state and apply remote
+        // Clear local state completely before applying remote
         useUserStore.getState().setUsers({});
         useUserStore.getState().setCurrentUser(null);
         useLibraryStore.getState().setLibrary({});
+        useSettingsStore.getState().updateSettings({ selectedCategories: [] });
         
         await this.applyState(decryptedData, true);
         
         this._applyingRemoteState = false;
         this.lastSyncTimestamp = latestRecord.timestamp;
         
-        // Keep protection active for 61 seconds
+        // Update server time offset
+        if (joinData.server_time) {
+          this.serverTimeOffset = joinData.server_time - Date.now();
+        }
+        
+        // Keep protection active for the specified time
+        const protectionTime = (joinData.protection_seconds || 60) * 1000 + 1000; // Add 1s buffer
         setTimeout(() => {
-          console.log('[SyncTS] Clearing join protection after 61 seconds');
+          console.log('[SyncTS] Clearing join protection');
           this._justJoinedSync = false;
-        }, this.JOIN_PROTECTION_TIME);
+        }, protectionTime);
       }
 
       // Save state
@@ -326,19 +346,35 @@ class SyncServiceTimestamp {
    * Perform sync operation
    */
   async performSync() {
-    // Check protection flags
-    if (this._justJoinedSync || this._applyingRemoteState) {
-      console.log('[SyncTS] Skipping sync - protection active');
-      return;
+    // Check protection flags with proper error status
+    if (this._justJoinedSync) {
+      const elapsed = Date.now() - this._joinedAt;
+      if (elapsed < this.JOIN_PROTECTION_TIME) {
+        const secondsRemaining = Math.ceil((this.JOIN_PROTECTION_TIME - elapsed) / 1000);
+        console.log(`[SyncTS] Sync blocked - wait ${secondsRemaining}s after joining`);
+        this.updateSyncStatus('blocked', `Wait ${secondsRemaining}s after joining`);
+        return { success: false, blocked: true, waitTime: secondsRemaining };
+      }
+      // Protection period has passed
+      this._justJoinedSync = false;
     }
     
-    if (!this.syncEnabled || !this.syncId || this.syncInProgress) {
-      return;
+    if (this._applyingRemoteState) {
+      console.log('[SyncTS] Skipping sync - applying remote state');
+      return { success: false, blocked: true, message: 'Applying remote state' };
+    }
+    
+    if (!this.syncEnabled || !this.syncId) {
+      return { success: false, error: 'Sync not enabled' };
+    }
+    
+    if (this.syncInProgress) {
+      return { success: false, inProgress: true };
     }
 
     if (!encryptionService.masterKey) {
       console.warn('[SyncTS] Skipping sync - encryption not initialized');
-      return;
+      return { success: false, error: 'Encryption not initialized' };
     }
 
     this.syncInProgress = true;
@@ -363,6 +399,14 @@ class SyncServiceTimestamp {
       );
       
       if (!pullResponse.ok) {
+        if (pullResponse.status === 429) {
+          const errorData = await pullResponse.json();
+          const waitTime = errorData.seconds_remaining || 60;
+          console.log(`[SyncTS] Rate limited - wait ${waitTime}s`);
+          this.updateSyncStatus('blocked', `Rate limited - wait ${waitTime}s`);
+          this.syncInProgress = false;
+          return { success: false, blocked: true, waitTime: waitTime };
+        }
         throw new Error(`Pull failed: ${pullResponse.status}`);
       }
       
@@ -425,10 +469,15 @@ class SyncServiceTimestamp {
       // Only push if we have actual changes
       if (hasNewLocalChanges || stateChanged) {
         console.log('[SyncTS] Pushing changes - hasNewLocal:', hasNewLocalChanges, 'stateChanged:', stateChanged);
-        // Push current state with current timestamp
-        const pushTimestamp = Date.now();
-        await this.push(stateToSync, pushTimestamp);
-        this.lastSyncTimestamp = pushTimestamp;
+        // Use server timestamp if available, fallback to client timestamp
+        const pushTimestamp = pullData.server_time || Date.now();
+        const pushResult = await this.push(stateToSync, pushTimestamp);
+        if (pushResult && pushResult.server_time) {
+          // Update our timestamp to match server
+          this.lastSyncTimestamp = pushResult.server_time;
+        } else {
+          this.lastSyncTimestamp = pushTimestamp;
+        }
       } else {
         console.log('[SyncTS] No changes to push');
       }
@@ -439,11 +488,12 @@ class SyncServiceTimestamp {
       this.lastSyncSuccess = Date.now();
       this.updateSyncStatus('success');
       this.syncInProgress = false;
+      return { success: true };
       
     } catch (error) {
       this.syncInProgress = false;
       this.updateSyncStatus('error', error.message);
-      throw error;
+      return { success: false, error: error.message };
     }
   }
 
@@ -534,11 +584,23 @@ class SyncServiceTimestamp {
     });
 
     if (!response.ok) {
+      if (response.status === 429) {
+        const errorData = await response.json();
+        const waitTime = errorData.seconds_remaining || 60;
+        console.log(`[SyncTS] Push blocked by server - wait ${waitTime}s`);
+        this.updateSyncStatus('blocked', `New device protection - wait ${waitTime}s`);
+        return { success: false, blocked: true, waitTime: waitTime };
+      }
       const error = await response.json();
       throw new Error(error.error || `Push failed: ${response.status}`);
     }
 
-    return response.json();
+    const result = await response.json();
+    // Store server time if provided
+    if (result.server_time) {
+      this.serverTimeOffset = result.server_time - Date.now();
+    }
+    return result;
   }
 
   /**
@@ -824,9 +886,11 @@ class SyncServiceTimestamp {
     if (!this.syncId) return false;
     try {
       const response = await fetch(
-        `${getApiBaseUrl()}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=0`
+        `${getApiBaseUrl()}/verify_timestamp.php?sync_id=${this.syncId}`
       );
-      return response.ok;
+      if (!response.ok) return false;
+      const data = await response.json();
+      return data.exists;
     } catch {
       return false;
     }
