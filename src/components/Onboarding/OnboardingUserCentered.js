@@ -241,8 +241,7 @@ const OnboardingUserCentered = ({
       
       // Decrypt the data
       console.log('[OnboardingSync] Decrypting sync data...');
-      // @ts-ignore - encryptionService exists on SyncService
-      const decryptedData = syncService.encryptionService.decryptData(pullResult.encrypted_blob);
+      const decryptedData = encryptionService.decryptData(pullResult.encrypted_blob);
 
       if (!decryptedData) {
         console.error('[OnboardingSync] Decryption failed');
@@ -311,8 +310,7 @@ const OnboardingUserCentered = ({
       const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
       
       // Initialize encryption without enabling sync
-      // @ts-ignore - encryptionService exists
-      await syncService.encryptionService.initialize(phraseToUse, syncId, fixedSalt);
+      await encryptionService.initialize(phraseToUse, syncId, fixedSalt);
       
       // Set syncId temporarily so pullData works
       syncService.syncId = syncId;
@@ -325,8 +323,7 @@ const OnboardingUserCentered = ({
       }
       
       // Decrypt the data
-      // @ts-ignore - encryptionService exists on SyncService
-      const decryptedData = syncService.encryptionService.decryptData(pullResult.encrypted_blob);
+      const decryptedData = encryptionService.decryptData(pullResult.encrypted_blob);
       
       if (!decryptedData) {
         throw new Error('Failed to decrypt sync data');
