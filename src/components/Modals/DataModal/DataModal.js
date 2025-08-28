@@ -211,22 +211,21 @@ const DataModal = ({
         setSyncEnabled(true);
         
         const id = await syncService.getSyncId();
-        console.log('[DataModal] Got sync ID from service:', id);
+        // Got sync ID from service
         
         // Also check what's in AsyncStorage directly
         const storedId = await AsyncStorage.getItem('@sync_id');
-        console.log('[DataModal] Sync ID from AsyncStorage:', storedId);
         
         if (id !== storedId) {
-          console.warn('[DataModal] MISMATCH: Service sync ID !== stored sync ID');
+          // MISMATCH: Service sync ID !== stored sync ID
         }
         
         let phrase = await syncService.getRecoveryPhrase();
-        console.log('[DataModal] Got recovery phrase from service:', phrase ? phrase.substring(0, 4) + '...' + phrase.substring(phrase.length - 4) : 'none');
+        // Got recovery phrase from service
         
         // If no phrase from service, try direct AsyncStorage as fallback
         if (!phrase && id) {
-          console.log('[DataModal] No phrase from service, trying direct AsyncStorage lookup for syncId:', id);
+          // No phrase from service, trying direct AsyncStorage lookup
           
           // Try multiple possible storage keys
           const possibleKeys = [
@@ -240,12 +239,12 @@ const DataModal = ({
             try {
               const directPhrase = await AsyncStorage.getItem(key);
               if (directPhrase) {
-                console.log('[DataModal] Found phrase in AsyncStorage at key:', key);
+                // Found phrase in AsyncStorage
                 phrase = directPhrase;
                 break;
               }
             } catch (e) {
-              console.log('[DataModal] Error checking key', key, ':', e.message);
+              // Error checking key
             }
           }
         }
@@ -972,13 +971,6 @@ const DataModal = ({
         const finalSyncId = result.syncId;
         const finalRecoveryPhrase = result.recoveryPhrase;
         
-        // DEBUG: Log to verify we're setting the right values (will be stripped in prod)
-        console.log('[DataModal] Setting sync values:', {
-          finalSyncId,
-          finalRecoveryPhrase,
-          syncIdLength: finalSyncId?.length,
-          phraseLength: finalRecoveryPhrase?.length
-        });
 
         // Set state with captured values from the frozen result
         // CRITICAL: Make sure we're not swapping these!

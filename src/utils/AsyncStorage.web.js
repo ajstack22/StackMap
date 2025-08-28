@@ -1,6 +1,5 @@
 // Web implementation of AsyncStorage using localStorage
-const VERBOSE_LOGGING = true; // ENABLED FOR DEBUGGING RECOVERY PHRASE ISSUE
-console.warn('[AsyncStorage.web] Module loaded at', new Date().toISOString());
+const VERBOSE_LOGGING = false; // Set to true for debugging
 
 // Test localStorage availability
 const testLocalStorage = () => {
@@ -14,7 +13,7 @@ const testLocalStorage = () => {
       console.error('[AsyncStorage.web] ❌ localStorage test failed!');
       return false;
     }
-    console.warn('[AsyncStorage.web] ✅ localStorage test passed');
+    // localStorage test passed
     return true;
   } catch (e) {
     console.error('[AsyncStorage.web] ❌ localStorage not available:', e);
@@ -29,7 +28,7 @@ const memoryStorage = {};
 
 const AsyncStorage = {
   getItem: key => {
-    if (VERBOSE_LOGGING) console.warn(`[AsyncStorage.web] 🟢 getItem called for: ${key}`);
+    // getItem called
     return new Promise((resolve) => {
       // Use setTimeout to ensure async behavior
       setTimeout(() => {
@@ -40,22 +39,16 @@ const AsyncStorage = {
           // Fallback to sessionStorage if localStorage fails
           if (value === null && typeof sessionStorage !== 'undefined') {
             value = sessionStorage.getItem(key);
-            if (value !== null && VERBOSE_LOGGING) {
-              console.warn(`[AsyncStorage.web] 📦 Found in sessionStorage: ${key}`);
-            }
+            // Found in sessionStorage
           }
           
           // Fallback to memory storage for critical keys
           if (value === null && key.includes('sync_phrase')) {
             value = memoryStorage[key];
-            if (value !== null && VERBOSE_LOGGING) {
-              console.warn(`[AsyncStorage.web] 🧠 Found in memory: ${key}`);
-            }
+            // Found in memory
           }
           
-          if (VERBOSE_LOGGING) {
-            console.warn(`[AsyncStorage.web] 🟢 getItem('${key}') = ${value ? value.substring(0, 50) + '...' : null}`);
-          }
+          // getItem complete
           resolve(value);
         } catch (error) {
           console.error('[AsyncStorage.web] getItem error:', error);
@@ -70,8 +63,7 @@ const AsyncStorage = {
   setItem: (key, value) => {
     return new Promise((resolve, reject) => {
       try {
-        // Always log during debugging
-        console.warn(`[AsyncStorage.web] 🔵 setItem('${key}') = ${value ? value.substring(0, 50) + '...' : value}`);
+        // setItem called
         
         let storageSuccess = false;
         
@@ -83,7 +75,7 @@ const AsyncStorage = {
           const verification = localStorage.getItem(key);
           if (verification === value) {
             storageSuccess = true;
-            console.warn(`[AsyncStorage.web] ✅ Successfully stored in localStorage: ${key}`);
+            // Successfully stored in localStorage
           } else {
             console.error(`[AsyncStorage.web] ❌ localStorage verification failed for ${key}!`);
           }
@@ -96,7 +88,7 @@ const AsyncStorage = {
           try {
             if (typeof sessionStorage !== 'undefined') {
               sessionStorage.setItem(key, value);
-              console.warn(`[AsyncStorage.web] 📦 Backed up to sessionStorage: ${key}`);
+              // Backed up to sessionStorage
             }
           } catch (e) {
             console.warn(`[AsyncStorage.web] sessionStorage backup failed:`, e);
@@ -104,7 +96,7 @@ const AsyncStorage = {
           
           // Always store in memory as final fallback
           memoryStorage[key] = value;
-          console.warn(`[AsyncStorage.web] 🧠 Backed up to memory: ${key}`);
+          // Backed up to memory
         }
         
         // If localStorage completely failed, try sessionStorage
@@ -112,7 +104,7 @@ const AsyncStorage = {
           try {
             sessionStorage.setItem(key, value);
             storageSuccess = true;
-            console.warn(`[AsyncStorage.web] 📦 Fallback stored in sessionStorage: ${key}`);
+            // Fallback stored in sessionStorage
           } catch (e) {
             console.error(`[AsyncStorage.web] sessionStorage also failed:`, e);
           }
@@ -121,7 +113,7 @@ const AsyncStorage = {
         // Final fallback to memory
         if (!storageSuccess) {
           memoryStorage[key] = value;
-          console.warn(`[AsyncStorage.web] 🧠 Final fallback to memory storage: ${key}`);
+          // Final fallback to memory storage
         }
         
         resolve();
