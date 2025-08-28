@@ -79,16 +79,18 @@ class SyncServiceTimestamp {
    */
   async _initializeOnStartup() {
     try {
-      const [enabled, syncId, lastTimestamp] = await Promise.all([
+      const [enabled, syncId, lastTimestamp, joinTimestamp] = await Promise.all([
         AsyncStorage.getItem('@sync_enabled'),
         AsyncStorage.getItem('@sync_id'),
-        AsyncStorage.getItem('@sync_timestamp')
+        AsyncStorage.getItem('@sync_timestamp'),
+        AsyncStorage.getItem('@sync_join_timestamp')
       ]);
 
       console.log('[SyncTS] Initialize:', {
         enabled,
         syncId,
-        lastTimestamp
+        lastTimestamp,
+        joinTimestamp
       });
 
       if (enabled === 'true' && syncId) {
@@ -96,6 +98,32 @@ class SyncServiceTimestamp {
         this.syncId = syncId;
         this.lastSyncTimestamp = parseInt(lastTimestamp, 10) || 0;
         this.deviceId = await encryptionService.getDeviceId();
+        
+        // Check if we're still in protection period from a previous join
+        if (joinTimestamp) {
+          const joinTime = parseInt(joinTimestamp, 10);
+          const elapsed = Date.now() - joinTime;
+          if (elapsed < this.JOIN_PROTECTION_TIME) {
+            this._joinedAt = joinTime;
+            this._justJoinedSync = true;
+            const remainingTime = this.JOIN_PROTECTION_TIME - elapsed;
+            console.log(`[SyncTS] Protection period still active for ${Math.ceil(remainingTime / 1000)}s`);
+            
+            // Set timer to clear protection when it expires
+            setTimeout(() => {
+              console.log('[SyncTS] Protection period expired - triggering sync');
+              this._justJoinedSync = false;
+              AsyncStorage.removeItem('@sync_join_timestamp');
+              // Trigger immediate sync now that protection is cleared
+              if (this.syncEnabled) {
+                this.performSync();
+              }
+            }, remainingTime);
+          } else {
+            // Protection period has expired, clear the timestamp
+            AsyncStorage.removeItem('@sync_join_timestamp');
+          }
+        }
         
         try {
           const recoveryPhrase = await encryptionService.getStoredRecoveryPhrase(syncId);
@@ -246,10 +274,13 @@ class SyncServiceTimestamp {
         
         const joinData = await joinResponse.json();
         
-        // Set protection flags
+        // Set protection flags and persist the join timestamp
         this._justJoinedSync = true;
         this._joinedAt = Date.now();
         this._applyingRemoteState = true;
+        
+        // Persist join timestamp so protection survives restarts
+        await AsyncStorage.setItem('@sync_join_timestamp', this._joinedAt.toString());
         
         console.log('[SyncTS] Join protection active for', joinData.protection_seconds || 60, 'seconds');
         
@@ -273,11 +304,17 @@ class SyncServiceTimestamp {
           this.serverTimeOffset = joinData.server_time - Date.now();
         }
         
-        // Keep protection active for the specified time
-        const protectionTime = (joinData.protection_seconds || 60) * 1000 + 1000; // Add 1s buffer
-        setTimeout(() => {
-          console.log('[SyncTS] Clearing join protection');
+        // Keep protection active for a brief period
+        const protectionTime = 10000; // 10 seconds is plenty  
+        setTimeout(async () => {
+          console.log('[SyncTS] Clearing join protection - triggering sync');
           this._justJoinedSync = false;
+          // Clear the persisted timestamp
+          await AsyncStorage.removeItem('@sync_join_timestamp');
+          // Trigger immediate sync now that protection is cleared
+          if (this.syncEnabled) {
+            this.performSync();
+          }
         }, protectionTime);
       }
 
@@ -363,6 +400,7 @@ class SyncServiceTimestamp {
       }
       // Protection period has passed
       this._justJoinedSync = false;
+      await AsyncStorage.removeItem('@sync_join_timestamp');
     }
     
     if (this._applyingRemoteState) {
@@ -878,8 +916,18 @@ class SyncServiceTimestamp {
    */
   startSyncTimer() {
     this.stopSyncTimer();
+    
+    // Perform an initial sync after a short delay (unless protected)
+    setTimeout(() => {
+      if (!this._justJoinedSync && this.syncEnabled) {
+        console.log('[SyncTS] Performing initial sync after timer start');
+        this.performSync();
+      }
+    }, 2000);
+    
+    // Then set up regular interval syncs
     this.syncTimer = setInterval(() => {
-      if (!this._justJoinedSync) {
+      if (!this._justJoinedSync && this.syncEnabled) {
         this.performSync();
       }
     }, this.SYNC_INTERVAL);
@@ -1102,8 +1150,23 @@ class SyncServiceTimestamp {
     this.syncStatus = status;
     this.syncError = error;
     
+    // Format time-based status messages
+    let displayMessage = error;
+    if (status === 'idle' && this.lastSyncSuccess && !error) {
+      const elapsed = Date.now() - this.lastSyncSuccess;
+      if (elapsed < 5000) {
+        displayMessage = 'Just now';
+      } else if (elapsed < 60000) {
+        displayMessage = `${Math.floor(elapsed / 1000)}s ago`;
+      } else if (elapsed < 3600000) {
+        displayMessage = `${Math.floor(elapsed / 60000)}m ago`;
+      } else {
+        displayMessage = 'Over an hour ago';
+      }
+    }
+    
     this.statusListeners.forEach(listener => {
-      listener({ status, error });
+      listener({ status, error: displayMessage, lastSyncSuccess: this.lastSyncSuccess });
     });
   }
 
