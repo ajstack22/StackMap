@@ -72,7 +72,7 @@ try {
     $db->beginTransaction();
     
     try {
-        // Check if sync group already exists
+        // Check if sync group already exists in either table
         $check_stmt = $db->prepare("SELECT sync_id FROM sync_groups WHERE sync_id = ?");
         $check_stmt->execute([$sync_id]);
         $result = $check_stmt->fetch(PDO::FETCH_ASSOC);
@@ -85,11 +85,32 @@ try {
             exit();
         }
         
-        // Create new sync group
-        $group_stmt = $db->prepare("INSERT INTO sync_groups (sync_id) VALUES (?)");
-        $group_stmt->execute([$sync_id]);
+        // Also check sync_data table for legacy compatibility
+        $check_data_stmt = $db->prepare("SELECT sync_id FROM sync_data WHERE sync_id = ?");
+        $check_data_stmt->execute([$sync_id]);
+        $data_result = $check_data_stmt->fetch(PDO::FETCH_ASSOC);
         
-        // Add device to sync group
+        if ($data_result) {
+            // Sync exists in legacy table - migrate it to sync_groups
+            $migrate_stmt = $db->prepare("INSERT INTO sync_groups (sync_id, created_at) SELECT sync_id, created_at FROM sync_data WHERE sync_id = ?");
+            $migrate_stmt->execute([$sync_id]);
+        } else {
+            // Create new sync group
+            $group_stmt = $db->prepare("INSERT INTO sync_groups (sync_id) VALUES (?)");
+            $group_stmt->execute([$sync_id]);
+        }
+        
+        // Also insert into sync_data for foreign key compatibility if it doesn't exist
+        if (!$data_result) {
+            try {
+                $compat_stmt = $db->prepare("INSERT IGNORE INTO sync_data (sync_id, encrypted_blob) VALUES (?, ?)");
+                $compat_stmt->execute([$sync_id, $encrypted_blob]);
+            } catch (Exception $e) {
+                // Ignore if sync_data table doesn't exist
+            }
+        }
+        
+        // Add device to sync group (will work with foreign key to sync_data)
         $device_stmt = $db->prepare("INSERT INTO sync_devices (sync_id, device_id) VALUES (?, ?)");
         $device_stmt->execute([$sync_id, $device_id]);
         
