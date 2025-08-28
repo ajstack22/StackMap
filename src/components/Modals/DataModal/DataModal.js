@@ -222,14 +222,41 @@ const DataModal = ({
         }
         
         let phrase = await syncService.getRecoveryPhrase();
-        console.log('[DataModal] Got recovery phrase:', phrase ? phrase.substring(0, 4) + '...' + phrase.substring(phrase.length - 4) : 'none');
+        console.log('[DataModal] Got recovery phrase from service:', phrase ? phrase.substring(0, 4) + '...' + phrase.substring(phrase.length - 4) : 'none');
+        
+        // If no phrase from service, try direct AsyncStorage as fallback
+        if (!phrase && id) {
+          console.log('[DataModal] No phrase from service, trying direct AsyncStorage lookup for syncId:', id);
+          
+          // Try multiple possible storage keys
+          const possibleKeys = [
+            `@sync_phrase_${id}`,
+            `@sync_phrase`,
+            `recovery_phrase_${id}`,
+            '@sync_recovery_phrase'
+          ];
+          
+          for (const key of possibleKeys) {
+            try {
+              const directPhrase = await AsyncStorage.getItem(key);
+              if (directPhrase) {
+                console.log('[DataModal] Found phrase in AsyncStorage at key:', key);
+                phrase = directPhrase;
+                break;
+              }
+            } catch (e) {
+              console.log('[DataModal] Error checking key', key, ':', e.message);
+            }
+          }
+        }
         
         // If phrase is null and we have a syncId, it means we have an orphaned sync
         // Don't show anything to the user - let them click "Create New Sync" which will handle it
         if (!phrase && id) {
           console.warn('[DataModal] Orphaned sync detected - ID exists but no valid recovery phrase');
-          setSyncId('');
-          setSyncRecoveryPhrase('');
+          // For debugging, show the sync ID temporarily
+          setSyncId(id);
+          setSyncRecoveryPhrase(`DEBUG: No phrase found for ID ${id}`);
           setSyncEnabled(false); // Show as disabled so user can create new sync
         } else {
           setSyncId(id);
