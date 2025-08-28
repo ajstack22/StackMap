@@ -223,6 +223,10 @@ class SyncServiceTimestamp {
         const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
         await encryptionService.initialize(recoveryPhrase, this.syncId, fixedSalt);
         
+        // CRITICAL: Store recovery phrase so sync persists after restart!
+        await encryptionService.storeRecoveryPhrase(recoveryPhrase, this.syncId);
+        this.currentRecoveryPhrase = recoveryPhrase;
+        
         // Call join endpoint to register device
         const joinResponse = await fetch(`${getApiBaseUrl()}/join_timestamp.php`, {
           method: 'POST',
