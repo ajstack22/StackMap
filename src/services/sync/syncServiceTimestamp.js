@@ -250,6 +250,20 @@ class SyncServiceTimestamp {
   }
 
   /**
+   * Create new sync (API compatibility with V2)
+   */
+  async create() {
+    // Disable any existing sync first
+    if (this.syncEnabled) {
+      await this.disable();
+    }
+    
+    // Generate new recovery phrase and enable
+    const recoveryPhrase = encryptionService.generateRecoveryPhrase();
+    return this.enable(recoveryPhrase);
+  }
+
+  /**
    * Create a new sync group
    */
   async createSyncGroup() {
@@ -520,6 +534,29 @@ class SyncServiceTimestamp {
   updateActiveShares() {
     console.log('[SyncTS] updateActiveShares not implemented in timestamp version');
     return Promise.resolve();
+  }
+
+  /**
+   * Generate share token (stub for API compatibility)
+   */
+  generateShareToken(isReadOnly = false) {
+    console.log('[SyncTS] generateShareToken not implemented in timestamp version');
+    // Return a dummy token for now
+    const randomBytes = new Uint8Array(16);
+    crypto.getRandomValues(randomBytes);
+    return Array.from(randomBytes, byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  /**
+   * Create share link (stub for API compatibility)
+   */
+  async createShareLink(userId, options = {}) {
+    console.log('[SyncTS] createShareLink not implemented in timestamp version');
+    return {
+      shareUrl: `https://stackmap.app/share/${this.generateShareToken(true)}`,
+      token: this.generateShareToken(true),
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 days
+    };
   }
 
   /**
