@@ -168,6 +168,9 @@ class SyncServiceTimestamp {
       this.syncId = await this.generateSyncId(recoveryPhrase);
       this.deviceId = await encryptionService.getDeviceId();
       
+      // Initialize encryption service with the recovery phrase
+      await encryptionService.initialize(recoveryPhrase, this.syncId);
+      
       // Try to pull existing data
       let existingRecords = null;
       try {
