@@ -363,6 +363,24 @@ class EncryptionService {
         phrasePreview: recoveryPhrase.substring(0, 4) + '...' + recoveryPhrase.substring(recoveryPhrase.length - 4)
       });
       
+      // TEMPORARY: Store phrase in plain text to debug the issue
+      // This is NOT secure but helps identify if encryption is the problem
+      const storageKey = `@sync_phrase_${syncId}`;
+      await AsyncStorage.setItem(storageKey, recoveryPhrase);
+      
+      // Also store in alternative location for redundancy
+      await AsyncStorage.setItem(`@sync_phrase`, recoveryPhrase);
+      await AsyncStorage.setItem(`@sync_id_for_phrase`, syncId);
+      
+      // Verify it was stored
+      const verify = await AsyncStorage.getItem(storageKey);
+      console.log('[Encryption] Verification after store:', {
+        storageKey,
+        stored: !!verify,
+        matches: verify === recoveryPhrase
+      });
+      
+      /* DISABLED ENCRYPTION TEMPORARILY FOR DEBUGGING
       // Generate a device-specific encryption key
       const deviceKey = await this.getDeviceKey();
 
@@ -381,10 +399,10 @@ class EncryptionService {
         `@sync_phrase_${syncId}`,
         util.encodeBase64(combined),
       );
+      */
     } catch (error) {
-      if (__DEV__) {
-        console.error('Failed to store recovery phrase:', error);
-      }
+      console.error('[Encryption] Failed to store recovery phrase:', error);
+      throw error; // Re-throw to make failures visible
     }
   }
 
@@ -399,12 +417,31 @@ class EncryptionService {
         storageKey
       });
       
-      const encryptedData = await AsyncStorage.getItem(storageKey);
-      if (!encryptedData) {
+      // TEMPORARY: Get plain text phrase
+      const phrase = await AsyncStorage.getItem(storageKey);
+      
+      if (!phrase) {
         console.log('[Encryption] No stored phrase found for sync ID:', syncId);
+        
+        // Try fallback locations
+        const fallbackPhrase = await AsyncStorage.getItem(`@sync_phrase`);
+        const fallbackSyncId = await AsyncStorage.getItem(`@sync_id_for_phrase`);
+        
+        if (fallbackPhrase && fallbackSyncId === syncId) {
+          console.log('[Encryption] Found phrase in fallback location');
+          return fallbackPhrase;
+        }
+        
         return null;
       }
-
+      
+      console.log('[Encryption] Successfully retrieved recovery phrase:', {
+        syncId,
+        phraseLength: phrase.length,
+        firstChars: phrase.substring(0, 4) + '...' + phrase.substring(phrase.length - 4)
+      });
+      
+      /* DISABLED DECRYPTION TEMPORARILY FOR DEBUGGING
       // Get device key
       const deviceKey = await this.getDeviceKey();
 
@@ -420,16 +457,11 @@ class EncryptionService {
       }
 
       const phrase = util.encodeUTF8(decrypted);
-      console.log('[Encryption] Successfully retrieved recovery phrase:', {
-        syncId,
-        phraseLength: phrase.length,
-        firstChars: phrase.substring(0, 4) + '...' + phrase.substring(phrase.length - 4)
-      });
+      */
+      
       return phrase;
     } catch (error) {
-      if (__DEV__) {
-        console.error('Failed to retrieve recovery phrase:', error);
-      }
+      console.error('[Encryption] Failed to retrieve recovery phrase:', error);
       return null;
     }
   }
