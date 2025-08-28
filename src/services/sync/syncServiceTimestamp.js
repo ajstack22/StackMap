@@ -265,9 +265,11 @@ class SyncServiceTimestamp {
       this.syncEnabled = true;
       this.startSyncTimer();
       
+      const isNewSync = !existingRecords || existingRecords.length === 0;
       return {
         syncId: this.syncId,
-        recoveryPhrase: recoveryPhrase
+        recoveryPhrase: recoveryPhrase,
+        isNewSync: isNewSync
       };
     } catch (error) {
       console.error('[SyncTS] Enable failed:', error);

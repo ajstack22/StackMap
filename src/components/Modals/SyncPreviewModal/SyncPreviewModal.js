@@ -140,8 +140,8 @@ const SyncPreviewModal = ({
       useUserStore.getState().setCurrentUser(null);
       useLibraryStore.getState().setLibraryTemplates([]);
 
-      // Initialize sync with the decoded phrase
-      await syncService.initialize(decodedPhrase);
+      // Enable sync with the decoded phrase
+      await syncService.enable(decodedPhrase);
 
       showToast('Sync connected successfully!', 'success');
 
