@@ -171,6 +171,14 @@ class SyncServiceTimestamp {
       // Initialize encryption service with the recovery phrase
       await encryptionService.initialize(recoveryPhrase, this.syncId);
       
+      // CRITICAL: Also store the recovery phrase directly to ensure it's available
+      // This is a backup to ensure the phrase is ALWAYS stored
+      console.log('[SyncTS] Directly storing recovery phrase for syncId:', this.syncId);
+      await AsyncStorage.setItem(`@sync_phrase_${this.syncId}`, recoveryPhrase);
+      await AsyncStorage.setItem('@sync_phrase', recoveryPhrase);
+      await AsyncStorage.setItem('@last_sync_id', this.syncId);
+      
+      
       // Try to pull existing data
       let existingRecords = null;
       try {
