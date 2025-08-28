@@ -575,14 +575,45 @@ class SyncServiceV2 {
           server: remoteData.version,
           difference: Math.abs(this.lastVersion - remoteData.version)
         });
-        // Force fresh pull and apply remote state
+        
+        // CRITICAL: Don't blindly apply remote state - it might be empty!
         const decryptedRemote = encryptionService.decryptData(remoteData.encrypted_blob);
         const normalizedRemote = normalizeSyncData(decryptedRemote);
-        await this.applyState(normalizedRemote);
-        this.lastVersion = remoteData.version;
-        await AsyncStorage.setItem('@sync_version', remoteData.version.toString());
-        this.syncInProgress = false;
-        return;
+        
+        // Check if remote state has real data
+        const remoteActivityCount = Object.values(normalizedRemote.users || {}).reduce((sum, user) => 
+          sum + Object.values(user.days || {}).reduce((daySum, day) => 
+            daySum + (day.activities?.length || 0), 0), 0);
+        
+        const localActivityCount = Object.values(localState.users || {}).reduce((sum, user) => 
+          sum + Object.values(user.days || {}).reduce((daySum, day) => 
+            daySum + (day.activities?.length || 0), 0), 0);
+        
+        console.log('[Sync] Version corruption - comparing states:', {
+          localActivities: localActivityCount,
+          remoteActivities: remoteActivityCount
+        });
+        
+        // If remote has no data but local does, keep local data
+        if (remoteActivityCount === 0 && localActivityCount > 0) {
+          console.error('[Sync] Remote state is empty - keeping local data!');
+          // Update version to match server but keep local data
+          this.lastVersion = remoteData.version;
+          await AsyncStorage.setItem('@sync_version', remoteData.version.toString());
+          // Continue with normal sync to push local data
+        } else if (localActivityCount === 0 && remoteActivityCount > 0) {
+          // Local is empty, remote has data - safe to take remote
+          console.log('[Sync] Local empty, taking remote state');
+          await this.applyState(normalizedRemote);
+          this.lastVersion = remoteData.version;
+          await AsyncStorage.setItem('@sync_version', remoteData.version.toString());
+          this.syncInProgress = false;
+          return;
+        } else {
+          // Both have data - need to merge properly
+          console.log('[Sync] Both have data - merging despite version gap');
+          // Continue with normal merge logic below
+        }
       }
       
       let stateToSync;

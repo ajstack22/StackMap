@@ -1,0 +1,606 @@
+/**
+ * Timestamp-based Sync Service
+ * Uses timestamps instead of version numbers for conflict-free sync
+ */
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+import encryptionService from './encryptionService';
+import eventLogger from './eventLogger';
+import dataMigrator from './dataMigrator';
+import { normalizeSyncData } from '../../utils/dataNormalizer';
+
+/**
+ * Get API base URL based on environment
+ */
+const getApiBaseUrl = () => {
+  const prodUrl = 'https://stackmap.app/api/sync';
+  const qualUrl = 'https://stackmap.app/qual/api/sync';
+  
+  if (__DEV__ && (Platform.OS === 'ios' || Platform.OS === 'android')) {
+    return qualUrl;
+  }
+  
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return prodUrl;
+    }
+    if (window.location.pathname.startsWith('/qual')) {
+      return qualUrl;
+    }
+    return prodUrl;
+  }
+  
+  return prodUrl;
+};
+
+class SyncServiceTimestamp {
+  constructor() {
+    this.syncEnabled = false;
+    this.syncId = null;
+    this.deviceId = null;
+    this.lastSyncTimestamp = 0;  // Last timestamp we synced
+    this.syncTimer = null;
+    this.syncDebounceTimer = null;
+    this.syncInProgress = false;
+    this._justJoinedSync = false;
+    this._joinedAt = 0;
+    this._applyingRemoteState = false;
+    
+    // Timing configuration
+    this.SYNC_INTERVAL = 30000; // 30 seconds
+    this.DEBOUNCE_DELAY = 5000; // 5 seconds
+    this.JOIN_PROTECTION_TIME = 61000; // 61 seconds
+    
+    // Clock skew detection
+    this.serverTimeOffset = 0;  // Difference between server and client time
+    
+    // Status tracking
+    this.syncStatus = 'idle';
+    this.syncError = null;
+    this.lastSyncAttempt = null;
+    this.lastSyncSuccess = null;
+    
+    // Listeners for UI updates
+    this.statusListeners = new Set();
+    
+    // Expose encryptionService for backward compatibility
+    this.encryptionService = encryptionService;
+    
+    this._initializeOnStartup();
+  }
+
+  /**
+   * Initialize service on startup
+   */
+  async _initializeOnStartup() {
+    try {
+      const [enabled, syncId, lastTimestamp] = await Promise.all([
+        AsyncStorage.getItem('@sync_enabled'),
+        AsyncStorage.getItem('@sync_id'),
+        AsyncStorage.getItem('@sync_timestamp')
+      ]);
+
+      console.log('[SyncTS] Initialize:', {
+        enabled,
+        syncId,
+        lastTimestamp
+      });
+
+      if (enabled === 'true' && syncId) {
+        this.syncEnabled = true;
+        this.syncId = syncId;
+        this.lastSyncTimestamp = parseInt(lastTimestamp, 10) || 0;
+        this.deviceId = await encryptionService.getDeviceId();
+        
+        try {
+          const recoveryPhrase = await encryptionService.getStoredRecoveryPhrase(syncId);
+          if (recoveryPhrase) {
+            const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+            await encryptionService.initialize(recoveryPhrase, syncId, fixedSalt);
+            
+            eventLogger.logSync('INITIALIZED', { 
+              syncId: this.syncId,
+              lastTimestamp: this.lastSyncTimestamp,
+              encryptionReady: true
+            });
+            
+            this.startSyncTimer();
+          }
+        } catch (encryptError) {
+          if (__DEV__) console.error('[SyncTS] Failed to initialize encryption:', encryptError);
+        }
+      }
+    } catch (error) {
+      if (__DEV__) console.error('[SyncTS] Initialization failed:', error);
+    }
+  }
+
+  /**
+   * Generate deterministic sync ID from recovery phrase
+   */
+  async generateSyncId(recoveryPhrase) {
+    const fixedSalt = 'U3luY0lkU2FsdDEyMzQ1Njc4OTAxMjM0NQ==';
+    const { key } = await encryptionService.deriveKeyFromPhrase(recoveryPhrase, fixedSalt);
+    const syncIdBytes = key.slice(0, 16);
+    const syncId = Array.from(syncIdBytes, byte =>
+      byte.toString(16).padStart(2, '0')
+    ).join('');
+    
+    return syncId;
+  }
+
+  /**
+   * Enable sync with recovery phrase
+   */
+  async enable(recoveryPhrase) {
+    try {
+      // Verify we have data before enabling sync
+      const testState = this.getCurrentState();
+      if (!testState.users || Object.keys(testState.users).length === 0) {
+        throw new Error('No data available to sync. Please ensure you have data before enabling sync.');
+      }
+      
+      // Check if already enabled
+      if (this.syncEnabled && this.syncId) {
+        const existingPhrase = await encryptionService.getStoredRecoveryPhrase(this.syncId);
+        if (existingPhrase) {
+          return {
+            syncId: this.syncId,
+            recoveryPhrase: existingPhrase
+          };
+        }
+      }
+      
+      // Generate recovery phrase if not provided
+      if (!recoveryPhrase) {
+        recoveryPhrase = encryptionService.generateRecoveryPhrase();
+      }
+      
+      this.syncId = await this.generateSyncId(recoveryPhrase);
+      this.deviceId = await encryptionService.getDeviceId();
+      
+      // Try to pull existing data
+      let existingRecords = null;
+      try {
+        const pullResponse = await fetch(
+          `${getApiBaseUrl()}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=0`
+        );
+        if (pullResponse.ok) {
+          const pullData = await pullResponse.json();
+          existingRecords = pullData.records;
+          this.serverTimeOffset = pullData.server_time - Date.now();
+        }
+      } catch (pullError) {
+        console.warn('[SyncTS] Pull during enable failed:', pullError.message);
+      }
+      
+      if (!existingRecords || existingRecords.length === 0) {
+        // New sync group - create it
+        const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+        await encryptionService.initialize(recoveryPhrase, this.syncId, fixedSalt);
+        await this.createSyncGroup();
+      } else {
+        // Existing sync group - join it
+        console.log('[SyncTS] Joining existing sync group');
+        const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+        await encryptionService.initialize(recoveryPhrase, this.syncId, fixedSalt);
+        
+        // Set protection flags
+        this._justJoinedSync = true;
+        this._joinedAt = Date.now();
+        this._applyingRemoteState = true;
+        
+        console.log('[SYNC_FIX_VERIFICATION] Protection active:', {
+          justJoined: this._justJoinedSync,
+          joinedAt: this._joinedAt,
+          willBlockFor: '61 seconds'
+        });
+        
+        // Apply the latest record's data
+        const latestRecord = existingRecords[existingRecords.length - 1];
+        const decryptedData = encryptionService.decryptData(latestRecord.encrypted_blob);
+        
+        // Clear local state and apply remote
+        const { useUserStore, useLibraryStore } = require('../../stores');
+        useUserStore.getState().setUsers({});
+        useUserStore.getState().setCurrentUser(null);
+        useLibraryStore.getState().setLibrary({});
+        
+        await this.applyState(decryptedData, true);
+        
+        this._applyingRemoteState = false;
+        this.lastSyncTimestamp = latestRecord.timestamp;
+        
+        // Keep protection active for 61 seconds
+        setTimeout(() => {
+          console.log('[SyncTS] Clearing join protection after 61 seconds');
+          this._justJoinedSync = false;
+        }, this.JOIN_PROTECTION_TIME);
+      }
+
+      // Save state
+      await AsyncStorage.multiSet([
+        ['@sync_enabled', 'true'],
+        ['@sync_id', this.syncId],
+        ['@sync_timestamp', this.lastSyncTimestamp.toString()]
+      ]);
+
+      this.syncEnabled = true;
+      this.startSyncTimer();
+      
+      return {
+        syncId: this.syncId,
+        recoveryPhrase: recoveryPhrase
+      };
+    } catch (error) {
+      console.error('[SyncTS] Enable failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new sync group
+   */
+  async createSyncGroup() {
+    const currentState = this.getCurrentState();
+    const timestamp = Date.now();
+    
+    const encryptedBlob = encryptionService.encryptData(currentState);
+    
+    const response = await fetch(`${getApiBaseUrl()}/create_timestamp.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sync_id: this.syncId,
+        encrypted_blob: encryptedBlob,
+        device_id: this.deviceId,
+        timestamp: timestamp
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Create failed: ${response.status}`);
+    }
+
+    const result = await response.json();
+    this.lastSyncTimestamp = timestamp;
+    this.serverTimeOffset = result.server_timestamp - Date.now();
+    
+    return result;
+  }
+
+  /**
+   * Perform sync operation
+   */
+  async performSync() {
+    // Check protection flags
+    if (this._justJoinedSync || this._applyingRemoteState) {
+      console.log('[SyncTS] Skipping sync - protection active');
+      return;
+    }
+    
+    if (!this.syncEnabled || !this.syncId || this.syncInProgress) {
+      return;
+    }
+
+    if (!encryptionService.masterKey) {
+      console.warn('[SyncTS] Skipping sync - encryption not initialized');
+      return;
+    }
+
+    this.syncInProgress = true;
+    this.lastSyncAttempt = Date.now();
+    
+    try {
+      this.updateSyncStatus('syncing');
+      
+      // Get current local state
+      const localState = this.getCurrentState();
+      
+      // Safety check - don't sync empty state
+      if (!localState.users || Object.keys(localState.users).length === 0) {
+        console.error('[SyncTS] Refusing to sync - no users in local state');
+        this.syncInProgress = false;
+        return;
+      }
+      
+      // Pull newer records from server
+      const pullResponse = await fetch(
+        `${getApiBaseUrl()}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=${this.lastSyncTimestamp}`
+      );
+      
+      if (!pullResponse.ok) {
+        throw new Error(`Pull failed: ${pullResponse.status}`);
+      }
+      
+      const pullData = await pullResponse.json();
+      const remoteRecords = pullData.records || [];
+      
+      // Update clock skew detection
+      if (pullData.server_time) {
+        this.serverTimeOffset = pullData.server_time - Date.now();
+        if (Math.abs(this.serverTimeOffset) > 300000) { // 5 minutes
+          console.warn('[SyncTS] Large clock skew detected:', this.serverTimeOffset, 'ms');
+        }
+      }
+      
+      // If we have remote records, merge them
+      let stateToSync = localState;
+      let needsPush = false;
+      
+      if (remoteRecords.length > 0) {
+        console.log('[SyncTS] Merging', remoteRecords.length, 'remote records');
+        
+        // Merge all remote records into local state
+        for (const record of remoteRecords) {
+          const decryptedRemote = encryptionService.decryptData(record.encrypted_blob);
+          const normalizedRemote = normalizeSyncData(decryptedRemote);
+          
+          // Use timestamp-based merge
+          stateToSync = this.mergeStatesByTimestamp(
+            stateToSync, 
+            normalizedRemote,
+            record.timestamp,
+            record.device_id
+          );
+          
+          // Track latest timestamp
+          if (record.timestamp > this.lastSyncTimestamp) {
+            this.lastSyncTimestamp = record.timestamp;
+          }
+        }
+        
+        // Apply merged state to stores
+        await this.applyState(stateToSync);
+        needsPush = true; // Push our merged state
+      }
+      
+      // Check if local state has changes newer than last sync
+      const localTimestamp = this.getLatestLocalTimestamp(localState);
+      if (localTimestamp > this.lastSyncTimestamp || needsPush) {
+        // Push current state with current timestamp
+        const pushTimestamp = Date.now();
+        await this.push(stateToSync, pushTimestamp);
+        this.lastSyncTimestamp = pushTimestamp;
+      }
+      
+      // Save last sync timestamp
+      await AsyncStorage.setItem('@sync_timestamp', this.lastSyncTimestamp.toString());
+      
+      this.lastSyncSuccess = Date.now();
+      this.updateSyncStatus('success');
+      this.syncInProgress = false;
+      
+    } catch (error) {
+      this.syncInProgress = false;
+      this.updateSyncStatus('error', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Push state to server with timestamp
+   */
+  async push(state, timestamp) {
+    // Protection check
+    if (this._justJoinedSync || (this._joinedAt && Date.now() - this._joinedAt < this.JOIN_PROTECTION_TIME)) {
+      console.log('[SYNC_FIX_VERIFICATION] Push blocked - protection working correctly');
+      return;
+    }
+    
+    // Safety checks
+    if (this._applyingRemoteState) {
+      console.warn('[SyncTS] Refusing to push - applying remote state');
+      return;
+    }
+    
+    const activityCount = Object.values(state.users || {}).reduce((sum, user) => 
+      sum + Object.values(user.days || {}).reduce((daySum, day) => 
+        daySum + (day.activities?.length || 0), 0), 0);
+    
+    if (activityCount === 0) {
+      console.warn('[SyncTS] Refusing to push - no activities');
+      return;
+    }
+    
+    const encrypted = encryptionService.encryptData(state);
+    
+    const response = await fetch(`${getApiBaseUrl()}/push_timestamp.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sync_id: this.syncId,
+        encrypted_blob: encrypted,
+        device_id: this.deviceId,
+        timestamp: timestamp
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || `Push failed: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Merge states using timestamp-based Last-Write-Wins
+   */
+  mergeStatesByTimestamp(localState, remoteState, remoteTimestamp, remoteDeviceId) {
+    // For now, simple last-write-wins for entire state
+    // TODO: Implement field-level timestamp tracking
+    const localTimestamp = this.getLatestLocalTimestamp(localState);
+    
+    if (remoteTimestamp > localTimestamp) {
+      console.log('[SyncTS] Remote is newer, taking remote state');
+      return remoteState;
+    } else if (localTimestamp > remoteTimestamp) {
+      console.log('[SyncTS] Local is newer, keeping local state');
+      return localState;
+    } else {
+      // Same timestamp - use device ID as tiebreaker
+      if (remoteDeviceId > this.deviceId) {
+        return remoteState;
+      } else {
+        return localState;
+      }
+    }
+  }
+
+  /**
+   * Get latest modification timestamp from state
+   */
+  getLatestLocalTimestamp(state) {
+    // TODO: Track actual modification timestamps per field
+    // For now, use current time if we have local changes
+    return Date.now();
+  }
+
+  /**
+   * Start periodic sync timer
+   */
+  startSyncTimer() {
+    this.stopSyncTimer();
+    this.syncTimer = setInterval(() => {
+      if (!this._justJoinedSync) {
+        this.performSync();
+      }
+    }, this.SYNC_INTERVAL);
+  }
+
+  /**
+   * Stop sync timer
+   */
+  stopSyncTimer() {
+    if (this.syncTimer) {
+      clearInterval(this.syncTimer);
+      this.syncTimer = null;
+    }
+  }
+
+  /**
+   * Request sync (debounced)
+   */
+  requestSync(options = {}) {
+    if (!this.syncEnabled) {
+      return Promise.resolve();
+    }
+    
+    if (this._justJoinedSync) {
+      console.log('[SyncTS] Ignoring sync request - just joined');
+      return Promise.resolve();
+    }
+    
+    if (this.syncDebounceTimer) {
+      clearTimeout(this.syncDebounceTimer);
+    }
+    
+    this.syncDebounceTimer = setTimeout(() => {
+      this.performSync().catch(error => {
+        console.error('[SyncTS] Sync failed:', error);
+      });
+    }, this.DEBOUNCE_DELAY);
+    
+    return Promise.resolve();
+  }
+
+  /**
+   * Disable sync
+   */
+  async disable() {
+    this.syncEnabled = false;
+    this.stopSyncTimer();
+    
+    await AsyncStorage.multiRemove([
+      '@sync_enabled',
+      '@sync_id',
+      '@sync_timestamp'
+    ]);
+    
+    this.syncId = null;
+    this.lastSyncTimestamp = 0;
+    
+    eventLogger.logSync('DISABLED', {});
+  }
+
+  /**
+   * Get current state from stores
+   */
+  getCurrentState() {
+    const { useUserStore, useSettingsStore, useLibraryStore } = require('../../stores');
+    
+    const userStore = useUserStore.getState();
+    const settingsStore = useSettingsStore.getState();
+    const libraryStore = useLibraryStore.getState();
+    
+    return {
+      users: userStore.users,
+      currentUser: userStore.currentUser,
+      currentDay: userStore.currentDay,
+      library: libraryStore.library,
+      libraryTemplates: libraryStore.libraryTemplates,
+      globalSettings: {
+        currentTheme: settingsStore.currentTheme,
+        bannerPosition: settingsStore.bannerPosition,
+        soundEnabled: settingsStore.soundEnabled,
+        taskCelebration: settingsStore.taskCelebration,
+        routineCelebration: settingsStore.routineCelebration
+      }
+    };
+  }
+
+  /**
+   * Apply state to stores
+   */
+  async applyState(state, skipMerge = false) {
+    const { useUserStore, useSettingsStore, useLibraryStore } = require('../../stores');
+    
+    const migratedState = await dataMigrator.checkAndMigrate(state, this.deviceId);
+    
+    useUserStore.getState().setUsers(migratedState.users || {});
+    useUserStore.getState().setCurrentUser(migratedState.currentUser);
+    useUserStore.getState().setCurrentDay(migratedState.currentDay || 'today');
+    
+    if (migratedState.library) {
+      useLibraryStore.getState().setLibrary(migratedState.library);
+    }
+    
+    if (migratedState.globalSettings) {
+      const settings = migratedState.globalSettings;
+      const settingsStore = useSettingsStore.getState();
+      settingsStore.updateSettings({
+        currentTheme: settings.currentTheme || settingsStore.currentTheme,
+        bannerPosition: settings.bannerPosition || settingsStore.bannerPosition,
+        soundEnabled: settings.soundEnabled !== undefined ? settings.soundEnabled : settingsStore.soundEnabled,
+        taskCelebration: settings.taskCelebration !== undefined ? settings.taskCelebration : settingsStore.taskCelebration,
+        routineCelebration: settings.routineCelebration !== undefined ? settings.routineCelebration : settingsStore.routineCelebration
+      });
+    }
+  }
+
+  /**
+   * Update sync status for UI
+   */
+  updateSyncStatus(status, error = null) {
+    this.syncStatus = status;
+    this.syncError = error;
+    
+    this.statusListeners.forEach(listener => {
+      listener({ status, error });
+    });
+  }
+
+  /**
+   * Add status listener
+   */
+  addStatusListener(listener) {
+    this.statusListeners.add(listener);
+    return () => this.statusListeners.delete(listener);
+  }
+}
+
+// Export singleton instance
+const syncServiceTimestamp = new SyncServiceTimestamp();
+export default syncServiceTimestamp;
