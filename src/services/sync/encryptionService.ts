@@ -270,12 +270,16 @@ class EncryptionService {
    */
   async storeRecoveryPhrase(phrase: string, syncId?: string): Promise<void> {
     try {
-      const key = syncId ? `recovery_phrase_${syncId}` : 'recovery_phrase';
+      const key = syncId ? `@sync_phrase_${syncId}` : '@sync_phrase';
+      console.log('[Encryption TS] Storing recovery phrase at key:', key);
       await AsyncStorage.setItem(key, phrase);
+      
+      // Verify it was stored
+      const verify = await AsyncStorage.getItem(key);
+      console.log('[Encryption TS] Stored phrase verified:', !!verify);
     } catch (error) {
-      if (__DEV__) {
-        console.error('Failed to store recovery phrase:', error);
-      }
+      console.error('[Encryption TS] Failed to store recovery phrase:', error);
+      throw error;
     }
   }
 
@@ -284,12 +288,13 @@ class EncryptionService {
    */
   async getStoredRecoveryPhrase(syncId?: string): Promise<string | null> {
     try {
-      const key = syncId ? `recovery_phrase_${syncId}` : 'recovery_phrase';
-      return await AsyncStorage.getItem(key);
+      const key = syncId ? `@sync_phrase_${syncId}` : '@sync_phrase';
+      console.log('[Encryption TS] Getting recovery phrase from key:', key);
+      const phrase = await AsyncStorage.getItem(key);
+      console.log('[Encryption TS] Retrieved phrase:', phrase ? 'found' : 'not found');
+      return phrase;
     } catch (error) {
-      if (__DEV__) {
-        console.error('Failed to get recovery phrase:', error);
-      }
+      console.error('[Encryption TS] Failed to get recovery phrase:', error);
       return null;
     }
   }
