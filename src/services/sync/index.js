@@ -6,10 +6,20 @@
 // Import the timestamp sync service
 import timestampSyncService from './syncServiceTimestamp';
 
+// DEBUG: Import minimal test sync
+import debugSync from './debugSync';
+
 // Use timestamp sync as the default
 const syncService = timestampSyncService;
 if (__DEV__) {
   console.log('[Sync] Using timestamp-based sync (immutable, append-only)');
+}
+
+// DEBUG: Test if basic sync works at all
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    console.log('[Sync] Debug sync available - window.testDebugSync()');
+  }, 2000);
 }
 
 // Old implementations - kept for emergency rollback only
