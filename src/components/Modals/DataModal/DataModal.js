@@ -254,9 +254,15 @@ const DataModal = ({
         // Show a clear message to the user about what's wrong
         if (!phrase && id) {
           // Store what we found for debugging
+          const checkedKeys = [
+            `@sync_phrase_${id}`,
+            `@sync_phrase`,
+            `recovery_phrase_${id}`,
+            '@sync_recovery_phrase'
+          ];
           const debugInfo = {
             syncId: id,
-            checkedKeys: possibleKeys,
+            checkedKeys: checkedKeys,
             localStorage: typeof window !== 'undefined' ? Object.keys(window.localStorage).filter(k => k.includes('sync')).join(', ') : 'N/A'
           };
           
