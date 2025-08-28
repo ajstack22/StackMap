@@ -9,6 +9,7 @@ import encryptionService from './encryptionService';
 import eventLogger from './eventLogger';
 import dataMigrator from './dataMigrator';
 import { normalizeSyncData } from '../../utils/dataNormalizer';
+import { useUserStore, useSettingsStore, useLibraryStore } from '../../stores';
 
 /**
  * Get API base URL based on environment
@@ -131,6 +132,13 @@ class SyncServiceTimestamp {
   }
 
   /**
+   * Get device ID (wrapper for encryptionService)
+   */
+  async getDeviceId() {
+    return encryptionService.getDeviceId();
+  }
+
+  /**
    * Enable sync with recovery phrase
    */
   async enable(recoveryPhrase) {
@@ -202,7 +210,6 @@ class SyncServiceTimestamp {
         const decryptedData = encryptionService.decryptData(latestRecord.encrypted_blob);
         
         // Clear local state and apply remote
-        const { useUserStore, useLibraryStore } = require('../../stores');
         useUserStore.getState().setUsers({});
         useUserStore.getState().setCurrentUser(null);
         useLibraryStore.getState().setLibrary({});
@@ -561,8 +568,6 @@ class SyncServiceTimestamp {
    * Get current state from stores
    */
   getCurrentState() {
-    const { useUserStore, useSettingsStore, useLibraryStore } = require('../../stores');
-    
     const userStore = useUserStore.getState();
     const settingsStore = useSettingsStore.getState();
     const libraryStore = useLibraryStore.getState();
@@ -587,7 +592,6 @@ class SyncServiceTimestamp {
    * Apply state to stores
    */
   async applyState(state, skipMerge = false) {
-    const { useUserStore, useSettingsStore, useLibraryStore } = require('../../stores');
     
     const migratedState = await dataMigrator.checkAndMigrate(state, this.deviceId);
     
