@@ -540,6 +540,48 @@ class SyncServiceTimestamp {
   }
 
   /**
+   * Pull latest data from server for preview or import
+   */
+  async pullData() {
+    if (!this.syncId) {
+      console.warn('[SyncTS] pullData called without syncId');
+      return null;
+    }
+    
+    try {
+      const deviceId = await this.getDeviceId();
+      const pullResponse = await fetch(
+        `${getApiBaseUrl()}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${deviceId}&since=0`
+      );
+      
+      if (!pullResponse.ok) {
+        if (pullResponse.status === 404) {
+          return null; // Sync group doesn't exist yet, which is valid for previews
+        }
+        const errorText = await pullResponse.text();
+        throw new Error(`Pull failed: ${pullResponse.status} - ${errorText}`);
+      }
+      
+      const pullData = await pullResponse.json();
+      
+      // The onboarding screen expects an object with an encrypted_blob property from the latest record.
+      if (pullData.records && pullData.records.length > 0) {
+        return {
+          encrypted_blob: pullData.records[pullData.records.length - 1].encrypted_blob,
+          records: pullData.records
+        };
+      }
+      
+      return null;
+      
+    } catch (error) {
+      console.error('[SyncTS] pullData failed:', error);
+      // Return null to prevent crashing the app on network errors during onboarding
+      return null;
+    }
+  }
+
+  /**
    * Merge states using timestamp-based Last-Write-Wins
    */
   mergeStatesByTimestamp(localState, remoteState, remoteTimestamp, remoteDeviceId) {
