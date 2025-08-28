@@ -34,7 +34,25 @@ module.exports = {
         },
       },
       {
-        test: /\.(js|jsx|ts|tsx)$/,
+        test: /\.(ts|tsx)$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'ts-loader',
+          options: {
+            transpileOnly: true,
+            compilerOptions: {
+              module: 'esnext',
+              target: 'es5',
+              jsx: 'react',
+              allowJs: true,
+              esModuleInterop: true,
+              allowSyntheticDefaultImports: true,
+            },
+          },
+        },
+      },
+      {
+        test: /\.(js|jsx)$/,
         exclude: /node_modules\/(?!(react-native.*|@react-native.*)\/).*/,
         use: {
           loader: 'babel-loader',
