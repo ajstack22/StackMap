@@ -8,6 +8,14 @@ const TerserPlugin = require('terser-webpack-plugin');
 const isProduction = process.env.NODE_ENV === 'production';
 
 module.exports = {
+  // Re-enable cache with proper invalidation
+  cache: {
+    type: 'filesystem',
+    buildDependencies: { 
+      config: [__filename] 
+    },
+    version: 'v2-sync-fix-deployed'  // Bump this for cache invalidation
+  },
   mode: process.env.NODE_ENV || 'development',
   entry: './index.web.js',
   output: {

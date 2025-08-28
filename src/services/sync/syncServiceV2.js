@@ -50,11 +50,7 @@ const getApiBaseUrl = () => {
   return prodUrl;
 };
 
-// Global protection flag - v22
-if (typeof window !== 'undefined') {
-  window.__syncJustJoined = false;
-  window.__syncJoinedAt = 0;
-}
+// Note: Global protection flags removed in favor of proper instance protection
 
 class SyncServiceV2 {
   constructor() {
@@ -302,16 +298,12 @@ class SyncServiceV2 {
           this._joinedAt = Date.now();
           this._applyingRemoteState = true;
           
-          // Set global flags too - v22
-          if (typeof window !== 'undefined') {
-            window.__syncJustJoined = true;
-            window.__syncJoinedAt = Date.now();
-          }
-          
-          // Alert to make it clear what's happening (for debugging)
-          if (typeof alert !== 'undefined') {
-            alert('DEBUG v22: Joining sync - all protection flags set');
-          }
+          // Log protection activation for verification
+          console.log('[SYNC_FIX_VERIFICATION] Protection active:', {
+            justJoined: this._justJoinedSync,
+            joinedAt: this._joinedAt,
+            willBlockFor: '61 seconds'
+          });
           
           // Temporarily disable sync to prevent any sync operations
           const wasSyncEnabled = this.syncEnabled;
@@ -338,11 +330,11 @@ class SyncServiceV2 {
             console.log('[SyncV2] Re-enabled sync after join');
           }, 1000); // 1 second delay to let state settle
           
-          // Keep the join flag active for longer
+          // Keep the join flag active for 61 seconds (redundant with server protection)
           setTimeout(() => {
-            console.log('[SyncV2] Clearing _justJoinedSync flag');
+            console.log('[SyncV2] Clearing _justJoinedSync flag after 61 seconds');
             this._justJoinedSync = false;
-          }, 20000); // Increased to 20 seconds for extra safety
+          }, 61000); // 61 seconds to match server protection + 1 second buffer
         }
         
         this.lastVersion = existingData.version;
@@ -576,6 +568,23 @@ class SyncServiceV2 {
         willMerge: remoteData && remoteData.version > this.lastVersion
       });
       
+      // Version corruption detection - prevent massive version jumps
+      if (remoteData && Math.abs(this.lastVersion - remoteData.version) > 10) {
+        console.error('[Sync] Version corruption detected', {
+          local: this.lastVersion,
+          server: remoteData.version,
+          difference: Math.abs(this.lastVersion - remoteData.version)
+        });
+        // Force fresh pull and apply remote state
+        const decryptedRemote = encryptionService.decryptData(remoteData.encrypted_blob);
+        const normalizedRemote = normalizeSyncData(decryptedRemote);
+        await this.applyState(normalizedRemote);
+        this.lastVersion = remoteData.version;
+        await AsyncStorage.setItem('@sync_version', remoteData.version.toString());
+        this.syncInProgress = false;
+        return;
+      }
+      
       let stateToSync;
       
       if (remoteData && remoteData.version > this.lastVersion) {
@@ -808,22 +817,13 @@ class SyncServiceV2 {
    * Push data to server
    */
   async push(state) {
-    // CRITICAL v22: Check global flag too
-    if (typeof window !== 'undefined' && window.__syncJustJoined) {
-      if (Date.now() - window.__syncJoinedAt < 30000) {
-        alert('DEBUG v22: Push blocked by GLOBAL flag - just joined');
-        return this.lastVersion;
-      } else {
-        window.__syncJustJoined = false; // Clear after 30 seconds
-      }
-    }
-    
-    // CRITICAL v22: Block push for 30 seconds after joining
-    if (this._justJoinedSync || (this._joinedAt && Date.now() - this._joinedAt < 30000)) {
-      if (typeof alert !== 'undefined') {
-        alert('DEBUG v22: Push blocked - just joined sync');
-      }
-      console.warn('[SyncV2] Refusing to push - just joined sync group');
+    // CRITICAL: Block push for 61 seconds after joining (redundant with server protection)
+    if (this._justJoinedSync || (this._joinedAt && Date.now() - this._joinedAt < 61000)) {
+      console.log('[SYNC_FIX_VERIFICATION] Push blocked - protection working correctly', {
+        justJoined: this._justJoinedSync,
+        timeSinceJoin: this._joinedAt ? Date.now() - this._joinedAt : 0,
+        requiredWait: 61000
+      });
       return this.lastVersion; // Return current version without pushing
     }
     

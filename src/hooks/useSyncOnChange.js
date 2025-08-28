@@ -57,6 +57,12 @@ export const useSyncOnChange = () => {
         console.log('[useSyncOnChange] Skipping sync trigger - applying remote state');
         return;
       }
+      
+      // Skip if sync is already in progress to prevent race conditions
+      if (syncService.syncInProgress) {
+        console.log('[useSyncOnChange] Skipping sync trigger - sync already in progress');
+        return;
+      }
 
       const currentState = getCurrentState();
 

@@ -24,6 +24,24 @@ if (!$sync_id || !$device_id) {
 
 try {
     $db = Database::getInstance()->getConnection();
+    
+    // PROTECTION: Handle simultaneous join race condition
+    // Count recent joins to detect thundering herd
+    $recentJoinsStmt = $db->prepare("
+        SELECT COUNT(*) as recent_joins
+        FROM sync_devices
+        WHERE sync_id = ? 
+        AND created_at > DATE_SUB(NOW(), INTERVAL 5 SECOND)
+    ");
+    $recentJoinsStmt->execute([$sync_id]);
+    $recentJoins = $recentJoinsStmt->fetchColumn();
+    
+    if ($recentJoins > 1) {
+        // Add random delay to stagger simultaneous joins
+        $delay = rand(0, 10);
+        error_log("[Sync] Staggering join by {$delay}s due to {$recentJoins} recent joins");
+        sleep($delay);
+    }
 
     // Get sync data
     $stmt = $db->prepare("
@@ -40,11 +58,12 @@ try {
         exit();
     }
 
-    // Update device last seen
+    // Create or update device record
+    // IMPORTANT: This tracks when a device first joins
     $deviceStmt = $db->prepare("
-        UPDATE sync_devices 
-        SET last_seen = CURRENT_TIMESTAMP
-        WHERE device_id = ? AND sync_id = ?
+        INSERT INTO sync_devices (device_id, sync_id, device_name, created_at, last_seen)
+        VALUES (?, ?, 'Web Browser', NOW(), NOW())
+        ON DUPLICATE KEY UPDATE last_seen = NOW()
     ");
     $deviceStmt->execute([$device_id, $sync_id]);
 
@@ -67,7 +86,7 @@ try {
     ]);
 
 } catch (Exception $e) {
-    error_log("Pull error: " . $e->getMessage());
+    error_log('Sync pull error: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Pull failed: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'error' => 'Internal server error']);
 }

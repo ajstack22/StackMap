@@ -58,11 +58,33 @@ try {
         exit();
     }
     
-    // PROTECTION: Check for corrupted version numbers
-    // Get current version
-    $versionCheckStmt = $db->prepare("SELECT version FROM sync_data WHERE sync_id = ?");
-    $versionCheckStmt->execute([$data['sync_id']]);
-    $currentVersion = $versionCheckStmt->fetchColumn();
+    // PROTECTION: Check for catastrophic data deletion
+    // Get current data to compare
+    $currentDataStmt = $db->prepare("SELECT encrypted_blob, version FROM sync_data WHERE sync_id = ?");
+    $currentDataStmt->execute([$data['sync_id']]);
+    $currentData = $currentDataStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($currentData && $currentData['encrypted_blob']) {
+        // Try to decode and check activity count (this is a heuristic)
+        // We can't decrypt but we can check blob size as a proxy
+        $currentBlobSize = strlen($currentData['encrypted_blob']);
+        $newBlobSize = strlen($data['encrypted_blob']);
+        
+        // If new blob is less than 50% of current, it might be data loss
+        if ($currentBlobSize > 1000 && $newBlobSize < $currentBlobSize * 0.5) {
+            error_log("WARNING: Device {$data['device_id']} attempting to reduce data from $currentBlobSize to $newBlobSize bytes");
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Rejected: Would delete too much data (>50% reduction)',
+                'current_size' => $currentBlobSize,
+                'new_size' => $newBlobSize
+            ]);
+            exit();
+        }
+    }
+    
+    $currentVersion = $currentData ? $currentData['version'] : 0;
     
     // If client sends a version number, validate it's reasonable
     if (isset($data['version'])) {

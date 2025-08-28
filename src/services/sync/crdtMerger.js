@@ -501,6 +501,16 @@ class CRDTMerger {
     
     console.log('[CRDTMerger] Activity counts:', { localActivityCount, remoteActivityCount });
     
+    // Defensive logging for join scenario
+    if (localActivityCount === 0 && remoteActivityCount > 0) {
+      console.log('[CRDT] Join scenario detected - taking remote state entirely');
+      console.log('[CRDT] Remote state details:', {
+        userCount: Object.keys(remoteState.users || {}).length,
+        activityCount: remoteActivityCount,
+        currentUser: remoteState.currentUser
+      });
+    }
+    
     // If local has no activities but remote does, just use remote state entirely
     // This handles the case when Browser B joins and shouldn't merge its starter data
     if (localActivityCount === 0 && remoteActivityCount > 0) {

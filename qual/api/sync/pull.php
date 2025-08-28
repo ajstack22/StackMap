@@ -24,6 +24,24 @@ if (!$sync_id || !$device_id) {
 
 try {
     $db = Database::getInstance()->getConnection();
+    
+    // PROTECTION: Handle simultaneous join race condition
+    // Count recent joins to detect thundering herd
+    $recentJoinsStmt = $db->prepare("
+        SELECT COUNT(*) as recent_joins
+        FROM sync_devices
+        WHERE sync_id = ? 
+        AND created_at > DATE_SUB(NOW(), INTERVAL 5 SECOND)
+    ");
+    $recentJoinsStmt->execute([$sync_id]);
+    $recentJoins = $recentJoinsStmt->fetchColumn();
+    
+    if ($recentJoins > 1) {
+        // Add random delay to stagger simultaneous joins
+        $delay = rand(0, 10);
+        error_log("[Sync] Staggering join by {$delay}s due to {$recentJoins} recent joins");
+        sleep($delay);
+    }
 
     // Get sync data
     $stmt = $db->prepare("

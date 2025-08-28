@@ -1,4 +1,4 @@
-  Adversarial Peer Review of the StackMap Codebase
+Adversarial Peer Review of the StackMap Codebase
 
   1. Executive Summary
 
@@ -234,3 +234,50 @@ Your review has identified several valid concerns, particularly around the App.j
 We're committed to addressing the valid concerns systematically, starting with the App.js refactor which will have the most immediate impact on code quality and maintainability. The security improvements, while our current implementation is functional, will be addressed to align with industry best practices.
 
 I appreciate your thorough analysis and look forward to your thoughts on this response and our proposed implementation approach.
+---
+### Gemini's Response to Adversarial Review and Final Plan
+
+Thank you for the detailed feedback on my initial plan. The adversarial review is invaluable. I have integrated its points and am presenting a final, more robust implementation plan.
+
+I agree with the review's core assessment: my focus must remain on the user-facing data loss bug, which is unequivocally caused by the Webpack build failure. The broader architectural issues noted in the peer review are valid technical debt but are not the proximate cause of this specific incident.
+
+I also acknowledge the two primary concerns raised about my plan:
+1.  The risk of ignoring the specific version number bug (3 -> 31).
+2.  The lack of a root cause analysis for the Webpack cache failure.
+
+My amended plan now addresses these points directly.
+
+---
+
+### **Final Implementation Plan**
+
+#### **Part 1: Unblock the Build Process & Clean Environment**
+
+*(Unchanged)*
+1.  **Modify `webpack.config.js`:** Add `cache: false` to the configuration to force a full rebuild.
+2.  **Clean Build Environment:** Execute `rm -rf node_modules/.cache .babel-cache web/build android/build ios/build` to delete all stale artifacts.
+
+#### **Part 2: Harden Client-Side Sync Logic & Add Investigative Logging**
+
+*(Amended based on review feedback)*
+1.  **Edit `src/services/sync/syncServiceV2.js`:**
+    *   **Action A: Remove All Temporary Hacks.** I will perform a single, comprehensive replacement to remove the `window.__syncJustJoined` and `window.__syncJoinedAt` flags and all associated `alert()` calls.
+    *   **Action B: Strengthen the "Join Sync" Cooldown.** I will increase the client-side `_justJoinedSync` protection cooldown from 20 seconds to **61 seconds** to create a safe, redundant buffer against the server's 60-second block.
+    *   **Action C: Add Investigative Logging for Version Corruption.** To address the concern about the `3 -> 31` version jump, I will add detailed logging around the `lastVersion` variable. This will not be removed after the fix, as it will provide crucial data if any versioning anomalies persist. I will add logs in the following locations:
+        *   `_initializeOnStartup()`: Log the version loaded from `AsyncStorage`.
+        *   `performSync()`: Log `this.lastVersion` at the start of the function.
+        *   `push()`: Log the version being sent to the server.
+        *   After `push()` returns: Log the `newVersion` received from the server before it's assigned to `this.lastVersion` and saved to `AsyncStorage`.
+
+#### **Part 3: Final Verification, Configuration, and Documentation**
+
+*(Amended based on review feedback)*
+1.  **Modify `webpack.config.js`:** After verification, I will replace `cache: false` with a safer, explicit cache configuration:
+    ```javascript
+    cache: {
+      type: 'filesystem',
+      buildDependencies: { config: [__filename] },
+      version: 'v2-sync-fix',
+    },
+    ```
+2.  **Document Technical Debt:** I will create a new file, `docs/technical-debt.md`, to formally document the Webpack cache invalidation failure as a high-priority follow-up investigation. The team needs to understand why the build system failed silently.
