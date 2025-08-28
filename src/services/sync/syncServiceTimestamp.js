@@ -716,9 +716,57 @@ class SyncServiceTimestamp {
    */
   async initializeForImport(recoveryPhrase) {
     console.log('[SyncTS] Initializing for import');
+    
+    // This method is called after onboarding imports data
+    // We need to properly enable sync without pulling data
+    
+    // Generate IDs
     this.syncId = await this.generateSyncId(recoveryPhrase);
     this.deviceId = await this.getDeviceId();
-    return true;
+    
+    // Store recovery phrase for persistence
+    this.currentRecoveryPhrase = recoveryPhrase;
+    await encryptionService.storeRecoveryPhrase(recoveryPhrase, this.syncId);
+    
+    // Initialize encryption
+    const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+    await encryptionService.initialize(recoveryPhrase, this.syncId, fixedSalt);
+    
+    // Save sync state to persist across sessions
+    await AsyncStorage.multiSet([
+      ['@sync_enabled', 'true'],
+      ['@sync_id', this.syncId],
+      ['@sync_timestamp', '0'] // Start from beginning
+    ]);
+    
+    // Enable sync and start timer
+    this.syncEnabled = true;
+    this.lastSyncTimestamp = 0;
+    
+    // Set protection flags since we just joined
+    this._justJoinedSync = true;
+    this._joinedAt = Date.now();
+    
+    // Start sync timer (will respect protection period)
+    this.startSyncTimer();
+    
+    // Schedule protection clear
+    setTimeout(() => {
+      console.log('[SyncTS] Clearing import protection after 61 seconds');
+      this._justJoinedSync = false;
+    }, this.JOIN_PROTECTION_TIME);
+    
+    console.log('[SyncTS] Import initialization complete:', {
+      syncId: this.syncId,
+      deviceId: this.deviceId,
+      syncEnabled: this.syncEnabled,
+      protectionActive: true
+    });
+    
+    return {
+      syncId: this.syncId,
+      recoveryPhrase: recoveryPhrase
+    };
   }
 
   /**
