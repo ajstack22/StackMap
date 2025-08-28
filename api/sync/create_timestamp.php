@@ -1,4 +1,8 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -15,9 +19,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-require_once 'database.php';
-
 try {
+    require_once 'database.php';
     $input = json_decode(file_get_contents('php://input'), true);
     
     if (!$input || !isset($input['sync_id']) || !isset($input['encrypted_blob']) || 
@@ -46,6 +49,24 @@ try {
     }
     
     $conn = getConnection();
+    
+    // Check if tables exist and create if needed
+    $check_table = $conn->query("SHOW TABLES LIKE 'sync_groups'");
+    if ($check_table->num_rows === 0) {
+        // Tables don't exist, need to create them
+        $schema = file_get_contents(__DIR__ . '/schema_timestamp.sql');
+        if ($schema) {
+            // Remove comments and split by semicolon
+            $schema = preg_replace('/--.*$/m', '', $schema);
+            $statements = array_filter(array_map('trim', explode(';', $schema)));
+            
+            foreach ($statements as $statement) {
+                if (!empty($statement)) {
+                    $conn->query($statement);
+                }
+            }
+        }
+    }
     
     // Start transaction
     $conn->begin_transaction();

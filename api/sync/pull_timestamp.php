@@ -1,4 +1,8 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
@@ -37,6 +41,14 @@ try {
     }
     
     $conn = getConnection();
+    
+    // Ensure tables exist
+    $check_table = $conn->query("SHOW TABLES LIKE 'sync_groups'");
+    if ($check_table->num_rows === 0) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Database not initialized']);
+        exit();
+    }
     
     // Check if sync group exists
     $check_stmt = $conn->prepare("SELECT sync_id FROM sync_groups WHERE sync_id = ?");
