@@ -1866,7 +1866,11 @@ const DataModal = ({
             {showRecoveryPhrase && (
               <View style={styles.recoveryPhraseContainer}>
                 <Text style={styles.recoveryPhrase} selectable>
-                  {syncRecoveryPhrase || 'Loading sync key...'}
+                  {syncRecoveryPhrase || (
+                    syncEnabled 
+                      ? 'Recovery phrase unavailable. Try refreshing the browser or disable and re-enable sync.'
+                      : 'Loading sync key...'
+                  )}
                 </Text>
               </View>
             )}

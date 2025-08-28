@@ -277,8 +277,21 @@ class EncryptionService {
       // Verify it was stored
       const verify = await AsyncStorage.getItem(key);
       console.log('[Encryption TS] Stored phrase verified:', !!verify);
+      
+      if (!verify) {
+        const errorMsg = `[CRITICAL] Recovery phrase storage verification failed! Key: ${key}`;
+        console.error(errorMsg);
+        // In production, show a visible warning
+        if (!__DEV__) {
+          console.warn('⚠️ IMPORTANT: Recovery phrase may not persist after page refresh. Please copy it immediately!');
+        }
+      }
     } catch (error) {
       console.error('[Encryption TS] Failed to store recovery phrase:', error);
+      // In production, show a visible warning
+      if (!__DEV__) {
+        console.warn('⚠️ CRITICAL ERROR: Could not save recovery phrase. Copy it now before refreshing!');
+      }
       throw error;
     }
   }

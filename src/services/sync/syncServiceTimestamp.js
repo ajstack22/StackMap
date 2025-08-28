@@ -98,6 +98,9 @@ class SyncServiceTimestamp {
         try {
           const recoveryPhrase = await encryptionService.getStoredRecoveryPhrase(syncId);
           if (recoveryPhrase) {
+            // CRITICAL: Store recovery phrase in memory for this session
+            this.currentRecoveryPhrase = recoveryPhrase;
+            
             const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
             await encryptionService.initialize(recoveryPhrase, syncId, fixedSalt);
             
