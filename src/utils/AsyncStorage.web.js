@@ -74,7 +74,6 @@ const AsyncStorage = {
         console.warn(`[AsyncStorage.web] 🔵 setItem('${key}') = ${value ? value.substring(0, 50) + '...' : value}`);
         
         let storageSuccess = false;
-        let storageError = null;
         
         // Try localStorage first
         try {
@@ -89,7 +88,6 @@ const AsyncStorage = {
             console.error(`[AsyncStorage.web] ❌ localStorage verification failed for ${key}!`);
           }
         } catch (e) {
-          storageError = e;
           console.error(`[AsyncStorage.web] ❌ localStorage.setItem failed for ${key}:`, e);
         }
         
