@@ -335,9 +335,11 @@ class EncryptionService {
     try {
       let deviceId = await AsyncStorage.getItem('device_id');
       if (!deviceId) {
-        // Generate a new device ID
+        // Generate a new device ID as 32-char hex string (matching server validation)
         const randomBytes = nacl.randomBytes(16);
-        deviceId = encodeBase64(randomBytes).replace(/[+/=]/g, '');
+        deviceId = Array.from(randomBytes)
+          .map(byte => byte.toString(16).padStart(2, '0'))
+          .join('');
         await AsyncStorage.setItem('device_id', deviceId);
       }
       return deviceId;
@@ -345,8 +347,8 @@ class EncryptionService {
       if (__DEV__) {
         console.error('Failed to get device ID:', error);
       }
-      // Return a fallback ID
-      return 'unknown_device';
+      // Return a fallback ID in correct format (32 hex chars)
+      return '00000000000000000000000000000000';
     }
   }
 
