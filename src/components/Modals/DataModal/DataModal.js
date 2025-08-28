@@ -251,17 +251,26 @@ const DataModal = ({
         }
         
         // If phrase is null and we have a syncId, it means we have an orphaned sync
-        // Don't show anything to the user - let them click "Create New Sync" which will handle it
+        // Show a clear message to the user about what's wrong
         if (!phrase && id) {
-          console.warn('[DataModal] Orphaned sync detected - ID exists but no valid recovery phrase');
-          // For debugging, show the sync ID temporarily
+          // Store what we found for debugging
+          const debugInfo = {
+            syncId: id,
+            checkedKeys: possibleKeys,
+            localStorage: typeof window !== 'undefined' ? Object.keys(window.localStorage).filter(k => k.includes('sync')).join(', ') : 'N/A'
+          };
+          
           setSyncId(id);
-          setSyncRecoveryPhrase(`DEBUG: No phrase found for ID ${id}`);
-          setSyncEnabled(false); // Show as disabled so user can create new sync
+          setSyncRecoveryPhrase(`ERROR: Recovery phrase not found. Sync ID: ${id.substring(0, 8)}... Please disable and recreate sync.`);
+          setSyncEnabled(false);
+          
+          // Also store the debug info in a global variable for inspection
+          if (typeof window !== 'undefined') {
+            window.__syncDebugInfo = debugInfo;
+          }
         } else {
           setSyncId(id);
           setSyncRecoveryPhrase(phrase || '');
-          console.log('[DataModal] Set state - syncId:', id, 'phrase:', phrase ? 'present' : 'missing');
         }
         
         // Optionally verify it exists on server in the background

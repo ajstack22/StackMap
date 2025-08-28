@@ -172,11 +172,22 @@ class SyncServiceTimestamp {
       await encryptionService.initialize(recoveryPhrase, this.syncId);
       
       // CRITICAL: Also store the recovery phrase directly to ensure it's available
-      // This is a backup to ensure the phrase is ALWAYS stored
-      console.log('[SyncTS] Directly storing recovery phrase for syncId:', this.syncId);
-      await AsyncStorage.setItem(`@sync_phrase_${this.syncId}`, recoveryPhrase);
-      await AsyncStorage.setItem('@sync_phrase', recoveryPhrase);
-      await AsyncStorage.setItem('@last_sync_id', this.syncId);
+      // Store in multiple locations to ensure retrieval works
+      try {
+        await AsyncStorage.setItem(`@sync_phrase_${this.syncId}`, recoveryPhrase);
+        await AsyncStorage.setItem('@sync_phrase', recoveryPhrase);
+        await AsyncStorage.setItem('@last_sync_id', this.syncId);
+        
+        // Verify it was actually stored
+        const verify = await AsyncStorage.getItem(`@sync_phrase_${this.syncId}`);
+        if (!verify) {
+          throw new Error('Recovery phrase storage verification failed');
+        }
+      } catch (storageError) {
+        // If storage fails, at least return the phrase so user can copy it
+        console.error('Failed to store recovery phrase:', storageError);
+        // Continue anyway - the phrase is still valid even if not stored
+      }
       
       
       // Try to pull existing data
