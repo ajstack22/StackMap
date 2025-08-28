@@ -351,10 +351,13 @@ class SyncServiceTimestamp {
       
       // If we have remote records, merge them
       let stateToSync = localState;
-      let needsPush = false;
+      let stateChanged = false;
       
       if (remoteRecords.length > 0) {
         console.log('[SyncTS] Merging', remoteRecords.length, 'remote records');
+        
+        // Keep original state for comparison
+        const originalState = JSON.parse(JSON.stringify(localState));
         
         // Merge all remote records into local state
         for (const record of remoteRecords) {
@@ -375,18 +378,31 @@ class SyncServiceTimestamp {
           }
         }
         
-        // Apply merged state to stores
-        await this.applyState(stateToSync);
-        needsPush = true; // Push our merged state
+        // Check if merge actually changed anything
+        stateChanged = this.statesAreDifferent(originalState, stateToSync);
+        
+        if (stateChanged) {
+          console.log('[SyncTS] Merge resulted in changes, applying to stores');
+          // Apply merged state to stores
+          await this.applyState(stateToSync);
+        } else {
+          console.log('[SyncTS] Merge resulted in no changes, skipping store update');
+        }
       }
       
       // Check if local state has changes newer than last sync
       const localTimestamp = this.getLatestLocalTimestamp(localState);
-      if (localTimestamp > this.lastSyncTimestamp || needsPush) {
+      const hasNewLocalChanges = localTimestamp > this.lastSyncTimestamp;
+      
+      // Only push if we have actual changes
+      if (hasNewLocalChanges || stateChanged) {
+        console.log('[SyncTS] Pushing changes - hasNewLocal:', hasNewLocalChanges, 'stateChanged:', stateChanged);
         // Push current state with current timestamp
         const pushTimestamp = Date.now();
         await this.push(stateToSync, pushTimestamp);
         this.lastSyncTimestamp = pushTimestamp;
+      } else {
+        console.log('[SyncTS] No changes to push');
       }
       
       // Save last sync timestamp
@@ -401,6 +417,54 @@ class SyncServiceTimestamp {
       this.updateSyncStatus('error', error.message);
       throw error;
     }
+  }
+
+  /**
+   * Compare two states to detect if they're meaningfully different
+   */
+  statesAreDifferent(state1, state2) {
+    try {
+      // Quick check - if one is null/undefined and other isn't
+      if (!state1 || !state2) return state1 !== state2;
+      
+      // Compare JSON strings of normalized states
+      // This handles object property order differences
+      const json1 = JSON.stringify(this.normalizeForComparison(state1));
+      const json2 = JSON.stringify(this.normalizeForComparison(state2));
+      
+      return json1 !== json2;
+    } catch (error) {
+      console.error('[SyncTS] Error comparing states:', error);
+      // If comparison fails, assume they're different to be safe
+      return true;
+    }
+  }
+  
+  /**
+   * Normalize state for comparison (sort arrays, normalize data)
+   */
+  normalizeForComparison(state) {
+    if (!state) return state;
+    
+    const normalized = JSON.parse(JSON.stringify(state)); // Deep clone
+    
+    // Sort users by ID for consistent comparison
+    if (normalized.users) {
+      const sortedUsers = {};
+      Object.keys(normalized.users).sort().forEach(userId => {
+        sortedUsers[userId] = normalized.users[userId];
+      });
+      normalized.users = sortedUsers;
+    }
+    
+    // Sort library items by text for consistent comparison
+    if (normalized.library?.items) {
+      normalized.library.items = [...normalized.library.items].sort((a, b) => 
+        (a.text || '').localeCompare(b.text || '')
+      );
+    }
+    
+    return normalized;
   }
 
   /**
