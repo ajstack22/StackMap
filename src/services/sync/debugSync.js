@@ -28,7 +28,11 @@ class DebugSync {
       const syncId = await AsyncStorage.getItem('@sync_id');
       const data = await AsyncStorage.getItem('@debug_sync_data');
       
-      this.log('Loaded', { syncId, hasData: !!data });
+      this.log('Loaded', { 
+        syncId, 
+        hasData: !!data,
+        dataLength: data ? JSON.parse(data).length : 0
+      });
       
       this.syncId = syncId;
       this.data = data ? JSON.parse(data) : null;
@@ -37,6 +41,8 @@ class DebugSync {
       if (syncId && !data) {
         this.log('Have sync but no data - pulling...');
         await this.pullAndApply();
+      } else if (data) {
+        this.log('Data already in storage! Records: ' + this.data.length);
       }
     } catch (error) {
       this.log('Load failed: ' + error.message);

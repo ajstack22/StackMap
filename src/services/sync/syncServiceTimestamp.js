@@ -631,6 +631,9 @@ class SyncServiceTimestamp {
             await AsyncStorage.setItem('@sync_timestamp', this.lastSyncTimestamp.toString());
             console.log('[SyncTS] FORCED: Applied state and saved timestamp:', latestTimestamp);
           }
+          // CRITICAL: Return early to prevent duplicate processing
+          this.updateSyncStatus('synced');
+          return;
         } else {
           stateChanged = this.statesAreDifferent(originalState, stateToSync);
         }
