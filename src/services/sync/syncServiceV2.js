@@ -209,32 +209,28 @@ class SyncServiceV2 {
       
       // Check if sync is already enabled 
       if (this.syncEnabled && this.syncId) {
-        console.warn('[SyncV2] Sync already enabled with ID:', this.syncId);
-        // Get the existing recovery phrase
-        const existingPhrase = await encryptionService.getStoredRecoveryPhrase(this.syncId);
-        
-        if (existingPhrase) {
-          // Verify the phrase generates the correct sync ID
-          const generatedId = await this.generateSyncId(existingPhrase);
-          if (generatedId !== this.syncId) {
-            console.error('[SyncV2] CRITICAL: Stored phrase generates wrong sync ID!', {
-              activeId: this.syncId,
-              generatedId: generatedId,
-              phrasePreview: existingPhrase.substring(0, 4) + '...'
-            });
-            // The stored phrase is wrong! We need to find the right one or fail
-            throw new Error('Sync recovery phrase mismatch - please disable and re-enable sync');
+        // If a recovery phrase is provided, user wants to create/join a different sync
+        if (recoveryPhrase) {
+          const newSyncId = await this.generateSyncId(recoveryPhrase);
+          if (newSyncId !== this.syncId) {
+            console.log('[SyncV2] Different sync requested, disabling current sync');
+            // Disable current sync first
+            await this.disable();
+            // Continue with new sync setup below
+          } else {
+            // Same sync ID - return existing
+            console.log('[SyncV2] Same sync ID requested, returning existing');
+            return {
+              syncId: this.syncId,
+              recoveryPhrase: recoveryPhrase
+            };
           }
-          
-          // CRITICAL: Return the existing sync info, don't create a new one!
-          console.log('[SyncV2] Returning existing sync info');
-          return {
-            syncId: this.syncId,
-            recoveryPhrase: existingPhrase
-          };
         } else {
-          console.error('[SyncV2] Sync enabled but no recovery phrase found!');
-          throw new Error('Sync recovery phrase not found - please disable and re-enable sync');
+          // No recovery phrase provided - check if we want to create a NEW sync
+          // This happens when user clicks "Create New Sync" while already syncing
+          console.log('[SyncV2] New sync requested while already syncing - disabling current');
+          await this.disable();
+          // Continue to create new sync below
         }
       }
       

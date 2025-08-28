@@ -481,6 +481,38 @@ class SyncServiceTimestamp {
   }
 
   /**
+   * Check if sync is enabled (for API compatibility)
+   */
+  isEnabled() {
+    return this.syncEnabled;
+  }
+
+  /**
+   * Initialize for import (for API compatibility)
+   */
+  async initializeForImport(recoveryPhrase) {
+    console.log('[SyncTS] Initializing for import');
+    this.syncId = await this.generateSyncId(recoveryPhrase);
+    this.deviceId = await this.getDeviceId();
+    return true;
+  }
+
+  /**
+   * Check if auto-update shares is enabled (stub for API compatibility)
+   */
+  hasAutoUpdateShares() {
+    return false;
+  }
+
+  /**
+   * Update active shares (stub for API compatibility)
+   */
+  updateActiveShares() {
+    console.log('[SyncTS] updateActiveShares not implemented in timestamp version');
+    return Promise.resolve();
+  }
+
+  /**
    * Request sync (debounced)
    */
   requestSync(options = {}) {

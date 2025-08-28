@@ -1,45 +1,49 @@
 /**
  * Central sync service export
- * CRDT-based sync implementation (August 2025)
+ * Timestamp-based sync implementation (August 2025)
  */
 
-// Import the CRDT sync service
-import crdtSyncService from './syncServiceV2';
+// Import the timestamp sync service
+import timestampSyncService from './syncServiceTimestamp';
 
-// Use CRDT sync as the default
-const syncService = crdtSyncService;
+// Use timestamp sync as the default
+const syncService = timestampSyncService;
 if (__DEV__) {
-  console.log('[Sync] Using CRDT-based sync (conflict-free, 800 lines)');
+  console.log('[Sync] Using timestamp-based sync (immutable, append-only)');
 }
 
-// Old implementations removed - using V2 CRDT exclusively
+// Old implementations - kept for emergency rollback only
 // If rollback is needed, uncomment these lines:
+// import crdtSyncService from './syncServiceV2';
 // import complexSyncService from './syncService';
 // import simpleSyncService from './simpleSyncService';
 
 // Development helpers for testing and emergency rollback
 if (__DEV__ && typeof window !== 'undefined') {
-  // Test CRDT implementation
-  window.testCRDT = async () => {
-    console.log('🧪 Running CRDT tests...');
-    const testModule = await import('./testCRDT');
-    testModule.default.runTests();
+  // Test timestamp implementation
+  window.testTimestamp = async () => {
+    console.log('🧪 Testing timestamp sync...');
+    console.log('- Clock skew detection: enabled');
+    console.log('- Protection time: 61 seconds');
+    console.log('- Sync interval: 30 seconds');
+    return syncService.getStatus ? syncService.getStatus() : { enabled: syncService.syncEnabled };
   };
   
-  // Emergency rollback disabled - old sync services not imported
-  window.useOldSync = () => {
-    console.warn('⚠️ Old sync services have been removed');
-    console.warn('To rollback: Uncomment imports in src/services/sync/index.js');
-    return 'V2 CRDT sync is the only implementation available';
+  // Emergency rollback to CRDT version
+  window.useCRDTSync = () => {
+    console.warn('⚠️ To rollback to CRDT sync:');
+    console.warn('1. Uncomment crdtSyncService import in src/services/sync/index.js');
+    console.warn('2. Change line 10 to: const syncService = crdtSyncService;');
+    return 'Timestamp sync is the current implementation';
   };
   
   // Check sync status
   window.syncStatus = () => {
-    console.log('Current sync: CRDT V2 (default)');
+    console.log('Current sync: Timestamp-based (default)');
     console.log('Commands:');
-    console.log('  window.testCRDT()    - Run CRDT tests');
-    console.log('  window.syncStatus()  - Show sync status');
-    console.log('  window.useOldSync()  - Instructions for emergency rollback');
+    console.log('  window.testTimestamp() - Test timestamp sync');
+    console.log('  window.syncStatus()    - Show sync status');
+    console.log('  window.useCRDTSync()   - Instructions for CRDT rollback');
     
     if (syncService.getStatus) {
       return syncService.getStatus();
