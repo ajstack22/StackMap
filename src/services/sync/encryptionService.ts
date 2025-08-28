@@ -334,12 +334,21 @@ class EncryptionService {
   async getDeviceId(): Promise<string> {
     try {
       let deviceId = await AsyncStorage.getItem('device_id');
+      
+      // Check if existing device ID is in the wrong format (not 32 hex chars)
+      if (deviceId && !/^[a-f0-9]{32}$/.test(deviceId)) {
+        console.log('[Encryption] Clearing invalid device_id format:', deviceId);
+        await AsyncStorage.removeItem('device_id');
+        deviceId = null;
+      }
+      
       if (!deviceId) {
         // Generate a new device ID as 32-char hex string (matching server validation)
         const randomBytes = nacl.randomBytes(16);
         deviceId = Array.from(randomBytes)
           .map(byte => byte.toString(16).padStart(2, '0'))
           .join('');
+        console.log('[Encryption] Generated new device_id:', deviceId);
         await AsyncStorage.setItem('device_id', deviceId);
       }
       return deviceId;
