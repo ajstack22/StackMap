@@ -38,6 +38,7 @@ const getApiBaseUrl = () => {
 
 class SyncServiceTimestamp {
   constructor() {
+    console.log('[SyncTS] Constructor called');
     this.syncEnabled = false;
     this.syncId = null;
     this.deviceId = null;
@@ -71,13 +72,17 @@ class SyncServiceTimestamp {
     // Expose encryptionService for backward compatibility
     this.encryptionService = encryptionService;
     
-    this._initializeOnStartup();
+    // Initialize but catch any errors to prevent constructor failure
+    this._initializeOnStartup().catch(err => {
+      console.error('[SyncTS] Initialization failed:', err);
+    });
   }
 
   /**
    * Initialize service on startup
    */
   async _initializeOnStartup() {
+    console.log('[SyncTS] _initializeOnStartup called');
     try {
       const [enabled, syncId, lastTimestamp, joinTimestamp] = await Promise.all([
         AsyncStorage.getItem('@sync_enabled'),
@@ -86,7 +91,7 @@ class SyncServiceTimestamp {
         AsyncStorage.getItem('@sync_join_timestamp')
       ]);
 
-      console.log('[SyncTS] Initialize:', {
+      console.log('[SyncTS] Initialize loaded from storage:', {
         enabled,
         syncId,
         lastTimestamp,
@@ -158,7 +163,17 @@ class SyncServiceTimestamp {
         this.startSyncTimer();
       }
     } catch (error) {
-      if (__DEV__) console.error('[SyncTS] Initialization failed:', error);
+      console.error('[SyncTS] CRITICAL: Initialization failed:', error);
+      console.error('[SyncTS] Stack trace:', error.stack);
+      // Try to start timer anyway as a failsafe
+      if (this.syncEnabled && !this.syncTimer) {
+        console.log('[SyncTS] Attempting to start timer despite initialization error');
+        try {
+          this.startSyncTimer();
+        } catch (timerError) {
+          console.error('[SyncTS] Failed to start timer:', timerError);
+        }
+      }
     }
   }
 
@@ -470,10 +485,17 @@ class SyncServiceTimestamp {
       const hasLocalData = localState.users && Object.keys(localState.users).length > 0;
       
       // Pull newer records from server
-      console.log('[SyncTS] Pulling from server...');
-      const pullResponse = await fetch(
-        `${getApiBaseUrl()}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=${this.lastSyncTimestamp}`
-      );
+      console.log('[SyncTS] About to pull from server with params:', {
+        syncId: this.syncId,
+        deviceId: this.deviceId,
+        lastSyncTimestamp: this.lastSyncTimestamp,
+        hasLocalData
+      });
+      
+      const pullUrl = `${getApiBaseUrl()}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=${this.lastSyncTimestamp}`;
+      console.log('[SyncTS] Pull URL:', pullUrl);
+      
+      const pullResponse = await fetch(pullUrl);
       
       if (!pullResponse.ok) {
         if (pullResponse.status === 429) {
@@ -526,6 +548,13 @@ class SyncServiceTimestamp {
         console.log('[SyncTS] Merging', remoteRecords.length, 'remote records from timestamps:', 
           remoteRecords.map(r => ({device: r.device_id.substring(0,8), ts: r.timestamp})));
         
+        // CRITICAL DEBUG: Log exact state before merge
+        console.log('[SyncTS] LOCAL STATE BEFORE MERGE:', {
+          hasUsers: !!localState?.users,
+          userCount: localState?.users ? Object.keys(localState.users).length : 0,
+          isEmpty: !localState?.users || Object.keys(localState.users).length === 0
+        });
+        
         // Keep original state for comparison
         const originalState = JSON.parse(JSON.stringify(localState));
         
@@ -570,10 +599,21 @@ class SyncServiceTimestamp {
         }
         
         // Check if merge actually changed anything
-        stateChanged = this.statesAreDifferent(originalState, stateToSync);
+        // CRITICAL: If we had no users and now have users, that's ALWAYS a change
+        const wasEmpty = !originalState.users || Object.keys(originalState.users).length === 0;
+        const hasDataNow = stateToSync.users && Object.keys(stateToSync.users).length > 0;
+        
+        if (wasEmpty && hasDataNow) {
+          console.log('[SyncTS] CRITICAL: Empty state receiving initial data - forcing apply');
+          stateChanged = true;
+        } else {
+          stateChanged = this.statesAreDifferent(originalState, stateToSync);
+        }
         
         console.log('[SyncTS] State comparison:', {
           stateChanged,
+          wasEmpty,
+          hasDataNow,
           originalUsers: Object.keys(originalState.users || {}).length,
           mergedUsers: Object.keys(stateToSync.users || {}).length
         });
@@ -639,6 +679,7 @@ class SyncServiceTimestamp {
       return { success: true };
       
     } catch (error) {
+      console.error('[SyncTS] Sync failed with error:', error);
       this.syncInProgress = false;
       this.updateSyncStatus('error', error.message);
       return { success: false, error: error.message };
@@ -1246,6 +1287,14 @@ class SyncServiceTimestamp {
    * Perform manual sync
    */
   async performManualSync() {
+    console.log('[SyncTS] Manual sync requested');
+    
+    // Failsafe: If sync is enabled but timer isn't running, start it
+    if (this.syncEnabled && !this.syncTimer) {
+      console.warn('[SyncTS] Sync enabled but timer not running - starting it now');
+      this.startSyncTimer();
+    }
+    
     return this.performSync();
   }
   
