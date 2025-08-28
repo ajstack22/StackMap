@@ -51,9 +51,10 @@ class SyncServiceTimestamp {
     this.currentRecoveryPhrase = null; // Store phrase in memory for current session
     
     // Timing configuration
-    this.SYNC_INTERVAL = 30000; // 30 seconds
+    this.SYNC_INTERVAL = 60000; // 60 seconds (reduce to avoid rate limiting)
     this.DEBOUNCE_DELAY = 5000; // 5 seconds
     this.JOIN_PROTECTION_TIME = 61000; // 61 seconds
+    this.rateLimitBackoff = 0; // Track rate limit backoff
     
     // Clock skew detection
     this.serverTimeOffset = 0;  // Difference between server and client time
@@ -409,6 +410,18 @@ class SyncServiceTimestamp {
           const waitTime = errorData.seconds_remaining || 60;
           console.log(`[SyncTS] Rate limited - wait ${waitTime}s`);
           this.updateSyncStatus('blocked', `Rate limited - wait ${waitTime}s`);
+          
+          // Implement exponential backoff
+          this.rateLimitBackoff = Math.max(waitTime * 1000, this.SYNC_INTERVAL * 2);
+          console.log(`[SyncTS] Backing off for ${this.rateLimitBackoff}ms`);
+          
+          // Restart timer with backoff
+          this.stopSyncTimer();
+          setTimeout(() => {
+            this.rateLimitBackoff = 0;
+            this.startSyncTimer();
+          }, this.rateLimitBackoff);
+          
           this.syncInProgress = false;
           return { success: false, blocked: true, waitTime: waitTime };
         }
@@ -417,6 +430,14 @@ class SyncServiceTimestamp {
       
       const pullData = await pullResponse.json();
       const remoteRecords = pullData.records || [];
+      
+      console.log('[SyncTS] Pull response:', {
+        recordCount: remoteRecords.length,
+        deviceInfo: pullData.device_info,
+        serverTime: pullData.server_time,
+        ourDeviceId: this.deviceId,
+        lastSyncTimestamp: this.lastSyncTimestamp
+      });
       
       // Update clock skew detection
       if (pullData.server_time) {
@@ -431,7 +452,8 @@ class SyncServiceTimestamp {
       let stateChanged = false;
       
       if (remoteRecords.length > 0) {
-        console.log('[SyncTS] Merging', remoteRecords.length, 'remote records');
+        console.log('[SyncTS] Merging', remoteRecords.length, 'remote records from timestamps:', 
+          remoteRecords.map(r => ({device: r.device_id.substring(0,8), ts: r.timestamp})));
         
         // Keep original state for comparison
         const originalState = JSON.parse(JSON.stringify(localState));
@@ -479,6 +501,12 @@ class SyncServiceTimestamp {
         // Check if merge actually changed anything
         stateChanged = this.statesAreDifferent(originalState, stateToSync);
         
+        console.log('[SyncTS] State comparison:', {
+          stateChanged,
+          originalUsers: Object.keys(originalState.users || {}).length,
+          mergedUsers: Object.keys(stateToSync.users || {}).length
+        });
+        
         if (stateChanged) {
           console.log('[SyncTS] Merge resulted in changes, applying to stores');
           
@@ -512,19 +540,27 @@ class SyncServiceTimestamp {
         console.log('[SyncTS] Pushing changes - hasNewLocal:', hasNewLocalChanges, 'stateChanged:', stateChanged);
         // Use server timestamp if available, fallback to client timestamp
         const pushTimestamp = pullData.server_time || Date.now();
-        const pushResult = await this.push(stateToSync, pushTimestamp);
-        if (pushResult && pushResult.server_time) {
-          // Update our timestamp to match server
-          this.lastSyncTimestamp = pushResult.server_time;
-        } else {
-          this.lastSyncTimestamp = pushTimestamp;
+        
+        try {
+          const pushResult = await this.push(stateToSync, pushTimestamp);
+          if (pushResult && pushResult.server_time) {
+            // Update our timestamp to match server
+            this.lastSyncTimestamp = pushResult.server_time;
+          } else if (pushResult) {
+            // Push succeeded, use the timestamp we sent
+            this.lastSyncTimestamp = pushTimestamp;
+          }
+          // Only save timestamp if push succeeded
+          await AsyncStorage.setItem('@sync_timestamp', this.lastSyncTimestamp.toString());
+        } catch (pushError) {
+          console.error('[SyncTS] Push failed, not updating timestamp:', pushError);
+          // Don't update lastSyncTimestamp if push failed
         }
       } else {
         console.log('[SyncTS] No changes to push');
+        // Still save the timestamp from records we processed
+        await AsyncStorage.setItem('@sync_timestamp', this.lastSyncTimestamp.toString());
       }
-      
-      // Save last sync timestamp
-      await AsyncStorage.setItem('@sync_timestamp', this.lastSyncTimestamp.toString());
       
       this.lastSyncSuccess = Date.now();
       this.updateSyncStatus('success');
