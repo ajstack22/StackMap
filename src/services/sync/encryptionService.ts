@@ -390,4 +390,9 @@ class EncryptionService {
 
 // Create and export singleton instance
 const encryptionService = new EncryptionService();
+
+// CommonJS compatibility for webpack
+module.exports = encryptionService;
+module.exports.default = encryptionService;
+
 export default encryptionService;
