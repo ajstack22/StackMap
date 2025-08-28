@@ -767,6 +767,61 @@ class SyncServiceTimestamp {
   }
   
   /**
+   * Get current sync ID
+   */
+  async getSyncId() {
+    return this.syncId;
+  }
+  
+  /**
+   * Verify sync exists on server
+   */
+  async verifySyncExists() {
+    if (!this.syncId) return false;
+    try {
+      const response = await fetch(
+        `${getApiBaseUrl()}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=0`
+      );
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+  
+  /**
+   * Perform manual sync
+   */
+  async performManualSync() {
+    return this.performSync();
+  }
+  
+  /**
+   * Delete sync from server (stub)
+   */
+  async deleteFromServer() {
+    // Not implemented for timestamp service
+    console.warn('[SyncTS] deleteFromServer not implemented');
+    return false;
+  }
+  
+  /**
+   * Get active shares (stub)
+   */
+  async getActiveShares() {
+    // Not implemented for timestamp service
+    return [];
+  }
+  
+  /**
+   * Delete share (stub)
+   */
+  async deleteShare(shareId) {
+    // Not implemented for timestamp service
+    console.warn('[SyncTS] deleteShare not implemented');
+    return false;
+  }
+  
+  /**
    * Get recovery phrase if available
    */
   async getRecoveryPhrase() {
