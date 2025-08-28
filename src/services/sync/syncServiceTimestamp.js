@@ -127,6 +127,12 @@ class SyncServiceTimestamp {
         
         try {
           const recoveryPhrase = await encryptionService.getStoredRecoveryPhrase(syncId);
+          console.log('[SyncTS] Recovery phrase retrieval:', {
+            syncId,
+            phraseFound: !!recoveryPhrase,
+            phraseLength: recoveryPhrase?.length
+          });
+          
           if (recoveryPhrase) {
             // CRITICAL: Store recovery phrase in memory for this session
             this.currentRecoveryPhrase = recoveryPhrase;
@@ -134,17 +140,22 @@ class SyncServiceTimestamp {
             const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
             await encryptionService.initialize(recoveryPhrase, syncId, fixedSalt);
             
+            console.log('[SyncTS] Encryption initialized, masterKey:', !!encryptionService.masterKey);
+            
             eventLogger.logSync('INITIALIZED', { 
               syncId: this.syncId,
               lastTimestamp: this.lastSyncTimestamp,
               encryptionReady: true
             });
-            
-            this.startSyncTimer();
+          } else {
+            console.error('[SyncTS] No recovery phrase found for syncId:', syncId);
           }
         } catch (encryptError) {
-          if (__DEV__) console.error('[SyncTS] Failed to initialize encryption:', encryptError);
+          console.error('[SyncTS] Failed to initialize encryption:', encryptError);
         }
+        
+        // Start sync timer regardless of encryption status - performSync will check if ready
+        this.startSyncTimer();
       }
     } catch (error) {
       if (__DEV__) console.error('[SyncTS] Initialization failed:', error);
@@ -254,8 +265,17 @@ class SyncServiceTimestamp {
         await encryptionService.initialize(recoveryPhrase, this.syncId, fixedSalt);
         
         // CRITICAL: Store recovery phrase so sync persists after restart!
+        console.log('[SyncTS] Storing recovery phrase with syncId:', this.syncId);
         await encryptionService.storeRecoveryPhrase(recoveryPhrase, this.syncId);
         this.currentRecoveryPhrase = recoveryPhrase;
+        
+        // Verify it was stored
+        const verifyPhrase = await encryptionService.getStoredRecoveryPhrase(this.syncId);
+        console.log('[SyncTS] Verify phrase storage:', {
+          syncId: this.syncId,
+          stored: !!verifyPhrase,
+          matches: verifyPhrase === recoveryPhrase
+        });
         
         // Call join endpoint to register device
         const joinResponse = await fetch(`${getApiBaseUrl()}/join_timestamp.php`, {
@@ -389,6 +409,8 @@ class SyncServiceTimestamp {
    * Perform sync operation
    */
   async performSync() {
+    console.log('[SyncTS] performSync called');
+    
     // Check protection flags with proper error status
     if (this._justJoinedSync) {
       const elapsed = Date.now() - this._joinedAt;
@@ -399,30 +421,36 @@ class SyncServiceTimestamp {
         return { success: false, blocked: true, waitTime: secondsRemaining };
       }
       // Protection period has passed
+      console.log('[SyncTS] Protection period passed, clearing flag');
       this._justJoinedSync = false;
       await AsyncStorage.removeItem('@sync_join_timestamp');
     }
     
     if (this._applyingRemoteState) {
-      console.log('[SyncTS] Skipping sync - applying remote state');
+      console.log('[SyncTS] FAILED: Applying remote state');
       return { success: false, blocked: true, message: 'Applying remote state' };
     }
     
+    console.log('[SyncTS] Check enabled:', this.syncEnabled, 'syncId:', this.syncId);
     if (!this.syncEnabled || !this.syncId) {
+      console.log('[SyncTS] FAILED: Sync not enabled or no syncId');
       return { success: false, error: 'Sync not enabled' };
     }
     
     if (this.syncInProgress) {
+      console.log('[SyncTS] FAILED: Sync already in progress');
       return { success: false, inProgress: true };
     }
 
+    console.log('[SyncTS] Check encryption - masterKey:', !!encryptionService.masterKey);
     if (!encryptionService.masterKey) {
-      console.warn('[SyncTS] Skipping sync - encryption not initialized');
+      console.error('[SyncTS] FAILED: No masterKey - encryption not initialized');
       return { success: false, error: 'Encryption not initialized' };
     }
 
     this.syncInProgress = true;
     this.lastSyncAttempt = Date.now();
+    console.log('[SyncTS] Starting sync - all checks passed');
     
     try {
       this.updateSyncStatus('syncing');
@@ -442,6 +470,7 @@ class SyncServiceTimestamp {
       const hasLocalData = localState.users && Object.keys(localState.users).length > 0;
       
       // Pull newer records from server
+      console.log('[SyncTS] Pulling from server...');
       const pullResponse = await fetch(
         `${getApiBaseUrl()}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=${this.lastSyncTimestamp}`
       );
