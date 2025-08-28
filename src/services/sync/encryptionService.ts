@@ -1,6 +1,7 @@
 // Import crypto polyfill for React Native BEFORE tweetnacl
-import { Platform } from 'react-native';
-if (Platform.OS !== 'web') {
+// Only import on native platforms, not web
+// @ts-ignore
+if (typeof window === 'undefined') {
   require('react-native-get-random-values');
 }
 
@@ -8,6 +9,7 @@ import nacl from 'tweetnacl';
 import util from 'tweetnacl-util';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import pako from 'pako';
+import { Platform } from 'react-native';
 
 // Type helpers for tweetnacl-util with proper casting
 const encodeBase64 = (arr: Uint8Array): string =>
@@ -388,11 +390,5 @@ class EncryptionService {
   }
 }
 
-// Create and export singleton instance
-const encryptionService = new EncryptionService();
-
-// CommonJS compatibility for webpack
-module.exports = encryptionService;
-module.exports.default = encryptionService;
-
-export default encryptionService;
+// Export singleton instance directly
+export default new EncryptionService();
