@@ -739,6 +739,21 @@ class SyncServiceTimestamp {
     this.statusListeners.add(listener);
     return () => this.statusListeners.delete(listener);
   }
+  
+  /**
+   * Get recovery phrase if available
+   */
+  async getRecoveryPhrase() {
+    if (!this.syncId) return null;
+    try {
+      const phrase = await encryptionService.getStoredRecoveryPhrase(this.syncId);
+      console.log('[SyncTS] Getting recovery phrase:', phrase ? 'found' : 'not found');
+      return phrase;
+    } catch (error) {
+      console.error('[SyncTS] Error getting recovery phrase:', error);
+      return null;
+    }
+  }
 }
 
 // Export singleton instance
