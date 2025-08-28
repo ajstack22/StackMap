@@ -47,6 +47,7 @@ class SyncServiceTimestamp {
     this._justJoinedSync = false;
     this._joinedAt = 0;
     this._applyingRemoteState = false;
+    this.currentRecoveryPhrase = null; // Store phrase in memory for current session
     
     // Timing configuration
     this.SYNC_INTERVAL = 30000; // 30 seconds
@@ -164,6 +165,9 @@ class SyncServiceTimestamp {
       if (!recoveryPhrase) {
         recoveryPhrase = encryptionService.generateRecoveryPhrase();
       }
+      
+      // Store in memory for this session
+      this.currentRecoveryPhrase = recoveryPhrase;
       
       this.syncId = await this.generateSyncId(recoveryPhrase);
       this.deviceId = await encryptionService.getDeviceId();
@@ -763,26 +767,23 @@ class SyncServiceTimestamp {
    * Get recovery phrase if available
    */
   async getRecoveryPhrase() {
-    console.log('[SyncTS] getRecoveryPhrase called, syncId:', this.syncId);
+    // First, check if we have it in memory from current session
+    if (this.currentRecoveryPhrase) {
+      return this.currentRecoveryPhrase;
+    }
     
     if (!this.syncId) {
-      console.log('[SyncTS] No syncId available');
       return null;
     }
     
     try {
-      // First check what's in AsyncStorage directly
-      const storageKey = `@sync_phrase_${this.syncId}`;
-      const directCheck = await AsyncStorage.getItem(storageKey);
-      console.log('[SyncTS] Direct AsyncStorage check for', storageKey, ':', directCheck ? 'exists' : 'missing');
-      
-      // Now try through encryptionService
+      // Try to get from storage
       const phrase = await encryptionService.getStoredRecoveryPhrase(this.syncId);
-      console.log('[SyncTS] Getting recovery phrase result:', phrase ? `found (${phrase.length} chars)` : 'not found');
       
       if (!phrase) {
         // Try alternative storage locations as fallback
         const alternativeKeys = [
+          `@sync_phrase_${this.syncId}`,
           `@sync_phrase`,
           `recovery_phrase_${this.syncId}`,
           `recovery_phrase`
@@ -791,15 +792,18 @@ class SyncServiceTimestamp {
         for (const key of alternativeKeys) {
           const altPhrase = await AsyncStorage.getItem(key);
           if (altPhrase) {
-            console.log('[SyncTS] Found phrase in alternative location:', key);
+            // Store in memory for this session
+            this.currentRecoveryPhrase = altPhrase;
             return altPhrase;
           }
         }
+      } else {
+        // Store in memory for this session
+        this.currentRecoveryPhrase = phrase;
       }
       
       return phrase;
     } catch (error) {
-      console.error('[SyncTS] Error getting recovery phrase:', error);
       return null;
     }
   }
