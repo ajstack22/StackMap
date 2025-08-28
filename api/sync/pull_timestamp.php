@@ -40,39 +40,37 @@ try {
         exit();
     }
     
-    $conn = getConnection();
+    $db = Database::getInstance()->getConnection();
     
     // Ensure tables exist
-    $check_table = $conn->query("SHOW TABLES LIKE 'sync_groups'");
-    if ($check_table->num_rows === 0) {
+    $check_table = $db->query("SHOW TABLES LIKE 'sync_groups'");
+    if ($check_table->rowCount() === 0) {
         http_response_code(404);
         echo json_encode(['error' => 'Database not initialized']);
         exit();
     }
     
     // Check if sync group exists
-    $check_stmt = $conn->prepare("SELECT sync_id FROM sync_groups WHERE sync_id = ?");
-    $check_stmt->bind_param("s", $sync_id);
-    $check_stmt->execute();
-    $result = $check_stmt->get_result();
+    $check_stmt = $db->prepare("SELECT sync_id FROM sync_groups WHERE sync_id = ?");
+    $check_stmt->execute([$sync_id]);
+    $result = $check_stmt->fetch(PDO::FETCH_ASSOC);
     
-    if ($result->num_rows === 0) {
+    if (!$result) {
         http_response_code(404);
         echo json_encode(['error' => 'Sync group not found']);
         exit();
     }
     
     // Update device last seen
-    $update_stmt = $conn->prepare("
+    $update_stmt = $db->prepare("
         INSERT INTO sync_devices (sync_id, device_id)
         VALUES (?, ?)
         ON DUPLICATE KEY UPDATE last_seen = CURRENT_TIMESTAMP
     ");
-    $update_stmt->bind_param("ss", $sync_id, $device_id);
-    $update_stmt->execute();
+    $update_stmt->execute([$sync_id, $device_id]);
     
     // Pull records newer than the requested timestamp
-    $pull_stmt = $conn->prepare("
+    $pull_stmt = $db->prepare("
         SELECT 
             id,
             device_id,
@@ -84,12 +82,10 @@ try {
         ORDER BY client_timestamp ASC
         LIMIT 100
     ");
-    $pull_stmt->bind_param("sd", $sync_id, $since);
-    $pull_stmt->execute();
-    $result = $pull_stmt->get_result();
+    $pull_stmt->execute([$sync_id, $since]);
     
     $records = [];
-    while ($row = $result->fetch_assoc()) {
+    while ($row = $pull_stmt->fetch(PDO::FETCH_ASSOC)) {
         $records[] = [
             'id' => intval($row['id']),
             'device_id' => $row['device_id'],
@@ -100,7 +96,7 @@ try {
     }
     
     // Get device info
-    $device_stmt = $conn->prepare("
+    $device_stmt = $db->prepare("
         SELECT 
             device_id,
             TIMESTAMPDIFF(SECOND, first_seen, CURRENT_TIMESTAMP) as seconds_since_join,
@@ -108,10 +104,8 @@ try {
         FROM sync_devices
         WHERE sync_id = ? AND device_id = ?
     ");
-    $device_stmt->bind_param("ss", $sync_id, $device_id);
-    $device_stmt->execute();
-    $device_result = $device_stmt->get_result();
-    $device_info = $device_result->fetch_assoc();
+    $device_stmt->execute([$sync_id, $device_id]);
+    $device_info = $device_stmt->fetch(PDO::FETCH_ASSOC);
     
     echo json_encode([
         'success' => true,

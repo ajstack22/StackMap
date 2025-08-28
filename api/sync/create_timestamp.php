@@ -48,11 +48,11 @@ try {
         exit();
     }
     
-    $conn = getConnection();
+    $db = Database::getInstance()->getConnection();
     
     // Check if tables exist and create if needed
-    $check_table = $conn->query("SHOW TABLES LIKE 'sync_groups'");
-    if ($check_table->num_rows === 0) {
+    $check_table = $db->query("SHOW TABLES LIKE 'sync_groups'");
+    if ($check_table->rowCount() === 0) {
         // Tables don't exist, need to create them
         $schema = file_get_contents(__DIR__ . '/schema_timestamp.sql');
         if ($schema) {
@@ -62,52 +62,48 @@ try {
             
             foreach ($statements as $statement) {
                 if (!empty($statement)) {
-                    $conn->query($statement);
+                    $db->exec($statement);
                 }
             }
         }
     }
     
     // Start transaction
-    $conn->begin_transaction();
+    $db->beginTransaction();
     
     try {
         // Check if sync group already exists
-        $check_stmt = $conn->prepare("SELECT sync_id FROM sync_groups WHERE sync_id = ?");
-        $check_stmt->bind_param("s", $sync_id);
-        $check_stmt->execute();
-        $result = $check_stmt->get_result();
+        $check_stmt = $db->prepare("SELECT sync_id FROM sync_groups WHERE sync_id = ?");
+        $check_stmt->execute([$sync_id]);
+        $result = $check_stmt->fetch(PDO::FETCH_ASSOC);
         
-        if ($result->num_rows > 0) {
+        if ($result) {
             // Sync group already exists - this is a join, not a create
-            $conn->rollback();
+            $db->rollBack();
             http_response_code(409);
             echo json_encode(['error' => 'Sync group already exists', 'sync_id' => $sync_id]);
             exit();
         }
         
         // Create new sync group
-        $group_stmt = $conn->prepare("INSERT INTO sync_groups (sync_id) VALUES (?)");
-        $group_stmt->bind_param("s", $sync_id);
-        $group_stmt->execute();
+        $group_stmt = $db->prepare("INSERT INTO sync_groups (sync_id) VALUES (?)");
+        $group_stmt->execute([$sync_id]);
         
         // Add device to sync group
-        $device_stmt = $conn->prepare("INSERT INTO sync_devices (sync_id, device_id) VALUES (?, ?)");
-        $device_stmt->bind_param("ss", $sync_id, $device_id);
-        $device_stmt->execute();
+        $device_stmt = $db->prepare("INSERT INTO sync_devices (sync_id, device_id) VALUES (?, ?)");
+        $device_stmt->execute([$sync_id, $device_id]);
         
         // Insert first sync record
-        $record_stmt = $conn->prepare("
+        $record_stmt = $db->prepare("
             INSERT INTO sync_records (sync_id, device_id, client_timestamp, encrypted_blob)
             VALUES (?, ?, ?, ?)
         ");
-        $record_stmt->bind_param("ssds", $sync_id, $device_id, $client_timestamp, $encrypted_blob);
-        $record_stmt->execute();
+        $record_stmt->execute([$sync_id, $device_id, $client_timestamp, $encrypted_blob]);
         
-        $record_id = $conn->insert_id;
+        $record_id = $db->lastInsertId();
         
         // Commit transaction
-        $conn->commit();
+        $db->commit();
         
         // Return success
         echo json_encode([
@@ -119,7 +115,7 @@ try {
         ]);
         
     } catch (Exception $e) {
-        $conn->rollback();
+        $db->rollBack();
         throw $e;
     }
     
