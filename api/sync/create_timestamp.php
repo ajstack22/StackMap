@@ -50,34 +50,15 @@ try {
     
     $db = Database::getInstance()->getConnection();
     
-    // Check if tables exist and create if needed
-    $check_table = $db->query("SHOW TABLES LIKE 'sync_groups'");
-    if ($check_table->rowCount() === 0) {
-        // Tables don't exist, need to create them
-        $schema = file_get_contents(__DIR__ . '/schema_timestamp.sql');
-        if ($schema) {
-            // Remove comments and split by semicolon
-            $schema = preg_replace('/--.*$/m', '', $schema);
-            $statements = array_filter(array_map('trim', explode(';', $schema)));
-            
-            foreach ($statements as $statement) {
-                if (!empty($statement)) {
-                    $db->exec($statement);
-                }
-            }
-        }
-    }
-    
     // Start transaction
     $db->beginTransaction();
     
     try {
-        // Check if sync group already exists in either table
+        // Check if sync group already exists
         $check_stmt = $db->prepare("SELECT sync_id FROM sync_groups WHERE sync_id = ?");
         $check_stmt->execute([$sync_id]);
-        $result = $check_stmt->fetch(PDO::FETCH_ASSOC);
         
-        if ($result) {
+        if ($check_stmt->fetch()) {
             // Sync group already exists - this is a join, not a create
             $db->rollBack();
             http_response_code(409);
@@ -85,33 +66,15 @@ try {
             exit();
         }
         
-        // Also check sync_data table for legacy compatibility
-        $check_data_stmt = $db->prepare("SELECT sync_id FROM sync_data WHERE sync_id = ?");
-        $check_data_stmt->execute([$sync_id]);
-        $data_result = $check_data_stmt->fetch(PDO::FETCH_ASSOC);
+        // Create new sync group
+        $group_stmt = $db->prepare("INSERT INTO sync_groups (sync_id) VALUES (?)");
+        $group_stmt->execute([$sync_id]);
         
-        if ($data_result) {
-            // Sync exists in legacy table - migrate it to sync_groups
-            $migrate_stmt = $db->prepare("INSERT INTO sync_groups (sync_id, created_at) SELECT sync_id, created_at FROM sync_data WHERE sync_id = ?");
-            $migrate_stmt->execute([$sync_id]);
-        } else {
-            // Create new sync group
-            $group_stmt = $db->prepare("INSERT INTO sync_groups (sync_id) VALUES (?)");
-            $group_stmt->execute([$sync_id]);
-        }
-        
-        // Also insert into sync_data for foreign key compatibility if it doesn't exist
-        if (!$data_result) {
-            try {
-                $compat_stmt = $db->prepare("INSERT IGNORE INTO sync_data (sync_id, encrypted_blob) VALUES (?, ?)");
-                $compat_stmt->execute([$sync_id, $encrypted_blob]);
-            } catch (Exception $e) {
-                // Ignore if sync_data table doesn't exist
-            }
-        }
-        
-        // Add device to sync group (will work with foreign key to sync_data)
-        $device_stmt = $db->prepare("INSERT INTO sync_devices (sync_id, device_id) VALUES (?, ?)");
+        // Add device to sync group
+        $device_stmt = $db->prepare("
+            INSERT INTO sync_devices (sync_id, device_id, first_seen, push_count)
+            VALUES (?, ?, NOW(), 0)
+        ");
         $device_stmt->execute([$sync_id, $device_id]);
         
         // Insert first sync record

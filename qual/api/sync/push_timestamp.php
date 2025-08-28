@@ -51,48 +51,50 @@ try {
     
     $db = Database::getInstance()->getConnection();
     
-    // Ensure tables exist
-    $check_table = $db->query("SHOW TABLES LIKE 'sync_groups'");
-    if ($check_table->rowCount() === 0) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Database not initialized']);
-        exit();
-    }
-    
     // Check if sync group exists
     $check_stmt = $db->prepare("SELECT sync_id FROM sync_groups WHERE sync_id = ?");
     $check_stmt->execute([$sync_id]);
-    $result = $check_stmt->fetch(PDO::FETCH_ASSOC);
     
-    if (!$result) {
+    if (!$check_stmt->fetch()) {
         http_response_code(404);
         echo json_encode(['error' => 'Sync group not found']);
         exit();
     }
     
-    // Check if device exists (simplified without first_seen column)
+    // Get device info for protection
     $device_stmt = $db->prepare("
-        SELECT device_id
+        SELECT 
+            TIMESTAMPDIFF(SECOND, first_seen, NOW()) as seconds_since_join,
+            push_count
         FROM sync_devices
         WHERE sync_id = ? AND device_id = ?
     ");
     $device_stmt->execute([$sync_id, $device_id]);
-    $device_exists = $device_stmt->fetch(PDO::FETCH_ASSOC);
+    $device_info = $device_stmt->fetch(PDO::FETCH_ASSOC);
     
-    if (!$device_exists) {
-        // New device - add it
-        try {
-            $add_device_stmt = $db->prepare("
-                INSERT INTO sync_devices (sync_id, device_id)
-                VALUES (?, ?)
-            ");
-            $add_device_stmt->execute([$sync_id, $device_id]);
-        } catch (Exception $e) {
-            // Device might already exist, continue
-        }
+    if (!$device_info) {
+        // New device - add it but require 60 second wait
+        $add_device_stmt = $db->prepare("
+            INSERT INTO sync_devices (sync_id, device_id, first_seen, push_count)
+            VALUES (?, ?, NOW(), 0)
+        ");
+        $add_device_stmt->execute([$sync_id, $device_id]);
+        
+        http_response_code(429);
+        echo json_encode(['error' => 'New device must wait 60 seconds before pushing']);
+        exit();
     }
     
-    // Skip protection checks since we can't reliably determine join time
+    // Protection: Block pushes from devices that joined less than 60 seconds ago
+    $seconds_since_join = intval($device_info['seconds_since_join']);
+    if ($seconds_since_join < 60) {
+        http_response_code(429);
+        echo json_encode([
+            'error' => 'Device must wait 60 seconds after joining before pushing',
+            'seconds_remaining' => 60 - $seconds_since_join
+        ]);
+        exit();
+    }
     
     // Insert sync record
     $insert_stmt = $db->prepare("
@@ -103,22 +105,18 @@ try {
     
     $record_id = $db->lastInsertId();
     
-    // Try to update device metadata if columns exist
-    try {
-        $update_stmt = $db->prepare("
-            UPDATE sync_devices 
-            SET device_id = device_id
-            WHERE sync_id = ? AND device_id = ?
-        ");
-        $update_stmt->execute([$sync_id, $device_id]);
-    } catch (Exception $e) {
-        // Ignore update errors
-    }
+    // Update device metadata
+    $update_stmt = $db->prepare("
+        UPDATE sync_devices 
+        SET push_count = push_count + 1, last_seen = NOW()
+        WHERE sync_id = ? AND device_id = ?
+    ");
+    $update_stmt->execute([$sync_id, $device_id]);
     
     // Update sync group last activity
     $update_group_stmt = $db->prepare("
         UPDATE sync_groups 
-        SET last_activity = CURRENT_TIMESTAMP
+        SET last_activity = NOW()
         WHERE sync_id = ?
     ");
     $update_group_stmt->execute([$sync_id]);

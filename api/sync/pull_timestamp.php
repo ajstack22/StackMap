@@ -42,36 +42,23 @@ try {
     
     $db = Database::getInstance()->getConnection();
     
-    // Ensure tables exist
-    $check_table = $db->query("SHOW TABLES LIKE 'sync_groups'");
-    if ($check_table->rowCount() === 0) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Database not initialized']);
-        exit();
-    }
-    
     // Check if sync group exists
     $check_stmt = $db->prepare("SELECT sync_id FROM sync_groups WHERE sync_id = ?");
     $check_stmt->execute([$sync_id]);
-    $result = $check_stmt->fetch(PDO::FETCH_ASSOC);
     
-    if (!$result) {
+    if (!$check_stmt->fetch()) {
         http_response_code(404);
         echo json_encode(['error' => 'Sync group not found']);
         exit();
     }
     
     // Register device if it doesn't exist
-    try {
-        $update_stmt = $db->prepare("
-            INSERT INTO sync_devices (sync_id, device_id)
-            VALUES (?, ?)
-            ON DUPLICATE KEY UPDATE device_id = device_id
-        ");
-        $update_stmt->execute([$sync_id, $device_id]);
-    } catch (Exception $e) {
-        // Ignore errors - device tracking is not critical for pulls
-    }
+    $register_stmt = $db->prepare("
+        INSERT INTO sync_devices (sync_id, device_id, first_seen, push_count)
+        VALUES (?, ?, NOW(), 0)
+        ON DUPLICATE KEY UPDATE last_seen = NOW()
+    ");
+    $register_stmt->execute([$sync_id, $device_id]);
     
     // Pull records newer than the requested timestamp
     $pull_stmt = $db->prepare("
@@ -99,16 +86,25 @@ try {
         ];
     }
     
-    // Skip device info query since table structure may vary
-    // Just return the pulled records
+    // Get device info
+    $device_stmt = $db->prepare("
+        SELECT 
+            TIMESTAMPDIFF(SECOND, first_seen, NOW()) as seconds_since_join,
+            push_count
+        FROM sync_devices
+        WHERE sync_id = ? AND device_id = ?
+    ");
+    $device_stmt->execute([$sync_id, $device_id]);
+    $device_info = $device_stmt->fetch(PDO::FETCH_ASSOC);
+    
     echo json_encode([
         'success' => true,
         'sync_id' => $sync_id,
         'records' => $records,
         'server_time' => round(microtime(true) * 1000),
         'device_info' => [
-            'seconds_since_join' => 60,  // Default to allow sync
-            'push_count' => 0
+            'seconds_since_join' => intval($device_info['seconds_since_join'] ?? 0),
+            'push_count' => intval($device_info['push_count'] ?? 0)
         ]
     ]);
     
