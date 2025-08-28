@@ -10,6 +10,7 @@ import eventLogger from './eventLogger';
 import dataMigrator from './dataMigrator';
 import { normalizeSyncData } from '../../utils/dataNormalizer';
 import { useUserStore, useSettingsStore, useLibraryStore } from '../../stores';
+import CRDTMerger from './crdtMerger';
 
 /**
  * Get API base URL based on environment
@@ -650,36 +651,159 @@ class SyncServiceTimestamp {
   }
 
   /**
-   * Merge states using timestamp-based Last-Write-Wins
+   * Merge states using field-level CRDT merging for activities
    */
   mergeStatesByTimestamp(localState, remoteState, remoteTimestamp, remoteDeviceId) {
-    // For now, simple last-write-wins for entire state
-    // TODO: Implement field-level timestamp tracking
-    const localTimestamp = this.getLatestLocalTimestamp(localState);
+    // Use CRDT merger for proper field-level conflict resolution
+    const merger = new CRDTMerger();
+    const mergedState = { ...localState };
     
-    if (remoteTimestamp > localTimestamp) {
-      console.log('[SyncTS] Remote is newer, taking remote state');
-      return remoteState;
-    } else if (localTimestamp > remoteTimestamp) {
-      console.log('[SyncTS] Local is newer, keeping local state');
-      return localState;
-    } else {
-      // Same timestamp - use device ID as tiebreaker
-      if (remoteDeviceId > this.deviceId) {
-        return remoteState;
-      } else {
-        return localState;
+    // Merge users and their activities
+    if (remoteState.users && localState.users) {
+      mergedState.users = {};
+      
+      // Get all user IDs from both states
+      const allUserIds = new Set([
+        ...Object.keys(localState.users || {}),
+        ...Object.keys(remoteState.users || {})
+      ]);
+      
+      for (const userId of allUserIds) {
+        const localUser = localState.users[userId];
+        const remoteUser = remoteState.users[userId];
+        
+        if (!localUser) {
+          // User only exists in remote
+          mergedState.users[userId] = remoteUser;
+        } else if (!remoteUser) {
+          // User only exists locally
+          mergedState.users[userId] = localUser;
+        } else {
+          // User exists in both - merge their data
+          mergedState.users[userId] = this.mergeUsers(localUser, remoteUser, merger, remoteDeviceId);
+        }
       }
     }
+    
+    // Merge library if present
+    if (remoteState.library || localState.library) {
+      mergedState.library = remoteState.library || localState.library;
+    }
+    
+    return mergedState;
+  }
+  
+  /**
+   * Merge two user objects with their activities
+   */
+  mergeUsers(localUser, remoteUser, merger, remoteDeviceId) {
+    const merged = { ...localUser };
+    
+    // Merge basic user fields
+    merged.name = remoteUser.name || localUser.name;
+    merged.icon = remoteUser.icon || localUser.icon;
+    
+    // Merge days and activities
+    if (localUser.days || remoteUser.days) {
+      merged.days = {};
+      const allDays = new Set([
+        ...Object.keys(localUser.days || {}),
+        ...Object.keys(remoteUser.days || {})
+      ]);
+      
+      for (const day of allDays) {
+        const localDay = localUser.days?.[day];
+        const remoteDay = remoteUser.days?.[day];
+        
+        if (!localDay) {
+          merged.days[day] = remoteDay;
+        } else if (!remoteDay) {
+          merged.days[day] = localDay;
+        } else {
+          // Merge activities for this day
+          merged.days[day] = {
+            activities: this.mergeActivities(
+              localDay.activities || [],
+              remoteDay.activities || [],
+              merger,
+              remoteDeviceId
+            )
+          };
+        }
+      }
+    }
+    
+    return merged;
+  }
+  
+  /**
+   * Merge activity arrays using CRDT logic
+   */
+  mergeActivities(localActivities, remoteActivities, merger, remoteDeviceId) {
+    const activityMap = new Map();
+    
+    // Process local activities
+    for (const activity of localActivities) {
+      if (activity.id) {
+        activityMap.set(activity.id, activity);
+      }
+    }
+    
+    // Merge remote activities
+    for (const remoteActivity of remoteActivities) {
+      if (!remoteActivity.id) continue;
+      
+      const localActivity = activityMap.get(remoteActivity.id);
+      if (!localActivity) {
+        // Activity only exists in remote
+        activityMap.set(remoteActivity.id, remoteActivity);
+      } else {
+        // Activity exists in both - use CRDT merge
+        const localCRDT = merger.activityToCRDT(localActivity, this.deviceId);
+        const remoteCRDT = merger.activityToCRDT(remoteActivity, remoteDeviceId);
+        const mergedCRDT = merger.mergeActivities(localCRDT, remoteCRDT);
+        const mergedActivity = merger.activityFromCRDT(mergedCRDT);
+        activityMap.set(remoteActivity.id, mergedActivity);
+      }
+    }
+    
+    // Convert back to array and filter out deleted
+    return Array.from(activityMap.values()).filter(a => !a.deleted);
   }
 
   /**
    * Get latest modification timestamp from state
    */
   getLatestLocalTimestamp(state) {
-    // TODO: Track actual modification timestamps per field
-    // For now, use current time if we have local changes
-    return Date.now();
+    let maxTimestamp = 0;
+    
+    // Check all activities for their modification timestamps
+    if (state.users) {
+      for (const user of Object.values(state.users)) {
+        if (user.days) {
+          for (const day of Object.values(user.days)) {
+            if (day.activities) {
+              for (const activity of day.activities) {
+                // Check various timestamp fields
+                const timestamps = [
+                  activity.modifiedAt,
+                  activity.completedAt,
+                  activity.uncompletedAt,
+                  activity.deletedAt
+                ].filter(t => typeof t === 'number');
+                
+                if (timestamps.length > 0) {
+                  maxTimestamp = Math.max(maxTimestamp, ...timestamps);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // Return the maximum timestamp found, or current time if nothing found
+    return maxTimestamp || Date.now();
   }
 
   /**
