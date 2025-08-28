@@ -95,13 +95,15 @@ class SyncServiceTimestamp {
         enabled,
         syncId,
         lastTimestamp,
-        joinTimestamp
+        joinTimestamp,
+        parsedTimestamp: parseInt(lastTimestamp, 10) || 0
       });
 
       if (enabled === 'true' && syncId) {
         this.syncEnabled = true;
         this.syncId = syncId;
         this.lastSyncTimestamp = parseInt(lastTimestamp, 10) || 0;
+        console.log('[SyncTS] Set lastSyncTimestamp to:', this.lastSyncTimestamp);
         this.deviceId = await encryptionService.getDeviceId();
         
         // CRITICAL: Check if we have NO local state but sync is enabled
@@ -109,8 +111,9 @@ class SyncServiceTimestamp {
         const currentState = this.getCurrentState();
         const hasNoUsers = !currentState.users || Object.keys(currentState.users).length === 0;
         
-        if (hasNoUsers && this.lastSyncTimestamp === 0) {
+        if (hasNoUsers) {
           console.log('[SyncTS] CRITICAL: Device has sync enabled but no data - forcing immediate sync');
+          console.log('[SyncTS] lastSyncTimestamp:', this.lastSyncTimestamp, '- will pull all records if 0, or newer records if > 0');
           // Force an immediate pull to restore state
           setTimeout(() => {
             this.performSync().catch(err => {
