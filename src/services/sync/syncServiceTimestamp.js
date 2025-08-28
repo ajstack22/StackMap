@@ -104,6 +104,21 @@ class SyncServiceTimestamp {
         this.lastSyncTimestamp = parseInt(lastTimestamp, 10) || 0;
         this.deviceId = await encryptionService.getDeviceId();
         
+        // CRITICAL: Check if we have NO local state but sync is enabled
+        // This means Device B lost its state after a restart
+        const currentState = this.getCurrentState();
+        const hasNoUsers = !currentState.users || Object.keys(currentState.users).length === 0;
+        
+        if (hasNoUsers && this.lastSyncTimestamp === 0) {
+          console.log('[SyncTS] CRITICAL: Device has sync enabled but no data - forcing immediate sync');
+          // Force an immediate pull to restore state
+          setTimeout(() => {
+            this.performSync().catch(err => {
+              console.error('[SyncTS] Emergency sync failed:', err);
+            });
+          }, 1000); // Give stores time to initialize
+        }
+        
         // Check if we're still in protection period from a previous join
         if (joinTimestamp) {
           const joinTime = parseInt(joinTimestamp, 10);
@@ -603,9 +618,19 @@ class SyncServiceTimestamp {
         const wasEmpty = !originalState.users || Object.keys(originalState.users).length === 0;
         const hasDataNow = stateToSync.users && Object.keys(stateToSync.users).length > 0;
         
+        // FORCE APPLY if we're empty and received data
         if (wasEmpty && hasDataNow) {
-          console.log('[SyncTS] CRITICAL: Empty state receiving initial data - forcing apply');
+          console.log('[SyncTS] CRITICAL: Empty state receiving initial data - FORCE APPLYING');
           stateChanged = true;
+          // IMMEDIATELY APPLY THE STATE - don't wait
+          await this.applyState(stateToSync);
+          // Also update the timestamp immediately
+          if (remoteRecords.length > 0) {
+            const latestTimestamp = remoteRecords[remoteRecords.length - 1].timestamp;
+            this.lastSyncTimestamp = latestTimestamp;
+            await AsyncStorage.setItem('@sync_timestamp', this.lastSyncTimestamp.toString());
+            console.log('[SyncTS] FORCED: Applied state and saved timestamp:', latestTimestamp);
+          }
         } else {
           stateChanged = this.statesAreDifferent(originalState, stateToSync);
         }
@@ -618,7 +643,7 @@ class SyncServiceTimestamp {
           mergedUsers: Object.keys(stateToSync.users || {}).length
         });
         
-        if (stateChanged) {
+        if (stateChanged && !(wasEmpty && hasDataNow)) {
           console.log('[SyncTS] Merge resulted in changes, applying to stores');
           
           // Debug: Log what's being applied
