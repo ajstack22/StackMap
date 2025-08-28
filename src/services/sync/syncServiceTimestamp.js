@@ -441,6 +441,27 @@ class SyncServiceTimestamp {
           const decryptedRemote = encryptionService.decryptData(record.encrypted_blob);
           const normalizedRemote = normalizeSyncData(decryptedRemote);
           
+          console.log('[SyncTS] Processing record from device:', record.device_id, 'timestamp:', record.timestamp);
+          
+          // Debug: Check if activities have completion timestamps
+          if (normalizedRemote.users) {
+            for (const [userId, user] of Object.entries(normalizedRemote.users)) {
+              if (user.days?.today?.activities) {
+                for (const activity of user.days.today.activities) {
+                  if (activity.completed || activity.completedAt) {
+                    console.log('[SyncTS] Remote activity:', {
+                      id: activity.id?.substring(0, 8),
+                      completed: activity.completed,
+                      completedAt: activity.completedAt,
+                      uncompletedAt: activity.uncompletedAt,
+                      modifiedAt: activity.modifiedAt
+                    });
+                  }
+                }
+              }
+            }
+          }
+          
           // Use timestamp-based merge
           stateToSync = this.mergeStatesByTimestamp(
             stateToSync, 
@@ -460,6 +481,21 @@ class SyncServiceTimestamp {
         
         if (stateChanged) {
           console.log('[SyncTS] Merge resulted in changes, applying to stores');
+          
+          // Debug: Log what's being applied
+          if (stateToSync.users) {
+            for (const [userId, user] of Object.entries(stateToSync.users)) {
+              if (user.days) {
+                for (const [day, dayData] of Object.entries(user.days)) {
+                  if (dayData.activities) {
+                    const completedCount = dayData.activities.filter(a => a.completed).length;
+                    console.log(`[SyncTS] User ${userId} Day ${day}: ${dayData.activities.length} activities, ${completedCount} completed`);
+                  }
+                }
+              }
+            }
+          }
+          
           // Apply merged state to stores
           await this.applyState(stateToSync);
         } else {
@@ -659,7 +695,7 @@ class SyncServiceTimestamp {
     const mergedState = { ...localState };
     
     // Merge users and their activities
-    if (remoteState.users && localState.users) {
+    if (remoteState.users || localState.users) {
       mergedState.users = {};
       
       // Get all user IDs from both states
@@ -669,8 +705,8 @@ class SyncServiceTimestamp {
       ]);
       
       for (const userId of allUserIds) {
-        const localUser = localState.users[userId];
-        const remoteUser = remoteState.users[userId];
+        const localUser = localState.users?.[userId];
+        const remoteUser = remoteState.users?.[userId];
         
         if (!localUser) {
           // User only exists in remote
@@ -687,7 +723,16 @@ class SyncServiceTimestamp {
     
     // Merge library if present
     if (remoteState.library || localState.library) {
+      // For now, take the most recent library (could implement field-level merge later)
       mergedState.library = remoteState.library || localState.library;
+    }
+    
+    // Preserve other state fields
+    if (remoteState.currentUser || localState.currentUser) {
+      mergedState.currentUser = remoteState.currentUser || localState.currentUser;
+    }
+    if (remoteState.currentDay || localState.currentDay) {
+      mergedState.currentDay = remoteState.currentDay || localState.currentDay;
     }
     
     return mergedState;
@@ -740,35 +785,21 @@ class SyncServiceTimestamp {
    * Merge activity arrays using CRDT logic
    */
   mergeActivities(localActivities, remoteActivities, merger, remoteDeviceId) {
-    const activityMap = new Map();
+    console.log('[SyncTS] Merging activities:', {
+      localCount: localActivities.length,
+      remoteCount: remoteActivities.length,
+      deviceId: this.deviceId
+    });
     
-    // Process local activities
-    for (const activity of localActivities) {
-      if (activity.id) {
-        activityMap.set(activity.id, activity);
-      }
-    }
+    // Use the CRDT merger's built-in array merging logic
+    const merged = merger.mergeActivityArrays(localActivities, remoteActivities, this.deviceId);
     
-    // Merge remote activities
-    for (const remoteActivity of remoteActivities) {
-      if (!remoteActivity.id) continue;
-      
-      const localActivity = activityMap.get(remoteActivity.id);
-      if (!localActivity) {
-        // Activity only exists in remote
-        activityMap.set(remoteActivity.id, remoteActivity);
-      } else {
-        // Activity exists in both - use CRDT merge
-        const localCRDT = merger.activityToCRDT(localActivity, this.deviceId);
-        const remoteCRDT = merger.activityToCRDT(remoteActivity, remoteDeviceId);
-        const mergedCRDT = merger.mergeActivities(localCRDT, remoteCRDT);
-        const mergedActivity = merger.activityFromCRDT(mergedCRDT);
-        activityMap.set(remoteActivity.id, mergedActivity);
-      }
-    }
+    console.log('[SyncTS] Merge result:', {
+      mergedCount: merged.length,
+      completedCount: merged.filter(a => a.completed).length
+    });
     
-    // Convert back to array and filter out deleted
-    return Array.from(activityMap.values()).filter(a => !a.deleted);
+    return merged;
   }
 
   /**
