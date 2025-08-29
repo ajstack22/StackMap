@@ -370,7 +370,7 @@ class SyncServiceTimestamp {
         // Persist join timestamp so protection survives restarts
         await AsyncStorage.setItem('@sync_join_timestamp', this._joinedAt.toString());
         
-        console.log('[SyncTS] Join protection active for', joinData.protection_seconds || 60, 'seconds');
+        console.log('[SyncTS] Sync protection active for 10 seconds to prevent data conflicts');
         
         // Apply the latest record's data from join response
         const latestRecord = joinData.latest_record;
@@ -477,19 +477,20 @@ class SyncServiceTimestamp {
    * Perform sync operation
    */
   async performSync() {
-    console.log('[SyncTS] performSync called');
+    const now = new Date().toLocaleTimeString();
+    console.log(`[SyncTS] 🔄 ${now} - Performing sync`);
     
     // Check protection flags with proper error status
     if (this._justJoinedSync) {
       const elapsed = Date.now() - this._joinedAt;
       if (elapsed < this.JOIN_PROTECTION_TIME) {
         const secondsRemaining = Math.ceil((this.JOIN_PROTECTION_TIME - elapsed) / 1000);
-        console.log(`[SyncTS] Sync blocked - wait ${secondsRemaining}s after joining`);
+        console.log(`[SyncTS] ⏸️ Sync paused for ${secondsRemaining}s after joining`);
         this.updateSyncStatus('blocked', `Wait ${secondsRemaining}s after joining`);
         return { success: false, blocked: true, waitTime: secondsRemaining };
       }
       // Protection period has passed
-      console.log('[SyncTS] Protection period passed, clearing flag');
+      console.log('[SyncTS] ✅ Protection period passed, proceeding with sync');
       this._justJoinedSync = false;
       await AsyncStorage.removeItem('@sync_join_timestamp');
     }
@@ -1068,9 +1069,11 @@ class SyncServiceTimestamp {
       }
     }, initialDelay);
     
-    // Then set up regular interval syncs - performSync will handle protection checks
+    // Then set up regular interval syncs (every 30 seconds)
+    console.log('[SyncTS] Starting 30-second sync timer');
     this.syncTimer = setInterval(() => {
-      console.log('[SyncTS] Timer tick - enabled:', this.syncEnabled);
+      const now = new Date().toLocaleTimeString();
+      console.log(`[SyncTS] ⏰ ${now} - 30-second sync check`);
       if (this.syncEnabled) {
         this.performSync().catch(err => {
           console.error('[SyncTS] Interval sync failed:', err);
