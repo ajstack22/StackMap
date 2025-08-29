@@ -135,23 +135,31 @@ class MinimalSyncService {
     const verify = await AsyncStorage.getItem('@minimal_sync_data');
     console.log('[MinimalSync] ✅ Local storage verified:', verify ? 'SUCCESS' : 'FAILED');
     
-    // Now push to server - using timestamp to avoid version conflicts
+    // Now push to server - using timestamp format
     const payload = {
       sync_id: this.syncId,
       device_id: this.deviceId,
       encrypted_blob: this.encodeBase64(JSON.stringify(testData)), // Safe base64, no encryption
-      timestamp // Use timestamp instead of version
+      timestamp
     };
     
     console.log('[MinimalSync] 🌐 Sending to server...', payload);
     
     try {
-      // Use timestamp-based endpoint to avoid version conflicts
+      // Use timestamp-based endpoint (tables should exist on server)
       const response = await fetch(`${this.API_BASE}/create_timestamp.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+      
+      // Check response status first
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[MinimalSync] ❌ Server error:', response.status);
+        console.error('[MinimalSync] Response:', text);
+        throw new Error(`Server error ${response.status}: ${text.substring(0, 200)}`);
+      }
       
       const result = await response.json();
       console.log('[MinimalSync] 📡 Server response:', result);
@@ -197,6 +205,14 @@ class MinimalSyncService {
           device_id: this.deviceId
         })
       });
+      
+      // Check response status first
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[MinimalSync] ❌ Server error:', response.status);
+        console.error('[MinimalSync] Response:', text);
+        throw new Error(`Server error ${response.status}: ${text.substring(0, 200)}`);
+      }
       
       const result = await response.json();
       console.log('[MinimalSync] 📡 Server response:', result);
