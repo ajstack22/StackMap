@@ -101,22 +101,40 @@ class SyncStoreIntegration {
    * Get current state from all stores
    */
   getCurrentState() {
+    const userState = useUserStore.getState();
+    const libraryState = useLibraryStore.getState();
+    const settingsState = useSettingsStore.getState();
+    
     const state = {
-      users: useUserStore.getState().users || [],
-      settings: useSettingsStore.getState() || {},
-      library: useLibraryStore.getState().library || [],
+      // Users is an object, not array
+      users: userState.users || {},
+      currentUser: userState.currentUser,
+      currentDay: userState.currentDay,
+      userContextData: userState.userContextData || {},
+      
+      // Library data - match actual store structure
+      library: libraryState.library || {
+        activities: [],
+        categories: [],
+        templates: [],
+        userAddedActivityIds: []
+      },
+      
+      // Settings
+      settings: settingsState || {},
+      
       // Include metadata
       timestamp: Date.now(),
       deviceId: minimalSync.deviceId,
       version: 2 // Store integration version
     };
 
-    // Normalize the data
+    // Normalize the data to ensure field consistency
     const normalized = normalizeSyncData(state);
     
     console.log('[SyncStore] 📊 Current state:', {
-      users: normalized.users.length,
-      library: normalized.library.length,
+      userCount: Object.keys(normalized.users || {}).length,
+      libraryActivities: normalized.library?.activities?.length || 0,
       hasSettings: !!normalized.settings
     });
     
@@ -137,19 +155,45 @@ class SyncStoreIntegration {
       const normalized = normalizeSyncData(syncedData);
       
       // Update stores using proper methods
-      if (normalized.users && Array.isArray(normalized.users)) {
-        console.log(`[SyncStore] Setting ${normalized.users.length} users`);
+      // Users is an object, not array
+      if (normalized.users && typeof normalized.users === 'object') {
+        console.log(`[SyncStore] Setting ${Object.keys(normalized.users).length} users`);
         useUserStore.getState().setUsers(normalized.users);
       }
       
+      // Set other user store properties
+      if (normalized.currentUser) {
+        useUserStore.getState().setCurrentUser(normalized.currentUser);
+      }
+      if (normalized.currentDay) {
+        useUserStore.getState().setCurrentDay(normalized.currentDay);
+      }
+      if (normalized.userContextData) {
+        useUserStore.getState().setUserContextData(normalized.userContextData);
+      }
+      
+      // Update library store - handle both object and array formats
+      if (normalized.library) {
+        if (typeof normalized.library === 'object' && !Array.isArray(normalized.library)) {
+          // Library is an object with activities, categories, etc.
+          console.log(`[SyncStore] Setting library object`);
+          useLibraryStore.getState().setLibrary(normalized.library);
+        } else if (Array.isArray(normalized.library)) {
+          // Legacy format - library is just an array of activities
+          console.log(`[SyncStore] Setting ${normalized.library.length} library items (legacy format)`);
+          useLibraryStore.getState().setLibrary({
+            activities: normalized.library,
+            categories: [],
+            templates: [],
+            userAddedActivityIds: []
+          });
+        }
+      }
+      
+      // Update settings
       if (normalized.settings) {
         console.log('[SyncStore] Updating settings');
         useSettingsStore.getState().updateSettings(normalized.settings);
-      }
-      
-      if (normalized.library && Array.isArray(normalized.library)) {
-        console.log(`[SyncStore] Setting ${normalized.library.length} library items`);
-        useLibraryStore.getState().setLibrary(normalized.library);
       }
       
       // Force immediate persistence
@@ -222,8 +266,8 @@ class SyncStoreIntegration {
         
         // Check if stores are empty
         const currentState = this.getCurrentState();
-        const isEmpty = (!currentState.users || currentState.users.length === 0) &&
-                       (!currentState.library || currentState.library.length === 0);
+        const isEmpty = (!currentState.users || Object.keys(currentState.users).length === 0) &&
+                       (!currentState.library || !currentState.library.activities || currentState.library.activities.length === 0);
         
         if (isEmpty && data) {
           console.log('[SyncStore] 🔄 Restoring from backup');

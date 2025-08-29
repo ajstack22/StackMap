@@ -12,10 +12,13 @@ export default function SyncStoreTest() {
   const [logs, setLogs] = useState([]);
   const [status, setStatus] = useState(null);
   
-  // Store data
-  const users = useUserStore(state => state.users);
-  const library = useLibraryStore(state => state.library);
-  const settings = useSettingsStore(state => state);
+  // Store data - matching actual structure
+  const users = useUserStore(state => state.users) || {};
+  const currentUser = useUserStore(state => state.currentUser);
+  const currentDay = useUserStore(state => state.currentDay);
+  const libraryState = useLibraryStore(state => state.library) || {};
+  const library = libraryState.activities || [];
+  const settings = useSettingsStore(state => state) || {};
 
   const addLog = (message, type = 'info') => {
     const timestamp = new Date().toLocaleTimeString();
@@ -65,17 +68,38 @@ export default function SyncStoreTest() {
     addLog('Creating new sync with test data...', 'info');
     
     try {
-      // Add test data to stores
-      const testUsers = [
-        { id: '1', name: 'Test User 1', icon: '👤' },
-        { id: '2', name: 'Test User 2', icon: '👥' }
-      ];
+      // Add test data to stores - users is an object
+      const testUsers = {
+        'user1': { 
+          id: 'user1', 
+          name: 'Test User 1', 
+          icon: '👤',
+          days: {
+            today: { activities: [] },
+            tomorrow: { activities: [] }
+          }
+        },
+        'user2': { 
+          id: 'user2', 
+          name: 'Test User 2', 
+          icon: '👥',
+          days: {
+            today: { activities: [] },
+            tomorrow: { activities: [] }
+          }
+        }
+      };
       
-      const testLibrary = [
-        { id: 'lib1', text: 'Test Activity 1', icon: '📝', category: 'Test' },
-        { id: 'lib2', text: 'Test Activity 2', icon: '✅', category: 'Test' },
-        { id: 'lib3', text: 'Test Activity 3', icon: '🎯', category: 'Test' }
-      ];
+      const testLibrary = {
+        activities: [
+          { id: 'lib1', text: 'Test Activity 1', icon: '📝', category: 'Test' },
+          { id: 'lib2', text: 'Test Activity 2', icon: '✅', category: 'Test' },
+          { id: 'lib3', text: 'Test Activity 3', icon: '🎯', category: 'Test' }
+        ],
+        categories: ['Test', 'Work', 'Personal'],
+        templates: [],
+        userAddedActivityIds: []
+      };
       
       useUserStore.getState().setUsers(testUsers);
       useLibraryStore.getState().setLibrary(testLibrary);
@@ -129,14 +153,22 @@ export default function SyncStoreTest() {
 
   // Add a new user (triggers automatic push after debounce)
   const handleAddUser = () => {
+    const userId = `user-${Date.now()}`;
+    const userCount = Object.keys(users).length;
     const newUser = {
-      id: `user-${Date.now()}`,
-      name: `User ${users.length + 1}`,
-      icon: '🆕'
+      id: userId,
+      name: `User ${userCount + 1}`,
+      icon: '🆕',
+      days: {
+        today: { activities: [] },
+        tomorrow: { activities: [] }
+      }
     };
     
     addLog(`Adding user: ${newUser.name}`, 'info');
-    useUserStore.getState().addUser(newUser);
+    // Add user to the users object
+    const updatedUsers = { ...users, [userId]: newUser };
+    useUserStore.getState().setUsers(updatedUsers);
     
     if (status?.hasProtectionPeriod) {
       addLog(`Change detected. Will push after protection period (${status.protectionSecondsRemaining}s)`, 'warning');
@@ -147,15 +179,19 @@ export default function SyncStoreTest() {
 
   // Add a new library item
   const handleAddLibraryItem = () => {
+    const currentLibrary = Array.isArray(library) ? library : [];
     const newItem = {
       id: `lib-${Date.now()}`,
-      text: `Activity ${library.length + 1}`,
+      text: `Activity ${currentLibrary.length + 1}`,
       icon: '🌟',
       category: 'Test'
     };
     
     addLog(`Adding library item: ${newItem.text}`, 'info');
-    const updatedLibrary = [...library, newItem];
+    const updatedLibrary = {
+      ...libraryState,
+      activities: [...currentLibrary, newItem]
+    };
     useLibraryStore.getState().setLibrary(updatedLibrary);
     
     if (status?.hasProtectionPeriod) {
@@ -184,7 +220,12 @@ export default function SyncStoreTest() {
           onPress: async () => {
             await syncStore.clearAll();
             useUserStore.getState().setUsers([]);
-            useLibraryStore.getState().setLibrary([]);
+            useLibraryStore.getState().setLibrary({
+              activities: [],
+              categories: [],
+              templates: [],
+              userAddedActivityIds: []
+            });
             setSyncId('');
             setInputSyncId('');
             setStatus(null);
@@ -235,18 +276,18 @@ export default function SyncStoreTest() {
       {/* Store Data Section */}
       <View style={styles.dataSection}>
         <Text style={styles.sectionTitle}>Store Data</Text>
-        <Text>Users: {users.length}</Text>
-        <Text>Library Items: {library.length}</Text>
+        <Text>Users: {Object.keys(users).length}</Text>
+        <Text>Library Items: {library?.length || 0}</Text>
         <View style={styles.userList}>
-          {users.map(user => (
-            <Text key={user.id}>{user.icon} {user.name}</Text>
+          {Object.entries(users).map(([userId, user]) => (
+            <Text key={userId}>{user.icon || user.emoji || '👤'} {user.name}</Text>
           ))}
         </View>
         <View style={styles.libraryList}>
-          {library.slice(0, 5).map(item => (
+          {Array.isArray(library) && library.slice(0, 5).map(item => (
             <Text key={item.id}>{item.icon} {item.text}</Text>
           ))}
-          {library.length > 5 && <Text>... and {library.length - 5} more</Text>}
+          {library?.length > 5 && <Text>... and {library.length - 5} more</Text>}
         </View>
       </View>
 
