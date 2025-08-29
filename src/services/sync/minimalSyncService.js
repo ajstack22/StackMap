@@ -185,19 +185,26 @@ class MinimalSyncService {
   async createSync(testData) {
     console.log('[MinimalSync] 📤 createSync called with:', testData);
     
-    // Generate recovery phrase
-    const recoveryPhrase = encryptionService.generateRecoveryPhrase();
-    console.log('[MinimalSync] 🔑 Generated recovery phrase:', recoveryPhrase);
-    
-    // Generate sync ID from recovery phrase
-    this.syncId = await this.generateSyncId(recoveryPhrase);
-    console.log('[MinimalSync] 🆔 Generated sync ID:', this.syncId);
-    
-    // Initialize encryption
-    await this.initializeEncryption(recoveryPhrase, this.syncId);
-    
-    // Use encryption service's device ID
-    this.deviceId = await encryptionService.getDeviceId();
+    try {
+      // Generate recovery phrase
+      console.log('[MinimalSync] About to generate recovery phrase...');
+      const recoveryPhrase = encryptionService.generateRecoveryPhrase();
+      console.log('[MinimalSync] 🔑 Generated recovery phrase:', recoveryPhrase);
+      
+      // Generate sync ID from recovery phrase
+      this.syncId = await this.generateSyncId(recoveryPhrase);
+      console.log('[MinimalSync] 🆔 Generated sync ID:', this.syncId);
+      
+      // Initialize encryption
+      await this.initializeEncryption(recoveryPhrase, this.syncId);
+      
+      // Use encryption service's device ID
+      this.deviceId = await encryptionService.getDeviceId();
+    } catch (error) {
+      console.error('[MinimalSync] ❌ Error in sync creation:', error);
+      console.error('[MinimalSync] Error stack:', error.stack);
+      return { success: false, error: `Failed to initialize encryption: ${error.message}` };
+    }
     
     const timestamp = Date.now();
     
@@ -226,7 +233,8 @@ class MinimalSyncService {
       timestamp
     };
     
-    console.log('[MinimalSync] 🌐 Sending to server...', payload);
+    console.log('[MinimalSync] 🌐 Sending to server...');
+    console.log('[MinimalSync] Payload size:', JSON.stringify(payload).length, 'bytes');
     
     try {
       // Use timestamp-based endpoint (tables should exist on server)

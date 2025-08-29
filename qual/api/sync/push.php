@@ -25,7 +25,7 @@ if (!$data || !isset($data['sync_id']) || !isset($data['encrypted_blob']) || !is
 try {
     $db = Database::getInstance()->getConnection();
     
-    // PROTECTION: Check if this device recently joined (within 30 seconds)
+    // PROTECTION: Check if this device recently joined (within 60 seconds)
     $joinCheckStmt = $db->prepare("
         SELECT created_at, last_seen,
                TIMESTAMPDIFF(SECOND, created_at, NOW()) as seconds_since_join
@@ -83,19 +83,6 @@ try {
             exit();
         }
     }
-    
-    $currentVersion = $currentData ? $currentData['version'] : 0;
-    
-    // If client sends a version number, validate it's reasonable
-    if (isset($data['version'])) {
-        $clientVersion = intval($data['version']);
-        // Version should never jump by more than 2 (current + 1)
-        if ($clientVersion > $currentVersion + 2) {
-            error_log("WARNING: Device {$data['device_id']} sent version $clientVersion but current is $currentVersion");
-            // Ignore client version, use server's version
-            unset($data['version']);
-        }
-    }
 
     // Update sync data
     $stmt = $db->prepare("
@@ -126,13 +113,27 @@ try {
     // Get updated version
     $versionStmt = $db->prepare("SELECT version, updated_at FROM sync_data WHERE sync_id = ?");
     $versionStmt->execute([$data['sync_id']]);
-    $result = $versionStmt->fetch(PDO::FETCH_ASSOC);
+    $versionData = $versionStmt->fetch(PDO::FETCH_ASSOC);
 
+    // Try to log metric but don't fail if table doesn't exist
+    try {
+        $metric = $db->prepare("INSERT INTO sync_metrics (event, metadata) VALUES (?, ?)");
+        $metric->execute(['sync_push', json_encode([
+            'sync_id' => $data['sync_id'],
+            'device_id' => $data['device_id'],
+            'blob_size' => strlen($data['encrypted_blob'])
+        ])]);
+    } catch (Exception $e) {
+        // Ignore metrics errors
+    }
+
+    // Return success response
     echo json_encode([
         'success' => true,
-        'version' => $result['version'],
-        'last_modified' => $result['updated_at']
+        'version' => $versionData['version'],
+        'last_modified' => $versionData['updated_at']
     ]);
+
 } catch (Exception $e) {
     error_log('Sync push error: ' . $e->getMessage());
     http_response_code(500);
