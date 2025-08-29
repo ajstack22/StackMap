@@ -116,7 +116,9 @@ export default function SyncStoreTest() {
       
       // Create sync - this should enable sync automatically
       const result = await syncStore.createSync();
+      console.log('[SyncStoreTest] Create result:', result);
       const recoveryPhrase = result.recoveryPhrase || result.syncId || result;
+      console.log('[SyncStoreTest] Recovery phrase to display:', recoveryPhrase);
       setSyncId(recoveryPhrase);
       
       // Check minimalSync status after

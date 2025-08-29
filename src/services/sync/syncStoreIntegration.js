@@ -391,6 +391,9 @@ class SyncStoreIntegration {
     
     if (result.success) {
       console.log('[SyncStore] ✅ Sync created:', result.syncId);
+      console.log('[SyncStore] 📝 Result contains:', result);
+      console.log('[SyncStore] 🔑 Recovery phrase from result:', result.recoveryPhrase);
+      console.log('[SyncStore] 🔑 Recovery phrase from minimalSync:', minimalSync.recoveryPhrase);
       
       // Enable periodic sync
       minimalSync.enableSync(this.handleDataReceived);
@@ -406,7 +409,7 @@ class SyncStoreIntegration {
       // Return both sync ID and recovery phrase for display
       return { 
         syncId: result.syncId, 
-        recoveryPhrase: minimalSync.recoveryPhrase 
+        recoveryPhrase: result.recoveryPhrase || minimalSync.recoveryPhrase || 'NOT_FOUND'
       };
     } else {
       console.error('[SyncStore] ❌ Create sync failed:', result.error);
