@@ -272,10 +272,10 @@ export default function SyncStoreTest() {
           <Text style={styles.sectionTitle}>Status</Text>
           <Text>Sync Enabled: {status.isEnabled ? '✅' : '❌'}</Text>
           <Text>Sync ID: {status.syncId || 'None'}</Text>
-          {syncId && syncId.length === 32 && (
+          {status.recoveryPhrase && status.recoveryPhrase.length === 32 && (
             <View style={styles.recoverySection}>
               <Text style={styles.recoveryLabel}>🔑 Recovery Phrase (for joining):</Text>
-              <Text style={styles.recoveryPhrase}>{syncId}</Text>
+              <Text style={styles.recoveryPhrase}>{status.recoveryPhrase}</Text>
             </View>
           )}
           {status.isEnabled && (

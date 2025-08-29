@@ -25,7 +25,9 @@ import conflictResolver from '../services/sync/conflictResolver';
 import { useUserStore, useLibraryStore } from '../stores';
 
 const ConflictResolutionTest = () => {
-  const [syncId, setSyncId] = useState(minimalSync.syncId || '');
+  const [syncId, setSyncId] = useState('');
+  const [recoveryPhrase, setRecoveryPhrase] = useState('');
+  const [syncStatus, setSyncStatus] = useState(null);
   const [status, setStatus] = useState('Not syncing');
   const [localData, setLocalData] = useState(null);
   const [remoteData, setRemoteData] = useState(null);
@@ -42,6 +44,37 @@ const ConflictResolutionTest = () => {
   useEffect(() => {
     updateLocalData();
   }, [users, library]);
+  
+  // Initialize sync status
+  useEffect(() => {
+    const initSync = async () => {
+      await syncStore.initialize();
+      const currentStatus = syncStore.getSyncStatus();
+      setSyncStatus(currentStatus);
+      
+      if (currentStatus.syncId) {
+        setSyncId(currentStatus.syncId);
+        setStatus(currentStatus.isEnabled ? 'Sync enabled' : 'Sync disabled');
+      }
+      
+      if (currentStatus.recoveryPhrase) {
+        setRecoveryPhrase(currentStatus.recoveryPhrase);
+      }
+    };
+    
+    initSync();
+    
+    // Update status periodically
+    const interval = setInterval(() => {
+      const currentStatus = syncStore.getSyncStatus();
+      setSyncStatus(currentStatus);
+      if (currentStatus.isEnabled) {
+        setStatus('Sync enabled');
+      }
+    }, 2000);
+    
+    return () => clearInterval(interval);
+  }, []);
   
   const updateLocalData = async () => {
     const state = await syncStore.getCurrentState();
@@ -73,9 +106,20 @@ const ConflictResolutionTest = () => {
       };
       
       const result = await syncStore.createSync();
-      const recoveryPhrase = result.recoveryPhrase || result.syncId || result;
-      setSyncId(recoveryPhrase);
-      setStatus(`Created sync: ${recoveryPhrase}`);
+      
+      if (result.syncId) {
+        setSyncId(result.syncId);
+      }
+      
+      if (result.recoveryPhrase) {
+        setRecoveryPhrase(result.recoveryPhrase);
+      }
+      
+      // Update sync status
+      const currentStatus = syncStore.getSyncStatus();
+      setSyncStatus(currentStatus);
+      
+      setStatus(`Created sync - ID: ${result.syncId}`);
       
       // Pull to get initial state
       await pullLatestData();
@@ -86,15 +130,24 @@ const ConflictResolutionTest = () => {
   };
   
   const joinTestSync = async () => {
-    if (!syncId) {
-      Alert.alert('Error', 'Enter a sync ID first');
+    if (!recoveryPhrase) {
+      Alert.alert('Error', 'Enter a recovery phrase first');
       return;
     }
     
     try {
       setStatus('Joining sync...');
-      await syncStore.joinSync(syncId);
-      setStatus(`Joined sync: ${syncId}`);
+      await syncStore.joinSync(recoveryPhrase);
+      
+      // Update sync status after joining
+      const currentStatus = syncStore.getSyncStatus();
+      setSyncStatus(currentStatus);
+      
+      if (currentStatus.syncId) {
+        setSyncId(currentStatus.syncId);
+      }
+      
+      setStatus(`Joined sync - ID: ${currentStatus.syncId}`);
       
       // Pull to get current state
       await pullLatestData();
@@ -675,7 +728,18 @@ const ConflictResolutionTest = () => {
         
         {/* Sync Controls */}
         <View style={{ marginBottom: 20 }}>
-          {syncId && syncId.length === 32 && (
+          {syncStatus && syncStatus.syncId && (
+            <View style={{ marginBottom: 10 }}>
+              <Text style={{ fontSize: 14, marginBottom: 5 }}>
+                Sync ID: {syncStatus.syncId}
+              </Text>
+              <Text style={{ fontSize: 14, marginBottom: 5 }}>
+                Status: {syncStatus.isEnabled ? '✅ Enabled' : '❌ Disabled'}
+              </Text>
+            </View>
+          )}
+          
+          {recoveryPhrase && recoveryPhrase.length === 32 && (
             <View style={{ 
               backgroundColor: '#E8F5E9', 
               padding: 10, 
@@ -693,7 +757,7 @@ const ConflictResolutionTest = () => {
                 padding: 8,
                 borderRadius: 3
               }}>
-                {syncId}
+                {recoveryPhrase}
               </Text>
             </View>
           )}
@@ -701,8 +765,8 @@ const ConflictResolutionTest = () => {
           <TextInput
             style={[styles.input, { marginBottom: 10 }]}
             placeholder="Enter Recovery Phrase to join existing sync"
-            value={syncId}
-            onChangeText={setSyncId}
+            value={recoveryPhrase}
+            onChangeText={setRecoveryPhrase}
           />
           
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>

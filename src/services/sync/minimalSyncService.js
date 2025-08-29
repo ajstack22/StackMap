@@ -81,6 +81,14 @@ class MinimalSyncService {
         this.syncId = storedSyncId;
         console.log('[MinimalSync] 📥 Loaded existing sync ID:', this.syncId);
         
+        // Try to load the recovery phrase
+        const storedPhrase = await AsyncStorage.getItem(`@sync_phrase_${storedSyncId}`) || 
+                           await AsyncStorage.getItem('@sync_phrase');
+        if (storedPhrase) {
+          this.recoveryPhrase = storedPhrase;
+          console.log('[MinimalSync] 🔑 Loaded recovery phrase');
+        }
+        
         // Also check if we have stored data
         const storedData = await AsyncStorage.getItem('@minimal_sync_data');
         if (storedData) {
@@ -257,7 +265,13 @@ class MinimalSyncService {
       
       if (result.success) {
         await AsyncStorage.setItem('@minimal_sync_id', this.syncId);
+        
+        // Store recovery phrase with sync ID for persistence
+        await AsyncStorage.setItem(`@sync_phrase_${this.syncId}`, this.recoveryPhrase);
+        await AsyncStorage.setItem('@sync_phrase', this.recoveryPhrase);
+        
         console.log('[MinimalSync] ✅ Sync created successfully!');
+        console.log('[MinimalSync] 🔑 Recovery phrase stored for persistence');
         
         // Start periodic pull if sync is enabled
         if (this.isEnabled) {
@@ -343,10 +357,13 @@ class MinimalSyncService {
           hasData: !!parsed?.data
         });
         
-        // Store sync ID (no protection period needed with conflict resolution)
+        // Store sync ID and recovery phrase for persistence
         await AsyncStorage.setItem('@minimal_sync_id', this.syncId);
+        await AsyncStorage.setItem(`@sync_phrase_${this.syncId}`, this.recoveryPhrase);
+        await AsyncStorage.setItem('@sync_phrase', this.recoveryPhrase);
         
         console.log('[MinimalSync] ✅ Device joined sync - can push immediately');
+        console.log('[MinimalSync] 🔑 Recovery phrase stored for persistence');
         
         // Start periodic pull if sync is enabled
         if (this.isEnabled) {

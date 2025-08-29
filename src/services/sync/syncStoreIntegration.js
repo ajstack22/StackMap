@@ -495,6 +495,7 @@ class SyncStoreIntegration {
     return {
       isEnabled: minimalSync.isEnabled,
       syncId: minimalSync.syncId,
+      recoveryPhrase: minimalSync.recoveryPhrase,
       canPushImmediately: true // No more protection period!
     };
   }
