@@ -180,7 +180,7 @@ class ConflictResolver {
   }
 
   /**
-   * Merge library - Additive merge (keep all categories)
+   * Merge library - Simple LWW with proper structure preservation
    */
   mergeLibrary(localLibrary, remoteLibrary, localMeta, remoteMeta) {
     if (!localLibrary && !remoteLibrary) return {};
@@ -193,37 +193,23 @@ class ConflictResolver {
       return localLibrary || {};
     }
 
-    // For library, we do additive merge - keep all unique categories
-    this.log('Library: Additive merge (keeping all categories)');
-    const merged = { ...localLibrary };
+    // Get timestamps
+    const localTimestamp = (localMeta.fieldTimestamps?.library) || 0;
+    const remoteTimestamp = (remoteMeta.fieldTimestamps?.library) || 0;
     
-    Object.keys(remoteLibrary).forEach(categoryId => {
-      if (!merged[categoryId]) {
-        merged[categoryId] = remoteLibrary[categoryId];
-        this.log(`  Added category ${categoryId} from remote`);
-      } else {
-        // Category exists in both - merge activities within it
-        const localCat = merged[categoryId];
-        const remoteCat = remoteLibrary[categoryId];
-        
-        // Merge activities array (keep unique)
-        const allActivities = new Set([
-          ...(localCat.activities || []),
-          ...(remoteCat.activities || [])
-        ]);
-        
-        merged[categoryId] = {
-          ...localCat,
-          activities: Array.from(allActivities)
-        };
-        
-        if (allActivities.size > (localCat.activities?.length || 0)) {
-          this.log(`  Merged activities in category ${categoryId}`);
-        }
-      }
-    });
-    
-    return merged;
+    // Simple LWW for library
+    if (remoteTimestamp > localTimestamp) {
+      this.log(`Library: Remote wins (${remoteTimestamp} > ${localTimestamp})`);
+      return remoteLibrary;
+    } else if (localTimestamp > remoteTimestamp) {
+      this.log(`Library: Local wins (${localTimestamp} > ${remoteTimestamp})`);
+      return localLibrary;
+    } else {
+      // Same timestamp - use device ID as tiebreaker
+      const winner = this.tiebreaker(localMeta.deviceId, remoteMeta.deviceId);
+      this.log(`Library: Tie broken by device ID (${winner})`);
+      return winner === 'local' ? localLibrary : remoteLibrary;
+    }
   }
 
   /**

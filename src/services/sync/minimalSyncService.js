@@ -439,7 +439,13 @@ class MinimalSyncService {
         lastTimestamp = parsed.timestamp || 0;
         localData = parsed.data;
         console.log('[MinimalSync] Using stored timestamp:', lastTimestamp);
-        console.log('[MinimalSync] Has local data:', !!localData);
+        console.log('[MinimalSync] Local data structure:', {
+          hasUsers: !!localData?.users,
+          hasLibrary: !!localData?.library,
+          libraryType: localData?.library ? typeof localData.library : 'undefined',
+          categoriesType: localData?.library?.categories ? typeof localData.library.categories : 'undefined',
+          isArray: Array.isArray(localData?.library?.categories)
+        });
       }
     } catch (error) {
       console.log('[MinimalSync] Error getting stored data:', error);
@@ -459,6 +465,14 @@ class MinimalSyncService {
         const latest = result.records[result.records.length - 1];
         const remoteData = JSON.parse(this.decodeBase64(latest.encrypted_blob));
         console.log('[MinimalSync] 📦 Remote data received');
+        console.log('[MinimalSync] Remote data structure:', {
+          hasUsers: !!remoteData?.users,
+          hasLibrary: !!remoteData?.library,
+          libraryType: remoteData?.library ? typeof remoteData.library : 'undefined',
+          categoriesType: remoteData?.library?.categories ? typeof remoteData.library.categories : 'undefined',
+          isArray: Array.isArray(remoteData?.library?.categories),
+          categoriesValue: remoteData?.library?.categories
+        });
         
         // Perform conflict resolution if we have local data
         let finalData;
