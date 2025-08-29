@@ -72,9 +72,10 @@ const ConflictResolutionTest = () => {
         }
       };
       
-      const newSyncId = await syncStore.createSync();
-      setSyncId(newSyncId);
-      setStatus(`Created sync: ${newSyncId}`);
+      const result = await syncStore.createSync();
+      const recoveryPhrase = result.recoveryPhrase || result.syncId || result;
+      setSyncId(recoveryPhrase);
+      setStatus(`Created sync: ${recoveryPhrase}`);
       
       // Pull to get initial state
       await pullLatestData();
@@ -674,9 +675,32 @@ const ConflictResolutionTest = () => {
         
         {/* Sync Controls */}
         <View style={{ marginBottom: 20 }}>
+          {syncId && syncId.length === 32 && (
+            <View style={{ 
+              backgroundColor: '#E8F5E9', 
+              padding: 10, 
+              borderRadius: 5, 
+              marginBottom: 10 
+            }}>
+              <Text style={{ fontSize: 12, color: '#2E7D32', marginBottom: 5 }}>
+                🔑 Recovery Phrase (share this to join):
+              </Text>
+              <Text style={{ 
+                fontFamily: 'monospace', 
+                fontSize: 11, 
+                color: '#1B5E20',
+                backgroundColor: '#fff',
+                padding: 8,
+                borderRadius: 3
+              }}>
+                {syncId}
+              </Text>
+            </View>
+          )}
+          
           <TextInput
             style={[styles.input, { marginBottom: 10 }]}
-            placeholder="Sync ID (for joining)"
+            placeholder="Enter Recovery Phrase to join existing sync"
             value={syncId}
             onChangeText={setSyncId}
           />
@@ -686,14 +710,14 @@ const ConflictResolutionTest = () => {
               style={[styles.button, { margin: 5, backgroundColor: '#4CAF50' }]}
               onPress={createTestSync}
             >
-              <Text style={styles.buttonText}>Create Sync</Text>
+              <Text style={styles.buttonText}>Create New Sync</Text>
             </TouchableOpacity>
             
             <TouchableOpacity
               style={[styles.button, { margin: 5, backgroundColor: '#2196F3' }]}
               onPress={joinTestSync}
             >
-              <Text style={styles.buttonText}>Join Sync</Text>
+              <Text style={styles.buttonText}>Join Existing Sync</Text>
             </TouchableOpacity>
           </View>
         </View>
