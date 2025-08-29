@@ -202,8 +202,9 @@ module.exports = {
     hot: true,
     open: true,
     historyApiFallback: true,
-    proxy: {
-      '/api/sync': {
+    proxy: [
+      {
+        context: ['/api/sync'],
         target: 'https://stackmap.app',
         changeOrigin: true,
         secure: true,
@@ -215,6 +216,6 @@ module.exports = {
           console.log('[Proxy] Response:', proxyRes.statusCode);
         }
       }
-    }
+    ]
   },
 };

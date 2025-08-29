@@ -16,6 +16,9 @@ class MinimalSyncService {
     this.syncId = null;
     this.deviceId = null;
     
+    // Load existing sync ID on initialization
+    this.loadExistingSyncId();
+    
     // Determine API URL based on environment
     if (typeof window !== 'undefined' && window.location) {
       // Web environment
@@ -52,6 +55,31 @@ class MinimalSyncService {
       console.log('[MinimalSync] Error initializing device ID:', error);
       // Generate one for this session
       this.deviceId = this.generateId();
+    }
+  }
+
+  async loadExistingSyncId() {
+    try {
+      const storedSyncId = await AsyncStorage.getItem('@minimal_sync_id');
+      if (storedSyncId) {
+        this.syncId = storedSyncId;
+        console.log('[MinimalSync] 📥 Loaded existing sync ID:', this.syncId);
+        
+        // Also check if we have stored data
+        const storedData = await AsyncStorage.getItem('@minimal_sync_data');
+        if (storedData) {
+          const parsed = JSON.parse(storedData);
+          console.log('[MinimalSync] 📦 Found existing data from previous session:', {
+            syncId: parsed.syncId,
+            hasData: !!parsed.data,
+            timestamp: parsed.timestamp
+          });
+        }
+      } else {
+        console.log('[MinimalSync] ℹ️ No existing sync ID found');
+      }
+    } catch (error) {
+      console.log('[MinimalSync] Error loading existing sync ID:', error);
     }
   }
 
@@ -263,7 +291,18 @@ class MinimalSyncService {
       return { success: false, error: 'No sync ID' };
     }
     
-    const lastTimestamp = 0; // Get all records for now
+    // Get the last timestamp from stored data
+    let lastTimestamp = 0;
+    try {
+      const storedData = await AsyncStorage.getItem('@minimal_sync_data');
+      if (storedData) {
+        const parsed = JSON.parse(storedData);
+        lastTimestamp = parsed.timestamp || 0;
+        console.log('[MinimalSync] Using stored timestamp:', lastTimestamp);
+      }
+    } catch (error) {
+      console.log('[MinimalSync] Error getting stored timestamp:', error);
+    }
     
     try {
       const url = `${this.API_BASE}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=${lastTimestamp}`;
