@@ -136,6 +136,7 @@ icon-color-preview.html
 
 # Local development
 *.log
+*.har
 
 # Old bundle backup directory
 /build-artifacts/
