@@ -263,7 +263,7 @@ class MinimalSyncService {
     // Check if we need to wait (protection period for new devices)
     const joinTime = await AsyncStorage.getItem('@minimal_sync_join_time');
     if (joinTime) {
-      const secondsSinceJoin = (Date.now() - parseInt(joinTime)) / 1000;
+      const secondsSinceJoin = (Date.now() - parseInt(joinTime, 10)) / 1000;
       if (secondsSinceJoin < 60) {
         const remaining = Math.ceil(60 - secondsSinceJoin);
         console.log(`[MinimalSync] ⏳ Protection period: ${remaining}s remaining`);

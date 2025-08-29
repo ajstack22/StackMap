@@ -7,7 +7,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import minimalSync from './minimalSyncService';
-import { useAppStore, useUserStore, useSettingsStore, useLibraryStore } from '../../stores';
+import { useUserStore, useSettingsStore, useLibraryStore } from '../../stores';
 import { normalizeSyncData } from '../../utils/dataNormalizer';
 
 class SyncStoreIntegration {
@@ -47,7 +47,7 @@ class SyncStoreIntegration {
       // Check protection period
       const joinTime = await AsyncStorage.getItem('@minimal_sync_join_time');
       if (joinTime) {
-        const msRemaining = 60000 - (Date.now() - parseInt(joinTime));
+        const msRemaining = 60000 - (Date.now() - parseInt(joinTime, 10));
         if (msRemaining > 0) {
           this.protectionPeriodEnd = Date.now() + msRemaining;
           console.log(`[SyncStore] Protection period active for ${Math.ceil(msRemaining/1000)}s`);

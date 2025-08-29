@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ScrollView, StyleSheet, Alert } from 'react-native';
 import syncStore from '../services/sync/syncStoreIntegration';
-import { useUserStore, useLibraryStore, useSettingsStore } from '../stores';
+import { useUserStore, useLibraryStore } from '../stores';
 
 /**
  * Test component for Phase 1 & 2: Bidirectional sync with store integration
@@ -14,11 +14,8 @@ export default function SyncStoreTest() {
   
   // Store data - matching actual structure
   const users = useUserStore(state => state.users) || {};
-  const currentUser = useUserStore(state => state.currentUser);
-  const currentDay = useUserStore(state => state.currentDay);
   const libraryState = useLibraryStore(state => state.library) || {};
   const library = libraryState.activities || [];
-  const settings = useSettingsStore(state => state) || {};
 
   const addLog = (message, type = 'info') => {
     const timestamp = new Date().toLocaleTimeString();
@@ -34,15 +31,15 @@ export default function SyncStoreTest() {
       await syncStore.initialize();
       
       // Check sync status
-      const status = syncStore.getSyncStatus();
-      setStatus(status);
+      const initialStatus = syncStore.getSyncStatus();
+      setStatus(initialStatus);
       
-      if (status.syncId) {
-        setSyncId(status.syncId);
-        addLog(`Found existing sync: ${status.syncId}`, 'success');
+      if (initialStatus.syncId) {
+        setSyncId(initialStatus.syncId);
+        addLog(`Found existing sync: ${initialStatus.syncId}`, 'success');
         
-        if (status.hasProtectionPeriod) {
-          addLog(`Protection period active: ${status.protectionSecondsRemaining}s remaining`, 'warning');
+        if (initialStatus.hasProtectionPeriod) {
+          addLog(`Protection period active: ${initialStatus.protectionSecondsRemaining}s remaining`, 'warning');
         }
       }
       
@@ -67,7 +64,7 @@ export default function SyncStoreTest() {
     }, 1000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Create new sync with test data
   const handleCreateSync = async () => {
@@ -248,21 +245,6 @@ export default function SyncStoreTest() {
     );
   };
 
-  // Log entry component
-  const LogEntry = ({ entry }) => {
-    const colors = {
-      info: '#007AFF',
-      success: '#34C759',
-      warning: '#FF9500',
-      error: '#FF3B30'
-    };
-    
-    return (
-      <Text style={[styles.logEntry, { color: colors[entry.type] }]}>
-        [{entry.timestamp}] {entry.message}
-      </Text>
-    );
-  };
 
   return (
     <ScrollView style={styles.container}>
@@ -343,7 +325,7 @@ export default function SyncStoreTest() {
             
             {!status?.isEnabled && (
               <TouchableOpacity 
-                style={[styles.button, styles.warning]} 
+                style={[styles.button, styles.warningButton]} 
                 onPress={async () => {
                   addLog('Manually enabling sync...', 'info');
                   await syncStore.initialize();
@@ -366,9 +348,19 @@ export default function SyncStoreTest() {
       <View style={styles.logsSection}>
         <Text style={styles.sectionTitle}>Logs</Text>
         <ScrollView style={styles.logs}>
-          {logs.map((entry, index) => (
-            <LogEntry key={index} entry={entry} />
-          ))}
+          {logs.map((entry, index) => {
+            const colors = {
+              info: '#007AFF',
+              success: '#34C759',
+              warning: '#FF9500',
+              error: '#FF3B30'
+            };
+            return (
+              <Text key={index} style={[styles.logEntry, { color: colors[entry.type] }]}>
+                [{entry.timestamp}] {entry.message}
+              </Text>
+            );
+          })}
         </ScrollView>
       </View>
     </ScrollView>
@@ -437,7 +429,7 @@ const styles = StyleSheet.create({
   destructive: {
     backgroundColor: '#FF3B30',
   },
-  warning: {
+  warningButton: {
     backgroundColor: '#FF9500',
   },
   buttonText: {
