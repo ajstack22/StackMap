@@ -33,6 +33,7 @@ import SyncFixTest from './src/components/SyncFixTest';
 import TimestampPersistTest from './src/components/TimestampPersistTest';
 import MinimalSyncTest from './src/components/MinimalSyncTest';
 import SyncStoreTest from './src/components/SyncStoreTest';
+import ConflictResolutionTest from './src/components/ConflictResolutionTest';
 import PersistenceDebugTest from './src/components/PersistenceDebugTest';
 // import * as Keychain from 'react-native-keychain'; // Removed - not used and causing crash
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -291,6 +292,7 @@ const App = () => {
   const [showDayManagementModal, setShowDayManagementModal] = useState(false);
   const [dayManagementActiveTab, setDayManagementActiveTab] = useState(0);
   const [showSyncTestModal, setShowSyncTestModal] = useState(false);
+  const [activeTestComponent, setActiveTestComponent] = useState('sync'); // 'sync' or 'conflict'
   const [showActivityManagementModal, setShowActivityManagementModal] =
     useState(false);
   const [activityManagementActiveTab, setActivityManagementActiveTab] =
@@ -5651,8 +5653,60 @@ Users: ${userNames} (${userCount} total)
                 <Icon name="close" size={24} color="white" />
               </TouchableOpacity>
             </View>
-            {/* Phase 1&2 Test: Store Integration */}
-            <SyncStoreTest />
+            
+            {/* Test Component Selector */}
+            <View style={{ 
+              flexDirection: 'row', 
+              padding: 10,
+              backgroundColor: '#f5f5f5',
+              borderBottomWidth: 1,
+              borderBottomColor: '#ddd'
+            }}>
+              <TouchableOpacity
+                style={{
+                  flex: 1,
+                  padding: 10,
+                  marginRight: 5,
+                  backgroundColor: activeTestComponent === 'sync' ? '#4A90E2' : '#fff',
+                  borderRadius: 5,
+                  alignItems: 'center'
+                }}
+                onPress={() => setActiveTestComponent('sync')}
+              >
+                <Text style={{ 
+                  color: activeTestComponent === 'sync' ? '#fff' : '#000',
+                  fontWeight: 'bold'
+                }}>
+                  Sync Store Test
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={{
+                  flex: 1,
+                  padding: 10,
+                  marginLeft: 5,
+                  backgroundColor: activeTestComponent === 'conflict' ? '#4A90E2' : '#fff',
+                  borderRadius: 5,
+                  alignItems: 'center'
+                }}
+                onPress={() => setActiveTestComponent('conflict')}
+              >
+                <Text style={{ 
+                  color: activeTestComponent === 'conflict' ? '#fff' : '#000',
+                  fontWeight: 'bold'
+                }}>
+                  Conflict Resolution Test
+                </Text>
+              </TouchableOpacity>
+            </View>
+            
+            {/* Render Active Test Component */}
+            {activeTestComponent === 'sync' ? (
+              <SyncStoreTest />
+            ) : (
+              <ConflictResolutionTest />
+            )}
             {/* Original minimal test: <MinimalSyncTest /> */}
           </SafeAreaView>
         </Modal>
