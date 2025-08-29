@@ -57,7 +57,7 @@ try {
         exit();
     }
     
-    // Add device to sync group with protection timestamp
+    // Add device to sync group (no protection period needed with conflict resolution)
     $device_stmt = $db->prepare("
         INSERT INTO sync_devices (sync_id, device_id, first_seen, push_count)
         VALUES (?, ?, NOW(), 0)
@@ -100,8 +100,8 @@ try {
             'server_timestamp' => intval($latest_record['server_timestamp']),
             'encrypted_blob' => $latest_record['encrypted_blob']
         ],
-        'server_time' => round(microtime(true) * 1000),
-        'protection_seconds' => 60
+        'server_time' => round(microtime(true) * 1000)
+        // No protection period needed with conflict resolution
     ]);
     
 } catch (Exception $e) {

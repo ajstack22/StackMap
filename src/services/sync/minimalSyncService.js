@@ -411,6 +411,18 @@ class MinimalSyncService {
       const result = await response.json();
       console.log('[MinimalSync] 📡 Push response:', result);
       
+      // Check if we got a 429 (rate limit)
+      if (response.status === 429) {
+        console.warn('[MinimalSync] ⚠️ Rate limited:', result.error);
+        return { success: false, error: result.error, rateLimited: true };
+      }
+      
+      // Check if response was successful
+      if (!response.ok) {
+        console.error('[MinimalSync] ❌ Push failed with status:', response.status);
+        return { success: false, error: result.error || 'Push failed' };
+      }
+      
       return { success: result.success };
     } catch (error) {
       console.error('[MinimalSync] ❌ Push error:', error);
@@ -606,11 +618,22 @@ class MinimalSyncService {
   }
   
   /**
-   * Push data (no retry needed without protection period)
+   * Push data with retry logic for rate limits
    */
-  async pushDataWithRetry(newData) {
-    // Just push directly - no protection period to worry about
-    return await this.pushData(newData);
+  async pushDataWithRetry(newData, retryCount = 0) {
+    const maxRetries = 3;
+    const result = await this.pushData(newData);
+    
+    // If rate limited and we have retries left, wait and retry
+    if (result.rateLimited && retryCount < maxRetries) {
+      const waitTime = Math.min(5000 * Math.pow(2, retryCount), 30000); // Exponential backoff, max 30s
+      console.log(`[MinimalSync] ⏳ Rate limited, retrying in ${waitTime/1000}s...`);
+      
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      return this.pushDataWithRetry(newData, retryCount + 1);
+    }
+    
+    return result;
   }
   
   /**

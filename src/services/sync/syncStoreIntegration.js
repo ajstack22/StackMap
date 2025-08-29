@@ -365,6 +365,15 @@ class SyncStoreIntegration {
         console.log('[SyncStore] ✅ State pushed successfully');
       } else {
         console.error('[SyncStore] ❌ Push failed:', result.error);
+        
+        // If it was a rate limit error, schedule a retry
+        if (result.rateLimited) {
+          console.log('[SyncStore] 🔄 Scheduling retry due to rate limit');
+          setTimeout(() => {
+            console.log('[SyncStore] 🔁 Retrying push after rate limit');
+            this.pushCurrentState();
+          }, 10000); // Retry after 10 seconds
+        }
       }
     } catch (error) {
       console.error('[SyncStore] ❌ Push error:', error);

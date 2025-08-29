@@ -73,28 +73,18 @@ try {
     $device_info = $device_stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$device_info) {
-        // New device - add it but require 60 second wait
+        // New device - add it (no protection period needed with conflict resolution)
         $add_device_stmt = $db->prepare("
             INSERT INTO sync_devices (sync_id, device_id, first_seen, push_count)
             VALUES (?, ?, NOW(), 0)
         ");
         $add_device_stmt->execute([$sync_id, $device_id]);
         
-        http_response_code(429);
-        echo json_encode(['error' => 'New device must wait 60 seconds before pushing']);
-        exit();
+        // Set device_info for the insert below
+        $device_info = ['seconds_since_join' => 0, 'push_count' => 0];
     }
     
-    // Protection: Block pushes from devices that joined less than 60 seconds ago
-    $seconds_since_join = intval($device_info['seconds_since_join']);
-    if ($seconds_since_join < 60) {
-        http_response_code(429);
-        echo json_encode([
-            'error' => 'Device must wait 60 seconds after joining before pushing',
-            'seconds_remaining' => 60 - $seconds_since_join
-        ]);
-        exit();
-    }
+    // No protection period needed - conflict resolution handles all edge cases
     
     // Insert sync record
     $insert_stmt = $db->prepare("
