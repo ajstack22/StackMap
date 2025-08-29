@@ -3,10 +3,13 @@
  * 
  * Connects minimal sync service to Zustand stores
  * Handles data normalization and proper store updates
+ * 
+ * PHASE 4 UPDATE: Added field-level timestamp tracking for conflict resolution
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import minimalSync from './minimalSyncService';
+import conflictResolver from './conflictResolver';
 import { useUserStore, useSettingsStore, useLibraryStore } from '../../stores';
 import { normalizeSyncData } from '../../utils/dataNormalizer';
 
@@ -19,6 +22,14 @@ class SyncStoreIntegration {
     this.changeDebounceTimer = null;
     this.changeDebounceDelay = 5000; // 5 seconds after changes
     this.protectionPeriodEnd = 0;
+    
+    // Track field-level timestamps for conflict resolution
+    this.fieldTimestamps = {
+      users: 0,
+      activities: 0,
+      settings: 0,
+      library: 0
+    };
     
     // Bind methods
     this.handleDataReceived = this.handleDataReceived.bind(this);
@@ -74,10 +85,21 @@ class SyncStoreIntegration {
   subscribeToStores() {
     console.log('[SyncStore] 📡 Subscribing to store changes');
     
-    // Subscribe to all stores
-    const unsubUser = useUserStore.subscribe(() => this.handleStoreChange());
-    const unsubSettings = useSettingsStore.subscribe(() => this.handleStoreChange());
-    const unsubLibrary = useLibraryStore.subscribe(() => this.handleStoreChange());
+    // Subscribe to all stores with field tracking
+    const unsubUser = useUserStore.subscribe(() => {
+      this.fieldTimestamps.users = Date.now();
+      this.handleStoreChange('users');
+    });
+    
+    const unsubSettings = useSettingsStore.subscribe(() => {
+      this.fieldTimestamps.settings = Date.now();
+      this.handleStoreChange('settings');
+    });
+    
+    const unsubLibrary = useLibraryStore.subscribe(() => {
+      this.fieldTimestamps.library = Date.now();
+      this.handleStoreChange('library');
+    });
     
     // Store unsubscribe functions
     this.unsubscribers = [unsubUser, unsubSettings, unsubLibrary];
@@ -86,11 +108,15 @@ class SyncStoreIntegration {
   /**
    * Handle store changes - debounced push
    */
-  handleStoreChange() {
+  handleStoreChange(field = null) {
     // Don't sync if we're currently receiving data
     if (this.isSyncing) {
       console.log('[SyncStore] ⏸️ Skipping change during sync');
       return;
+    }
+
+    if (field) {
+      console.log(`[SyncStore] 📝 ${field} changed`);
     }
 
     // Clear existing debounce timer
@@ -130,19 +156,28 @@ class SyncStoreIntegration {
       // Settings
       settings: settingsState || {},
       
-      // Include metadata
-      timestamp: Date.now(),
-      deviceId: minimalSync.deviceId,
-      version: 2 // Store integration version
+      // Include metadata for conflict resolution
+      metadata: {
+        lastModified: Date.now(),
+        deviceId: minimalSync.deviceId,
+        fieldTimestamps: { ...this.fieldTimestamps },
+        version: 2 // Store integration version
+      }
     };
 
     // Normalize the data to ensure field consistency
     const normalized = normalizeSyncData(state);
     
+    // Preserve metadata after normalization
+    if (!normalized.metadata) {
+      normalized.metadata = state.metadata;
+    }
+    
     console.log('[SyncStore] 📊 Current state:', {
       userCount: Object.keys(normalized.users || {}).length,
       libraryActivities: normalized.library?.activities?.length || 0,
-      hasSettings: !!normalized.settings
+      hasSettings: !!normalized.settings,
+      fieldTimestamps: state.metadata.fieldTimestamps
     });
     
     return normalized;
@@ -294,8 +329,29 @@ class SyncStoreIntegration {
   async handleDataReceived(syncedData) {
     console.log('[SyncStore] 📨 Received sync data');
     
-    // Apply the synced state
-    await this.applyState(syncedData);
+    // Get current state for conflict resolution
+    const currentState = this.getCurrentState();
+    
+    // Perform conflict resolution
+    console.log('[SyncStore] 🔀 Resolving conflicts...');
+    const mergedData = conflictResolver.mergeStates(currentState, syncedData);
+    
+    // Check if there were conflicts
+    const mergeLog = conflictResolver.getMergeLog();
+    if (mergeLog.length > 0) {
+      console.log('[SyncStore] 📊 Conflict resolution summary:');
+      mergeLog.slice(-5).forEach(entry => {
+        console.log(`  - ${entry.message}`);
+      });
+    }
+    
+    // Apply the merged state
+    await this.applyState(mergedData);
+    
+    // Update our field timestamps from merged data
+    if (mergedData.metadata?.fieldTimestamps) {
+      this.fieldTimestamps = { ...mergedData.metadata.fieldTimestamps };
+    }
   }
 
   /**

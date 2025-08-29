@@ -6,9 +6,12 @@
  * - NO CRDT
  * - NO complex state management
  * - Just JSON in, JSON out, with extreme logging
+ * 
+ * PHASE 4 UPDATE: Added conflict resolution with metadata tracking
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import conflictResolver from './conflictResolver';
 
 class MinimalSyncService {
   constructor() {
@@ -113,6 +116,33 @@ class MinimalSyncService {
   }
 
   /**
+   * Add metadata to data if it doesn't have it
+   */
+  addMetadata(data) {
+    const now = Date.now();
+    
+    // If data already has metadata, preserve it
+    if (data.metadata) {
+      return data;
+    }
+    
+    // Add metadata for conflict resolution
+    return {
+      ...data,
+      metadata: {
+        lastModified: now,
+        deviceId: this.deviceId,
+        fieldTimestamps: {
+          users: now,
+          activities: now,
+          settings: now,
+          library: now
+        }
+      }
+    };
+  }
+
+  /**
    * Create a new sync group with test data
    */
   async createSync(testData) {
@@ -121,11 +151,14 @@ class MinimalSyncService {
     this.syncId = this.generateId();
     const timestamp = Date.now();
     
+    // Add metadata for conflict resolution
+    const dataWithMetadata = this.addMetadata(testData);
+    
     // Store the data locally first
     const dataToStore = {
       syncId: this.syncId,
       timestamp,
-      data: testData
+      data: dataWithMetadata
     };
     
     console.log('[MinimalSync] 💾 Storing locally first...');
@@ -139,7 +172,7 @@ class MinimalSyncService {
     const payload = {
       sync_id: this.syncId,
       device_id: this.deviceId,
-      encrypted_blob: this.encodeBase64(JSON.stringify(testData)), // Safe base64, no encryption
+      encrypted_blob: this.encodeBase64(JSON.stringify(dataWithMetadata)), // Safe base64, no encryption
       timestamp
     };
     
@@ -285,6 +318,47 @@ class MinimalSyncService {
   }
 
   /**
+   * Update metadata for changed fields
+   */
+  updateMetadata(newData, oldData) {
+    const now = Date.now();
+    const metadata = oldData?.metadata || {};
+    const fieldTimestamps = metadata.fieldTimestamps || {};
+    
+    // Check which fields have changed and update their timestamps
+    const updatedTimestamps = { ...fieldTimestamps };
+    
+    if (JSON.stringify(newData.users) !== JSON.stringify(oldData?.users)) {
+      updatedTimestamps.users = now;
+      console.log('[MinimalSync] Users changed, updating timestamp');
+    }
+    
+    if (JSON.stringify(newData.activities) !== JSON.stringify(oldData?.activities)) {
+      updatedTimestamps.activities = now;
+      console.log('[MinimalSync] Activities changed, updating timestamp');
+    }
+    
+    if (JSON.stringify(newData.settings) !== JSON.stringify(oldData?.settings)) {
+      updatedTimestamps.settings = now;
+      console.log('[MinimalSync] Settings changed, updating timestamp');
+    }
+    
+    if (JSON.stringify(newData.library) !== JSON.stringify(oldData?.library)) {
+      updatedTimestamps.library = now;
+      console.log('[MinimalSync] Library changed, updating timestamp');
+    }
+    
+    return {
+      ...newData,
+      metadata: {
+        lastModified: now,
+        deviceId: this.deviceId,
+        fieldTimestamps: updatedTimestamps
+      }
+    };
+  }
+
+  /**
    * Push updated data
    */
   async pushData(newData) {
@@ -312,11 +386,20 @@ class MinimalSyncService {
     
     const timestamp = Date.now();
     
+    // Get current data to preserve/update metadata
+    const currentStored = await AsyncStorage.getItem('@minimal_sync_data');
+    const currentData = currentStored ? JSON.parse(currentStored).data : null;
+    
+    // Update metadata based on what changed
+    const dataWithMetadata = currentData 
+      ? this.updateMetadata(newData, currentData)
+      : this.addMetadata(newData);
+    
     // Store locally first
     const dataToStore = {
       syncId: this.syncId,
       timestamp,
-      data: newData
+      data: dataWithMetadata
     };
     
     console.log('[MinimalSync] 💾 Updating local storage...');
@@ -326,7 +409,7 @@ class MinimalSyncService {
     const payload = {
       sync_id: this.syncId,
       device_id: this.deviceId,
-      encrypted_blob: this.encodeBase64(JSON.stringify(newData)),
+      encrypted_blob: this.encodeBase64(JSON.stringify(dataWithMetadata)),
       timestamp
     };
     
@@ -361,17 +444,20 @@ class MinimalSyncService {
       return { success: false, error: 'No sync ID' };
     }
     
-    // Get the last timestamp from stored data
+    // Get the last timestamp and current local data
     let lastTimestamp = 0;
+    let localData = null;
     try {
       const storedData = await AsyncStorage.getItem('@minimal_sync_data');
       if (storedData) {
         const parsed = JSON.parse(storedData);
         lastTimestamp = parsed.timestamp || 0;
+        localData = parsed.data;
         console.log('[MinimalSync] Using stored timestamp:', lastTimestamp);
+        console.log('[MinimalSync] Has local data:', !!localData);
       }
     } catch (error) {
-      console.log('[MinimalSync] Error getting stored timestamp:', error);
+      console.log('[MinimalSync] Error getting stored data:', error);
     }
     
     try {
@@ -386,17 +472,36 @@ class MinimalSyncService {
       if (result.success && result.records && result.records.length > 0) {
         // Get the latest record from timestamp API
         const latest = result.records[result.records.length - 1];
-        const decodedData = JSON.parse(this.decodeBase64(latest.encrypted_blob));
-        console.log('[MinimalSync] 📦 Latest data:', decodedData);
+        const remoteData = JSON.parse(this.decodeBase64(latest.encrypted_blob));
+        console.log('[MinimalSync] 📦 Remote data received');
         
-        // Store it
+        // Perform conflict resolution if we have local data
+        let finalData;
+        if (localData) {
+          console.log('[MinimalSync] 🔀 Merging remote with local data...');
+          finalData = conflictResolver.mergeStates(localData, remoteData);
+          
+          // Log merge summary
+          const mergeLog = conflictResolver.getMergeLog();
+          if (mergeLog.length > 0) {
+            console.log('[MinimalSync] 📊 Merge decisions:', mergeLog.length);
+            mergeLog.slice(-5).forEach(entry => {
+              console.log(`  - ${entry.message}`);
+            });
+          }
+        } else {
+          console.log('[MinimalSync] No local data, using remote directly');
+          finalData = remoteData;
+        }
+        
+        // Store the merged result
         const dataToStore = {
           syncId: this.syncId,
           timestamp: latest.timestamp,
-          data: decodedData
+          data: finalData
         };
         
-        console.log('[MinimalSync] 💾 Storing pulled data...');
+        console.log('[MinimalSync] 💾 Storing merged data...');
         await AsyncStorage.setItem('@minimal_sync_data', JSON.stringify(dataToStore));
         
         // Verify storage
@@ -405,8 +510,10 @@ class MinimalSyncService {
         
         return { 
           success: true, 
-          data: decodedData,
-          timestamp: latest.timestamp
+          data: finalData,
+          timestamp: latest.timestamp,
+          hadConflicts: localData !== null,
+          mergeLog: conflictResolver.getMergeLog()
         };
       }
       
