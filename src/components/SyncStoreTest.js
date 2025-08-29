@@ -38,9 +38,7 @@ export default function SyncStoreTest() {
         setSyncId(initialStatus.syncId);
         addLog(`Found existing sync: ${initialStatus.syncId}`, 'success');
         
-        if (initialStatus.hasProtectionPeriod) {
-          addLog(`Protection period active: ${initialStatus.protectionSecondsRemaining}s remaining`, 'warning');
-        }
+        // No protection period with conflict resolution
       }
       
       // Try to restore from backup
@@ -165,12 +163,12 @@ export default function SyncStoreTest() {
       
       addLog(`✅ Joined sync successfully!`, 'success');
       addLog('📥 Data received and applied to stores', 'success');
-      addLog('⏰ 60-second protection period started', 'warning');
+      // No protection period needed with conflict resolution
       addLog('✅ Sync enabled with periodic pull every 30s', 'success');
       
       Alert.alert(
         'Joined Successfully!',
-        'Data has been synced. There is a 60-second protection period before you can push changes.\n\nPeriodic sync is now active (every 30 seconds).',
+        'Data has been synced. Changes will be pushed automatically after a 5-second debounce.\n\nPeriodic sync is now active (every 30 seconds).',
         [{ text: 'OK' }]
       );
     } catch (error) {
@@ -197,11 +195,7 @@ export default function SyncStoreTest() {
     const updatedUsers = { ...users, [userId]: newUser };
     useUserStore.getState().setUsers(updatedUsers);
     
-    if (status?.hasProtectionPeriod) {
-      addLog(`Change detected. Will push after protection period (${status.protectionSecondsRemaining}s)`, 'warning');
-    } else {
-      addLog('Change detected. Will push after 5 second debounce', 'info');
-    }
+    addLog('Change detected. Will push after 5 second debounce', 'info');
   };
 
   // Add a new library item
@@ -221,11 +215,7 @@ export default function SyncStoreTest() {
     };
     useLibraryStore.getState().setLibrary(updatedLibrary);
     
-    if (status?.hasProtectionPeriod) {
-      addLog(`Change detected. Will push after protection period (${status.protectionSecondsRemaining}s)`, 'warning');
-    } else {
-      addLog('Change detected. Will push after 5 second debounce', 'info');
-    }
+    addLog('Change detected. Will push after 5 second debounce', 'info');
   };
 
   // Manual push (for testing)
@@ -280,11 +270,7 @@ export default function SyncStoreTest() {
           {status.isEnabled && (
             <Text style={styles.success}>📡 Periodic sync active (30s interval)</Text>
           )}
-          {status.hasProtectionPeriod && (
-            <Text style={styles.warning}>
-              ⏰ Protection Period: {status.protectionSecondsRemaining}s remaining
-            </Text>
-          )}
+          {/* No protection period with conflict resolution */}
         </View>
       )}
 

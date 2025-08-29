@@ -560,8 +560,10 @@ class MinimalSyncService {
     // Do an immediate pull
     this.pullAndNotify();
     
-    // Then set up interval
+    // Then set up interval (every 30 seconds)
     this.pullInterval = setInterval(() => {
+      const now = new Date().toLocaleTimeString();
+      console.log(`[MinimalSync] ⏰ ${now} - 30-second sync check`);
       this.pullAndNotify();
     }, this.pullIntervalDuration);
   }
