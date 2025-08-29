@@ -95,6 +95,24 @@ class MinimalSyncService {
   }
 
   /**
+   * Safe base64 encoding that handles Unicode
+   */
+  encodeBase64(str) {
+    // Convert string to UTF-8, then to base64
+    const utf8 = unescape(encodeURIComponent(str));
+    return btoa(utf8);
+  }
+
+  /**
+   * Safe base64 decoding that handles Unicode
+   */
+  decodeBase64(str) {
+    // Decode from base64, then from UTF-8
+    const utf8 = atob(str);
+    return decodeURIComponent(escape(utf8));
+  }
+
+  /**
    * Create a new sync group with test data
    */
   async createSync(testData) {
@@ -121,7 +139,7 @@ class MinimalSyncService {
     const payload = {
       sync_id: this.syncId,
       device_id: this.deviceId,
-      encrypted_blob: btoa(JSON.stringify(testData)), // Just base64, no encryption
+      encrypted_blob: this.encodeBase64(JSON.stringify(testData)), // Safe base64, no encryption
       timestamp // Use timestamp instead of version
     };
     
@@ -185,7 +203,7 @@ class MinimalSyncService {
       
       if (result.success && result.latest_record && result.latest_record.encrypted_blob) {
         // Decode the data from timestamp API format
-        const decodedData = JSON.parse(atob(result.latest_record.encrypted_blob));
+        const decodedData = JSON.parse(this.decodeBase64(result.latest_record.encrypted_blob));
         console.log('[MinimalSync] 📦 Decoded data:', decodedData);
         
         // Store it locally
@@ -292,7 +310,7 @@ class MinimalSyncService {
     const payload = {
       sync_id: this.syncId,
       device_id: this.deviceId,
-      encrypted_blob: btoa(JSON.stringify(newData)),
+      encrypted_blob: this.encodeBase64(JSON.stringify(newData)),
       timestamp
     };
     
@@ -352,7 +370,7 @@ class MinimalSyncService {
       if (result.success && result.records && result.records.length > 0) {
         // Get the latest record from timestamp API
         const latest = result.records[result.records.length - 1];
-        const decodedData = JSON.parse(atob(latest.encrypted_blob));
+        const decodedData = JSON.parse(this.decodeBase64(latest.encrypted_blob));
         console.log('[MinimalSync] 📦 Latest data:', decodedData);
         
         // Store it
