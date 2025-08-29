@@ -29,6 +29,7 @@ import {
   THEMES,
 } from '../../constants';
 import SyncStoreTest from '../SyncStoreTest';
+import ConflictResolutionTest from '../ConflictResolutionTest';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const isTablet = () => screenWidth >= 768;
@@ -81,6 +82,7 @@ const OnboardingUserCentered = ({
   const [generatedSyncCode, setGeneratedSyncCode] = useState('');
   const [showCopiedToast, setShowCopiedToast] = useState(false);
   const [showSyncTest, setShowSyncTest] = useState(false);
+  const [activeTestComponent, setActiveTestComponent] = useState('sync'); // 'sync' or 'conflict'
 
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -613,7 +615,60 @@ const OnboardingUserCentered = ({
               ← Back to Welcome
             </Text>
           </TouchableOpacity>
-          <SyncStoreTest />
+          
+          {/* Test Component Selector */}
+          <View style={{ 
+            flexDirection: 'row', 
+            padding: 10,
+            backgroundColor: '#f5f5f5',
+            borderRadius: 8,
+            marginBottom: 10
+          }}>
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                padding: 10,
+                marginRight: 5,
+                backgroundColor: activeTestComponent === 'sync' ? defaultTheme.primary : '#fff',
+                borderRadius: 5,
+                alignItems: 'center'
+              }}
+              onPress={() => setActiveTestComponent('sync')}
+            >
+              <Text style={{ 
+                color: activeTestComponent === 'sync' ? '#fff' : '#000',
+                fontWeight: 'bold'
+              }}>
+                Sync Store Test
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                padding: 10,
+                marginLeft: 5,
+                backgroundColor: activeTestComponent === 'conflict' ? defaultTheme.primary : '#fff',
+                borderRadius: 5,
+                alignItems: 'center'
+              }}
+              onPress={() => setActiveTestComponent('conflict')}
+            >
+              <Text style={{ 
+                color: activeTestComponent === 'conflict' ? '#fff' : '#000',
+                fontWeight: 'bold'
+              }}>
+                Conflict Resolution
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          {/* Render Active Test Component */}
+          {activeTestComponent === 'sync' ? (
+            <SyncStoreTest />
+          ) : (
+            <ConflictResolutionTest />
+          )}
         </View>
       ) : (
         <>
