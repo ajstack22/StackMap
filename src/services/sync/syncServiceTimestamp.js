@@ -79,11 +79,38 @@ class SyncServiceTimestamp {
   }
 
   /**
+   * Restore from backup if stores are empty
+   */
+  async _restoreBackupIfNeeded() {
+    try {
+      const backup = await AsyncStorage.getItem('@sync_state_backup');
+      if (backup) {
+        const backupState = JSON.parse(backup);
+        const currentUsers = useUserStore.getState().users;
+        
+        // If stores are empty but we have backup, restore it
+        if ((!currentUsers || Object.keys(currentUsers).length === 0) && backupState.users) {
+          console.log('[SyncTS] Restoring from backup after refresh...');
+          await this.applyState(backupState, true);
+          console.log('[SyncTS] ✅ Backup restored successfully');
+          return true;
+        }
+      }
+    } catch (error) {
+      console.error('[SyncTS] Error restoring backup:', error);
+    }
+    return false;
+  }
+
+  /**
    * Initialize service on startup
    */
   async _initializeOnStartup() {
     console.log('[SyncTS] _initializeOnStartup called');
     try {
+      // First check if we have a backup to restore (in case of crash/refresh)
+      await this._restoreBackupIfNeeded();
+      
       const [enabled, syncId, lastTimestamp, joinTimestamp] = await Promise.all([
         AsyncStorage.getItem('@sync_enabled'),
         AsyncStorage.getItem('@sync_id'),
@@ -1258,22 +1285,31 @@ class SyncServiceTimestamp {
     console.log('[SyncTS] Forcing immediate persistence to storage...');
     
     // Force flush all stores' persist middleware
-    const userStore = useUserStore;
-    const settingsStore = useSettingsStore;
-    const libraryStore = useLibraryStore;
-    
-    if (userStore.persist && userStore.persist.flush) {
-      await userStore.persist.flush();
+    if (useUserStore.persist && typeof useUserStore.persist.flush === 'function') {
+      await useUserStore.persist.flush();
       console.log('[SyncTS] ✅ User store persisted');
     }
-    if (settingsStore.persist && settingsStore.persist.flush) {
-      await settingsStore.persist.flush();
+    if (useSettingsStore.persist && typeof useSettingsStore.persist.flush === 'function') {
+      await useSettingsStore.persist.flush();
       console.log('[SyncTS] ✅ Settings store persisted');
     }
-    if (libraryStore.persist && libraryStore.persist.flush) {
-      await libraryStore.persist.flush();
+    if (useLibraryStore.persist && typeof useLibraryStore.persist.flush === 'function') {
+      await useLibraryStore.persist.flush();
       console.log('[SyncTS] ✅ Library store persisted');
     }
+    
+    // Backup state to AsyncStorage as failsafe
+    const backupState = {
+      users: useUserStore.getState().users,
+      currentUser: useUserStore.getState().currentUser,
+      currentDay: useUserStore.getState().currentDay,
+      settings: useSettingsStore.getState(),
+      library: useLibraryStore.getState(),
+      timestamp: Date.now()
+    };
+    
+    await AsyncStorage.setItem('@sync_state_backup', JSON.stringify(backupState));
+    console.log('[SyncTS] ✅ Backup state saved to AsyncStorage');
     
     console.log('[SyncTS] All stores persisted successfully');
   }

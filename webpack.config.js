@@ -202,5 +202,19 @@ module.exports = {
     hot: true,
     open: true,
     historyApiFallback: true,
+    proxy: {
+      '/api/sync': {
+        target: 'https://stackmap.app',
+        changeOrigin: true,
+        secure: true,
+        logLevel: 'debug',
+        onProxyReq: (proxyReq, req, res) => {
+          console.log('[Proxy] Forwarding:', req.url, '->', 'https://stackmap.app' + req.url);
+        },
+        onProxyRes: (proxyRes, req, res) => {
+          console.log('[Proxy] Response:', proxyRes.statusCode);
+        }
+      }
+    }
   },
 };

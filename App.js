@@ -14,6 +14,7 @@ import {
   Image,
   Animated,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 
 // Disable console logs on Android for performance
@@ -28,6 +29,7 @@ if (Platform.OS === 'android' && __DEV__) {
 // Import our custom Text and TextInput components that use Comic Relief
 import { Text } from './src/components/Typography';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import SyncFixTest from './src/components/SyncFixTest';
 // import * as Keychain from 'react-native-keychain'; // Removed - not used and causing crash
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSyncOnChange } from './src/hooks/useSyncOnChange';
@@ -284,6 +286,7 @@ const App = () => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showDayManagementModal, setShowDayManagementModal] = useState(false);
   const [dayManagementActiveTab, setDayManagementActiveTab] = useState(0);
+  const [showSyncTestModal, setShowSyncTestModal] = useState(false);
   const [showActivityManagementModal, setShowActivityManagementModal] =
     useState(false);
   const [activityManagementActiveTab, setActivityManagementActiveTab] =
@@ -5593,6 +5596,61 @@ Users: ${userNames} (${userCount} total)
           }
         }}
       />
+
+      {/* Dev Mode Sync Test Button - Floating */}
+      {__DEV__ && (
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            bottom: 100,
+            right: 20,
+            width: 60,
+            height: 60,
+            borderRadius: 30,
+            backgroundColor: '#ff6b6b',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+            elevation: 8,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+          }}
+          onPress={() => setShowSyncTestModal(true)}
+        >
+          <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>
+            SYNC{'\n'}TEST
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Sync Test Modal - Development Only */}
+      {__DEV__ && (
+        <Modal
+          visible={showSyncTestModal}
+          animationType="slide"
+          onRequestClose={() => setShowSyncTestModal(false)}
+        >
+          <SafeAreaView style={{ flex: 1 }}>
+            <View style={{ 
+              flexDirection: 'row', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              padding: 10,
+              backgroundColor: theme?.colors?.primary || '#4A90E2'
+            }}>
+              <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>
+                Sync Test (Dev Only)
+              </Text>
+              <TouchableOpacity onPress={() => setShowSyncTestModal(false)}>
+                <Icon name="close" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
+            <SyncFixTest />
+          </SafeAreaView>
+        </Modal>
+      )}
 
       {/* Activity Management Modal */}
       <ActivityManagementModal
