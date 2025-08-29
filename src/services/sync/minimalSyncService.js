@@ -328,12 +328,12 @@ class MinimalSyncService {
         const parsed = verify ? JSON.parse(verify) : null;
         console.log('[MinimalSync] ✅ Storage verification:', {
           stored: !!verify,
-          syncIdMatches: parsed?.syncId === syncId,
+          syncIdMatches: parsed?.syncId === this.syncId,
           hasData: !!parsed?.data
         });
         
         // Store sync ID (no protection period needed with conflict resolution)
-        await AsyncStorage.setItem('@minimal_sync_id', syncId);
+        await AsyncStorage.setItem('@minimal_sync_id', this.syncId);
         
         console.log('[MinimalSync] ✅ Device joined sync - can push immediately');
         
