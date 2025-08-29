@@ -188,15 +188,15 @@ class MinimalSyncService {
     try {
       // Generate recovery phrase
       console.log('[MinimalSync] About to generate recovery phrase...');
-      const recoveryPhrase = encryptionService.generateRecoveryPhrase();
-      console.log('[MinimalSync] 🔑 Generated recovery phrase:', recoveryPhrase);
+      this.recoveryPhrase = encryptionService.generateRecoveryPhrase();
+      console.log('[MinimalSync] 🔑 Generated recovery phrase:', this.recoveryPhrase);
       
       // Generate sync ID from recovery phrase
-      this.syncId = await this.generateSyncId(recoveryPhrase);
+      this.syncId = await this.generateSyncId(this.recoveryPhrase);
       console.log('[MinimalSync] 🆔 Generated sync ID:', this.syncId);
       
       // Initialize encryption
-      await this.initializeEncryption(recoveryPhrase, this.syncId);
+      await this.initializeEncryption(this.recoveryPhrase, this.syncId);
       
       // Use encryption service's device ID
       this.deviceId = await encryptionService.getDeviceId();
@@ -280,6 +280,9 @@ class MinimalSyncService {
    */
   async joinSync(recoveryPhrase) {
     console.log('[MinimalSync] 📥 joinSync called with recovery phrase');
+    
+    // Store the recovery phrase
+    this.recoveryPhrase = recoveryPhrase;
     
     // Generate sync ID from recovery phrase
     this.syncId = await this.generateSyncId(recoveryPhrase);
