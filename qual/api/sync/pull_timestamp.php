@@ -61,6 +61,7 @@ try {
     $register_stmt->execute([$sync_id, $device_id]);
     
     // Pull records newer than the requested timestamp
+    // EXCLUDING records from our own device to prevent pulling our own changes
     $pull_stmt = $db->prepare("
         SELECT 
             id,
@@ -69,11 +70,13 @@ try {
             encrypted_blob,
             UNIX_TIMESTAMP(server_timestamp) * 1000 as server_timestamp
         FROM sync_records
-        WHERE sync_id = ? AND client_timestamp > ?
+        WHERE sync_id = ? 
+            AND client_timestamp > ?
+            AND device_id != ?
         ORDER BY client_timestamp ASC
         LIMIT 100
     ");
-    $pull_stmt->execute([$sync_id, $since]);
+    $pull_stmt->execute([$sync_id, $since, $device_id]);
     
     $records = [];
     while ($row = $pull_stmt->fetch(PDO::FETCH_ASSOC)) {
