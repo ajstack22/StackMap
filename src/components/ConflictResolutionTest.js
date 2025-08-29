@@ -23,7 +23,6 @@ import syncStore from '../services/sync/syncStoreIntegration';
 import minimalSync from '../services/sync/minimalSyncService';
 import conflictResolver from '../services/sync/conflictResolver';
 import { useUserStore, useLibraryStore } from '../stores';
-import styles from '../styles';
 
 const ConflictResolutionTest = () => {
   const [syncId, setSyncId] = useState(minimalSync.syncId || '');
@@ -617,6 +616,51 @@ const ConflictResolutionTest = () => {
     return JSON.stringify(summary, null, 2);
   };
   
+  // Define styles inline
+  const styles = {
+    container: {
+      flex: 1,
+      padding: 20
+    },
+    card: {
+      backgroundColor: 'white',
+      borderRadius: 10,
+      padding: 20,
+      margin: 10,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: '#333'
+    },
+    text: {
+      fontSize: 16,
+      color: '#666'
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: '#ddd',
+      borderRadius: 5,
+      padding: 10,
+      backgroundColor: 'white'
+    },
+    button: {
+      padding: 10,
+      borderRadius: 5,
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    buttonText: {
+      color: 'white',
+      fontWeight: 'bold'
+    }
+  };
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: '#f0f0f0' }]}>
       <View style={styles.card}>
