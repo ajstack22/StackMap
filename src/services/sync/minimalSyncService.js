@@ -15,6 +15,11 @@ class MinimalSyncService {
     console.log('[MinimalSync] 🚀 Constructor called');
     this.syncId = null;
     this.deviceId = null;
+    this.pullInterval = null;
+    this.pullIntervalDuration = 30000; // 30 seconds
+    this.isEnabled = false;
+    this.lastPullTime = 0;
+    this.onDataReceived = null; // Callback for when new data arrives
     
     // Load existing sync ID on initialization
     this.loadExistingSyncId();
@@ -135,6 +140,12 @@ class MinimalSyncService {
       if (result.success) {
         await AsyncStorage.setItem('@minimal_sync_id', this.syncId);
         console.log('[MinimalSync] ✅ Sync created successfully!');
+        
+        // Start periodic pull if sync is enabled
+        if (this.isEnabled) {
+          this.startPeriodicPull();
+        }
+        
         return { success: true, syncId: this.syncId };
       } else {
         console.error('[MinimalSync] ❌ Server error:', result);
@@ -195,8 +206,16 @@ class MinimalSyncService {
           hasData: !!parsed?.data
         });
         
-        // Also store sync ID
+        // Also store sync ID and join time
         await AsyncStorage.setItem('@minimal_sync_id', syncId);
+        await AsyncStorage.setItem('@minimal_sync_join_time', Date.now().toString());
+        
+        console.log('[MinimalSync] ⏰ 60-second protection period started for new device');
+        
+        // Start periodic pull if sync is enabled
+        if (this.isEnabled) {
+          this.startPeriodicPull();
+        }
         
         return { 
           success: true, 
@@ -239,6 +258,21 @@ class MinimalSyncService {
     if (!this.syncId) {
       console.error('[MinimalSync] ❌ No sync ID - call createSync or joinSync first');
       return { success: false, error: 'No sync ID' };
+    }
+    
+    // Check if we need to wait (protection period for new devices)
+    const joinTime = await AsyncStorage.getItem('@minimal_sync_join_time');
+    if (joinTime) {
+      const secondsSinceJoin = (Date.now() - parseInt(joinTime)) / 1000;
+      if (secondsSinceJoin < 60) {
+        const remaining = Math.ceil(60 - secondsSinceJoin);
+        console.log(`[MinimalSync] ⏳ Protection period: ${remaining}s remaining`);
+        return { 
+          success: false, 
+          error: `New device must wait ${remaining} seconds before pushing`,
+          secondsRemaining: remaining
+        };
+      }
     }
     
     const timestamp = Date.now();
@@ -348,15 +382,119 @@ class MinimalSyncService {
   }
 
   /**
+   * Enable periodic sync
+   */
+  enableSync(callback = null) {
+    console.log('[MinimalSync] 🔄 Enabling periodic sync');
+    this.isEnabled = true;
+    this.onDataReceived = callback;
+    
+    // Start periodic pull if we have a sync ID
+    if (this.syncId) {
+      this.startPeriodicPull();
+    }
+  }
+  
+  /**
+   * Disable periodic sync
+   */
+  disableSync() {
+    console.log('[MinimalSync] ⏸️ Disabling periodic sync');
+    this.isEnabled = false;
+    this.stopPeriodicPull();
+  }
+  
+  /**
+   * Start periodic pull
+   */
+  startPeriodicPull() {
+    if (this.pullInterval) {
+      clearInterval(this.pullInterval);
+    }
+    
+    console.log('[MinimalSync] ⏰ Starting periodic pull (every 30s)');
+    
+    // Do an immediate pull
+    this.pullAndNotify();
+    
+    // Then set up interval
+    this.pullInterval = setInterval(() => {
+      this.pullAndNotify();
+    }, this.pullIntervalDuration);
+  }
+  
+  /**
+   * Stop periodic pull
+   */
+  stopPeriodicPull() {
+    if (this.pullInterval) {
+      console.log('[MinimalSync] ⏹️ Stopping periodic pull');
+      clearInterval(this.pullInterval);
+      this.pullInterval = null;
+    }
+  }
+  
+  /**
+   * Pull data and notify if there are changes
+   */
+  async pullAndNotify() {
+    if (!this.syncId) {
+      console.log('[MinimalSync] ⚠️ No sync ID, skipping pull');
+      return;
+    }
+    
+    const now = Date.now();
+    if (now - this.lastPullTime < 5000) {
+      console.log('[MinimalSync] ⏳ Skipping pull, too soon since last pull');
+      return;
+    }
+    
+    this.lastPullTime = now;
+    console.log('[MinimalSync] 🔄 Periodic pull triggered');
+    
+    const result = await this.pullData();
+    
+    if (result.success && result.data && this.onDataReceived) {
+      console.log('[MinimalSync] 📨 New data received, notifying callback');
+      this.onDataReceived(result.data);
+    }
+  }
+  
+  /**
+   * Push data with automatic retry after protection period
+   */
+  async pushDataWithRetry(newData) {
+    const result = await this.pushData(newData);
+    
+    if (!result.success && result.secondsRemaining) {
+      console.log(`[MinimalSync] ⏳ Will retry push in ${result.secondsRemaining} seconds`);
+      
+      // Schedule retry after protection period
+      setTimeout(async () => {
+        console.log('[MinimalSync] 🔄 Retrying push after protection period');
+        const retryResult = await this.pushData(newData);
+        if (retryResult.success) {
+          console.log('[MinimalSync] ✅ Retry successful!');
+        }
+      }, result.secondsRemaining * 1000);
+    }
+    
+    return result;
+  }
+  
+  /**
    * Clear all data (for testing)
    */
   async clearAll() {
     console.log('[MinimalSync] 🗑️ Clearing all data...');
+    this.stopPeriodicPull();
     await AsyncStorage.multiRemove([
       '@minimal_sync_data',
-      '@minimal_sync_id'
+      '@minimal_sync_id',
+      '@minimal_sync_join_time'
     ]);
     this.syncId = null;
+    this.isEnabled = false;
     console.log('[MinimalSync] ✅ All data cleared');
   }
 }

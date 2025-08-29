@@ -32,6 +32,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import SyncFixTest from './src/components/SyncFixTest';
 import TimestampPersistTest from './src/components/TimestampPersistTest';
 import MinimalSyncTest from './src/components/MinimalSyncTest';
+import SyncStoreTest from './src/components/SyncStoreTest';
 import PersistenceDebugTest from './src/components/PersistenceDebugTest';
 // import * as Keychain from 'react-native-keychain'; // Removed - not used and causing crash
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -5650,7 +5651,9 @@ Users: ${userNames} (${userCount} total)
                 <Icon name="close" size={24} color="white" />
               </TouchableOpacity>
             </View>
-            <MinimalSyncTest />
+            {/* Phase 1&2 Test: Store Integration */}
+            <SyncStoreTest />
+            {/* Original minimal test: <MinimalSyncTest /> */}
           </SafeAreaView>
         </Modal>
       )}

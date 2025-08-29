@@ -138,6 +138,13 @@ export default function MinimalSyncTest() {
       addLog('✅ Activity added and pushed', 'success');
     } else {
       addLog(`❌ Push failed: ${result.error}`, 'error');
+      if (result.secondsRemaining) {
+        Alert.alert(
+          'Protection Period',
+          `New devices must wait 60 seconds before pushing.\n${result.secondsRemaining} seconds remaining.\n\nThis prevents sync conflicts when devices first join.`,
+          [{ text: 'OK' }]
+        );
+      }
     }
   };
 

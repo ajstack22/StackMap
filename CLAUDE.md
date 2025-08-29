@@ -1,5 +1,10 @@
 # CLAUDE.md - Essential StackMap Development Guide
 
+## 🎯 CURRENT WORK - READ THIS FIRST!
+**See `/CURRENT_WORK.md` for what we're actively building**
+- Current Feature: Edit Mode List Refactor (converting cards to list view)
+- NOT working on: Sync fixes, documentation cleanup, or old issues
+
 ## 🚀 DEPLOYMENT - ALWAYS USE THIS
 ```bash
 # First, update PENDING_CHANGES.md with your changes:
