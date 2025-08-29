@@ -270,6 +270,12 @@ export default function SyncStoreTest() {
           <Text style={styles.sectionTitle}>Status</Text>
           <Text>Sync Enabled: {status.isEnabled ? '✅' : '❌'}</Text>
           <Text>Sync ID: {status.syncId || 'None'}</Text>
+          {syncId && syncId.length === 32 && (
+            <View style={styles.recoverySection}>
+              <Text style={styles.recoveryLabel}>🔑 Recovery Phrase (for joining):</Text>
+              <Text style={styles.recoveryPhrase}>{syncId}</Text>
+            </View>
+          )}
           {status.isEnabled && (
             <Text style={styles.success}>📡 Periodic sync active (30s interval)</Text>
           )}
@@ -416,6 +422,25 @@ const styles = StyleSheet.create({
   success: {
     color: '#34C759',
     fontWeight: 'bold',
+  },
+  recoverySection: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#E8F5E9',
+    borderRadius: 5,
+  },
+  recoveryLabel: {
+    fontSize: 12,
+    color: '#2E7D32',
+    marginBottom: 5,
+  },
+  recoveryPhrase: {
+    fontFamily: 'monospace',
+    fontSize: 11,
+    color: '#1B5E20',
+    backgroundColor: '#fff',
+    padding: 8,
+    borderRadius: 3,
   },
   userList: {
     marginTop: 10,

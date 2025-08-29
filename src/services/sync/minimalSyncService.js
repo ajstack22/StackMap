@@ -264,7 +264,7 @@ class MinimalSyncService {
           this.startPeriodicPull();
         }
         
-        return { success: true, syncId: this.syncId };
+        return { success: true, syncId: this.syncId, recoveryPhrase: this.recoveryPhrase };
       } else {
         console.error('[MinimalSync] ❌ Server error:', result);
         return { success: false, error: result.error };
