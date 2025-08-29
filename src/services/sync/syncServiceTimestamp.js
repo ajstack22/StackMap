@@ -91,6 +91,14 @@ class SyncServiceTimestamp {
         // If stores are empty but we have backup, restore it
         if ((!currentUsers || Object.keys(currentUsers).length === 0) && backupState.users) {
           console.log('[SyncTS] Restoring from backup after refresh...');
+          
+          // Restore the sync timestamp from backup
+          if (backupState.lastSyncTimestamp) {
+            this.lastSyncTimestamp = backupState.lastSyncTimestamp;
+            await AsyncStorage.setItem('@sync_timestamp', this.lastSyncTimestamp.toString());
+            console.log('[SyncTS] Restored sync timestamp from backup:', this.lastSyncTimestamp);
+          }
+          
           await this.applyState(backupState, true);
           console.log('[SyncTS] ✅ Backup restored successfully');
           return true;
@@ -1109,16 +1117,22 @@ class SyncServiceTimestamp {
     const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
     await encryptionService.initialize(recoveryPhrase, this.syncId, fixedSalt);
     
+    // Check if we already have a timestamp (device rejoining after refresh)
+    const existingTimestamp = await AsyncStorage.getItem('@sync_timestamp');
+    const timestampToUse = existingTimestamp ? parseInt(existingTimestamp, 10) : 0;
+    
+    console.log('[SyncTS] InitializeForImport - existing timestamp:', existingTimestamp, 'using:', timestampToUse);
+    
     // Save sync state to persist across sessions
     await AsyncStorage.multiSet([
       ['@sync_enabled', 'true'],
       ['@sync_id', this.syncId],
-      ['@sync_timestamp', '0'] // Start from beginning
+      ['@sync_timestamp', timestampToUse.toString()] // Preserve existing or start from 0
     ]);
     
     // Enable sync and start timer
     this.syncEnabled = true;
-    this.lastSyncTimestamp = 0;
+    this.lastSyncTimestamp = timestampToUse;
     
     // Set protection flags since we just joined
     this._justJoinedSync = true;
@@ -1305,13 +1319,21 @@ class SyncServiceTimestamp {
       currentDay: useUserStore.getState().currentDay,
       settings: useSettingsStore.getState(),
       library: useLibraryStore.getState(),
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      lastSyncTimestamp: this.lastSyncTimestamp // Include sync timestamp in backup
     };
     
     await AsyncStorage.setItem('@sync_state_backup', JSON.stringify(backupState));
     console.log('[SyncTS] ✅ Backup state saved to AsyncStorage');
     
-    console.log('[SyncTS] All stores persisted successfully');
+    // CRITICAL: Also persist the sync timestamp immediately
+    // This fixes Device B always requesting since=0 after refresh
+    if (this.lastSyncTimestamp > 0) {
+      await AsyncStorage.setItem('@sync_timestamp', this.lastSyncTimestamp.toString());
+      console.log('[SyncTS] ✅ Sync timestamp persisted:', this.lastSyncTimestamp);
+    }
+    
+    console.log('[SyncTS] All stores and timestamp persisted successfully');
   }
 
   /**
