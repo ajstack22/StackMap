@@ -117,17 +117,18 @@ class MinimalSyncService {
     const verify = await AsyncStorage.getItem('@minimal_sync_data');
     console.log('[MinimalSync] ✅ Local storage verified:', verify ? 'SUCCESS' : 'FAILED');
     
-    // Now push to server (simple format, no encryption)
+    // Now push to server - using timestamp to avoid version conflicts
     const payload = {
       sync_id: this.syncId,
       device_id: this.deviceId,
       encrypted_blob: btoa(JSON.stringify(testData)), // Just base64, no encryption
-      timestamp
+      timestamp // Use timestamp instead of version
     };
     
     console.log('[MinimalSync] 🌐 Sending to server...', payload);
     
     try {
+      // Use timestamp-based endpoint to avoid version conflicts
       const response = await fetch(`${this.API_BASE}/create_timestamp.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -165,32 +166,32 @@ class MinimalSyncService {
     
     this.syncId = syncId;
     
-    const payload = {
-      sync_id: syncId,
-      device_id: this.deviceId
-    };
-    
-    console.log('[MinimalSync] 🌐 Fetching from server...');
+    console.log('[MinimalSync] 🌐 Fetching from server to join sync...');
     
     try {
-      const response = await fetch(`${this.API_BASE}/join_timestamp.php`, {
+      // Use timestamp endpoint for joining (POST request)
+      const url = `${this.API_BASE}/join_timestamp.php`;
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          sync_id: syncId,
+          device_id: this.deviceId
+        })
       });
       
       const result = await response.json();
       console.log('[MinimalSync] 📡 Server response:', result);
       
-      if (result.success && result.latest_record) {
-        // Decode the data (just base64, no decryption)
+      if (result.success && result.latest_record && result.latest_record.encrypted_blob) {
+        // Decode the data from timestamp API format
         const decodedData = JSON.parse(atob(result.latest_record.encrypted_blob));
         console.log('[MinimalSync] 📦 Decoded data:', decodedData);
         
         // Store it locally
         const dataToStore = {
           syncId: syncId,
-          timestamp: result.latest_record.timestamp,
+          timestamp: result.latest_record.timestamp || Date.now(),
           data: decodedData
         };
         
@@ -220,7 +221,7 @@ class MinimalSyncService {
         return { 
           success: true, 
           data: decodedData,
-          timestamp: result.latest_record.timestamp
+          timestamp: result.latest_record.timestamp || Date.now()
         };
       } else {
         console.error('[MinimalSync] ❌ Join failed:', result);
@@ -287,7 +288,7 @@ class MinimalSyncService {
     console.log('[MinimalSync] 💾 Updating local storage...');
     await AsyncStorage.setItem('@minimal_sync_data', JSON.stringify(dataToStore));
     
-    // Push to server
+    // Push to server using timestamp
     const payload = {
       sync_id: this.syncId,
       device_id: this.deviceId,
@@ -298,6 +299,7 @@ class MinimalSyncService {
     console.log('[MinimalSync] 🌐 Pushing to server...');
     
     try {
+      // Use timestamp endpoint to avoid version conflicts
       const response = await fetch(`${this.API_BASE}/push_timestamp.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -339,6 +341,7 @@ class MinimalSyncService {
     }
     
     try {
+      // Use timestamp endpoint - pull changes since last timestamp
       const url = `${this.API_BASE}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=${lastTimestamp}`;
       console.log('[MinimalSync] 🌐 Pulling from:', url);
       
@@ -347,7 +350,7 @@ class MinimalSyncService {
       console.log('[MinimalSync] 📡 Pull response:', result);
       
       if (result.success && result.records && result.records.length > 0) {
-        // Get the latest record
+        // Get the latest record from timestamp API
         const latest = result.records[result.records.length - 1];
         const decodedData = JSON.parse(atob(latest.encrypted_blob));
         console.log('[MinimalSync] 📦 Latest data:', decodedData);

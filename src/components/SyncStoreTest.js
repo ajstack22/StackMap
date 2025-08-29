@@ -70,6 +70,13 @@ export default function SyncStoreTest() {
   const handleCreateSync = async () => {
     addLog('Creating new sync with test data...', 'info');
     
+    // Check minimalSync status before
+    console.log('[SyncStoreTest] MinimalSync before create:', {
+      syncId: syncStore.minimalSync?.syncId,
+      isEnabled: syncStore.minimalSync?.isEnabled,
+      deviceId: syncStore.minimalSync?.deviceId
+    });
+    
     try {
       // Add test data to stores - users is an object
       const testUsers = {
@@ -113,11 +120,22 @@ export default function SyncStoreTest() {
       const newSyncId = await syncStore.createSync();
       setSyncId(newSyncId);
       
+      // Check minimalSync status after
+      console.log('[SyncStoreTest] MinimalSync after create:', {
+        syncId: syncStore.minimalSync?.syncId,
+        isEnabled: syncStore.minimalSync?.isEnabled,
+        deviceId: syncStore.minimalSync?.deviceId
+      });
+      
       // Update status to reflect enabled state
-      setStatus(syncStore.getSyncStatus());
+      const newStatus = syncStore.getSyncStatus();
+      setStatus(newStatus);
       
       addLog(`✅ Sync created! ID: ${newSyncId}`, 'success');
-      addLog('✅ Sync enabled with periodic pull every 30s', 'success');
+      addLog(`✅ Sync ${newStatus.isEnabled ? 'enabled' : 'NOT enabled'} with periodic pull every 30s`, newStatus.isEnabled ? 'success' : 'error');
+      
+      // Log the actual status
+      console.log('[SyncStoreTest] Status after create:', newStatus);
       
       Alert.alert(
         'Sync Created!',
