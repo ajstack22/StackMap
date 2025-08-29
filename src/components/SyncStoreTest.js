@@ -57,7 +57,13 @@ export default function SyncStoreTest() {
     
     // Update status periodically
     const interval = setInterval(() => {
-      setStatus(syncStore.getSyncStatus());
+      const newStatus = syncStore.getSyncStatus();
+      setStatus(newStatus);
+      
+      // Log status changes for debugging
+      if (newStatus?.isEnabled !== status?.isEnabled) {
+        console.log('[SyncStoreTest] Status changed:', newStatus);
+      }
     }, 1000);
     
     return () => clearInterval(interval);
@@ -106,12 +112,15 @@ export default function SyncStoreTest() {
       
       addLog('Added test data to stores', 'success');
       
-      // Create sync
+      // Create sync - this should enable sync automatically
       const newSyncId = await syncStore.createSync();
       setSyncId(newSyncId);
+      
+      // Update status to reflect enabled state
       setStatus(syncStore.getSyncStatus());
       
       addLog(`✅ Sync created! ID: ${newSyncId}`, 'success');
+      addLog('✅ Sync enabled with periodic pull every 30s', 'success');
       
       Alert.alert(
         'Sync Created!',
@@ -135,11 +144,14 @@ export default function SyncStoreTest() {
     try {
       await syncStore.joinSync(inputSyncId.trim());
       setSyncId(inputSyncId.trim());
+      
+      // Update status to reflect enabled state
       setStatus(syncStore.getSyncStatus());
       
       addLog(`✅ Joined sync successfully!`, 'success');
       addLog('📥 Data received and applied to stores', 'success');
       addLog('⏰ 60-second protection period started', 'warning');
+      addLog('✅ Sync enabled with periodic pull every 30s', 'success');
       
       Alert.alert(
         'Joined Successfully!',
@@ -265,6 +277,9 @@ export default function SyncStoreTest() {
           <Text style={styles.sectionTitle}>Status</Text>
           <Text>Sync Enabled: {status.isEnabled ? '✅' : '❌'}</Text>
           <Text>Sync ID: {status.syncId || 'None'}</Text>
+          {status.isEnabled && (
+            <Text style={styles.success}>📡 Periodic sync active (30s interval)</Text>
+          )}
           {status.hasProtectionPeriod && (
             <Text style={styles.warning}>
               ⏰ Protection Period: {status.protectionSecondsRemaining}s remaining
@@ -326,6 +341,20 @@ export default function SyncStoreTest() {
               <Text style={styles.buttonText}>Manual Push</Text>
             </TouchableOpacity>
             
+            {!status?.isEnabled && (
+              <TouchableOpacity 
+                style={[styles.button, styles.warning]} 
+                onPress={async () => {
+                  addLog('Manually enabling sync...', 'info');
+                  await syncStore.initialize();
+                  setStatus(syncStore.getSyncStatus());
+                  addLog('✅ Sync enabled', 'success');
+                }}
+              >
+                <Text style={styles.buttonText}>Enable Sync (Manual)</Text>
+              </TouchableOpacity>
+            )}
+            
             <TouchableOpacity style={[styles.button, styles.destructive]} onPress={handleClearAll}>
               <Text style={styles.buttonText}>Clear All Data</Text>
             </TouchableOpacity>
@@ -385,6 +414,10 @@ const styles = StyleSheet.create({
     color: '#FF9500',
     fontWeight: 'bold',
   },
+  success: {
+    color: '#34C759',
+    fontWeight: 'bold',
+  },
   userList: {
     marginTop: 10,
   },
@@ -403,6 +436,9 @@ const styles = StyleSheet.create({
   },
   destructive: {
     backgroundColor: '#FF3B30',
+  },
+  warning: {
+    backgroundColor: '#FF9500',
   },
   buttonText: {
     color: 'white',

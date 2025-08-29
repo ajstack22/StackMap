@@ -36,6 +36,9 @@ class SyncStoreIntegration {
 
     console.log('[SyncStore] 🚀 Initializing sync integration');
     
+    // Load existing sync ID into minimalSync first
+    await minimalSync.loadExistingSyncId();
+    
     // Check if we have an existing sync
     const syncId = await AsyncStorage.getItem('@minimal_sync_id');
     if (syncId) {
@@ -56,6 +59,10 @@ class SyncStoreIntegration {
       
       // Subscribe to store changes
       this.subscribeToStores();
+      
+      console.log('[SyncStore] ✅ Sync enabled for existing sync:', syncId);
+    } else {
+      console.log('[SyncStore] No existing sync found');
     }
     
     this.isInitialized = true;
@@ -346,9 +353,14 @@ class SyncStoreIntegration {
       
       // Enable periodic sync
       minimalSync.enableSync(this.handleDataReceived);
+      console.log('[SyncStore] ✅ Periodic sync enabled');
       
-      // Subscribe to store changes
-      this.subscribeToStores();
+      // Subscribe to store changes if not already subscribed
+      if (!this.unsubscribers) {
+        this.subscribeToStores();
+      }
+      
+      this.isInitialized = true;
       
       return result.syncId;
     } else {
@@ -378,9 +390,14 @@ class SyncStoreIntegration {
       
       // Enable periodic sync
       minimalSync.enableSync(this.handleDataReceived);
+      console.log('[SyncStore] ✅ Periodic sync enabled');
       
-      // Subscribe to store changes
-      this.subscribeToStores();
+      // Subscribe to store changes if not already subscribed
+      if (!this.unsubscribers) {
+        this.subscribeToStores();
+      }
+      
+      this.isInitialized = true;
       
       return true;
     } else {
