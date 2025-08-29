@@ -115,21 +115,24 @@ export default function SyncStoreTest() {
       addLog('Added test data to stores', 'success');
       
       // Create sync - this should enable sync automatically
-      const newSyncId = await syncStore.createSync();
-      setSyncId(newSyncId);
+      const result = await syncStore.createSync();
+      const recoveryPhrase = result.recoveryPhrase || result.syncId || result;
+      setSyncId(recoveryPhrase);
       
       // Check minimalSync status after
       console.log('[SyncStoreTest] MinimalSync after create:', {
         syncId: syncStore.minimalSync?.syncId,
         isEnabled: syncStore.minimalSync?.isEnabled,
-        deviceId: syncStore.minimalSync?.deviceId
+        deviceId: syncStore.minimalSync?.deviceId,
+        recoveryPhrase: recoveryPhrase
       });
       
       // Update status to reflect enabled state
       const newStatus = syncStore.getSyncStatus();
       setStatus(newStatus);
       
-      addLog(`✅ Sync created! ID: ${newSyncId}`, 'success');
+      addLog(`✅ Sync created!`, 'success');
+      addLog(`🔑 Recovery phrase: ${recoveryPhrase}`, 'success');
       addLog(`✅ Sync ${newStatus.isEnabled ? 'enabled' : 'NOT enabled'} with periodic pull every 30s`, newStatus.isEnabled ? 'success' : 'error');
       
       // Log the actual status
@@ -137,7 +140,7 @@ export default function SyncStoreTest() {
       
       Alert.alert(
         'Sync Created!',
-        `Sync ID: ${newSyncId}\n\nCopy this ID to test in another tab/device.`,
+        `Recovery Phrase:\n${recoveryPhrase}\n\nCopy this to join from another device.`,
         [{ text: 'OK' }]
       );
     } catch (error) {
@@ -148,11 +151,11 @@ export default function SyncStoreTest() {
   // Join existing sync
   const handleJoinSync = async () => {
     if (!inputSyncId.trim()) {
-      Alert.alert('Error', 'Please enter a Sync ID');
+      Alert.alert('Error', 'Please enter a Recovery Phrase');
       return;
     }
 
-    addLog(`Joining sync ${inputSyncId}...`, 'info');
+    addLog(`Joining sync with recovery phrase...`, 'info');
     
     try {
       await syncStore.joinSync(inputSyncId.trim());
@@ -303,7 +306,7 @@ export default function SyncStoreTest() {
             <View style={styles.joinSection}>
               <TextInput
                 style={styles.input}
-                placeholder="Enter Sync ID to join"
+                placeholder="Enter Recovery Phrase (32 hex characters)"
                 value={inputSyncId}
                 onChangeText={setInputSyncId}
                 autoCapitalize="none"

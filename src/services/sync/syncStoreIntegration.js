@@ -403,7 +403,11 @@ class SyncStoreIntegration {
       
       this.isInitialized = true;
       
-      return result.syncId;
+      // Return both sync ID and recovery phrase for display
+      return { 
+        syncId: result.syncId, 
+        recoveryPhrase: minimalSync.recoveryPhrase 
+      };
     } else {
       console.error('[SyncStore] ❌ Create sync failed:', result.error);
       throw new Error(result.error);

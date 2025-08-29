@@ -1,17 +1,21 @@
 /**
- * PHASE 1: MINIMAL SYNC SERVICE
+ * MINIMAL SYNC SERVICE WITH ENCRYPTION
  * 
- * Goal: Just make two browser tabs exchange data reliably
- * - NO encryption
- * - NO CRDT
- * - NO complex state management
- * - Just JSON in, JSON out, with extreme logging
+ * PHASE 1: Core bidirectional sync ✅
+ * PHASE 2: Store integration ✅
+ * PHASE 3: Encryption layer ✅
+ * PHASE 4: Conflict resolution ✅
  * 
- * PHASE 4 UPDATE: Added conflict resolution with metadata tracking
+ * Features:
+ * - Zero-knowledge encryption using NaCl
+ * - Conflict resolution with LWW
+ * - Automatic retry for rate limits
+ * - 30-second periodic sync
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import conflictResolver from './conflictResolver';
+import encryptionService from './encryptionService';
 
 class MinimalSyncService {
   constructor() {
@@ -49,6 +53,10 @@ class MinimalSyncService {
     
     // Generate device ID once
     this.initDeviceId();
+    
+    // Track encryption initialization
+    this.encryptionReady = false;
+    this.recoveryPhrase = null;
   }
 
   async initDeviceId() {
@@ -143,12 +151,54 @@ class MinimalSyncService {
   }
 
   /**
+   * Generate sync ID from recovery phrase (same as existing sync)
+   */
+  async generateSyncId(recoveryPhrase) {
+    const fixedSalt = 'U3luY0lkU2FsdDEyMzQ1Njc4OTAxMjM0NQ==';
+    const { key } = await encryptionService.deriveKeyFromPhrase(recoveryPhrase, fixedSalt);
+    const syncIdBytes = key.slice(0, 16);
+    const syncId = Array.from(syncIdBytes, byte =>
+      byte.toString(16).padStart(2, '0')
+    ).join('');
+    return syncId;
+  }
+
+  /**
+   * Initialize encryption for sync
+   */
+  async initializeEncryption(recoveryPhrase, syncId) {
+    const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+    await encryptionService.initialize(recoveryPhrase, syncId, fixedSalt);
+    this.encryptionReady = true;
+    this.recoveryPhrase = recoveryPhrase;
+    
+    // Store recovery phrase for persistence
+    await AsyncStorage.setItem(`@sync_phrase_${syncId}`, recoveryPhrase);
+    await AsyncStorage.setItem('@sync_phrase', recoveryPhrase);
+    
+    console.log('[MinimalSync] 🔐 Encryption initialized');
+  }
+
+  /**
    * Create a new sync group with test data
    */
   async createSync(testData) {
     console.log('[MinimalSync] 📤 createSync called with:', testData);
     
-    this.syncId = this.generateId();
+    // Generate recovery phrase
+    const recoveryPhrase = encryptionService.generateRecoveryPhrase();
+    console.log('[MinimalSync] 🔑 Generated recovery phrase:', recoveryPhrase);
+    
+    // Generate sync ID from recovery phrase
+    this.syncId = await this.generateSyncId(recoveryPhrase);
+    console.log('[MinimalSync] 🆔 Generated sync ID:', this.syncId);
+    
+    // Initialize encryption
+    await this.initializeEncryption(recoveryPhrase, this.syncId);
+    
+    // Use encryption service's device ID
+    this.deviceId = await encryptionService.getDeviceId();
+    
     const timestamp = Date.now();
     
     // Add metadata for conflict resolution
@@ -172,7 +222,7 @@ class MinimalSyncService {
     const payload = {
       sync_id: this.syncId,
       device_id: this.deviceId,
-      encrypted_blob: this.encodeBase64(JSON.stringify(dataWithMetadata)), // Safe base64, no encryption
+      encrypted_blob: encryptionService.encryptData(dataWithMetadata), // Proper NaCl encryption
       timestamp
     };
     
@@ -220,10 +270,18 @@ class MinimalSyncService {
   /**
    * Join an existing sync group
    */
-  async joinSync(syncId) {
-    console.log('[MinimalSync] 📥 joinSync called with:', syncId);
+  async joinSync(recoveryPhrase) {
+    console.log('[MinimalSync] 📥 joinSync called with recovery phrase');
     
-    this.syncId = syncId;
+    // Generate sync ID from recovery phrase
+    this.syncId = await this.generateSyncId(recoveryPhrase);
+    console.log('[MinimalSync] 🆔 Generated sync ID from phrase:', this.syncId);
+    
+    // Initialize encryption
+    await this.initializeEncryption(recoveryPhrase, this.syncId);
+    
+    // Use encryption service's device ID
+    this.deviceId = await encryptionService.getDeviceId();
     
     console.log('[MinimalSync] 🌐 Fetching from server to join sync...');
     
@@ -234,7 +292,7 @@ class MinimalSyncService {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sync_id: syncId,
+          sync_id: this.syncId,
           device_id: this.deviceId
         })
       });
@@ -251,13 +309,13 @@ class MinimalSyncService {
       console.log('[MinimalSync] 📡 Server response:', result);
       
       if (result.success && result.latest_record && result.latest_record.encrypted_blob) {
-        // Decode the data from timestamp API format
-        const decodedData = JSON.parse(this.decodeBase64(result.latest_record.encrypted_blob));
+        // Decrypt the data using encryption service
+        const decodedData = encryptionService.decryptData(result.latest_record.encrypted_blob);
         console.log('[MinimalSync] 📦 Decoded data:', decodedData);
         
         // Store it locally
         const dataToStore = {
-          syncId: syncId,
+          syncId: this.syncId,
           timestamp: result.latest_record.timestamp || Date.now(),
           data: decodedData
         };
@@ -368,6 +426,11 @@ class MinimalSyncService {
       return { success: false, error: 'No sync ID' };
     }
     
+    if (!this.encryptionReady) {
+      console.error('[MinimalSync] ❌ Encryption not initialized');
+      return { success: false, error: 'Encryption not ready' };
+    }
+    
     // No protection period needed - conflict resolution handles everything
     const timestamp = Date.now();
     
@@ -394,7 +457,7 @@ class MinimalSyncService {
     const payload = {
       sync_id: this.syncId,
       device_id: this.deviceId,
-      encrypted_blob: this.encodeBase64(JSON.stringify(dataWithMetadata)),
+      encrypted_blob: encryptionService.encryptData(dataWithMetadata),
       timestamp
     };
     
@@ -475,7 +538,7 @@ class MinimalSyncService {
       if (result.success && result.records && result.records.length > 0) {
         // Get the latest record from timestamp API
         const latest = result.records[result.records.length - 1];
-        const remoteData = JSON.parse(this.decodeBase64(latest.encrypted_blob));
+        const remoteData = encryptionService.decryptData(latest.encrypted_blob);
         console.log('[MinimalSync] 📦 Remote data received');
         console.log('[MinimalSync] Remote data structure:', {
           hasUsers: !!remoteData?.users,
