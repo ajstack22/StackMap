@@ -52,7 +52,7 @@ class ConflictResolver {
   }
 
   /**
-   * Merge users - LWW per user
+   * Merge users - Per-user granular merge
    */
   mergeUsers(localUsers, remoteUsers, localMeta, remoteMeta) {
     if (!localUsers && !remoteUsers) return {};
@@ -65,32 +65,137 @@ class ConflictResolver {
       return localUsers || {};
     }
 
-    // Get timestamps
-    const localTimestamp = (localMeta.fieldTimestamps?.users) || 0;
-    const remoteTimestamp = (remoteMeta.fieldTimestamps?.users) || 0;
+    const merged = {};
+    const allUserIds = new Set([
+      ...Object.keys(localUsers),
+      ...Object.keys(remoteUsers)
+    ]);
+
+    // Merge each user individually
+    allUserIds.forEach(userId => {
+      const localUser = localUsers[userId];
+      const remoteUser = remoteUsers[userId];
+      
+      if (!localUser && remoteUser) {
+        // User only exists remotely
+        merged[userId] = remoteUser;
+        this.log(`User ${userId}: Added from remote`);
+      } else if (localUser && !remoteUser) {
+        // User only exists locally
+        merged[userId] = localUser;
+        this.log(`User ${userId}: Kept local (not in remote)`);
+      } else if (localUser && remoteUser) {
+        // User exists in both - merge based on modification
+        merged[userId] = this.mergeIndividualUser(localUser, remoteUser, userId);
+      }
+    });
     
-    // Simple LWW for entire users object
-    if (remoteTimestamp > localTimestamp) {
-      this.log(`Users: Remote wins (${remoteTimestamp} > ${localTimestamp})`);
-      return remoteUsers;
-    } else if (localTimestamp > remoteTimestamp) {
-      this.log(`Users: Local wins (${localTimestamp} > ${remoteTimestamp})`);
-      return localUsers;
+    return merged;
+  }
+  
+  /**
+   * Merge individual user with activity preservation
+   */
+  mergeIndividualUser(localUser, remoteUser, userId) {
+    // Check if users have modification timestamps
+    const localModified = localUser.lastModified || 0;
+    const remoteModified = remoteUser.lastModified || 0;
+    
+    // Start with the more recent base user data
+    let mergedUser;
+    if (remoteModified > localModified) {
+      mergedUser = { ...remoteUser };
+      this.log(`User ${userId}: Using remote as base (${remoteModified} > ${localModified})`);
+    } else if (localModified > remoteModified) {
+      mergedUser = { ...localUser };
+      this.log(`User ${userId}: Using local as base (${localModified} > ${remoteModified})`);
     } else {
-      // Same timestamp - merge additively (keep all unique users)
-      this.log('Users: Same timestamp, merging additively');
-      const merged = { ...localUsers };
+      // Same timestamp or no timestamps - merge properties
+      mergedUser = { ...localUser };
       
-      // Add any users from remote that don't exist locally
-      Object.keys(remoteUsers).forEach(userId => {
-        if (!merged[userId]) {
-          merged[userId] = remoteUsers[userId];
-          this.log(`  Added user ${userId} from remote`);
+      // Preserve name/icon from the one with more recent change
+      if (remoteUser.name !== localUser.name || remoteUser.icon !== localUser.icon) {
+        // Can't determine which is newer without timestamps, use device ID tiebreaker
+        const winner = this.tiebreaker(localUser.deviceId, remoteUser.deviceId);
+        if (winner === 'remote') {
+          mergedUser.name = remoteUser.name;
+          mergedUser.icon = remoteUser.icon;
         }
-      });
-      
-      return merged;
+      }
     }
+    
+    // Merge days/activities additively to prevent data loss
+    if (localUser.days || remoteUser.days) {
+      mergedUser.days = this.mergeUserDays(localUser.days, remoteUser.days);
+    }
+    
+    return mergedUser;
+  }
+  
+  /**
+   * Merge user days and activities additively
+   */
+  mergeUserDays(localDays, remoteDays) {
+    if (!localDays && !remoteDays) return {};
+    if (!localDays) return remoteDays;
+    if (!remoteDays) return localDays;
+    
+    const merged = {};
+    const allDays = new Set([
+      ...Object.keys(localDays),
+      ...Object.keys(remoteDays)
+    ]);
+    
+    allDays.forEach(day => {
+      const localDay = localDays[day];
+      const remoteDay = remoteDays[day];
+      
+      if (!localDay) {
+        merged[day] = remoteDay;
+      } else if (!remoteDay) {
+        merged[day] = localDay;
+      } else {
+        // Merge activities for this day
+        merged[day] = {
+          ...localDay,
+          ...remoteDay,
+          activities: this.mergeActivitiesArray(
+            localDay.activities || [],
+            remoteDay.activities || []
+          )
+        };
+      }
+    });
+    
+    return merged;
+  }
+  
+  /**
+   * Merge activities arrays - additive with deduplication
+   */
+  mergeActivitiesArray(localActivities, remoteActivities) {
+    const merged = [...localActivities];
+    const existingIds = new Set(localActivities.map(a => a.id));
+    
+    remoteActivities.forEach(activity => {
+      if (!existingIds.has(activity.id)) {
+        merged.push(activity);
+        this.log(`  Added activity: ${activity.text || activity.name}`);
+      } else {
+        // Activity exists - check if remote is newer
+        const localActivity = localActivities.find(a => a.id === activity.id);
+        const localTime = localActivity?.modifiedAt || localActivity?.createdAt || 0;
+        const remoteTime = activity.modifiedAt || activity.createdAt || 0;
+        
+        if (remoteTime > localTime) {
+          const index = merged.findIndex(a => a.id === activity.id);
+          merged[index] = activity;
+          this.log(`  Updated activity: ${activity.text || activity.name}`);
+        }
+      }
+    });
+    
+    return merged;
   }
 
   /**
@@ -180,7 +285,7 @@ class ConflictResolver {
   }
 
   /**
-   * Merge library - Simple LWW with proper structure preservation
+   * Merge library - Granular merge preserving all data
    */
   mergeLibrary(localLibrary, remoteLibrary, localMeta, remoteMeta) {
     if (!localLibrary && !remoteLibrary) return {};
@@ -193,23 +298,133 @@ class ConflictResolver {
       return localLibrary || {};
     }
 
-    // Get timestamps
-    const localTimestamp = (localMeta.fieldTimestamps?.library) || 0;
-    const remoteTimestamp = (remoteMeta.fieldTimestamps?.library) || 0;
+    // Start with a merged structure
+    const merged = {};
     
-    // Simple LWW for library
-    if (remoteTimestamp > localTimestamp) {
-      this.log(`Library: Remote wins (${remoteTimestamp} > ${localTimestamp})`);
-      return remoteLibrary;
-    } else if (localTimestamp > remoteTimestamp) {
-      this.log(`Library: Local wins (${localTimestamp} > ${remoteTimestamp})`);
-      return localLibrary;
-    } else {
-      // Same timestamp - use device ID as tiebreaker
-      const winner = this.tiebreaker(localMeta.deviceId, remoteMeta.deviceId);
-      this.log(`Library: Tie broken by device ID (${winner})`);
-      return winner === 'local' ? localLibrary : remoteLibrary;
+    // Merge categories array additively
+    if (localLibrary.categories || remoteLibrary.categories) {
+      merged.categories = this.mergeLibraryCategories(
+        localLibrary.categories,
+        remoteLibrary.categories
+      );
     }
+    
+    // Merge templates array additively
+    if (localLibrary.templates || remoteLibrary.templates) {
+      merged.templates = this.mergeLibraryTemplates(
+        localLibrary.templates,
+        remoteLibrary.templates
+      );
+    }
+    
+    // Merge activities array additively
+    if (localLibrary.activities || remoteLibrary.activities) {
+      merged.activities = this.mergeLibraryActivities(
+        localLibrary.activities,
+        remoteLibrary.activities
+      );
+    }
+    
+    // Merge userAddedActivityIds - union of both sets
+    if (localLibrary.userAddedActivityIds || remoteLibrary.userAddedActivityIds) {
+      const localIds = localLibrary.userAddedActivityIds || [];
+      const remoteIds = remoteLibrary.userAddedActivityIds || [];
+      merged.userAddedActivityIds = [...new Set([...localIds, ...remoteIds])];
+      
+      if (merged.userAddedActivityIds.length > localIds.length) {
+        this.log(`Library: Added ${merged.userAddedActivityIds.length - localIds.length} user activity IDs from remote`);
+      }
+    }
+    
+    // Preserve any other properties
+    const allKeys = new Set([
+      ...Object.keys(localLibrary),
+      ...Object.keys(remoteLibrary)
+    ]);
+    
+    allKeys.forEach(key => {
+      if (!['categories', 'templates', 'activities', 'userAddedActivityIds'].includes(key)) {
+        // For other properties, use LWW based on timestamps
+        const localTimestamp = (localMeta.fieldTimestamps?.library) || 0;
+        const remoteTimestamp = (remoteMeta.fieldTimestamps?.library) || 0;
+        
+        if (remoteTimestamp > localTimestamp) {
+          merged[key] = remoteLibrary[key];
+        } else if (localTimestamp > remoteTimestamp) {
+          merged[key] = localLibrary[key];
+        } else {
+          // Same timestamp - merge if possible, otherwise use tiebreaker
+          merged[key] = localLibrary[key]; // Default to local
+        }
+      }
+    });
+    
+    return merged;
+  }
+  
+  /**
+   * Merge library categories additively
+   */
+  mergeLibraryCategories(localCategories, remoteCategories) {
+    if (!localCategories) return remoteCategories || [];
+    if (!remoteCategories) return localCategories || [];
+    
+    // Handle both array and object formats
+    const localArray = Array.isArray(localCategories) ? localCategories : [];
+    const remoteArray = Array.isArray(remoteCategories) ? remoteCategories : [];
+    
+    const merged = [...localArray];
+    const existingIds = new Set(localArray.map(c => c.id || c.name));
+    
+    remoteArray.forEach(category => {
+      const categoryId = category.id || category.name;
+      if (!existingIds.has(categoryId)) {
+        merged.push(category);
+        this.log(`  Added category: ${category.name}`);
+      }
+    });
+    
+    return merged;
+  }
+  
+  /**
+   * Merge library templates additively
+   */
+  mergeLibraryTemplates(localTemplates, remoteTemplates) {
+    if (!localTemplates) return remoteTemplates || [];
+    if (!remoteTemplates) return localTemplates || [];
+    
+    const merged = [...localTemplates];
+    const existingIds = new Set(localTemplates.map(t => t.id));
+    
+    remoteTemplates.forEach(template => {
+      if (!existingIds.has(template.id)) {
+        merged.push(template);
+        this.log(`  Added template: ${template.name || template.text}`);
+      }
+    });
+    
+    return merged;
+  }
+  
+  /**
+   * Merge library activities additively
+   */
+  mergeLibraryActivities(localActivities, remoteActivities) {
+    if (!localActivities) return remoteActivities || [];
+    if (!remoteActivities) return localActivities || [];
+    
+    const merged = [...localActivities];
+    const existingIds = new Set(localActivities.map(a => a.id));
+    
+    remoteActivities.forEach(activity => {
+      if (!existingIds.has(activity.id)) {
+        merged.push(activity);
+        this.log(`  Added library activity: ${activity.text || activity.name}`);
+      }
+    });
+    
+    return merged;
   }
 
   /**
