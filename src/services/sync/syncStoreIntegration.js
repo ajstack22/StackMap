@@ -21,7 +21,6 @@ class SyncStoreIntegration {
     this.lastPushTime = 0;
     this.changeDebounceTimer = null;
     this.changeDebounceDelay = 5000; // 5 seconds after changes
-    this.protectionPeriodEnd = 0;
     
     // Track field-level timestamps for conflict resolution
     this.fieldTimestamps = {
@@ -54,16 +53,6 @@ class SyncStoreIntegration {
     const syncId = await AsyncStorage.getItem('@minimal_sync_id');
     if (syncId) {
       console.log('[SyncStore] Found existing sync:', syncId);
-      
-      // Check protection period
-      const joinTime = await AsyncStorage.getItem('@minimal_sync_join_time');
-      if (joinTime) {
-        const msRemaining = 60000 - (Date.now() - parseInt(joinTime, 10));
-        if (msRemaining > 0) {
-          this.protectionPeriodEnd = Date.now() + msRemaining;
-          console.log(`[SyncStore] Protection period active for ${Math.ceil(msRemaining/1000)}s`);
-        }
-      }
       
       // Enable periodic sync with our callback
       minimalSync.enableSync(this.handleDataReceived);
@@ -358,20 +347,7 @@ class SyncStoreIntegration {
    * Push current state to sync
    */
   async pushCurrentState() {
-    // Check protection period
-    if (Date.now() < this.protectionPeriodEnd) {
-      const secondsRemaining = Math.ceil((this.protectionPeriodEnd - Date.now()) / 1000);
-      console.log(`[SyncStore] ⏳ Protection period active: ${secondsRemaining}s remaining`);
-      
-      // Schedule retry after protection period
-      setTimeout(() => {
-        this.pushCurrentState();
-      }, secondsRemaining * 1000);
-      
-      return;
-    }
-
-    // Rate limit pushes
+    // Rate limit pushes (5 second minimum between pushes)
     const now = Date.now();
     if (now - this.lastPushTime < 5000) {
       console.log('[SyncStore] ⏸️ Rate limiting push (too soon)');
@@ -436,17 +412,14 @@ class SyncStoreIntegration {
     if (result.success) {
       console.log('[SyncStore] ✅ Joined sync successfully');
       
-      // Apply the received data
+      // Apply the received data (conflict resolution will handle merging)
       if (result.data) {
-        await this.applyState(result.data);
+        await this.handleDataReceived(result.data);
       }
-      
-      // Update protection period
-      this.protectionPeriodEnd = Date.now() + 60000;
       
       // Enable periodic sync
       minimalSync.enableSync(this.handleDataReceived);
-      console.log('[SyncStore] ✅ Periodic sync enabled');
+      console.log('[SyncStore] ✅ Periodic sync enabled - can push immediately');
       
       // Subscribe to store changes if not already subscribed
       if (!this.unsubscribers) {
@@ -496,7 +469,6 @@ class SyncStoreIntegration {
     await minimalSync.clearAll();
     await AsyncStorage.removeItem('@sync_state_backup');
     
-    this.protectionPeriodEnd = 0;
     this.lastPushTime = 0;
   }
 
@@ -507,8 +479,7 @@ class SyncStoreIntegration {
     return {
       isEnabled: minimalSync.isEnabled,
       syncId: minimalSync.syncId,
-      hasProtectionPeriod: Date.now() < this.protectionPeriodEnd,
-      protectionSecondsRemaining: Math.max(0, Math.ceil((this.protectionPeriodEnd - Date.now()) / 1000))
+      canPushImmediately: true // No more protection period!
     };
   }
 }

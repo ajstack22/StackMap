@@ -274,11 +274,10 @@ class MinimalSyncService {
           hasData: !!parsed?.data
         });
         
-        // Also store sync ID and join time
+        // Store sync ID (no protection period needed with conflict resolution)
         await AsyncStorage.setItem('@minimal_sync_id', syncId);
-        await AsyncStorage.setItem('@minimal_sync_join_time', Date.now().toString());
         
-        console.log('[MinimalSync] ⏰ 60-second protection period started for new device');
+        console.log('[MinimalSync] ✅ Device joined sync - can push immediately');
         
         // Start periodic pull if sync is enabled
         if (this.isEnabled) {
@@ -369,21 +368,7 @@ class MinimalSyncService {
       return { success: false, error: 'No sync ID' };
     }
     
-    // Check if we need to wait (protection period for new devices)
-    const joinTime = await AsyncStorage.getItem('@minimal_sync_join_time');
-    if (joinTime) {
-      const secondsSinceJoin = (Date.now() - parseInt(joinTime, 10)) / 1000;
-      if (secondsSinceJoin < 60) {
-        const remaining = Math.ceil(60 - secondsSinceJoin);
-        console.log(`[MinimalSync] ⏳ Protection period: ${remaining}s remaining`);
-        return { 
-          success: false, 
-          error: `New device must wait ${remaining} seconds before pushing`,
-          secondsRemaining: remaining
-        };
-      }
-    }
-    
+    // No protection period needed - conflict resolution handles everything
     const timestamp = Date.now();
     
     // Get current data to preserve/update metadata
@@ -605,25 +590,11 @@ class MinimalSyncService {
   }
   
   /**
-   * Push data with automatic retry after protection period
+   * Push data (no retry needed without protection period)
    */
   async pushDataWithRetry(newData) {
-    const result = await this.pushData(newData);
-    
-    if (!result.success && result.secondsRemaining) {
-      console.log(`[MinimalSync] ⏳ Will retry push in ${result.secondsRemaining} seconds`);
-      
-      // Schedule retry after protection period
-      setTimeout(async () => {
-        console.log('[MinimalSync] 🔄 Retrying push after protection period');
-        const retryResult = await this.pushData(newData);
-        if (retryResult.success) {
-          console.log('[MinimalSync] ✅ Retry successful!');
-        }
-      }, result.secondsRemaining * 1000);
-    }
-    
-    return result;
+    // Just push directly - no protection period to worry about
+    return await this.pushData(newData);
   }
   
   /**
@@ -634,8 +605,8 @@ class MinimalSyncService {
     this.stopPeriodicPull();
     await AsyncStorage.multiRemove([
       '@minimal_sync_data',
-      '@minimal_sync_id',
-      '@minimal_sync_join_time'
+      '@minimal_sync_id'
+      // No more join_time to clear
     ]);
     this.syncId = null;
     this.isEnabled = false;

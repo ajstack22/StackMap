@@ -104,11 +104,27 @@ export const normalizeSyncData = (data) => {
   
   // Normalize library activities
   if (normalized.library && normalized.library.categories) {
-    normalized.library.categories.forEach(category => {
-      if (category.activities && Array.isArray(category.activities)) {
-        category.activities = category.activities.map(normalizeActivity);
-      }
-    });
+    // Handle both array and object formats
+    if (Array.isArray(normalized.library.categories)) {
+      normalized.library.categories.forEach(category => {
+        if (category.activities && Array.isArray(category.activities)) {
+          category.activities = category.activities.map(normalizeActivity);
+        }
+      });
+    } else if (typeof normalized.library.categories === 'object') {
+      // Categories is an object, normalize values
+      Object.keys(normalized.library.categories).forEach(categoryId => {
+        const category = normalized.library.categories[categoryId];
+        if (category && category.activities && Array.isArray(category.activities)) {
+          category.activities = category.activities.map(normalizeActivity);
+        }
+      });
+    }
+  }
+  
+  // Also normalize library.activities if it exists (different structure)
+  if (normalized.library && normalized.library.activities && Array.isArray(normalized.library.activities)) {
+    normalized.library.activities = normalized.library.activities.map(normalizeActivity);
   }
   
   // Normalize library templates
@@ -156,13 +172,37 @@ export const needsNormalization = (data) => {
   
   // Check library activities
   if (data.library && data.library.categories) {
-    for (const category of data.library.categories) {
-      if (category.activities && Array.isArray(category.activities)) {
-        for (const activity of category.activities) {
-          if (activity.name || activity.title || activity.emoji) {
-            return true;
+    // Handle both array and object formats
+    if (Array.isArray(data.library.categories)) {
+      for (const category of data.library.categories) {
+        if (category.activities && Array.isArray(category.activities)) {
+          for (const activity of category.activities) {
+            if (activity.name || activity.title || activity.emoji) {
+              return true;
+            }
           }
         }
+      }
+    } else if (typeof data.library.categories === 'object') {
+      // Categories is an object
+      for (const categoryId in data.library.categories) {
+        const category = data.library.categories[categoryId];
+        if (category && category.activities && Array.isArray(category.activities)) {
+          for (const activity of category.activities) {
+            if (activity.name || activity.title || activity.emoji) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // Also check library.activities if it exists
+  if (data.library && data.library.activities && Array.isArray(data.library.activities)) {
+    for (const activity of data.library.activities) {
+      if (activity.name || activity.title || activity.emoji) {
+        return true;
       }
     }
   }
