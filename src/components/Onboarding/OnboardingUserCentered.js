@@ -28,6 +28,7 @@ import {
   RADIUS,
   THEMES,
 } from '../../constants';
+import SyncStoreTest from '../SyncStoreTest';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const isTablet = () => screenWidth >= 768;
@@ -79,6 +80,7 @@ const OnboardingUserCentered = ({
   const [syncPreviewData, setSyncPreviewData] = useState(null);
   const [generatedSyncCode, setGeneratedSyncCode] = useState('');
   const [showCopiedToast, setShowCopiedToast] = useState(false);
+  const [showSyncTest, setShowSyncTest] = useState(false);
 
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -601,60 +603,88 @@ const OnboardingUserCentered = ({
   // Step Render Functions (not components to avoid recreation)
   const renderWelcomeStep = () => (
     <View style={styles.stepContainer}>
-      <View style={styles.logoSection}>
-        <Logo size={screenWidth >= 768 ? 100 : 80} theme={defaultTheme} color={defaultTheme.primary} />
-        <Text style={styles.logoText}>StackMap</Text>
-        <Text style={styles.tagline}>Better days through shared understanding</Text>
-      </View>
-      
-      <View style={styles.optionsContainer}>
-        <TouchableOpacity
-          style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
-          onPress={() => {
-            setUserJourney(prev => ({ ...prev, journeyType: 'new' }));
-            animateStepTransition('userType');
-          }}
-        >
-          <Text style={styles.buttonText}>I'm new to StackMap</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => {
-            setUserJourney(prev => ({ ...prev, journeyType: 'existing' }));
-            animateStepTransition('existingUser');
-          }}
-        >
-          <Text style={[styles.secondaryButtonText, { color: defaultTheme.primary }]}>
-            I already use StackMap
-          </Text>
-        </TouchableOpacity>
-      </View>
-      
-      <View style={styles.footerLinks}>
-        <TouchableOpacity
-          style={styles.footerLink}
-          onPress={() => onShowPrivacy?.()}
-        >
-          <Text style={[styles.footerLinkText, { color: defaultTheme.primary }]}>
-            Privacy Policy
-          </Text>
-        </TouchableOpacity>
-        
-        {Platform.OS === 'web' && onShowSupport && (
-          <>
-            <Text style={styles.footerSeparator}>•</Text>
+      {showSyncTest ? (
+        <View style={{ flex: 1 }}>
+          <TouchableOpacity
+            style={[styles.secondaryButton, { marginBottom: 10 }]}
+            onPress={() => setShowSyncTest(false)}
+          >
+            <Text style={[styles.secondaryButtonText, { color: defaultTheme.primary }]}>
+              ← Back to Welcome
+            </Text>
+          </TouchableOpacity>
+          <SyncStoreTest />
+        </View>
+      ) : (
+        <>
+          <View style={styles.logoSection}>
+            <Logo size={screenWidth >= 768 ? 100 : 80} theme={defaultTheme} color={defaultTheme.primary} />
+            <Text style={styles.logoText}>StackMap</Text>
+            <Text style={styles.tagline}>Better days through shared understanding</Text>
+          </View>
+          
+          <View style={styles.optionsContainer}>
             <TouchableOpacity
-              style={styles.footerLink}
-              onPress={() => onShowSupport?.()}
+              style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
+              onPress={() => {
+                setUserJourney(prev => ({ ...prev, journeyType: 'new' }));
+                animateStepTransition('userType');
+              }}
             >
-              <Text style={[styles.footerLinkText, { color: defaultTheme.primary }]}>
-                Support StackMap
+              <Text style={styles.buttonText}>I'm new to StackMap</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => {
+                setUserJourney(prev => ({ ...prev, journeyType: 'existing' }));
+                animateStepTransition('existingUser');
+              }}
+            >
+              <Text style={[styles.secondaryButtonText, { color: defaultTheme.primary }]}>
+                I already use StackMap
               </Text>
             </TouchableOpacity>
-          </>
-        )}
-      </View>
+            
+            {/* Development/Testing Button */}
+            {Platform.OS === 'web' && (
+              <TouchableOpacity
+                style={[styles.secondaryButton, { backgroundColor: '#FF9800', marginTop: 20 }]}
+                onPress={() => setShowSyncTest(true)}
+              >
+                <Text style={[styles.buttonText, { color: '#FFF' }]}>
+                  🧪 Sync Testing
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          
+          <View style={styles.footerLinks}>
+            <TouchableOpacity
+              style={styles.footerLink}
+              onPress={() => onShowPrivacy?.()}
+            >
+              <Text style={[styles.footerLinkText, { color: defaultTheme.primary }]}>
+                Privacy Policy
+              </Text>
+            </TouchableOpacity>
+            
+            {Platform.OS === 'web' && onShowSupport && (
+              <>
+                <Text style={styles.footerSeparator}>•</Text>
+                <TouchableOpacity
+                  style={styles.footerLink}
+                  onPress={() => onShowSupport?.()}
+                >
+                  <Text style={[styles.footerLinkText, { color: defaultTheme.primary }]}>
+                    Support StackMap
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </>
+      )}
     </View>
   );
 
