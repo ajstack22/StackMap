@@ -1252,6 +1252,30 @@ class SyncServiceTimestamp {
         routineCelebration: settings.routineCelebration !== undefined ? settings.routineCelebration : settingsStore.routineCelebration
       });
     }
+
+    // CRITICAL FIX: Force immediate persistence to AsyncStorage
+    // This fixes the bug where Device B loses data on refresh
+    console.log('[SyncTS] Forcing immediate persistence to storage...');
+    
+    // Force flush all stores' persist middleware
+    const userStore = useUserStore;
+    const settingsStore = useSettingsStore;
+    const libraryStore = useLibraryStore;
+    
+    if (userStore.persist && userStore.persist.flush) {
+      await userStore.persist.flush();
+      console.log('[SyncTS] ✅ User store persisted');
+    }
+    if (settingsStore.persist && settingsStore.persist.flush) {
+      await settingsStore.persist.flush();
+      console.log('[SyncTS] ✅ Settings store persisted');
+    }
+    if (libraryStore.persist && libraryStore.persist.flush) {
+      await libraryStore.persist.flush();
+      console.log('[SyncTS] ✅ Library store persisted');
+    }
+    
+    console.log('[SyncTS] All stores persisted successfully');
   }
 
   /**

@@ -291,7 +291,7 @@ class SimpleSyncService {
   /**
    * Set complete state to all stores (atomic)
    */
-  setCompleteState(state) {
+  async setCompleteState(state) {
     const userStore = require('../../stores/useUserStore.js').default;
     const settingsStore = require('../../stores/useSettingsStore.js').default;
     const libraryStore = require('../../stores/useLibraryStore.js').default;
@@ -329,6 +329,30 @@ class SimpleSyncService {
       const activities = state.users[state.currentUser]?.days?.[state.currentDay]?.activities || [];
       appStore.setState({ activities });
     }
+
+    // CRITICAL FIX: Force immediate persistence to AsyncStorage
+    // This fixes the bug where Device B loses data on refresh
+    console.log('🔄 SIMPLE SYNC: Forcing immediate persistence to storage...');
+    
+    // Force flush all stores' persist middleware
+    if (userStore.persist && userStore.persist.flush) {
+      await userStore.persist.flush();
+      console.log('✅ User store persisted');
+    }
+    if (settingsStore.persist && settingsStore.persist.flush) {
+      await settingsStore.persist.flush();
+      console.log('✅ Settings store persisted');
+    }
+    if (libraryStore.persist && libraryStore.persist.flush) {
+      await libraryStore.persist.flush();
+      console.log('✅ Library store persisted');
+    }
+    if (appStore.persist && appStore.persist.flush) {
+      await appStore.persist.flush();
+      console.log('✅ App store persisted');
+    }
+    
+    console.log('🔄 SIMPLE SYNC: All stores persisted successfully');
   }
 
   /**
@@ -415,7 +439,7 @@ class SimpleSyncService {
       if (serverNewer) {
         // Server is newer, apply it
         console.log('📥 SIMPLE SYNC: Applying server state (server was newer)');
-        this.setCompleteState(serverState);
+        await this.setCompleteState(serverState);
         this.lastServerTimestamp = serverState.timestamp;
         await AsyncStorage.setItem('@sync_last_timestamp', serverState.timestamp.toString());
         
