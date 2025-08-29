@@ -5601,7 +5601,7 @@ Users: ${userNames} (${userCount} total)
       />
 
       {/* Dev Mode Sync Test Button - Floating */}
-      {__DEV__ && (
+      {true && (
         <TouchableOpacity
           style={{
             position: 'absolute',
@@ -5629,7 +5629,7 @@ Users: ${userNames} (${userCount} total)
       )}
 
       {/* Sync Test Modal - Development Only */}
-      {__DEV__ && (
+      {true && (
         <Modal
           visible={showSyncTestModal}
           animationType="slide"
