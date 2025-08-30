@@ -1931,9 +1931,10 @@ const App = () => {
           console.log('[Activity]', !activity.completed ? 'COMPLETE' : 'UNCOMPLETE', {
             activityId: id,
             wasCompleted: !!activity.completed,
-          hadCompletedAt: !!activity.completedAt,
-          hadUncompletedAt: !!activity.uncompletedAt
-        });
+            hadCompletedAt: !!activity.completedAt,
+            hadUncompletedAt: !!activity.uncompletedAt
+          });
+        }
         // console.log(`[TOGGLE] Activity ${id} - Previous: completed=${activity.completed}, completedAt=${activity.completedAt}, uncompletedAt=${activity.uncompletedAt}`);
 
         if (!activity.completed) {
