@@ -87,6 +87,13 @@ class MinimalSyncService {
         if (storedPhrase) {
           this.recoveryPhrase = storedPhrase;
           console.log('[MinimalSync] 🔑 Loaded recovery phrase');
+          
+          // CRITICAL: Re-initialize encryption with the loaded phrase
+          await this.initializeEncryption(storedPhrase, storedSyncId);
+          console.log('[MinimalSync] 🔐 Re-initialized encryption');
+        } else {
+          console.warn('[MinimalSync] ⚠️ Sync ID found but no recovery phrase - sync disabled');
+          this.syncId = null; // Clear sync ID if we can't decrypt
         }
         
         // Also check if we have stored data

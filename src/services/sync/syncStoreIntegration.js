@@ -54,7 +54,7 @@ class SyncStoreIntegration {
     
     // Check if we have an existing sync
     const syncId = await AsyncStorage.getItem('@minimal_sync_id');
-    if (syncId) {
+    if (syncId && minimalSync.encryptionReady) {
       console.log('[SyncStore] Found existing sync:', syncId);
       
       // Enable periodic sync with our callback
@@ -63,9 +63,21 @@ class SyncStoreIntegration {
       // Subscribe to store changes
       this.subscribeToStores();
       
+      // Do an initial pull to get latest data
+      console.log('[SyncStore] 🔄 Performing initial sync on app load');
+      try {
+        const pullResult = await minimalSync.pullData();
+        if (pullResult.success && pullResult.data) {
+          await this.handleDataReceived(pullResult.data);
+          console.log('[SyncStore] ✅ Initial sync complete');
+        }
+      } catch (error) {
+        console.error('[SyncStore] Initial sync failed:', error);
+      }
+      
       console.log('[SyncStore] ✅ Sync enabled for existing sync:', syncId);
     } else {
-      console.log('[SyncStore] No existing sync found');
+      console.log('[SyncStore] No existing sync found or encryption not ready');
     }
     
     this.isInitialized = true;
@@ -540,7 +552,8 @@ class SyncStoreIntegration {
    * Check if sync is enabled (async for compatibility)
    */
   async isEnabled() {
-    return minimalSync.isEnabled;
+    // Check both if sync is enabled AND if we have a sync ID
+    return minimalSync.isEnabled && !!minimalSync.syncId;
   }
 
   /**
