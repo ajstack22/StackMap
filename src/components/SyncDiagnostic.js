@@ -11,6 +11,11 @@ const SyncDiagnostic = () => {
   const [recoveryPhrase, setRecoveryPhrase] = useState('');
   const [syncId, setSyncId] = useState('');
   
+  // Get store update functions
+  const setUsers = useUserStore(state => state.setUsers);
+  const setLibrary = useLibraryStore(state => state.setLibrary);
+  const updateSettings = useSettingsStore(state => state.updateSettings);
+  
   const addLog = (message, data = null) => {
     const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
     setLog(prev => [...prev, { 
@@ -313,8 +318,8 @@ const SyncDiagnostic = () => {
         });
         
         // Now try to import it using syncStoreIntegration
-        addLog('Calling syncStoreIntegration.importFromSync...');
-        await syncStoreIntegration.importFromSync(decryptedData);
+        addLog('Calling syncStoreIntegration.handleDataReceived...');
+        await syncStoreIntegration.handleDataReceived(decryptedData);
         
         addLog('✅ Import completed successfully!');
         
@@ -331,6 +336,105 @@ const SyncDiagnostic = () => {
       
     } catch (error) {
       addLog('ERROR in import test', { error: error.message, stack: error.stack });
+    }
+  };
+
+  const loadDemoData = async () => {
+    try {
+      addLog('Loading demo data (Atlas, Mappy, Desty)...');
+      
+      // Demo data structure matching demo-data-kids-export.json
+      const demoData = {
+        users: {
+          "user-atlas": {
+            id: "user-atlas",
+            name: "Atlas",
+            icon: "🌎",
+            createdAt: "2025-01-01T09:00:00.000Z",
+            lastActive: new Date().toISOString(),
+            settings: { theme: "#2196F3" },
+            days: {
+              today: {
+                activities: [
+                  { id: "atlas-1", text: "Brush teeth", icon: "🦷", completed: true, pinned: false, order: 0 },
+                  { id: "atlas-2", text: "Get dressed", icon: "👕", completed: true, pinned: false, order: 1 },
+                  { id: "atlas-3", text: "Eat breakfast", icon: "🥞", completed: true, pinned: true, order: 2 },
+                  { id: "atlas-4", text: "Take medicine", icon: "💊", completed: false, pinned: true, order: 3 },
+                  { id: "atlas-5", text: "Reading time", icon: "📖", completed: false, pinned: false, order: 4 },
+                  { id: "atlas-6", text: "Math practice", icon: "🔢", completed: false, pinned: false, order: 5 },
+                  { id: "atlas-7", text: "Snack time", icon: "🍎", completed: false, pinned: false, order: 6 },
+                  { id: "atlas-8", text: "Art class", icon: "🎨", completed: false, pinned: false, order: 7 },
+                  { id: "atlas-9", text: "Playground", icon: "🛝", completed: false, pinned: false, order: 8 },
+                  { id: "atlas-10", text: "Speech therapy", icon: "💬", completed: false, pinned: false, order: 9 },
+                  { id: "atlas-11", text: "Quiet time", icon: "🧘", completed: false, pinned: false, order: 10 },
+                  { id: "atlas-12", text: "Bedtime routine", icon: "🌙", completed: false, pinned: false, order: 11 }
+                ]
+              },
+              tomorrow: { activities: [] }
+            }
+          },
+          "user-mappy": {
+            id: "user-mappy",
+            name: "Mappy",
+            icon: "🗺️",
+            createdAt: "2025-01-05T14:30:00.000Z",
+            lastActive: new Date().toISOString(),
+            settings: { theme: "#4CAF50" },
+            days: {
+              today: { activities: [] },
+              tomorrow: { activities: [] }
+            }
+          },
+          "user-desty": {
+            id: "user-desty",
+            name: "Desty",
+            icon: "📍",
+            createdAt: "2025-01-08T08:00:00.000Z",
+            lastActive: new Date().toISOString(),
+            settings: { theme: "#F44336" },
+            days: {
+              today: { activities: [] },
+              tomorrow: { activities: [] }
+            }
+          }
+        },
+        currentUser: "user-atlas",
+        currentDay: "today",
+        library: {
+          categories: [
+            { id: "my-templates", name: "My Templates", icon: "⭐", activities: [] }
+          ],
+          userAddedActivityIds: []
+        },
+        settings: {
+          currentTheme: "stackBlue",
+          bannerPosition: "top",
+          defaultView: "normal",
+          displayMode: "numbers",
+          enableDayManagement: true,
+          pinEnabled: false
+        }
+      };
+      
+      // Update stores with demo data
+      setUsers(demoData.users);
+      setLibrary(demoData.library);
+      updateSettings(demoData.settings);
+      
+      addLog('Demo data loaded!', {
+        userCount: Object.keys(demoData.users).length,
+        users: Object.keys(demoData.users)
+      });
+      
+      // Verify it was loaded
+      const currentState = await syncStoreIntegration.getCurrentState();
+      addLog('Verified current state', {
+        users: Object.keys(currentState.users || {}),
+        userCount: Object.keys(currentState.users || {}).length
+      });
+      
+    } catch (error) {
+      addLog('ERROR loading demo data', { error: error.message });
     }
   };
 
@@ -373,13 +477,17 @@ const SyncDiagnostic = () => {
       </View>
       
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 }}>
+        <Button title="Load Demo Data" onPress={loadDemoData} color="#4CAF50" />
+        <View style={{ width: 10 }} />
+        <Button title="Clear Log" onPress={clearLog} />
+      </View>
+      
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 }}>
         <Button title="1. Create Sync" onPress={testCreateSync} />
         <View style={{ width: 10 }} />
         <Button title="2. Join Sync" onPress={testJoinSync} />
         <View style={{ width: 10 }} />
         <Button title="3. Test Pull" onPress={testRawPull} />
-        <View style={{ width: 10 }} />
-        <Button title="Clear Log" onPress={clearLog} />
       </View>
       
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 }}>
