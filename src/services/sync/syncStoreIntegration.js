@@ -499,6 +499,164 @@ class SyncStoreIntegration {
       canPushImmediately: true // No more protection period!
     };
   }
+
+  // ============================================
+  // Compatibility methods for existing app usage
+  // ============================================
+
+  /**
+   * Check if sync is enabled (async for compatibility)
+   */
+  async isEnabled() {
+    return minimalSync.isEnabled;
+  }
+
+  /**
+   * Enable sync (compatibility method)
+   * If a recovery phrase is provided, create a new sync with it
+   */
+  async enable(recoveryPhrase = null) {
+    if (recoveryPhrase) {
+      // Creating a new sync with the provided recovery phrase
+      console.log('[SyncStore] Creating new sync from enable()');
+      const result = await this.createSync();
+      return result;
+    }
+    
+    if (!minimalSync.syncId) {
+      throw new Error('No sync ID - create or join a sync first');
+    }
+    minimalSync.enableSync(this.handleDataReceived);
+    return true;
+  }
+
+  /**
+   * Disable sync (compatibility method)
+   */
+  async disable() {
+    this.disableSync();
+    return true;
+  }
+
+  /**
+   * Initialize for import (used by onboarding)
+   */
+  async initializeForImport(recoveryPhrase) {
+    console.log('[SyncStore] Initializing for import with recovery phrase');
+    
+    // Join the sync with the recovery phrase
+    const result = await this.joinSync(recoveryPhrase);
+    
+    if (!result) {
+      throw new Error('Failed to join sync');
+    }
+    
+    return true;
+  }
+
+  /**
+   * Generate sync ID from recovery phrase (for preview)
+   */
+  async generateSyncId(recoveryPhrase) {
+    return minimalSync.generateSyncId(recoveryPhrase);
+  }
+
+  /**
+   * Pull data without enabling sync (for preview)
+   */
+  async pullWithoutEnabling(syncId) {
+    console.log('[SyncStore] Pulling data for preview');
+    
+    // Temporarily set sync ID for the pull
+    const originalSyncId = minimalSync.syncId;
+    minimalSync.syncId = syncId;
+    
+    try {
+      const result = await minimalSync.pullLatestData();
+      
+      // Restore original sync ID
+      minimalSync.syncId = originalSyncId;
+      
+      if (result.success && result.data) {
+        return {
+          encrypted_blob: result.data.encrypted_blob || result.data
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      // Restore original sync ID
+      minimalSync.syncId = originalSyncId;
+      throw error;
+    }
+  }
+
+  /**
+   * Pull data (compatibility)
+   */
+  async pullData() {
+    return this.pullWithoutEnabling(minimalSync.syncId);
+  }
+
+  /**
+   * Check for auto-update shares (stub for compatibility)
+   */
+  async hasAutoUpdateShares(userId) {
+    // Not implemented in new system yet
+    return false;
+  }
+
+  /**
+   * Update active shares (stub for compatibility)
+   */
+  async updateActiveShares(userId) {
+    // Not implemented in new system yet
+    return true;
+  }
+
+  /**
+   * Get status (compatibility method)
+   */
+  getStatus() {
+    return this.getSyncStatus();
+  }
+
+  /**
+   * Request sync (compatibility method)
+   * Our system already auto-syncs on changes, so this is mostly a no-op
+   */
+  async requestSync(options = {}) {
+    console.log('[SyncStore] Sync requested (auto-sync already active)');
+    
+    // If we have a sync ID and are enabled, trigger a push
+    if (minimalSync.syncId && minimalSync.isEnabled) {
+      // Use the delay if specified
+      if (options.delay) {
+        setTimeout(() => {
+          this.pushCurrentState();
+        }, options.delay);
+      } else if (options.immediate) {
+        await this.pushCurrentState();
+      }
+    }
+    
+    return true;
+  }
+
+  /**
+   * Compatibility flags
+   */
+  get enabled() {
+    return minimalSync.isEnabled;
+  }
+
+  get syncEnabled() {
+    return minimalSync.isEnabled;
+  }
+
+  get syncInProgress() {
+    return this.isSyncing;
+  }
 }
 
 // Export singleton

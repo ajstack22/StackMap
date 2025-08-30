@@ -1,18 +1,18 @@
 /**
  * Central sync service export
- * Timestamp-based sync implementation (August 2025)
+ * Phase 5: Production sync with conflict resolution (August 2025)
  */
 
-// Import the timestamp sync service
-import timestampSyncService from './syncServiceTimestamp';
+// Import the new integrated sync service with conflict resolution
+import syncStoreIntegration from './syncStoreIntegration';
 
 // DEBUG: Import minimal test sync
 import debugSync from './debugSync';
 
-// Use timestamp sync as the default
-const syncService = timestampSyncService;
+// Use the new sync store integration as the default
+const syncService = syncStoreIntegration;
 if (__DEV__) {
-  console.log('[Sync] Using timestamp-based sync (immutable, append-only)');
+  console.log('[Sync] Using Phase 5 sync: store integration with conflict resolution');
 }
 
 // DEBUG: Test if basic sync works at all
