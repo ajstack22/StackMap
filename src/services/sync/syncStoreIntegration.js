@@ -637,6 +637,17 @@ class SyncStoreIntegration {
   }
 
   /**
+   * Pull data directly (for onboarding preview)
+   */
+  async pullData() {
+    console.log('[SyncStore] Direct pullData called');
+    
+    // Direct pass-through to minimalSync for onboarding preview
+    // This doesn't update stores, just returns the raw data
+    return await minimalSync.pullData();
+  }
+  
+  /**
    * Check for auto-update shares (stub for compatibility)
    */
   async hasAutoUpdateShares(userId) {
@@ -818,6 +829,20 @@ class SyncStoreIntegration {
    */
   getSyncId() {
     return minimalSync.syncId || '';
+  }
+  
+  /**
+   * Set sync ID (for onboarding preview)
+   */
+  set syncId(value) {
+    minimalSync.syncId = value;
+  }
+  
+  /**
+   * Get sync ID (property getter)
+   */
+  get syncId() {
+    return minimalSync.syncId;
   }
 
   /**
