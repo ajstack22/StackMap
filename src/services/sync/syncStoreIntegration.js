@@ -418,6 +418,13 @@ class SyncStoreIntegration {
   }
 
   /**
+   * Create method alias (for DataModal compatibility)
+   */
+  async create() {
+    return this.createSync();
+  }
+
+  /**
    * Join existing sync
    */
   async joinSync(syncId) {
@@ -612,6 +619,30 @@ class SyncStoreIntegration {
   async updateActiveShares(userId) {
     // Not implemented in new system yet
     return true;
+  }
+
+  /**
+   * Generate share token (stub for compatibility)
+   */
+  generateShareToken(isAutoUpdate = false) {
+    // Generate a random token for sharing
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  /**
+   * Create share link (stub for compatibility)
+   */
+  async createShareLink(userId, options = {}) {
+    // Not implemented in new system yet
+    // Return a stub response
+    const token = this.generateShareToken();
+    return {
+      success: true,
+      shareUrl: `https://stackmap.app/share/${token}`,
+      token
+    };
   }
 
   /**
