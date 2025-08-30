@@ -65,6 +65,21 @@ class ConflictResolver {
       return localUsers || {};
     }
 
+    // Check field-level timestamps first
+    const localUserTime = localMeta?.fieldTimestamps?.users || 0;
+    const remoteUserTime = remoteMeta?.fieldTimestamps?.users || 0;
+    
+    // If one side has significantly newer user data (>1 sec), prefer it entirely
+    if (remoteUserTime > localUserTime + 1000) {
+      this.log(`Using remote users (newer by ${(remoteUserTime - localUserTime)/1000}s)`);
+      return remoteUsers;
+    }
+    if (localUserTime > remoteUserTime + 1000) {
+      this.log(`Using local users (newer by ${(localUserTime - remoteUserTime)/1000}s)`);
+      return localUsers;
+    }
+
+    // Timestamps are close - do detailed merge
     const merged = {};
     const allUserIds = new Set([
       ...Object.keys(localUsers),

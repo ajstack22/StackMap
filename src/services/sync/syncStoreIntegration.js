@@ -108,18 +108,25 @@ class SyncStoreIntegration {
     }
 
     if (field) {
-      console.log(`[SyncStore] 📝 ${field} changed`);
+      console.log(`[SyncStore] 📝 ${field} changed - pushing immediately`);
     }
+    
+    // Push immediately to reduce conflicts
+    this.pushCurrentState();
 
-    // Clear existing debounce timer
+    // Debounce the pull to avoid too many requests
     if (this.changeDebounceTimer) {
       clearTimeout(this.changeDebounceTimer);
     }
 
-    // Set new debounce timer
-    this.changeDebounceTimer = setTimeout(() => {
-      this.pushCurrentState();
-    }, this.changeDebounceDelay);
+    // Pull after a short delay to get any other changes
+    this.changeDebounceTimer = setTimeout(async () => {
+      console.log('[SyncStore] ⏰ Pulling latest changes');
+      const pullResult = await minimalSync.pullData();
+      if (pullResult.success && pullResult.data) {
+        await this.handleDataReceived(pullResult.data);
+      }
+    }, 2000); // 2 second debounce for pulls
   }
 
   /**
