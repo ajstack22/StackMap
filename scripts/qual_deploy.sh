@@ -298,9 +298,9 @@ if [ "$SKIP_TESTS" = false ]; then
     
     # Test 2: Check critical services exist
     echo "- Checking critical services..."
-    # Check for either .js or .ts version (TypeScript migration in progress)
-    if [ ! -f "src/services/sync/syncService.js" ] && [ ! -f "src/services/sync/syncService.ts" ]; then
-        echo "❌ Missing critical service: syncService.js or syncService.ts"
+    # Check for modern sync system files
+    if [ ! -f "src/services/sync/syncStoreIntegration.js" ] || [ ! -f "src/services/sync/minimalSyncService.js" ]; then
+        echo "❌ Missing critical sync service files"
         exit 1
     fi
     if [ ! -f "src/stores/useAppStore.js" ]; then

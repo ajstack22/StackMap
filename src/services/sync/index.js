@@ -23,11 +23,7 @@ if (typeof window !== 'undefined') {
   }, 2000);
 }
 
-// Old implementations - kept for emergency rollback only
-// If rollback is needed, uncomment these lines:
-// import crdtSyncService from './syncServiceV2';
-// import complexSyncService from './syncService';
-// import simpleSyncService from './simpleSyncService';
+// All old sync implementations have been removed (12,500+ lines deleted)
 
 // Development helpers for testing and emergency rollback
 if (__DEV__ && typeof window !== 'undefined') {
@@ -40,12 +36,11 @@ if (__DEV__ && typeof window !== 'undefined') {
     return syncService.getStatus ? syncService.getStatus() : { enabled: syncService.syncEnabled };
   };
   
-  // Emergency rollback to CRDT version
+  // Old sync systems have been removed
   window.useCRDTSync = () => {
-    console.warn('⚠️ To rollback to CRDT sync:');
-    console.warn('1. Uncomment crdtSyncService import in src/services/sync/index.js');
-    console.warn('2. Change line 10 to: const syncService = crdtSyncService;');
-    return 'Timestamp sync is the current implementation';
+    console.warn('⚠️ Old sync systems have been removed.');
+    console.warn('The modern sync system is the only implementation.');
+    return 'Modern sync (minimalSyncService + syncStoreIntegration)';
   };
   
   // Check sync status
@@ -62,15 +57,11 @@ if (__DEV__ && typeof window !== 'undefined') {
     return { version: 'CRDT V2', enabled: syncService.syncEnabled };
   };
   
-  // Show event logger status
+  // Event logger has been removed
   window.syncLogs = () => {
-    const eventLogger = require('./eventLogger').default;
-    const events = eventLogger.getRecentEvents();
-    console.log(`📊 Recent sync events (${events.length})`);
-    events.slice(-20).forEach(e => {
-      console.log(`${new Date(e.timestamp).toISOString().slice(11,19)} ${e.category}:${e.action}`, e);
-    });
-    return events;
+    console.log('📊 Event logger has been removed.');
+    console.log('Check browser console for [MinimalSync] and [SyncStore] logs.');
+    return 'Use browser console filters for sync debugging';
   };
 }
 
