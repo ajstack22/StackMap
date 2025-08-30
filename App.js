@@ -115,6 +115,7 @@ import {
 import EditModeList from './src/components/EditModeList';
 import { EMPTY_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingUserCentered from './src/components/Onboarding/OnboardingUserCentered';
+import SyncDiagnostic from './src/components/SyncDiagnostic';
 import ShareView from './src/components/ShareView/ShareView';
 import PinModal from './src/components/Modals/PinModal';
 import { STACKMAP_LIBRARY } from './src/constants/stackMapLibrary';
@@ -283,6 +284,7 @@ const App = () => {
   const [showAccessModal, setShowAccessModal] = useState(false);
   const [accessModalActiveTab, setAccessModalActiveTab] = useState(0);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showSyncDiagnostic, setShowSyncDiagnostic] = useState(false);
   const [showDayManagementModal, setShowDayManagementModal] = useState(false);
   const [dayManagementActiveTab, setDayManagementActiveTab] = useState(0);
   const [showActivityManagementModal, setShowActivityManagementModal] =
@@ -5320,7 +5322,28 @@ Users: ${userNames} (${userCount} total)
         insets={insets}
         getAndroidModalBottomHeight={getAndroidModalBottomHeight}
         styles={styles}
+        onSyncDiagnostic={() => {
+          setShowSupportModal(false);
+          setTimeout(() => setShowSyncDiagnostic(true), 300);
+        }}
       />
+      
+      {/* Sync Diagnostic Modal */}
+      <Modal
+        visible={showSyncDiagnostic}
+        animationType="slide"
+        onRequestClose={() => setShowSyncDiagnostic(false)}
+      >
+        <SafeAreaView style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', padding: 10, justifyContent: 'space-between' }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Sync Diagnostic</Text>
+            <TouchableOpacity onPress={() => setShowSyncDiagnostic(false)}>
+              <Text style={{ color: '#007AFF' }}>Close</Text>
+            </TouchableOpacity>
+          </View>
+          <SyncDiagnostic />
+        </SafeAreaView>
+      </Modal>
 
       {/* Toast Notification */}
       <Toast toast={toast} onDismiss={hideToast} theme={theme} />

@@ -25,7 +25,7 @@ if (Platform.OS === 'web') {
   if (TeamPhoto && typeof TeamPhoto === 'object' && TeamPhoto.default) {}
 }
 
-const SupportModal = ({ visible, onClose, insets }) => {
+const SupportModal = ({ visible, onClose, insets, onSyncDiagnostic }) => {
   const [scrollKey, setScrollKey] = useState(0);
   const scrollRef = useRef(null);
 
@@ -136,6 +136,24 @@ const SupportModal = ({ visible, onClose, insets }) => {
           </View>
         )}
       </View>
+
+      {/* Debug Sync Button - only in dev */}
+      {__DEV__ && onSyncDiagnostic && (
+        <TouchableOpacity 
+          onPress={onSyncDiagnostic}
+          style={{
+            backgroundColor: '#FF6B6B',
+            padding: 10,
+            margin: 20,
+            borderRadius: 8,
+            alignItems: 'center'
+          }}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>
+            🔧 Open Sync Diagnostic Tool
+          </Text>
+        </TouchableOpacity>
+      )}
 
       <View style={styles.supportWaysSection}>
         <Text style={styles.supportSectionTitle}>Ways to Contribute</Text>
