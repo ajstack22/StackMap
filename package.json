@@ -1,6 +1,6 @@
 {
   "name": "StackMap",
-  "version": "2025.08.29.36",
+  "version": "2025.08.29.37",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
