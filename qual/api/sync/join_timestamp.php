@@ -83,9 +83,16 @@ try {
     $latest_record = $latest_stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$latest_record) {
-        // No records yet - this shouldn't happen for a join
-        http_response_code(404);
-        echo json_encode(['error' => 'No sync data found']);
+        // No records yet - this can happen if the creating device hasn't pushed data yet
+        // Return success but indicate no data is available yet
+        echo json_encode([
+            'success' => true,
+            'sync_id' => $sync_id,
+            'device_id' => $device_id,
+            'latest_record' => null,
+            'message' => 'Sync group exists but no data available yet',
+            'server_time' => round(microtime(true) * 1000)
+        ]);
         exit();
     }
     

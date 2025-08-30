@@ -61,22 +61,42 @@ try {
     $register_stmt->execute([$sync_id, $device_id]);
     
     // Pull records newer than the requested timestamp
-    // EXCLUDING records from our own device to prevent pulling our own changes
-    $pull_stmt = $db->prepare("
-        SELECT 
-            id,
-            device_id,
-            client_timestamp as timestamp,
-            encrypted_blob,
-            UNIX_TIMESTAMP(server_timestamp) * 1000 as server_timestamp
-        FROM sync_records
-        WHERE sync_id = ? 
-            AND client_timestamp > ?
-            AND device_id != ?
-        ORDER BY client_timestamp ASC
-        LIMIT 100
-    ");
-    $pull_stmt->execute([$sync_id, $since, $device_id]);
+    // For initial sync (since=0), include ALL records to ensure new devices can get data
+    // For incremental sync (since>0), exclude our own device to prevent pulling our own changes
+    if ($since == 0) {
+        // Initial pull - get ALL records (including our own for new devices joining)
+        $pull_stmt = $db->prepare("
+            SELECT 
+                id,
+                device_id,
+                client_timestamp as timestamp,
+                encrypted_blob,
+                UNIX_TIMESTAMP(server_timestamp) * 1000 as server_timestamp
+            FROM sync_records
+            WHERE sync_id = ? 
+                AND client_timestamp > ?
+            ORDER BY client_timestamp ASC
+            LIMIT 100
+        ");
+        $pull_stmt->execute([$sync_id, $since]);
+    } else {
+        // Incremental pull - exclude our own device's records
+        $pull_stmt = $db->prepare("
+            SELECT 
+                id,
+                device_id,
+                client_timestamp as timestamp,
+                encrypted_blob,
+                UNIX_TIMESTAMP(server_timestamp) * 1000 as server_timestamp
+            FROM sync_records
+            WHERE sync_id = ? 
+                AND client_timestamp > ?
+                AND device_id != ?
+            ORDER BY client_timestamp ASC
+            LIMIT 100
+        ");
+        $pull_stmt->execute([$sync_id, $since, $device_id]);
+    }
     
     $records = [];
     while ($row = $pull_stmt->fetch(PDO::FETCH_ASSOC)) {
