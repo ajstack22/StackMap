@@ -973,6 +973,36 @@ class SyncStoreIntegration {
     // Check if we just joined within last 5 seconds
     return false; // Simplified for now
   }
+
+  /**
+   * Trigger immediate sync (for AppState changes on mobile)
+   */
+  async triggerSync() {
+    console.log('[SyncStore] Manual sync triggered');
+    
+    if (!minimalSync.isEnabled || !minimalSync.syncId) {
+      console.log('[SyncStore] Sync not enabled or no sync ID');
+      return { success: false, error: 'Sync not enabled' };
+    }
+    
+    try {
+      // First push any local changes
+      await this.pushCurrentState();
+      
+      // Then pull latest changes
+      const pullResult = await minimalSync.pullData();
+      if (pullResult.success && pullResult.data) {
+        await this.handleDataReceived(pullResult.data);
+        console.log('[SyncStore] ✅ Manual sync complete');
+        return { success: true };
+      }
+      
+      return pullResult;
+    } catch (error) {
+      console.error('[SyncStore] Manual sync failed:', error);
+      return { success: false, error: error.message };
+    }
+  }
 }
 
 // Export singleton

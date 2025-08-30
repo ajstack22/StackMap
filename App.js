@@ -15,6 +15,7 @@ import {
   Animated,
   ActivityIndicator,
   Modal,
+  AppState,
 } from 'react-native';
 
 // Disable console logs on Android for performance
@@ -509,6 +510,49 @@ const App = () => {
 
     checkSyncStatus();
   }, [isHydrated, showOnboarding, showSetupWizard]);
+
+  // AppState listener for mobile - trigger sync when app comes to foreground
+  useEffect(() => {
+    // Only on mobile platforms
+    if (Platform.OS === 'web') return;
+    if (!isHydrated) return;
+    
+    let appStateSubscription;
+    
+    const handleAppStateChange = async (nextAppState) => {
+      if (nextAppState === 'active') {
+        console.log('[App] App became active - checking sync');
+        
+        // Check if sync is enabled
+        const syncEnabled = await syncService.isEnabled();
+        if (syncEnabled) {
+          console.log('[App] Sync enabled - triggering manual sync');
+          
+          // Trigger immediate sync using the new method
+          try {
+            const result = await syncService.triggerSync();
+            if (result.success) {
+              console.log('[App] Manual sync successful');
+            } else {
+              console.log('[App] Manual sync failed:', result.error);
+            }
+          } catch (error) {
+            console.log('[App] Manual sync error:', error);
+          }
+        }
+      }
+    };
+    
+    // Subscribe to app state changes
+    appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
+    
+    return () => {
+      // Cleanup
+      if (appStateSubscription && appStateSubscription.remove) {
+        appStateSubscription.remove();
+      }
+    };
+  }, [isHydrated]);
 
   // Load data on mount and migrate PIN if needed
   useEffect(() => {
