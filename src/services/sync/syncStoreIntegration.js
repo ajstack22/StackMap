@@ -542,9 +542,9 @@ class SyncStoreIntegration {
    */
   async enable(recoveryPhrase = null) {
     if (recoveryPhrase) {
-      // Creating a new sync with the provided recovery phrase
-      console.log('[SyncStore] Creating new sync from enable()');
-      const result = await this.createSync();
+      // Joining existing sync with the provided recovery phrase
+      console.log('[SyncStore] 🔗 Joining sync from enable() with recovery phrase');
+      const result = await this.joinSync(recoveryPhrase);
       return result;
     }
     
