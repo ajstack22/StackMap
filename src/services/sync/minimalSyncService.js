@@ -652,9 +652,25 @@ class MinimalSyncService {
       const storedData = await AsyncStorage.getItem('@minimal_sync_data');
       if (storedData) {
         const parsed = JSON.parse(storedData);
-        lastTimestamp = parsed.timestamp || 0;
+        
+        // IMPORTANT: For initial import in onboarding, we should always pull from 0
+        // Check if we're in an initial import scenario (no users in local data)
+        const isInitialImport = !parsed.data?.users || Object.keys(parsed.data.users).length === 0;
+        
+        if (isInitialImport) {
+          console.log('[MinimalSync] 🔄 Initial import detected - forcing pull from timestamp 0');
+          lastTimestamp = 0;
+        } else {
+          lastTimestamp = parsed.timestamp || 0;
+        }
+        
         localData = parsed.data;
-        console.log('[MinimalSync] Using stored timestamp:', lastTimestamp);
+        console.log('[MinimalSync] Using stored timestamp:', lastTimestamp, {
+          isInitialImport,
+          originalTimestamp: parsed.timestamp || 0,
+          hasStoredData: !!storedData,
+          userCount: localData?.users ? Object.keys(localData.users).length : 0
+        });
         console.log('[MinimalSync] Local data structure:', {
           hasUsers: !!localData?.users,
           hasLibrary: !!localData?.library,
@@ -662,6 +678,8 @@ class MinimalSyncService {
           categoriesType: localData?.library?.categories ? typeof localData.library.categories : 'undefined',
           isArray: Array.isArray(localData?.library?.categories)
         });
+      } else {
+        console.log('[MinimalSync] No stored data - will pull from timestamp 0');
       }
     } catch (error) {
       console.log('[MinimalSync] Error getting stored data:', error);
@@ -679,8 +697,30 @@ class MinimalSyncService {
       
       // Parse the response
       const result = JSON.parse(responseText);
-      console.log('[MinimalSync] 📡 Parsed response:', result);
+      console.log('[MinimalSync] 📡 Parsed response:', {
+        success: result.success,
+        hasRecords: !!result.records,
+        recordsLength: result.records ? result.records.length : 0,
+        recordsArray: Array.isArray(result.records),
+        firstRecord: result.records && result.records[0] ? {
+          hasBlob: !!result.records[0].encrypted_blob,
+          blobLength: result.records[0].encrypted_blob ? result.records[0].encrypted_blob.length : 0,
+          timestamp: result.records[0].timestamp,
+          device_id: result.records[0].device_id
+        } : null,
+        error: result.error
+      });
       console.log('[MinimalSync] 📊 Records count:', result.records ? result.records.length : 0);
+      
+      // DEBUG: Check what happens with empty records array
+      if (result.success && result.records && Array.isArray(result.records)) {
+        console.log('[MinimalSync] 🔍 Records array check:', {
+          isArray: true,
+          length: result.records.length,
+          isEmpty: result.records.length === 0,
+          willReturnData: result.records.length > 0
+        });
+      }
       
       if (result.success && result.records && result.records.length > 0) {
         // Get the latest record from timestamp API
@@ -738,7 +778,14 @@ class MinimalSyncService {
         };
       }
       
-      console.log('[MinimalSync] ℹ️ No new data from server');
+      console.log('[MinimalSync] ℹ️ No new data from server', {
+        recordsExist: !!result.records,
+        recordsLength: result.records ? result.records.length : 'no records array',
+        resultSuccess: result.success,
+        willReturnNull: true,
+        lastTimestamp: lastTimestamp,
+        syncId: this.syncId
+      });
       return { success: true, data: null };
     } catch (error) {
       console.error('[MinimalSync] ❌ Pull error:', error);

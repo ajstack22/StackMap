@@ -641,7 +641,9 @@ class SyncStoreIntegration {
    * Initialize encryption (for onboarding)
    */
   async initializeEncryption(recoveryPhrase, syncId) {
-    console.log('[SyncStore] Initializing encryption for onboarding');
+    console.log('[SyncStore] Initializing encryption for onboarding', { syncId });
+    // CRITICAL: Set the syncId on minimalSync so pullData works
+    minimalSync.syncId = syncId;
     await minimalSync.initializeEncryption(recoveryPhrase, syncId);
   }
   

@@ -341,11 +341,7 @@ const OnboardingUserCentered = ({
       // Initialize encryption without enabling sync
       await encryptionService.initialize(phraseToUse, syncId, fixedSalt);
       
-      // Set syncId temporarily so pullData works
-      syncService.syncId = syncId;
-      
-      // CRITICAL: Also initialize minimalSync's encryption flag
-      // This is needed because minimalSync checks encryptionReady before pulling
+      // Initialize sync service encryption (this now sets syncId on minimalSync)
       if (syncService.initializeEncryption) {
         await syncService.initializeEncryption(phraseToUse, syncId);
       }
