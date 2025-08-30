@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, Button, TextInput, ScrollView, Alert } from 'react-native';
+import { View, Button, TextInput, ScrollView, Alert } from 'react-native';
+import { Text } from './Typography'; // Use our custom Text component
 import minimalSyncService from '../services/sync/minimalSyncService';
 import encryptionService from '../services/sync/encryptionService';
 

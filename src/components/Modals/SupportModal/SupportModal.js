@@ -137,8 +137,8 @@ const SupportModal = ({ visible, onClose, insets, onSyncDiagnostic }) => {
         )}
       </View>
 
-      {/* Debug Sync Button - only in dev */}
-      {__DEV__ && onSyncDiagnostic && (
+      {/* Debug Sync Button - available in qual for testing */}
+      {onSyncDiagnostic && (
         <TouchableOpacity 
           onPress={onSyncDiagnostic}
           style={{
