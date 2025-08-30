@@ -1232,7 +1232,7 @@ const OnboardingUserCentered = ({
         
         {recoveryPhrase.length > 0 && (
           <Text style={styles.charCount}>
-            {recoveryPhrase.replace(/\s+/g, '').length}/32 characters
+            {recoveryPhrase.replace(/[\s-]+/g, '').length}/32 characters
           </Text>
         )}
       </View>
@@ -1254,7 +1254,7 @@ const OnboardingUserCentered = ({
           <TouchableOpacity
             style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
             onPress={fetchSyncPreview}
-            disabled={syncLoading || recoveryPhrase.replace(/\s+/g, '').length !== 32}
+            disabled={syncLoading || recoveryPhrase.replace(/[\s-]+/g, '').length !== 32}
           >
             {syncLoading ? (
               <ActivityIndicator color="#fff" />
