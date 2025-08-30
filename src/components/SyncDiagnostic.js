@@ -3,6 +3,8 @@ import { View, Button, TextInput, ScrollView, Alert } from 'react-native';
 import { Text } from './Typography'; // Use our custom Text component
 import minimalSyncService from '../services/sync/minimalSyncService';
 import encryptionService from '../services/sync/encryptionService';
+import syncStoreIntegration from '../services/sync/syncStoreIntegration';
+import { useUserStore, useLibraryStore, useSettingsStore } from '../stores';
 
 const SyncDiagnostic = () => {
   const [log, setLog] = useState([]);
@@ -208,6 +210,130 @@ const SyncDiagnostic = () => {
     }
   };
 
+  const testCreateWithRealData = async () => {
+    try {
+      addLog('Starting CREATE with REAL APP DATA...');
+      
+      // Get current app state
+      const currentState = await syncStoreIntegration.getCurrentState();
+      addLog('Current app state captured', {
+        users: Object.keys(currentState.users || {}),
+        userCount: Object.keys(currentState.users || {}).length,
+        hasLibrary: !!currentState.library,
+        hasSettings: !!currentState.settings
+      });
+      
+      // Generate recovery phrase
+      const phrase = encryptionService.generateRecoveryPhrase();
+      addLog('Generated recovery phrase', phrase);
+      setRecoveryPhrase(phrase);
+      
+      // Generate sync ID
+      const syncId = await minimalSyncService.generateSyncId(phrase);
+      addLog('Generated sync ID', syncId);
+      setSyncId(syncId);
+      
+      // Initialize encryption
+      const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+      await encryptionService.initialize(phrase, syncId, fixedSalt);
+      
+      // Encrypt current state
+      const encrypted = encryptionService.encryptData(currentState);
+      addLog('Encrypted real data length', encrypted.length);
+      
+      // Test decryption
+      const decrypted = encryptionService.decryptData(encrypted);
+      addLog('Decryption test', { 
+        success: true,
+        userCount: Object.keys(decrypted.users || {}).length
+      });
+      
+      // Create sync via API
+      const deviceId = await encryptionService.getDeviceId();
+      const createUrl = `https://stackmap.app/qual/api/sync/create_timestamp.php`;
+      const payload = {
+        sync_id: syncId,
+        device_id: deviceId,
+        encrypted_blob: encrypted,
+        timestamp: Date.now()
+      };
+      
+      addLog('Pushing real data to server...');
+      const response = await fetch(createUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      const result = await response.json();
+      addLog('Create response', result);
+      
+    } catch (error) {
+      addLog('ERROR in create with real data', { error: error.message, stack: error.stack });
+    }
+  };
+
+  const testImportData = async () => {
+    try {
+      if (!recoveryPhrase) {
+        addLog('ERROR: No recovery phrase set');
+        return;
+      }
+      
+      addLog('Starting IMPORT test (will modify app data!)...');
+      
+      // Join and get data
+      const syncId = await minimalSyncService.generateSyncId(recoveryPhrase);
+      const deviceId = await encryptionService.getDeviceId();
+      
+      // Initialize encryption
+      const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+      await encryptionService.initialize(recoveryPhrase, syncId, fixedSalt);
+      
+      // Pull data
+      const pullUrl = `https://stackmap.app/qual/api/sync/pull_timestamp.php?sync_id=${syncId}&device_id=${deviceId}&since=0`;
+      addLog('Pulling data for import...');
+      
+      const pullResponse = await fetch(pullUrl);
+      const pullResult = await pullResponse.json();
+      
+      if (pullResult.records && pullResult.records.length > 0) {
+        // Get the latest record
+        const latestRecord = pullResult.records[pullResult.records.length - 1];
+        addLog('Found record to import', {
+          device: latestRecord.device_id,
+          timestamp: latestRecord.timestamp
+        });
+        
+        // Decrypt the data
+        const decryptedData = encryptionService.decryptData(latestRecord.encrypted_blob);
+        addLog('Decrypted data for import', {
+          users: Object.keys(decryptedData.users || {}),
+          userCount: Object.keys(decryptedData.users || {}).length
+        });
+        
+        // Now try to import it using syncStoreIntegration
+        addLog('Calling syncStoreIntegration.importFromSync...');
+        await syncStoreIntegration.importFromSync(decryptedData);
+        
+        addLog('✅ Import completed successfully!');
+        
+        // Verify what was imported
+        const newState = await syncStoreIntegration.getCurrentState();
+        addLog('New app state after import', {
+          users: Object.keys(newState.users || {}),
+          userCount: Object.keys(newState.users || {}).length
+        });
+        
+      } else {
+        addLog('No records found to import');
+      }
+      
+    } catch (error) {
+      addLog('ERROR in import test', { error: error.message, stack: error.stack });
+    }
+  };
+
   const clearLog = () => setLog([]);
 
   return (
@@ -254,6 +380,12 @@ const SyncDiagnostic = () => {
         <Button title="3. Test Pull" onPress={testRawPull} />
         <View style={{ width: 10 }} />
         <Button title="Clear Log" onPress={clearLog} />
+      </View>
+      
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 }}>
+        <Button title="4. Create w/ Real Data" onPress={testCreateWithRealData} color="#FF6B6B" />
+        <View style={{ width: 10 }} />
+        <Button title="5. Import Data" onPress={testImportData} color="#FF6B6B" />
       </View>
       
       <View style={{ backgroundColor: '#f0f0f0', padding: 10, borderRadius: 5 }}>
