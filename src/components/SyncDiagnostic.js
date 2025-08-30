@@ -51,8 +51,9 @@ const SyncDiagnostic = () => {
       addLog('Generated sync ID', syncId);
       setSyncId(syncId);
       
-      // Test encryption
-      await encryptionService.initialize(phrase, syncId, 'test-salt');
+      // Test encryption - use the same fixed salt as minimalSyncService
+      const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ='; // Base64 encoded salt
+      await encryptionService.initialize(phrase, syncId, fixedSalt);
       const encrypted = encryptionService.encryptData(testData);
       addLog('Encrypted data length', encrypted.length);
       
@@ -140,8 +141,9 @@ const SyncDiagnostic = () => {
       if (pullResult.records && pullResult.records.length > 0) {
         addLog('Found records, attempting decrypt...');
         
-        // Initialize encryption
-        await encryptionService.initialize(recoveryPhrase, syncId, 'test-salt');
+        // Initialize encryption with the same fixed salt
+        const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+        await encryptionService.initialize(recoveryPhrase, syncId, fixedSalt);
         
         for (const record of pullResult.records) {
           try {
