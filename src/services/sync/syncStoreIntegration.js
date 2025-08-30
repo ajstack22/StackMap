@@ -616,6 +616,27 @@ class SyncStoreIntegration {
   }
 
   /**
+   * Pull latest data (compatibility method)
+   */
+  async pullLatestData() {
+    console.log('[SyncStore] Pulling latest data');
+    
+    if (!minimalSync.syncId) {
+      throw new Error('No sync ID set');
+    }
+    
+    const result = await minimalSync.pullLatestData();
+    
+    if (result.success && result.data) {
+      // Handle the received data
+      await this.handleDataReceived(result.data);
+      return result;
+    }
+    
+    return result;
+  }
+
+  /**
    * Check for auto-update shares (stub for compatibility)
    */
   async hasAutoUpdateShares(userId) {
