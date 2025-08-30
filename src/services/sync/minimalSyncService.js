@@ -180,11 +180,22 @@ class MinimalSyncService {
     this.encryptionReady = true;
     this.recoveryPhrase = recoveryPhrase;
     
+    // Ensure device ID is set
+    if (!this.deviceId) {
+      await this.initDeviceId();
+    }
+    
+    // Use encryption service's device ID if ours isn't set
+    if (!this.deviceId) {
+      this.deviceId = await encryptionService.getDeviceId();
+      console.log('[MinimalSync] Using encryption service device ID:', this.deviceId);
+    }
+    
     // Store recovery phrase for persistence
     await AsyncStorage.setItem(`@sync_phrase_${syncId}`, recoveryPhrase);
     await AsyncStorage.setItem('@sync_phrase', recoveryPhrase);
     
-    console.log('[MinimalSync] 🔐 Encryption initialized');
+    console.log('[MinimalSync] 🔐 Encryption initialized with device ID:', this.deviceId);
   }
 
   /**
@@ -526,10 +537,21 @@ class MinimalSyncService {
    */
   async pullData() {
     console.log('[MinimalSync] 📥 pullData called');
+    console.log('[MinimalSync] Current state:', {
+      syncId: this.syncId,
+      deviceId: this.deviceId,
+      encryptionReady: this.encryptionReady,
+      hasRecoveryPhrase: !!this.recoveryPhrase
+    });
     
     if (!this.syncId) {
       console.error('[MinimalSync] ❌ No sync ID');
       return { success: false, error: 'No sync ID' };
+    }
+    
+    if (!this.deviceId) {
+      console.error('[MinimalSync] ❌ No device ID');
+      return { success: false, error: 'No device ID' };
     }
     
     // Get the last timestamp and current local data
