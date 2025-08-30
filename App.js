@@ -132,8 +132,6 @@ import useSyncStore from './src/stores/useSyncStore';
 // Import services
 import encryptionService from './src/services/sync/encryptionService';
 import syncService from './src/services/sync';
-import eventLogger from './src/services/sync/eventLogger';
-import dataMigrator from './src/services/sync/dataMigrator';
 import './src/utils/stateDebugger'; // Add state change tracking
 
 // Import utilities
@@ -1928,10 +1926,11 @@ const App = () => {
 
     const newActivities = currentState.map(activity => {
       if (activity.id === id) {
-        // Log the toggle operation without user content
-        eventLogger.logActivity(!activity.completed ? 'COMPLETE' : 'UNCOMPLETE', {
-          activityId: id,
-          wasCompleted: !!activity.completed,
+        // Toggle operation
+        if (__DEV__) {
+          console.log('[Activity]', !activity.completed ? 'COMPLETE' : 'UNCOMPLETE', {
+            activityId: id,
+            wasCompleted: !!activity.completed,
           hadCompletedAt: !!activity.completedAt,
           hadUncompletedAt: !!activity.uncompletedAt
         });
@@ -3390,8 +3389,8 @@ This will replace all your current data.`,
         // Allow state to settle before importing new data
         await new Promise(resolve => setTimeout(resolve, 50));
 
-        // Check if data needs migration from old format
-        const migratedData = await dataMigrator.checkAndMigrate(importData, 'import');
+        // Use imported data directly (migration no longer needed)
+        const migratedData = importData;
         
         // Restore selected users
         if (migratedData.users && Object.keys(migratedData.users).length > 0) {
