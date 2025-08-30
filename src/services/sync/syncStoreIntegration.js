@@ -630,10 +630,20 @@ class SyncStoreIntegration {
   }
 
   /**
+   * Initialize encryption (for onboarding)
+   */
+  async initializeEncryption(recoveryPhrase, syncId) {
+    console.log('[SyncStore] Initializing encryption for onboarding');
+    await minimalSync.initializeEncryption(recoveryPhrase, syncId);
+  }
+  
+  /**
    * Pull data directly (for onboarding preview)
    */
   async pullData() {
     console.log('[SyncStore] Direct pullData called');
+    console.log('[SyncStore] minimalSync.syncId:', minimalSync.syncId);
+    console.log('[SyncStore] minimalSync.encryptionReady:', minimalSync.encryptionReady);
     
     // Direct pass-through to minimalSync for onboarding preview
     // This doesn't update stores, just returns the raw data
@@ -828,6 +838,7 @@ class SyncStoreIntegration {
    * Set sync ID (for onboarding preview)
    */
   set syncId(value) {
+    console.log('[SyncStore] Setting syncId:', value);
     minimalSync.syncId = value;
   }
   

@@ -323,16 +323,33 @@ const OnboardingUserCentered = ({
       const syncId = await syncService.generateSyncId(phraseToUse);
       const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
       
+      console.log('[OnboardingImport] Generated sync ID:', syncId);
+      console.log('[OnboardingImport] Using recovery phrase (first 8 chars):', phraseToUse.substring(0, 8));
+      
       // Initialize encryption without enabling sync
       await encryptionService.initialize(phraseToUse, syncId, fixedSalt);
       
       // Set syncId temporarily so pullData works
       syncService.syncId = syncId;
       
+      // CRITICAL: Also initialize minimalSync's encryption flag
+      // This is needed because minimalSync checks encryptionReady before pulling
+      if (syncService.initializeEncryption) {
+        await syncService.initializeEncryption(phraseToUse, syncId);
+      }
+      
       // Pull the data (already decrypted by minimalSync)
       const pullResult = await syncService.pullData();
       
+      console.log('[OnboardingImport] Pull result:', {
+        success: pullResult?.success,
+        hasData: !!pullResult?.data,
+        dataKeys: pullResult?.data ? Object.keys(pullResult.data) : [],
+        error: pullResult?.error
+      });
+      
       if (!pullResult || !pullResult.success || !pullResult.data) {
+        console.error('[OnboardingImport] Pull failed:', pullResult);
         throw new Error('Failed to import data - no data available in sync group');
       }
       
