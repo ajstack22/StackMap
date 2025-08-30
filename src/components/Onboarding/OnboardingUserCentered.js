@@ -29,6 +29,7 @@ import {
   THEMES,
 } from '../../constants';
 import SyncStoreTest from '../SyncStoreTest';
+import SyncDiagnostic from '../SyncDiagnostic';
 import ConflictResolutionTest from '../ConflictResolutionTest';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -674,7 +675,7 @@ const OnboardingUserCentered = ({
                 color: activeTestComponent === 'sync' ? '#fff' : '#000',
                 fontWeight: 'bold'
               }}>
-                Sync Store Test
+                Sync Diagnostic
               </Text>
             </TouchableOpacity>
             
@@ -700,7 +701,7 @@ const OnboardingUserCentered = ({
           
           {/* Render Active Test Component */}
           {activeTestComponent === 'sync' ? (
-            <SyncStoreTest />
+            <SyncDiagnostic />
           ) : (
             <ConflictResolutionTest />
           )}
