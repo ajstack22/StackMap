@@ -37,8 +37,8 @@ class MinimalSyncService {
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         // Local development - use relative URL to go through webpack proxy
         this.API_BASE = '/api/sync';
-      } else if (window.location.pathname.startsWith('/qual')) {
-        // QUAL environment
+      } else if (window.location.href.includes('/qual/') || window.location.href.includes('qual.')) {
+        // QUAL environment - check for /qual/ in URL or qual subdomain
         this.API_BASE = 'https://stackmap.app/qual/api/sync';
       } else {
         // Production
