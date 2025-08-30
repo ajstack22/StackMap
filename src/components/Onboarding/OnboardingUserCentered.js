@@ -329,15 +329,15 @@ const OnboardingUserCentered = ({
       // Set syncId temporarily so pullData works
       syncService.syncId = syncId;
       
-      // Pull the encrypted data
+      // Pull the data (already decrypted by minimalSync)
       const pullResult = await syncService.pullData();
       
-      if (!pullResult || !pullResult.encrypted_blob) {
-        throw new Error('Failed to import data');
+      if (!pullResult || !pullResult.success || !pullResult.data) {
+        throw new Error('Failed to import data - no data available in sync group');
       }
       
-      // Decrypt the data
-      const decryptedData = encryptionService.decryptData(pullResult.encrypted_blob);
+      // Data is already decrypted by minimalSync
+      const decryptedData = pullResult.data;
       
       if (!decryptedData) {
         throw new Error('Failed to decrypt sync data');
