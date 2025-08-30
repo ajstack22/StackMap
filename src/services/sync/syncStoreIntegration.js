@@ -165,6 +165,14 @@ class SyncStoreIntegration {
       normalized.metadata = state.metadata;
     }
     
+    console.log('[SyncStore] 📊 Current state details:');
+    console.log('[SyncStore]   - Users count:', Object.keys(state.users || {}).length);
+    console.log('[SyncStore]   - User IDs:', Object.keys(state.users || {}));
+    console.log('[SyncStore]   - Library activities:', state.library?.activities?.length || 0);
+    console.log('[SyncStore]   - Library categories:', state.library?.categories?.length || 0);
+    console.log('[SyncStore]   - Has settings:', !!state.settings);
+    console.log('[SyncStore]   - Current user:', state.currentUser);
+    
     console.log('[SyncStore] 📊 Current state:', {
       userCount: Object.keys(normalized.users || {}).length,
       libraryActivities: normalized.library?.activities?.length || 0,

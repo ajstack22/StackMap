@@ -202,15 +202,27 @@ class MinimalSyncService {
    * Create a new sync group with test data
    */
   async createSync(testData) {
-    console.log('[MinimalSync] 📤 createSync called with:', testData);
+    console.log('[MinimalSync] 📤 createSync called');
+    console.log('[MinimalSync] 📊 Data received:');
+    console.log('[MinimalSync]   - Users count:', Object.keys(testData?.users || {}).length);
+    console.log('[MinimalSync]   - User IDs:', Object.keys(testData?.users || {}));
+    console.log('[MinimalSync]   - Library activities:', testData?.library?.activities?.length || 0);
+    console.log('[MinimalSync]   - Has metadata:', !!testData?.metadata);
     
     try {
-      // Generate recovery phrase
+      // Generate recovery phrase (with dashes for display)
       console.log('[MinimalSync] About to generate recovery phrase...');
-      this.recoveryPhrase = encryptionService.generateRecoveryPhrase();
-      console.log('[MinimalSync] 🔑 Generated recovery phrase:', this.recoveryPhrase);
+      const dashedPhrase = encryptionService.generateRecoveryPhrase();
+      console.log('[MinimalSync] 🔑 Generated recovery phrase (for display):', dashedPhrase);
       
-      // Generate sync ID from recovery phrase
+      // Store both versions - dashed for display, cleaned for processing
+      this.displayPhrase = dashedPhrase;
+      
+      // Clean recovery phrase for sync ID generation (remove dashes)
+      this.recoveryPhrase = dashedPhrase.replace(/[\s-]+/g, '');
+      console.log('[MinimalSync] 🔑 Cleaned recovery phrase (for sync ID):', this.recoveryPhrase);
+      
+      // Generate sync ID from cleaned recovery phrase
       this.syncId = await this.generateSyncId(this.recoveryPhrase);
       console.log('[MinimalSync] 🆔 Generated sync ID:', this.syncId);
       
@@ -244,19 +256,41 @@ class MinimalSyncService {
     const verify = await AsyncStorage.getItem('@minimal_sync_data');
     console.log('[MinimalSync] ✅ Local storage verified:', verify ? 'SUCCESS' : 'FAILED');
     
+    // Test encryption before sending
+    console.log('[MinimalSync] 🔐 Testing encryption...');
+    const testEncrypted = encryptionService.encryptData(dataWithMetadata);
+    console.log('[MinimalSync] 🔐 Encrypted data length:', testEncrypted.length);
+    
+    // Test decryption to verify it works
+    try {
+      const testDecrypted = encryptionService.decryptData(testEncrypted);
+      console.log('[MinimalSync] 🔓 Test decryption successful');
+      console.log('[MinimalSync] 🔓 Decrypted users count:', Object.keys(testDecrypted?.users || {}).length);
+    } catch (error) {
+      console.error('[MinimalSync] ❌ Test decryption failed:', error);
+    }
+    
     // Now push to server - using timestamp format
     const payload = {
       sync_id: this.syncId,
       device_id: this.deviceId,
-      encrypted_blob: encryptionService.encryptData(dataWithMetadata), // Proper NaCl encryption
+      encrypted_blob: testEncrypted, // Use the tested encrypted data
       timestamp
     };
     
     console.log('[MinimalSync] 🌐 Sending to server...');
-    console.log('[MinimalSync] Payload size:', JSON.stringify(payload).length, 'bytes');
+    console.log('[MinimalSync] Payload details:');
+    console.log('[MinimalSync]   - sync_id:', payload.sync_id);
+    console.log('[MinimalSync]   - device_id:', payload.device_id);
+    console.log('[MinimalSync]   - timestamp:', payload.timestamp);
+    console.log('[MinimalSync]   - encrypted_blob length:', payload.encrypted_blob.length);
+    console.log('[MinimalSync]   - Total payload size:', JSON.stringify(payload).length, 'bytes');
     
     try {
       // Use timestamp-based endpoint (tables should exist on server)
+      console.log('[MinimalSync] 🚀 Calling create_timestamp.php with sync_id:', this.syncId);
+      console.log('[MinimalSync] 🚀 Full URL:', `${this.API_BASE}/create_timestamp.php`);
+      
       const response = await fetch(`${this.API_BASE}/create_timestamp.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -289,7 +323,7 @@ class MinimalSyncService {
           this.startPeriodicPull();
         }
         
-        return { success: true, syncId: this.syncId, recoveryPhrase: this.recoveryPhrase };
+        return { success: true, syncId: this.syncId, recoveryPhrase: this.displayPhrase || this.recoveryPhrase };
       } else {
         console.error('[MinimalSync] ❌ Server error:', result);
         return { success: false, error: result.error };

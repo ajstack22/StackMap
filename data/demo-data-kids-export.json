@@ -1,6 +1,6 @@
 {
-  "version": 3,
-  "exportDate": "2025-08-16T23:23:14.070Z",
+  "version": 4,
+  "exportDate": "2025-08-30T11:18:07.768Z",
   "exportedItems": {
     "users": true,
     "activityCards": true,
@@ -20,148 +20,112 @@
         "today": {
           "activities": [
             {
-              "id": "activity_atlas-1",
+              "id": "atlas-1",
               "text": "Brush teeth",
               "icon": "🦷",
               "completed": true,
               "pinned": false,
               "order": 0,
-              "description": "",
-              "activityType": "normal",
-              "time": null,
-              "createdAt": "2025-08-16T23:22:58.737Z"
+              "modifiedAt": 0
             },
             {
-              "id": "activity_atlas-2",
+              "id": "atlas-2",
               "text": "Get dressed",
               "icon": "👕",
               "completed": true,
               "pinned": false,
               "order": 1,
-              "description": "",
-              "activityType": "normal",
-              "time": null,
-              "createdAt": "2025-08-16T23:22:58.737Z"
+              "modifiedAt": 0
             },
             {
-              "id": "activity_atlas-3",
+              "id": "atlas-3",
               "text": "Eat breakfast",
               "icon": "🥞",
               "completed": true,
               "pinned": true,
               "order": 2,
-              "description": "",
-              "activityType": "normal",
-              "time": null,
-              "createdAt": "2025-08-16T23:22:58.737Z"
+              "modifiedAt": 0
             },
             {
-              "id": "activity_atlas-4",
+              "id": "atlas-4",
               "text": "Take medicine",
               "icon": "💊",
               "completed": false,
               "pinned": true,
               "order": 3,
-              "description": "",
-              "activityType": "normal",
-              "time": null,
-              "createdAt": "2025-08-16T23:22:58.737Z"
+              "modifiedAt": 0
             },
             {
-              "id": "activity_atlas-5",
+              "id": "atlas-5",
               "text": "Reading time",
               "icon": "📖",
               "completed": false,
               "pinned": false,
               "order": 4,
-              "description": "",
-              "activityType": "normal",
-              "time": null,
-              "createdAt": "2025-08-16T23:22:58.737Z"
+              "modifiedAt": 0
             },
             {
-              "id": "activity_atlas-6",
+              "id": "atlas-6",
               "text": "Math practice",
               "icon": "🔢",
               "completed": false,
               "pinned": false,
               "order": 5,
-              "description": "",
-              "activityType": "normal",
-              "time": null,
-              "createdAt": "2025-08-16T23:22:58.737Z"
+              "modifiedAt": 0
             },
             {
-              "id": "activity_atlas-7",
+              "id": "atlas-7",
               "text": "Snack time",
               "icon": "🍎",
               "completed": false,
               "pinned": false,
               "order": 6,
-              "description": "",
-              "activityType": "normal",
-              "time": null,
-              "createdAt": "2025-08-16T23:22:58.737Z"
+              "modifiedAt": 0
             },
             {
-              "id": "activity_atlas-8",
+              "id": "atlas-8",
               "text": "Art class",
               "icon": "🎨",
               "completed": false,
               "pinned": false,
               "order": 7,
-              "description": "",
-              "activityType": "normal",
-              "time": null,
-              "createdAt": "2025-08-16T23:22:58.737Z"
+              "modifiedAt": 0
             },
             {
-              "id": "activity_atlas-9",
+              "id": "atlas-9",
               "text": "Playground",
               "icon": "🛝",
               "completed": false,
               "pinned": false,
               "order": 8,
-              "description": "",
-              "activityType": "normal",
-              "time": null,
-              "createdAt": "2025-08-16T23:22:58.737Z"
+              "modifiedAt": 0
             },
             {
-              "id": "activity_atlas-10",
+              "id": "atlas-10",
               "text": "Speech therapy",
               "icon": "💬",
               "completed": false,
               "pinned": false,
               "order": 9,
-              "description": "",
-              "activityType": "normal",
-              "time": null,
-              "createdAt": "2025-08-16T23:22:58.737Z"
+              "modifiedAt": 0
             },
             {
-              "id": "activity_atlas-11",
+              "id": "atlas-11",
               "text": "Quiet time",
               "icon": "🧘",
               "completed": false,
               "pinned": false,
               "order": 10,
-              "description": "",
-              "activityType": "normal",
-              "time": null,
-              "createdAt": "2025-08-16T23:22:58.738Z"
+              "modifiedAt": 0
             },
             {
-              "id": "activity_atlas-12",
+              "id": "atlas-12",
               "text": "Bedtime routine",
               "icon": "🌙",
               "completed": false,
               "pinned": false,
               "order": 11,
-              "description": "",
-              "activityType": "normal",
-              "time": null,
-              "createdAt": "2025-08-16T23:22:58.738Z"
+              "modifiedAt": 0
             }
           ]
         },
@@ -211,154 +175,128 @@
   "currentUser": "user-atlas",
   "activityCards": [
     {
-      "id": "activity_atlas-1",
+      "id": "atlas-1",
       "text": "Brush teeth",
       "icon": "🦷",
       "completed": true,
       "pinned": false,
       "order": 0,
-      "description": "",
-      "activityType": "normal",
-      "time": null,
-      "createdAt": "2025-08-16T23:22:58.737Z"
+      "modifiedAt": 0
     },
     {
-      "id": "activity_atlas-2",
+      "id": "atlas-2",
       "text": "Get dressed",
       "icon": "👕",
       "completed": true,
       "pinned": false,
       "order": 1,
-      "description": "",
-      "activityType": "normal",
-      "time": null,
-      "createdAt": "2025-08-16T23:22:58.737Z"
+      "modifiedAt": 0
     },
     {
-      "id": "activity_atlas-3",
+      "id": "atlas-3",
       "text": "Eat breakfast",
       "icon": "🥞",
       "completed": true,
       "pinned": true,
       "order": 2,
-      "description": "",
-      "activityType": "normal",
-      "time": null,
-      "createdAt": "2025-08-16T23:22:58.737Z"
+      "modifiedAt": 0
     },
     {
-      "id": "activity_atlas-4",
+      "id": "atlas-4",
       "text": "Take medicine",
       "icon": "💊",
       "completed": false,
       "pinned": true,
       "order": 3,
-      "description": "",
-      "activityType": "normal",
-      "time": null,
-      "createdAt": "2025-08-16T23:22:58.737Z"
+      "modifiedAt": 0
     },
     {
-      "id": "activity_atlas-5",
+      "id": "atlas-5",
       "text": "Reading time",
       "icon": "📖",
       "completed": false,
       "pinned": false,
       "order": 4,
-      "description": "",
-      "activityType": "normal",
-      "time": null,
-      "createdAt": "2025-08-16T23:22:58.737Z"
+      "modifiedAt": 0
     },
     {
-      "id": "activity_atlas-6",
+      "id": "atlas-6",
       "text": "Math practice",
       "icon": "🔢",
       "completed": false,
       "pinned": false,
       "order": 5,
-      "description": "",
-      "activityType": "normal",
-      "time": null,
-      "createdAt": "2025-08-16T23:22:58.737Z"
+      "modifiedAt": 0
     },
     {
-      "id": "activity_atlas-7",
+      "id": "atlas-7",
       "text": "Snack time",
       "icon": "🍎",
       "completed": false,
       "pinned": false,
       "order": 6,
-      "description": "",
-      "activityType": "normal",
-      "time": null,
-      "createdAt": "2025-08-16T23:22:58.737Z"
+      "modifiedAt": 0
     },
     {
-      "id": "activity_atlas-8",
+      "id": "atlas-8",
       "text": "Art class",
       "icon": "🎨",
       "completed": false,
       "pinned": false,
       "order": 7,
-      "description": "",
-      "activityType": "normal",
-      "time": null,
-      "createdAt": "2025-08-16T23:22:58.737Z"
+      "modifiedAt": 0
     },
     {
-      "id": "activity_atlas-9",
+      "id": "atlas-9",
       "text": "Playground",
       "icon": "🛝",
       "completed": false,
       "pinned": false,
       "order": 8,
-      "description": "",
-      "activityType": "normal",
-      "time": null,
-      "createdAt": "2025-08-16T23:22:58.737Z"
+      "modifiedAt": 0
     },
     {
-      "id": "activity_atlas-10",
+      "id": "atlas-10",
       "text": "Speech therapy",
       "icon": "💬",
       "completed": false,
       "pinned": false,
       "order": 9,
-      "description": "",
-      "activityType": "normal",
-      "time": null,
-      "createdAt": "2025-08-16T23:22:58.737Z"
+      "modifiedAt": 0
     },
     {
-      "id": "activity_atlas-11",
+      "id": "atlas-11",
       "text": "Quiet time",
       "icon": "🧘",
       "completed": false,
       "pinned": false,
       "order": 10,
-      "description": "",
-      "activityType": "normal",
-      "time": null,
-      "createdAt": "2025-08-16T23:22:58.738Z"
+      "modifiedAt": 0
     },
     {
-      "id": "activity_atlas-12",
+      "id": "atlas-12",
       "text": "Bedtime routine",
       "icon": "🌙",
       "completed": false,
       "pinned": false,
       "order": 11,
-      "description": "",
-      "activityType": "normal",
-      "time": null,
-      "createdAt": "2025-08-16T23:22:58.738Z"
+      "modifiedAt": 0
     }
   ],
-  "activityCategories": null,
-  "templates": {},
+  "library": {
+    "categories": [
+      {
+        "id": "my-templates",
+        "name": "My Templates",
+        "icon": "⭐",
+        "activities": []
+      }
+    ],
+    "userAddedActivityIds": []
+  },
+  "libraryTemplates": [],
   "globalSettings": {
-    "currentTheme": "#2196F3",
+    "currentTheme": "stackBlue",
     "bannerPosition": "top",
     "defaultView": "normal",
     "displayMode": "numbers",
