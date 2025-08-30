@@ -54,11 +54,19 @@ class SyncStoreIntegration {
     
     // Check if we have an existing sync
     const syncId = await AsyncStorage.getItem('@minimal_sync_id');
+    console.log('[SyncStore] After loadExistingSyncId - minimalSync state:', {
+      syncId: minimalSync.syncId,
+      isEnabled: minimalSync.isEnabled,
+      encryptionReady: minimalSync.encryptionReady,
+      recoveryPhrase: !!minimalSync.recoveryPhrase
+    });
+    
     if (syncId && minimalSync.encryptionReady) {
       console.log('[SyncStore] Found existing sync:', syncId);
       
       // Enable periodic sync with our callback
       minimalSync.enableSync(this.handleDataReceived);
+      console.log('[SyncStore] After enableSync - minimalSync.isEnabled:', minimalSync.isEnabled);
       
       // Subscribe to store changes
       this.subscribeToStores();
@@ -553,7 +561,13 @@ class SyncStoreIntegration {
    */
   async isEnabled() {
     // Check both if sync is enabled AND if we have a sync ID
-    return minimalSync.isEnabled && !!minimalSync.syncId;
+    const result = minimalSync.isEnabled && !!minimalSync.syncId;
+    console.log('[SyncStore] isEnabled check:', {
+      minimalSync_isEnabled: minimalSync.isEnabled,
+      minimalSync_syncId: minimalSync.syncId,
+      returning: result
+    });
+    return result;
   }
 
   /**
