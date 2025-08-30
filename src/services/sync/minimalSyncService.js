@@ -236,13 +236,15 @@ class MinimalSyncService {
     const dataWithMetadata = this.addMetadata(testData);
     
     // Store the data locally first
+    // IMPORTANT: Store timestamp-1 so the first pull includes our own record
     const dataToStore = {
       syncId: this.syncId,
-      timestamp,
+      timestamp: timestamp - 1,  // Ensure first pull includes this record
       data: dataWithMetadata
     };
     
     console.log('[MinimalSync] 💾 Storing locally first...');
+    console.log('[MinimalSync] 📝 Storing with timestamp-1 to ensure first pull includes our record');
     await AsyncStorage.setItem('@minimal_sync_data', JSON.stringify(dataToStore));
     
     // Verify it was stored
