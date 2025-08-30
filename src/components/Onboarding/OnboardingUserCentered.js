@@ -241,14 +241,19 @@ const OnboardingUserCentered = ({
         }
       }
 
-      if (!pullResult || !pullResult.encrypted_blob) {
+      if (!pullResult || !pullResult.success) {
         console.error('[OnboardingSync] Failed to get sync data after', attempts, 'attempts');
-        throw new Error('No data found for this sync code. The sync group may still be initializing.');
+        throw new Error('Failed to connect to sync group.');
       }
       
-      // Decrypt the data
-      console.log('[OnboardingSync] Decrypting sync data...');
-      const decryptedData = encryptionService.decryptData(pullResult.encrypted_blob);
+      if (!pullResult.data) {
+        console.warn('[OnboardingSync] Sync group exists but has no data yet');
+        throw new Error('The sync group exists but contains no data yet. Please ensure the other device has completed setup and try again.');
+      }
+      
+      // Data is already decrypted by minimalSync
+      console.log('[OnboardingSync] Using decrypted sync data...');
+      const decryptedData = pullResult.data;
 
       if (!decryptedData) {
         console.error('[OnboardingSync] Decryption failed');
@@ -290,7 +295,9 @@ const OnboardingUserCentered = ({
       console.error('[OnboardingSync] Error:', error);
       
       // Provide more helpful error messages
-      if (error.message.includes('No data found')) {
+      if (error.message.includes('exists but contains no data')) {
+        setSyncError('The sync group exists but has no data yet. Please ensure the first device has finished setting up sync.');
+      } else if (error.message.includes('No data found')) {
         setSyncError('Sync group is still being set up. Please wait a moment and try again.');
       } else if (error.message.includes('No active users')) {
         setSyncError('The sync group appears to be empty. Please verify the sync code and try again.');
