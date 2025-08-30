@@ -30,6 +30,9 @@ class SyncStoreIntegration {
       library: 0
     };
     
+    // Status listeners for UI updates
+    this.statusListeners = new Set();
+    
     // Bind methods
     this.handleDataReceived = this.handleDataReceived.bind(this);
     this.handleStoreChange = this.handleStoreChange.bind(this);
@@ -356,6 +359,8 @@ class SyncStoreIntegration {
 
     console.log('[SyncStore] 📤 Pushing current state');
     this.lastPushTime = now;
+    this.isSyncing = true;
+    this.notifyStatusListeners('syncing');
     
     try {
       const currentState = this.getCurrentState();
@@ -363,8 +368,10 @@ class SyncStoreIntegration {
       
       if (result.success) {
         console.log('[SyncStore] ✅ State pushed successfully');
+        this.notifyStatusListeners('idle');
       } else {
         console.error('[SyncStore] ❌ Push failed:', result.error);
+        this.notifyStatusListeners('error');
         
         // If it was a rate limit error, schedule a retry
         if (result.rateLimited) {
@@ -377,6 +384,9 @@ class SyncStoreIntegration {
       }
     } catch (error) {
       console.error('[SyncStore] ❌ Push error:', error);
+      this.notifyStatusListeners('error');
+    } finally {
+      this.isSyncing = false;
     }
   }
 
@@ -650,6 +660,57 @@ class SyncStoreIntegration {
    */
   getStatus() {
     return this.getSyncStatus();
+  }
+
+  /**
+   * Add status listener for UI updates
+   */
+  addStatusListener(listener) {
+    this.statusListeners.add(listener);
+    
+    // Immediately send current status
+    const currentStatus = {
+      status: minimalSync.isEnabled ? 'idle' : 'disabled',
+      syncEnabled: minimalSync.isEnabled,
+      syncId: minimalSync.syncId,
+      lastSuccess: this.lastPushTime,
+      isSyncing: this.isSyncing
+    };
+    
+    listener(currentStatus);
+    
+    // Return unsubscribe function
+    return () => {
+      this.statusListeners.delete(listener);
+    };
+  }
+
+  /**
+   * Remove status listener
+   */
+  removeStatusListener(listener) {
+    this.statusListeners.delete(listener);
+  }
+
+  /**
+   * Notify all status listeners
+   */
+  notifyStatusListeners(status) {
+    const statusUpdate = {
+      status: status || (minimalSync.isEnabled ? 'idle' : 'disabled'),
+      syncEnabled: minimalSync.isEnabled,
+      syncId: minimalSync.syncId,
+      lastSuccess: this.lastPushTime,
+      isSyncing: this.isSyncing
+    };
+    
+    this.statusListeners.forEach(listener => {
+      try {
+        listener(statusUpdate);
+      } catch (error) {
+        console.error('[SyncStore] Error notifying status listener:', error);
+      }
+    });
   }
 
   /**
