@@ -505,62 +505,105 @@ const SyncDiagnostic = () => {
 
   const clearLog = () => setLog([]);
 
+  // Combined test functions
+  const testBrowserA = async () => {
+    clearLog();
+    addLog('=== BROWSER A TEST SEQUENCE ===');
+    
+    // Step 1: Load demo data
+    addLog('Step 1: Loading demo data...');
+    await loadFullDemoData();
+    
+    // Wait a bit for state to settle
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Step 2: Create sync with that data
+    addLog('Step 2: Creating sync with demo data...');
+    await testCreateWithRealData();
+    
+    addLog('=== TEST COMPLETE ===');
+    addLog('📋 COPY THE RECOVERY PHRASE ABOVE TO BROWSER B');
+  };
+  
+  const testBrowserB = async () => {
+    if (!recoveryPhrase) {
+      addLog('❌ ERROR: Please paste the recovery phrase from Browser A first!');
+      return;
+    }
+    
+    clearLog();
+    addLog('=== BROWSER B TEST SEQUENCE ===');
+    addLog('Using recovery phrase: ' + recoveryPhrase);
+    
+    // Import the data
+    addLog('Importing data from sync...');
+    await testImportData();
+    
+    addLog('=== TEST COMPLETE ===');
+    addLog('✅ Check if data was imported successfully above');
+  };
+
   return (
     <ScrollView style={{ flex: 1, padding: 20 }}>
-      <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 20 }}>
-        Sync Diagnostic Tool
+      <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' }}>
+        Sync Test
       </Text>
       
-      <View style={{ marginBottom: 20 }}>
-        <Text>Recovery Phrase:</Text>
-        <TextInput
-          value={recoveryPhrase}
-          onChangeText={setRecoveryPhrase}
-          style={{ 
-            borderWidth: 1, 
-            borderColor: '#ccc', 
-            padding: 10, 
-            marginVertical: 5,
-            fontFamily: 'monospace'
-          }}
-          placeholder="Enter or generate recovery phrase"
-        />
+      <View style={{ 
+        backgroundColor: '#f0f0f0', 
+        padding: 15, 
+        borderRadius: 8, 
+        marginBottom: 20 
+      }}>
+        <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>
+          Which browser is this?
+        </Text>
         
-        <Text>Sync ID:</Text>
-        <TextInput
-          value={syncId}
-          onChangeText={setSyncId}
-          style={{ 
-            borderWidth: 1, 
-            borderColor: '#ccc', 
-            padding: 10, 
-            marginVertical: 5,
-            fontFamily: 'monospace'
-          }}
-          placeholder="Sync ID (auto-generated)"
-        />
+        <View style={{ marginBottom: 15 }}>
+          <Button 
+            title="🅰️ Browser A - CREATE SYNC" 
+            onPress={testBrowserA}
+            color="#2196F3"
+          />
+          <Text style={{ fontSize: 12, marginTop: 5, fontStyle: 'italic' }}>
+            Creates a new sync with demo data
+          </Text>
+        </View>
+        
+        <View style={{ 
+          borderTopWidth: 1, 
+          borderTopColor: '#ccc', 
+          paddingTop: 15,
+          marginTop: 10 
+        }}>
+          <Text style={{ marginBottom: 5 }}>Recovery Phrase from Browser A:</Text>
+          <TextInput
+            value={recoveryPhrase}
+            onChangeText={setRecoveryPhrase}
+            style={{ 
+              borderWidth: 1, 
+              borderColor: '#ccc', 
+              padding: 10, 
+              marginBottom: 10,
+              backgroundColor: '#fff',
+              fontFamily: 'monospace'
+            }}
+            placeholder="Paste recovery phrase here"
+          />
+          
+          <Button 
+            title="🅱️ Browser B - JOIN SYNC" 
+            onPress={testBrowserB}
+            color="#4CAF50"
+          />
+          <Text style={{ fontSize: 12, marginTop: 5, fontStyle: 'italic' }}>
+            Imports data using the recovery phrase
+          </Text>
+        </View>
       </View>
       
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 }}>
-        <Button title="Load Demo Data" onPress={loadDemoData} color="#4CAF50" />
-        <View style={{ width: 10 }} />
-        <Button title="Load FULL Demo" onPress={loadFullDemoData} color="#4CAF50" />
-        <View style={{ width: 10 }} />
-        <Button title="Clear Log" onPress={clearLog} />
-      </View>
-      
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 }}>
-        <Button title="1. Create Sync" onPress={testCreateSync} />
-        <View style={{ width: 10 }} />
-        <Button title="2. Join Sync" onPress={testJoinSync} />
-        <View style={{ width: 10 }} />
-        <Button title="3. Test Pull" onPress={testRawPull} />
-      </View>
-      
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 }}>
-        <Button title="4. Create w/ Real Data" onPress={testCreateWithRealData} color="#FF6B6B" />
-        <View style={{ width: 10 }} />
-        <Button title="5. Import Data" onPress={testImportData} color="#FF6B6B" />
+      <View style={{ marginBottom: 10 }}>
+        <Button title="Clear Log" onPress={clearLog} color="#666" />
       </View>
       
       <View style={{ backgroundColor: '#f0f0f0', padding: 10, borderRadius: 5 }}>
