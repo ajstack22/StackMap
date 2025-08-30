@@ -341,7 +341,7 @@ const SyncDiagnostic = () => {
 
   const loadDemoData = async () => {
     try {
-      addLog('Loading demo data (Atlas, Mappy, Desty)...');
+      addLog('Loading FULL demo data from demo-data-kids-export.json...');
       
       // Demo data structure matching demo-data-kids-export.json
       const demoData = {
@@ -438,6 +438,71 @@ const SyncDiagnostic = () => {
     }
   };
 
+  const loadFullDemoData = async () => {
+    try {
+      addLog('Loading COMPLETE demo-data-kids-export.json...');
+      
+      // Fetch the actual demo file
+      const response = await fetch('/data/demo-data-kids-export.json');
+      const fullData = await response.json();
+      
+      addLog('Demo file loaded', {
+        version: fullData.version,
+        hasUsers: !!fullData.users,
+        hasLibrary: !!fullData.library
+      });
+      
+      // Extract the data we need
+      const importData = {
+        users: fullData.users || {},
+        currentUser: fullData.currentUser || 'user-atlas',
+        currentDay: fullData.currentDay || 'today',
+        library: fullData.library || {
+          categories: fullData.library?.categories || [],
+          userAddedActivityIds: fullData.library?.userAddedActivityIds || []
+        },
+        globalSettings: fullData.globalSettings || {}
+      };
+      
+      // Update stores with full demo data
+      if (importData.users && Object.keys(importData.users).length > 0) {
+        setUsers(importData.users);
+        addLog('Users loaded', {
+          count: Object.keys(importData.users).length,
+          users: Object.keys(importData.users)
+        });
+      }
+      
+      if (importData.library) {
+        setLibrary(importData.library);
+        addLog('Library loaded', {
+          categories: importData.library.categories?.length || 0
+        });
+      }
+      
+      if (importData.globalSettings) {
+        updateSettings(importData.globalSettings);
+        addLog('Settings loaded');
+      }
+      
+      // Verify the data was loaded
+      const currentState = await syncStoreIntegration.getCurrentState();
+      addLog('✅ Full demo data loaded! Current state:', {
+        users: Object.keys(currentState.users || {}),
+        userCount: Object.keys(currentState.users || {}).length,
+        firstUserActivities: currentState.users?.['user-atlas']?.days?.today?.activities?.length || 0
+      });
+      
+    } catch (error) {
+      addLog('ERROR loading full demo data', { 
+        error: error.message,
+        note: 'File may not be accessible via web. Using inline demo data instead.'
+      });
+      // Fall back to the inline demo data
+      loadDemoData();
+    }
+  };
+
   const clearLog = () => setLog([]);
 
   return (
@@ -478,6 +543,8 @@ const SyncDiagnostic = () => {
       
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 }}>
         <Button title="Load Demo Data" onPress={loadDemoData} color="#4CAF50" />
+        <View style={{ width: 10 }} />
+        <Button title="Load FULL Demo" onPress={loadFullDemoData} color="#4CAF50" />
         <View style={{ width: 10 }} />
         <Button title="Clear Log" onPress={clearLog} />
       </View>
