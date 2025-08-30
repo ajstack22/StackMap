@@ -210,19 +210,12 @@ class MinimalSyncService {
     console.log('[MinimalSync]   - Has metadata:', !!testData?.metadata);
     
     try {
-      // Generate recovery phrase (with dashes for display)
+      // Generate recovery phrase
       console.log('[MinimalSync] About to generate recovery phrase...');
-      const dashedPhrase = encryptionService.generateRecoveryPhrase();
-      console.log('[MinimalSync] 🔑 Generated recovery phrase (for display):', dashedPhrase);
+      this.recoveryPhrase = encryptionService.generateRecoveryPhrase();
+      console.log('[MinimalSync] 🔑 Generated recovery phrase:', this.recoveryPhrase);
       
-      // Store both versions - dashed for display, cleaned for processing
-      this.displayPhrase = dashedPhrase;
-      
-      // Clean recovery phrase for sync ID generation (remove dashes)
-      this.recoveryPhrase = dashedPhrase.replace(/[\s-]+/g, '');
-      console.log('[MinimalSync] 🔑 Cleaned recovery phrase (for sync ID):', this.recoveryPhrase);
-      
-      // Generate sync ID from cleaned recovery phrase
+      // Generate sync ID from recovery phrase
       this.syncId = await this.generateSyncId(this.recoveryPhrase);
       console.log('[MinimalSync] 🆔 Generated sync ID:', this.syncId);
       
@@ -323,7 +316,7 @@ class MinimalSyncService {
           this.startPeriodicPull();
         }
         
-        return { success: true, syncId: this.syncId, recoveryPhrase: this.displayPhrase || this.recoveryPhrase };
+        return { success: true, syncId: this.syncId, recoveryPhrase: this.recoveryPhrase };
       } else {
         console.error('[MinimalSync] ❌ Server error:', result);
         return { success: false, error: result.error };
@@ -340,7 +333,7 @@ class MinimalSyncService {
   async joinSync(recoveryPhrase) {
     console.log('[MinimalSync] 📥 joinSync called with recovery phrase');
     
-    // Clean recovery phrase (remove dashes and spaces for backward compatibility)
+    // Clean recovery phrase (remove any spaces for consistency)
     const cleanPhrase = recoveryPhrase.replace(/[\s-]+/g, '');
     
     // Store the cleaned recovery phrase

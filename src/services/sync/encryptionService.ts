@@ -44,17 +44,12 @@ class EncryptionService {
    */
   generateRecoveryPhrase(): string {
     // Generate a random 128-bit seed and convert to hex
-    // Format with dashes for readability and to distinguish from sync IDs
-    // Format: XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX (8 groups of 4)
+    // In production, use BIP39 wordlist for better UX
     const seedBytes = nacl.randomBytes(16);
-    const hex = Array.from(seedBytes)
+    // Convert to hex string (no padding, URL-safe)
+    return Array.from(seedBytes)
       .map(byte => byte.toString(16).padStart(2, '0'))
       .join('');
-    
-    // Add dashes every 4 characters for readability
-    // This makes it visually distinct from sync IDs which are plain hex
-    const formatted = hex.match(/.{1,4}/g)?.join('-') || hex;
-    return formatted;
   }
 
   /**
