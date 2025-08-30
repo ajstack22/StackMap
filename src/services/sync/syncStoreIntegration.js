@@ -649,15 +649,16 @@ class SyncStoreIntegration {
   
   /**
    * Pull data directly (for onboarding preview)
+   * @param {boolean} forceFullPull - If true, pulls all data ignoring timestamps (for initial sync)
    */
-  async pullData() {
-    console.log('[SyncStore] Direct pullData called');
+  async pullData(forceFullPull = false) {
+    console.log('[SyncStore] Direct pullData called, forceFullPull:', forceFullPull);
     console.log('[SyncStore] minimalSync.syncId:', minimalSync.syncId);
     console.log('[SyncStore] minimalSync.encryptionReady:', minimalSync.encryptionReady);
     
     // Direct pass-through to minimalSync for onboarding preview
     // This doesn't update stores, just returns the raw data
-    return await minimalSync.pullData();
+    return await minimalSync.pullData(forceFullPull);
   }
   
   /**

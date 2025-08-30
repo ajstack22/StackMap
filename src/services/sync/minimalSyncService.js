@@ -625,8 +625,9 @@ class MinimalSyncService {
 
   /**
    * Pull latest data from server
+   * @param {boolean} forceFullPull - If true, ignores stored data and pulls everything (for initial sync)
    */
-  async pullData() {
+  async pullData(forceFullPull = false) {
     console.log('[MinimalSync] 📥 pullData called');
     console.log('[MinimalSync] Current state:', {
       syncId: this.syncId,
@@ -648,41 +649,28 @@ class MinimalSyncService {
     // Get the last timestamp and current local data
     let lastTimestamp = 0;
     let localData = null;
-    try {
-      const storedData = await AsyncStorage.getItem('@minimal_sync_data');
-      if (storedData) {
-        const parsed = JSON.parse(storedData);
-        
-        // IMPORTANT: For initial import in onboarding, we should always pull from 0
-        // Check if we're in an initial import scenario (no users in local data)
-        const isInitialImport = !parsed.data?.users || Object.keys(parsed.data.users).length === 0;
-        
-        if (isInitialImport) {
-          console.log('[MinimalSync] 🔄 Initial import detected - forcing pull from timestamp 0');
-          lastTimestamp = 0;
-        } else {
-          lastTimestamp = parsed.timestamp || 0;
+    
+    // CRITICAL: For initial sync (onboarding/import), ignore all stored data
+    if (forceFullPull) {
+      // Initial sync - pull everything from timestamp 0, no merge needed
+      lastTimestamp = 0;
+      localData = null;
+    } else {
+      // Incremental sync - check stored data for timestamp
+      try {
+        const storedData = await AsyncStorage.getItem('@minimal_sync_data');
+        if (storedData) {
+          const parsed = JSON.parse(storedData);
+          
+          // Check if the stored sync ID matches our current sync ID
+          if (parsed.syncId && parsed.syncId === this.syncId) {
+            lastTimestamp = parsed.timestamp || 0;
+            localData = parsed.data;
+          }
         }
-        
-        localData = parsed.data;
-        console.log('[MinimalSync] Using stored timestamp:', lastTimestamp, {
-          isInitialImport,
-          originalTimestamp: parsed.timestamp || 0,
-          hasStoredData: !!storedData,
-          userCount: localData?.users ? Object.keys(localData.users).length : 0
-        });
-        console.log('[MinimalSync] Local data structure:', {
-          hasUsers: !!localData?.users,
-          hasLibrary: !!localData?.library,
-          libraryType: localData?.library ? typeof localData.library : 'undefined',
-          categoriesType: localData?.library?.categories ? typeof localData.library.categories : 'undefined',
-          isArray: Array.isArray(localData?.library?.categories)
-        });
-      } else {
-        console.log('[MinimalSync] No stored data - will pull from timestamp 0');
+      } catch (error) {
+        console.log('[MinimalSync] Error getting stored data:', error);
       }
-    } catch (error) {
-      console.log('[MinimalSync] Error getting stored data:', error);
     }
     
     try {
@@ -725,8 +713,30 @@ class MinimalSyncService {
       if (result.success && result.records && result.records.length > 0) {
         // Get the latest record from timestamp API
         const latest = result.records[result.records.length - 1];
-        const remoteData = encryptionService.decryptData(latest.encrypted_blob);
-        console.log('[MinimalSync] 📦 Remote data received');
+        console.log('[MinimalSync] 🔐 About to decrypt blob of length:', latest.encrypted_blob?.length);
+        console.log('[MinimalSync] 🔐 Blob preview:', latest.encrypted_blob?.substring(0, 50) + '...');
+        
+        let remoteData;
+        try {
+          remoteData = encryptionService.decryptData(latest.encrypted_blob);
+          console.log('[MinimalSync] ✅ Decryption successful');
+        } catch (decryptError) {
+          console.error('[MinimalSync] ❌ Decryption failed:', decryptError);
+          console.error('[MinimalSync] ❌ Error details:', {
+            message: decryptError.message,
+            stack: decryptError.stack,
+            encryptionReady: this.encryptionReady,
+            hasRecoveryPhrase: !!this.recoveryPhrase
+          });
+          throw decryptError;
+        }
+        
+        console.log('[MinimalSync] 📦 Remote data received:', {
+          isNull: remoteData === null,
+          isUndefined: remoteData === undefined,
+          type: typeof remoteData,
+          hasKeys: remoteData ? Object.keys(remoteData).length : 0
+        });
         console.log('[MinimalSync] Remote data structure:', {
           hasUsers: !!remoteData?.users,
           hasLibrary: !!remoteData?.library,
@@ -736,9 +746,9 @@ class MinimalSyncService {
           categoriesValue: remoteData?.library?.categories
         });
         
-        // Perform conflict resolution if we have local data
+        // Perform conflict resolution if we have local data AND this isn't a force pull
         let finalData;
-        if (localData) {
+        if (localData && !forceFullPull) {
           console.log('[MinimalSync] 🔀 Merging remote with local data...');
           finalData = conflictResolver.mergeStates(localData, remoteData);
           
@@ -751,7 +761,7 @@ class MinimalSyncService {
             });
           }
         } else {
-          console.log('[MinimalSync] No local data, using remote directly');
+          // Initial sync or no local data - use remote directly
           finalData = remoteData;
         }
         

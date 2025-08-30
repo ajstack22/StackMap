@@ -346,8 +346,9 @@ const OnboardingUserCentered = ({
         await syncService.initializeEncryption(phraseToUse, syncId);
       }
       
-      // Pull the data (already decrypted by minimalSync)
-      const pullResult = await syncService.pullData();
+      // Pull the data with forceFullPull=true for initial sync
+      // This ignores any stored timestamps and pulls everything
+      const pullResult = await syncService.pullData(true);
       
       console.log('[OnboardingImport] Pull result:', {
         success: pullResult?.success,
