@@ -13,6 +13,7 @@
  * - 30-second periodic sync
  */
 
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import conflictResolver from './conflictResolver';
 import encryptionService from './encryptionService';
@@ -45,8 +46,14 @@ class MinimalSyncService {
         this.API_BASE = 'https://stackmap.app/api/sync';
       }
     } else {
-      // Default for non-web environments
-      this.API_BASE = 'https://stackmap.app/api/sync';
+      // Mobile environments
+      // Development mode for native apps - use QUAL
+      if (typeof __DEV__ !== 'undefined' && __DEV__ && (Platform.OS === 'ios' || Platform.OS === 'android')) {
+        this.API_BASE = 'https://stackmap.app/qual/api/sync';
+      } else {
+        // Production for non-web environments
+        this.API_BASE = 'https://stackmap.app/api/sync';
+      }
     }
     
     console.log('[MinimalSync] API URL:', this.API_BASE);
