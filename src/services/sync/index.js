@@ -1,6 +1,7 @@
 /**
  * Central sync service export
  * Phase 5: Production sync with conflict resolution (August 2025)
+ * Build: 2025.08.29.39
  */
 
 // Import the new integrated sync service with conflict resolution

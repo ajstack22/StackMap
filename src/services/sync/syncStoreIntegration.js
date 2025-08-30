@@ -15,7 +15,7 @@ import { normalizeSyncData } from '../../utils/dataNormalizer';
 
 class SyncStoreIntegration {
   constructor() {
-    console.log('[SyncStore] 🔗 Integration layer initialized');
+    console.log('[SyncStore] 🔗 Integration layer initialized v39');
     this.isInitialized = false;
     this.isSyncing = false;
     this.lastPushTime = 0;
@@ -437,10 +437,10 @@ class SyncStoreIntegration {
   /**
    * Join existing sync
    */
-  async joinSync(syncId) {
-    console.log('[SyncStore] 🔗 Joining sync:', syncId);
+  async joinSync(recoveryPhrase) {
+    console.log('[SyncStore] 🔗 Joining sync with recovery phrase');
     
-    const result = await minimalSync.joinSync(syncId);
+    const result = await minimalSync.joinSync(recoveryPhrase);
     
     if (result.success) {
       console.log('[SyncStore] ✅ Joined sync successfully');
