@@ -614,8 +614,14 @@ class MinimalSyncService {
       console.log('[MinimalSync] 🌐 Pulling from:', url);
       
       const response = await fetch(url);
-      const result = await response.json();
-      console.log('[MinimalSync] 📡 Pull response:', result);
+      const responseText = await response.text();
+      console.log('[MinimalSync] 📡 Raw pull response:', responseText);
+      console.log('[MinimalSync] 📡 Response length:', responseText.length, 'bytes');
+      
+      // Parse the response
+      const result = JSON.parse(responseText);
+      console.log('[MinimalSync] 📡 Parsed response:', result);
+      console.log('[MinimalSync] 📊 Records count:', result.records ? result.records.length : 0);
       
       if (result.success && result.records && result.records.length > 0) {
         // Get the latest record from timestamp API
