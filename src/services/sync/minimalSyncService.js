@@ -376,51 +376,110 @@ class MinimalSyncService {
       const result = await response.json();
       console.log('[MinimalSync] 📡 Server response:', result);
       
-      if (result.success && result.latest_record && result.latest_record.encrypted_blob) {
-        // Decrypt the data using encryption service
-        const decodedData = encryptionService.decryptData(result.latest_record.encrypted_blob);
-        console.log('[MinimalSync] 📦 Decoded data:', decodedData);
-        
-        // Store it locally
-        const dataToStore = {
-          syncId: this.syncId,
-          timestamp: result.latest_record.timestamp || Date.now(),
-          data: decodedData
-        };
-        
-        console.log('[MinimalSync] 💾 Storing to AsyncStorage...');
-        await AsyncStorage.setItem('@minimal_sync_data', JSON.stringify(dataToStore));
-        
-        // Immediately verify storage
-        const verify = await AsyncStorage.getItem('@minimal_sync_data');
-        const parsed = verify ? JSON.parse(verify) : null;
-        console.log('[MinimalSync] ✅ Storage verification:', {
-          stored: !!verify,
-          syncIdMatches: parsed?.syncId === this.syncId,
-          hasData: !!parsed?.data
-        });
-        
-        // Store sync ID and recovery phrase for persistence
-        await AsyncStorage.setItem('@minimal_sync_id', this.syncId);
-        await AsyncStorage.setItem(`@sync_phrase_${this.syncId}`, this.recoveryPhrase);
-        await AsyncStorage.setItem('@sync_phrase', this.recoveryPhrase);
-        
-        console.log('[MinimalSync] ✅ Device joined sync - can push immediately');
-        console.log('[MinimalSync] 🔑 Recovery phrase stored for persistence');
-        
-        // Start periodic pull if sync is enabled
-        if (this.isEnabled) {
-          this.startPeriodicPull();
+      if (result.success) {
+        if (result.latest_record && result.latest_record.encrypted_blob) {
+          // We have data - decrypt and use it
+          const decodedData = encryptionService.decryptData(result.latest_record.encrypted_blob);
+          console.log('[MinimalSync] 📦 Decoded data:', decodedData);
+          
+          // Store it locally
+          const dataToStore = {
+            syncId: this.syncId,
+            timestamp: result.latest_record.timestamp || Date.now(),
+            data: decodedData
+          };
+          
+          console.log('[MinimalSync] 💾 Storing to AsyncStorage...');
+          await AsyncStorage.setItem('@minimal_sync_data', JSON.stringify(dataToStore));
+          
+          // Immediately verify storage
+          const verify = await AsyncStorage.getItem('@minimal_sync_data');
+          const parsed = verify ? JSON.parse(verify) : null;
+          console.log('[MinimalSync] ✅ Storage verification:', {
+            stored: !!verify,
+            syncIdMatches: parsed?.syncId === this.syncId,
+            hasData: !!parsed?.data
+          });
+          
+          // Store sync ID and recovery phrase for persistence
+          await AsyncStorage.setItem('@minimal_sync_id', this.syncId);
+          await AsyncStorage.setItem(`@sync_phrase_${this.syncId}`, this.recoveryPhrase);
+          await AsyncStorage.setItem('@sync_phrase', this.recoveryPhrase);
+          
+          console.log('[MinimalSync] ✅ Device joined sync - can push immediately');
+          console.log('[MinimalSync] 🔑 Recovery phrase stored for persistence');
+          
+          // Start periodic pull if sync is enabled
+          if (this.isEnabled) {
+            this.startPeriodicPull();
+          }
+          
+          return { 
+            success: true, 
+            data: decodedData,
+            timestamp: result.latest_record.timestamp || Date.now()
+          };
+        } else {
+          // No data yet but sync group exists - try pulling directly
+          console.log('[MinimalSync] ⚠️ Sync group exists but no data yet, trying direct pull...');
+          
+          // Try pulling with since=0 to get all records
+          const pullUrl = `${this.API_BASE}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=0`;
+          console.log('[MinimalSync] 📥 Attempting direct pull from:', pullUrl);
+          
+          const pullResponse = await fetch(pullUrl);
+          const pullResult = await pullResponse.json();
+          console.log('[MinimalSync] 📡 Pull result:', pullResult);
+          
+          if (pullResult.success && pullResult.records && pullResult.records.length > 0) {
+            // Process the pulled records
+            let latestTimestamp = 0;
+            let latestData = null;
+            
+            for (const record of pullResult.records) {
+              try {
+                const decryptedData = encryptionService.decryptData(record.encrypted_blob);
+                console.log('[MinimalSync] ✅ Decrypted record from device:', record.device_id);
+                
+                if (record.timestamp > latestTimestamp) {
+                  latestTimestamp = record.timestamp;
+                  latestData = decryptedData;
+                }
+              } catch (error) {
+                console.error('[MinimalSync] ❌ Failed to decrypt record:', error);
+              }
+            }
+            
+            if (latestData) {
+              // Store the data
+              const dataToStore = {
+                syncId: this.syncId,
+                timestamp: latestTimestamp,
+                data: latestData
+              };
+              
+              await AsyncStorage.setItem('@minimal_sync_data', JSON.stringify(dataToStore));
+              await AsyncStorage.setItem('@minimal_sync_id', this.syncId);
+              await AsyncStorage.setItem(`@sync_phrase_${this.syncId}`, this.recoveryPhrase);
+              await AsyncStorage.setItem('@sync_phrase', this.recoveryPhrase);
+              
+              console.log('[MinimalSync] ✅ Successfully pulled data via direct pull');
+              
+              return {
+                success: true,
+                data: latestData,
+                timestamp: latestTimestamp
+              };
+            }
+          }
+          
+          // Still no data - return error
+          console.error('[MinimalSync] ❌ No data available in sync group');
+          return { success: false, error: result.message || 'No data available in sync group' };
         }
-        
-        return { 
-          success: true, 
-          data: decodedData,
-          timestamp: result.latest_record.timestamp || Date.now()
-        };
       } else {
         console.error('[MinimalSync] ❌ Join failed:', result);
-        return { success: false, error: result.error || 'No data found' };
+        return { success: false, error: result.error || 'Join failed' };
       }
     } catch (error) {
       console.error('[MinimalSync] ❌ Network error:', error);
