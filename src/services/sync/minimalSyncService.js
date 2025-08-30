@@ -47,11 +47,22 @@ class MinimalSyncService {
       }
     } else {
       // Mobile environments
-      // Development mode for native apps - use QUAL
-      if (typeof __DEV__ !== 'undefined' && __DEV__ && (Platform.OS === 'ios' || Platform.OS === 'android')) {
-        this.API_BASE = 'https://stackmap.app/qual/api/sync';
+      // Check if we're in development mode using __DEV__ global
+      // __DEV__ is true in debug builds, false in release builds
+      const isDevelopment = typeof __DEV__ !== 'undefined' ? __DEV__ : false;
+      
+      if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        if (isDevelopment) {
+          // Development/Debug builds use QUAL
+          this.API_BASE = 'https://stackmap.app/qual/api/sync';
+          console.log('[MinimalSync] Mobile DEBUG build - using QUAL API');
+        } else {
+          // Production/Release builds use production API
+          this.API_BASE = 'https://stackmap.app/api/sync';
+          console.log('[MinimalSync] Mobile RELEASE build - using production API');
+        }
       } else {
-        // Production for non-web environments
+        // Default for other non-web environments
         this.API_BASE = 'https://stackmap.app/api/sync';
       }
     }
