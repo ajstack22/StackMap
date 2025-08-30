@@ -609,13 +609,6 @@ class SyncStoreIntegration {
   }
 
   /**
-   * Pull data (compatibility)
-   */
-  async pullData() {
-    return this.pullWithoutEnabling(minimalSync.syncId);
-  }
-
-  /**
    * Pull latest data (compatibility method)
    */
   async pullLatestData() {
