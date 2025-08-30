@@ -126,7 +126,7 @@ class SyncStoreIntegration {
       if (pullResult.success && pullResult.data) {
         await this.handleDataReceived(pullResult.data);
       }
-    }, 2000); // 2 second debounce for pulls
+    }, 1000); // 1 second debounce for pulls
   }
 
   /**
