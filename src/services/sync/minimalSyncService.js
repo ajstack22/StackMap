@@ -306,15 +306,18 @@ class MinimalSyncService {
   async joinSync(recoveryPhrase) {
     console.log('[MinimalSync] 📥 joinSync called with recovery phrase');
     
-    // Store the recovery phrase
-    this.recoveryPhrase = recoveryPhrase;
+    // Clean recovery phrase (remove dashes and spaces for backward compatibility)
+    const cleanPhrase = recoveryPhrase.replace(/[\s-]+/g, '');
+    
+    // Store the cleaned recovery phrase
+    this.recoveryPhrase = cleanPhrase;
     
     // Generate sync ID from recovery phrase
-    this.syncId = await this.generateSyncId(recoveryPhrase);
+    this.syncId = await this.generateSyncId(cleanPhrase);
     console.log('[MinimalSync] 🆔 Generated sync ID from phrase:', this.syncId);
     
     // Initialize encryption
-    await this.initializeEncryption(recoveryPhrase, this.syncId);
+    await this.initializeEncryption(cleanPhrase, this.syncId);
     
     // Use encryption service's device ID
     this.deviceId = await encryptionService.getDeviceId();
