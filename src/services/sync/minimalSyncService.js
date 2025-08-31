@@ -874,7 +874,7 @@ class MinimalSyncService {
       if (result.success && result.records && result.records.length > 0) {
         // Try to decrypt records starting from the latest
         let remoteData = null;
-        let successfulRecord = null;
+        let successfulRecord = null; // Track which record was successfully decrypted
         
         // Try the latest few records in case some are corrupted
         const recordsToTry = result.records.slice(-3).reverse(); // Try last 3 records, newest first
@@ -944,7 +944,7 @@ class MinimalSyncService {
         // Store the merged result
         const dataToStore = {
           syncId: this.syncId,
-          timestamp: latest.timestamp,
+          timestamp: successfulRecord.timestamp,
           data: finalData
         };
         
@@ -958,7 +958,7 @@ class MinimalSyncService {
         return { 
           success: true, 
           data: finalData,
-          timestamp: latest.timestamp,
+          timestamp: successfulRecord.timestamp,
           hadConflicts: localData !== null,
           mergeLog: conflictResolver.getMergeLog()
         };
