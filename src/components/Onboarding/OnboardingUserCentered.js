@@ -198,12 +198,27 @@ const OnboardingUserCentered = ({
 
   // Fetch sync preview
   const fetchSyncPreview = async () => {
+    console.log('[OnboardingSync] ===== START fetchSyncPreview =====');
+    console.log('[OnboardingSync] Raw recovery phrase:', recoveryPhrase);
+    console.log('[OnboardingSync] Recovery phrase type:', typeof recoveryPhrase);
+    console.log('[OnboardingSync] Recovery phrase length:', recoveryPhrase.length);
+    
     setSyncLoading(true);
     setSyncError('');
     
     try {
+      console.log('[OnboardingSync] About to process recovery phrase...');
+      // Log character codes to detect invisible characters
+      const charCodes = [];
+      for (let i = 0; i < recoveryPhrase.length; i++) {
+        charCodes.push(recoveryPhrase.charCodeAt(i));
+      }
+      console.log('[OnboardingSync] Character codes:', charCodes);
+      
       // Support both old format (plain hex) and new format (with dashes)
       const phraseToUse = recoveryPhrase.trim().replace(/[\s-]+/g, '');
+      console.log('[OnboardingSync] Processed phrase:', phraseToUse);
+      console.log('[OnboardingSync] Processed phrase char codes:', phraseToUse.split('').map(c => c.charCodeAt(0)));
 
       if (phraseToUse.length !== 32 || !/^[a-f0-9]+$/i.test(phraseToUse)) {
         throw new Error('Invalid sync code format');

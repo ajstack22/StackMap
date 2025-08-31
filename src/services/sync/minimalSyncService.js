@@ -20,6 +20,10 @@ import encryptionService from './encryptionService';
 
 class MinimalSyncService {
   constructor() {
+    console.log('[MinimalSync] ===== CONSTRUCTOR START =====');
+    console.log('[MinimalSync] Platform:', Platform.OS);
+    console.log('[MinimalSync] typeof window:', typeof window);
+    
     // Constructor initialization
     this.syncId = null;
     this.deviceId = null;
@@ -42,11 +46,16 @@ class MinimalSyncService {
     }, 1000); // 1 second delay, same as old syncService
     
     // Determine API URL based on environment
+    console.log('[MinimalSync] About to check window.location...');
     if (typeof window !== 'undefined' && window.location) {
+      console.log('[MinimalSync] Window.location exists, attempting to access properties...');
       // Web environment - safely access location properties
       try {
+        console.log('[MinimalSync] Getting hostname...');
         const hostname = window.location.hostname || '';
+        console.log('[MinimalSync] Getting href...');
         const href = window.location.href || '';
+        console.log('[MinimalSync] Got location values:', { hostname, href });
         
         if (hostname === 'localhost' || hostname === '127.0.0.1') {
           // Local development - use relative URL to go through webpack proxy
