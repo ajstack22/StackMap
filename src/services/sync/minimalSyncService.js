@@ -467,11 +467,8 @@ class MinimalSyncService {
           console.log('[MinimalSync] ⚠️ Sync group exists but no data yet, trying direct pull...');
           
           // Try pulling with since=0 to get all records
-          // Manual URL construction to avoid iOS template literal issues
-          const pullUrl = this.API_BASE + '/pull_timestamp.php' + 
-                         '?sync_id=' + String(this.syncId || '') + 
-                         '&device_id=' + String(this.deviceId || '') + 
-                         '&since=0';
+          // Simple URL construction like in the working test UI
+          const pullUrl = `${this.API_BASE}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=0`;
           console.log('[MinimalSync] 📥 Attempting direct pull from:', pullUrl);
           
           const pullResponse = await fetch(pullUrl);
@@ -759,17 +756,8 @@ class MinimalSyncService {
         timestampType: typeof lastTimestamp
       });
       
-      // Build URL carefully to avoid iOS issues
-      // Ensure all values are strings and not undefined
-      const syncIdStr = String(this.syncId || '');
-      const deviceIdStr = String(this.deviceId || '');
-      const timestampStr = String(lastTimestamp || 0);
-      
-      // Manual URL construction to avoid template literal issues on iOS
-      const url = this.API_BASE + '/pull_timestamp.php' + 
-                  '?sync_id=' + syncIdStr + 
-                  '&device_id=' + deviceIdStr + 
-                  '&since=' + timestampStr;
+      // Simple URL construction without encoding (hex IDs don't need it)
+      const url = `${this.API_BASE}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=${lastTimestamp}`;
       
       console.log('[MinimalSync] 🌐 Pulling from:', url);
       console.log('[MinimalSync] 🌐 URL length:', url.length);
@@ -790,11 +778,15 @@ class MinimalSyncService {
       // Try to get response text - iOS might have issues with certain encodings
       let responseText;
       try {
+        console.log('[MinimalSync] 📡 About to read response.text()...');
         responseText = await response.text();
+        console.log('[MinimalSync] 📡 Successfully read response text');
         console.log('[MinimalSync] 📡 Raw pull response:', responseText);
         console.log('[MinimalSync] 📡 Response length:', responseText.length, 'bytes');
       } catch (textError) {
         console.error('[MinimalSync] ❌ Error reading response text:', textError);
+        console.error('[MinimalSync] ❌ Error name:', textError.name);
+        console.error('[MinimalSync] ❌ Error message:', textError.message);
         console.error('[MinimalSync] ❌ Response status:', response.status);
         console.error('[MinimalSync] ❌ Response headers:', response.headers);
         
