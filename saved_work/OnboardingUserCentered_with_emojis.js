@@ -1,0 +1,1754 @@
+// @ts-check
+import React, { useState, useRef, useEffect } from 'react';
+import { Text, TextInput } from '../Typography';
+import {
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  Platform,
+  KeyboardAvoidingView,
+  ScrollView,
+  Animated,
+  StatusBar,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import DeferredStorage from '../../utils/deferredStorage';
+import { DEFAULT_USER_ICON } from '../../constants';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Logo from '../Logo/Logo';
+import EmojiPicker from '../EmojiPicker';
+import syncService from '../../services/sync';
+import encryptionService from '../../services/sync/encryptionService';
+import { BUILD_VERSION } from '../../utils/version';
+import { useAppStore, useUserStore } from '../../stores';
+import {
+  TYPOGRAPHY,
+  SPACING,
+  RADIUS,
+  THEMES,
+} from '../../constants';
+// Test components removed - no longer needed
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const isTablet = () => screenWidth >= 768;
+const isMobileWeb = () =>
+  Platform.OS === 'web' && Dimensions.get('window').width < 768;
+
+const OnboardingUserCentered = ({
+  onComplete,
+  onImport,
+  syncSetupPhrase = null,
+  onShowPrivacy,
+  onShowSupport,
+}) => {
+  const defaultTheme = {
+    primary: THEMES?.stackBlue?.primary || '#5C7E9D',
+    dark: THEMES?.stackBlue?.dark || '#4A6680',
+    light: THEMES?.stackBlue?.light || '#7896B3',
+    text: '#000000',
+    textSecondary: '#666666',
+    background: '#FFFFFF',
+    card: '#F5F5F5',
+  };
+
+  // Navigation state
+  const [currentStep, setCurrentStep] = useState('welcome');
+  const [navigationHistory, setNavigationHistory] = useState(['welcome']);
+
+  // User choices state
+  const [userJourney, setUserJourney] = useState({
+    journeyType: null, // 'new' or 'existing'
+    userType: null, // 'self', 'helper', 'group'
+    deviceStrategy: null, // 'single' or 'multi'
+    syncEnabled: false,
+    pinEnabled: false,
+  });
+
+  // User data state
+  const [userName, setUserName] = useState('');
+  const [selectedEmoji, setSelectedEmoji] = useState(DEFAULT_USER_ICON);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [pin, setPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [pinError, setPinError] = useState('');
+
+  // Sync state
+  const [recoveryPhrase, setRecoveryPhrase] = useState('');
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncError, setSyncError] = useState('');
+  const [syncPreviewData, setSyncPreviewData] = useState(null);
+  const [generatedSyncCode, setGeneratedSyncCode] = useState('');
+  const [showCopiedToast, setShowCopiedToast] = useState(false);
+  const [syncStatusDetails, setSyncStatusDetails] = useState({
+    stage: 'idle',
+    message: '',
+    progress: null
+  });
+  // Test component state removed - no longer needed
+
+  // Animation refs
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
+
+  // Quick emoji options - first 4 are defaults, last one launches picker
+  const quickEmojis = ['🌈', '⭐', '🐶', '😀'];
+  
+  // Generate sync code when reaching the syncCreate step
+  useEffect(() => {
+    if (currentStep === 'syncCreate' && !generatedSyncCode) {
+      generateNewSyncCode();
+    }
+  }, [currentStep, generatedSyncCode]);
+
+  // Pre-populate if coming from sync URL
+  useEffect(() => {
+    if (syncSetupPhrase) {
+      setRecoveryPhrase(syncSetupPhrase);
+      setUserJourney(prev => ({ ...prev, journeyType: 'existing' }));
+      setCurrentStep('syncImport');
+    }
+  }, [syncSetupPhrase]);
+
+  // Fade in animation
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  // Step transition animation - optimized for iOS performance
+  const animateStepTransition = (nextStep) => {
+    // On iOS, minimize animation overhead
+    if (Platform.OS === 'ios') {
+      // Simple fade without full transparency
+      fadeAnim.setValue(0.9);
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      // Full animation on other platforms
+      Animated.sequence([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+    
+    setNavigationHistory(prev => [...prev, nextStep]);
+    setCurrentStep(nextStep);
+  };
+
+  const goBack = () => {
+    if (navigationHistory.length > 1) {
+      const newHistory = [...navigationHistory];
+      newHistory.pop();
+      const previousStep = newHistory[newHistory.length - 1];
+      setNavigationHistory(newHistory);
+      animateStepTransition(previousStep);
+    }
+  };
+
+  // Generate a new sync code
+  const generateNewSyncCode = () => {
+    const bytes = new Uint8Array(16);
+    if (Platform.OS === 'web') {
+      crypto.getRandomValues(bytes);
+    } else {
+      // Use better randomness on mobile with timestamp and Math.random
+      const timestamp = Date.now();
+      for (let i = 0; i < 16; i++) {
+        // Mix timestamp with random for better entropy
+        const seed = timestamp + i + Math.random() * 1000000;
+        bytes[i] = Math.floor((Math.random() * seed) % 256);
+      }
+    }
+    const hexCode = Array.from(bytes)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    setGeneratedSyncCode(hexCode);
+    return hexCode;
+  };
+
+  // Copy sync code to clipboard
+  const copySyncCode = async () => {
+    try {
+      if (Platform.OS === 'web') {
+        await navigator.clipboard.writeText(generatedSyncCode);
+      } else {
+        const Clipboard = require('@react-native-clipboard/clipboard').default;
+        Clipboard.setString(generatedSyncCode);
+      }
+      setShowCopiedToast(true);
+      setTimeout(() => setShowCopiedToast(false), 2000);
+    } catch (error) {
+//       console.error('Failed to copy:', error);
+    }
+  };
+
+  // Fetch sync preview
+  const fetchSyncPreview = async () => {
+    setSyncLoading(true);
+    setSyncError('');
+    setSyncStatusDetails({ stage: 'connecting', message: 'Connecting to sync server...', progress: null });
+    
+    try {
+      // Support both old format (plain hex) and new format (with dashes)
+      const phraseToUse = recoveryPhrase.trim().replace(/[\s-]+/g, '');
+
+      if (phraseToUse.length !== 32 || !/^[a-f0-9]+$/i.test(phraseToUse)) {
+        throw new Error('Invalid sync code format');
+      }
+
+      console.log('[OnboardingSync] Initializing sync for preview...');
+      setSyncStatusDetails({ stage: 'checking', message: 'Checking for existing sync...', progress: null });
+      const syncId = await syncService.generateSyncId(phraseToUse);
+      const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+      await encryptionService.initialize(phraseToUse, syncId, fixedSalt);
+      syncService.syncId = syncId; // Temporarily set for pullData
+
+      // Try pulling with retries for race conditions
+      let pullResult = null;
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (!pullResult && attempts < maxAttempts) {
+        attempts++;
+        console.log(`[OnboardingSync] Pull attempt ${attempts}/${maxAttempts}`);
+        setSyncStatusDetails({ stage: 'downloading', message: 'Downloading sync data...', progress: null });
+        
+        pullResult = await syncService.pullData();
+        
+        if (!pullResult || !pullResult.encrypted_blob) {
+          console.warn(`[OnboardingSync] Pull attempt ${attempts} returned:`, {
+            hasResult: !!pullResult,
+            hasBlob: !!(pullResult?.encrypted_blob),
+            status: pullResult?.success,
+            message: pullResult?.message
+          });
+          
+          if (attempts < maxAttempts) {
+            // Wait before retry to allow other devices to complete push
+            console.log('[OnboardingSync] Waiting 2 seconds before retry...');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+        }
+      }
+
+      if (!pullResult || !pullResult.success) {
+        console.error('[OnboardingSync] Failed to get sync data after', attempts, 'attempts');
+        throw new Error('Failed to connect to sync group.');
+      }
+      
+      if (!pullResult.data) {
+        console.warn('[OnboardingSync] Sync group exists but has no data yet');
+        throw new Error('The sync group exists but contains no data yet. Please ensure the other device has completed setup and try again.');
+      }
+      
+      // Data is already decrypted by minimalSync
+      console.log('[OnboardingSync] Using decrypted sync data...');
+      const decryptedData = pullResult.data;
+
+      if (!decryptedData) {
+        console.error('[OnboardingSync] Decryption failed');
+        throw new Error('Failed to decrypt sync data');
+      }
+
+      const users = decryptedData.users || {};
+      const validUsers = Object.keys(users).filter(id => !users[id].deleted);
+      const userCount = validUsers.length;
+      
+      console.log('[OnboardingSync] Decrypted data contains:', {
+        userCount,
+        totalUsers: Object.keys(users).length,
+        deletedUsers: Object.keys(users).filter(id => users[id].deleted).length,
+        hasLibrary: !!(decryptedData.library?.categories?.length > 0),
+        version: decryptedData.version
+      });
+      
+      // Validate that we have users data
+      if (userCount === 0) {
+        console.error('[OnboardingSync] No valid users found - Details:', {
+          totalUserIds: Object.keys(users).length,
+          deletedCount: Object.keys(users).filter(id => users[id].deleted).length,
+          hasUsersObject: !!users,
+          usersIsEmpty: Object.keys(users).length === 0
+        });
+        throw new Error('No active users found in sync data');
+      }
+      
+      setSyncPreviewData({
+        userCount,
+        users: Object.values(users).filter(u => !u.deleted).map(u => ({
+          name: u.name,
+          icon: u.icon || u.emoji || DEFAULT_USER_ICON,
+        })),
+        hasLibrary: decryptedData.library && decryptedData.library.categories?.length > 0,
+      });
+    } catch (error) {
+      console.error('[OnboardingSync] Error:', error);
+      
+      // Provide more helpful error messages
+      if (error.message.includes('exists but contains no data')) {
+        setSyncError('The sync group exists but has no data yet. Please ensure the first device has finished setting up sync.');
+      } else if (error.message.includes('No data found')) {
+        setSyncError('Sync group is still being set up. Please wait a moment and try again.');
+      } else if (error.message.includes('No active users')) {
+        setSyncError('The sync group appears to be empty. Please verify the sync code and try again.');
+      } else if (error.message.includes('Invalid sync code')) {
+        setSyncError('The sync code format is invalid. Please check and try again.');
+      } else {
+        setSyncError(error.message || 'Failed to fetch sync data');
+      }
+    } finally {
+      setSyncLoading(false);
+      // Clear status after a delay
+      setTimeout(() => {
+        setSyncStatusDetails({ stage: 'idle', message: '', progress: null });
+      }, 2000);
+    }
+  };
+
+  // Import sync data
+  const importSyncData = async () => {
+    setSyncLoading(true);
+    setSyncError('');
+    setSyncStatusDetails({ stage: 'connecting', message: 'Connecting to sync server...', progress: null });
+    
+    try {
+      // Support both old format (plain hex) and new format (with dashes)
+      const phraseToUse = recoveryPhrase.trim().replace(/[\s-]+/g, '');
+      
+      // Initialize temporarily just to decrypt (don't enable sync yet)
+      let syncId = await syncService.generateSyncId(phraseToUse);
+      
+      // TEMPORARY FIX: Handle known mismatched sync
+      // Recovery phrase 8b993a49ebf42aaf3d06e63ae8aee6c8 should map to 12e8a92bf426e20b1c28c7d6b3acd7bc
+      // but generates bb6d11d2a3490da04511f642e6d166c9 instead
+      if (phraseToUse === '8b993a49ebf42aaf3d06e63ae8aee6c8') {
+        console.log('[OnboardingImport] Using hardcoded sync ID for known mismatched sync');
+        syncId = '12e8a92bf426e20b1c28c7d6b3acd7bc';
+      }
+      
+      const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+      
+      console.log('[OnboardingImport] Generated sync ID:', syncId);
+      console.log('[OnboardingImport] Using recovery phrase (first 8 chars):', phraseToUse.substring(0, 8));
+      
+      // Initialize encryption without enabling sync
+      await encryptionService.initialize(phraseToUse, syncId, fixedSalt);
+      
+      // Initialize sync service encryption (this now sets syncId on minimalSync)
+      setSyncStatusDetails({ stage: 'checking', message: 'Initializing encryption...', progress: null });
+      if (syncService.initializeEncryption) {
+        await syncService.initializeEncryption(phraseToUse, syncId);
+      }
+      
+      // Pull the data with forceFullPull=true for initial sync
+      // This ignores any stored timestamps and pulls everything
+      setSyncStatusDetails({ stage: 'downloading', message: 'Downloading sync data...', progress: null });
+      const pullResult = await syncService.pullData(true);
+      
+      console.log('[OnboardingImport] Pull result:', {
+        success: pullResult?.success,
+        hasData: !!pullResult?.data,
+        dataKeys: pullResult?.data ? Object.keys(pullResult.data) : [],
+        error: pullResult?.error
+      });
+      
+      if (!pullResult || !pullResult.success || !pullResult.data) {
+        console.error('[OnboardingImport] Pull failed:', pullResult);
+        throw new Error('Failed to import data - no data available in sync group');
+      }
+      
+      // Data is already decrypted by minimalSync
+      const decryptedData = pullResult.data;
+      
+      if (!decryptedData) {
+        throw new Error('Failed to decrypt sync data');
+      }
+
+      // Log imported data for debugging
+      console.log('[OnboardingUserCentered] Sync import - decrypted data:', {
+        userCount: Object.keys(decryptedData.users || {}).length,
+        hasLibrary: !!decryptedData.library,
+        hasSettings: !!decryptedData.globalSettings,
+        version: decryptedData.version,
+        users: Object.entries(decryptedData.users || {}).map(([id, u]) => ({
+          id,
+          name: u.name,
+          icon: u.icon || u.emoji,
+          hasToday: !!(u.days?.today),
+          todayCount: u.days?.today?.activities?.length || 0,
+          hasTomorrow: !!(u.days?.tomorrow),
+          tomorrowCount: u.days?.tomorrow?.activities?.length || 0
+        }))
+      });
+
+      // IMPORTANT: Pass the data to onComplete FIRST before enabling sync
+      // This ensures the data is in the stores before sync starts
+      console.log('[OnboardingUserCentered] Passing imported data to onComplete');
+      
+      // Don't restore via syncService - let onComplete handle it
+      // Don't enable sync yet - let it happen after data is restored
+      
+      console.log('[OnboardingUserCentered] Data restored to sync service, completing onboarding');
+      
+      onComplete({
+        importedData: decryptedData,
+        syncEnabled: true,
+        syncCompleted: true, // Flag to indicate sync has completed
+        recoveryPhrase: phraseToUse,
+      });
+    } catch (error) {
+      console.error('[OnboardingUserCentered] Sync import error:', error);
+      setSyncError(error.message || 'Failed to import data');
+      setSyncStatusDetails({ stage: 'error', message: error.message || 'Failed to import data', progress: null });
+    } finally {
+      setSyncLoading(false);
+      // Clear status after a delay
+      setTimeout(() => {
+        setSyncStatusDetails({ stage: 'idle', message: '', progress: null });
+      }, 2000);
+    }
+  };
+
+  // Create new sync
+  const createNewSync = async () => {
+    setSyncLoading(true);
+    setSyncError('');
+    
+    try {
+      // First, create users in the store before setting up sync
+      if (users.length > 0) {
+        const timestamp = Date.now();
+        const randomId = Math.random().toString(36).substr(2, 9);
+        const usersObj = {};
+        let firstUserId = null;
+        
+        // Create starter activities for the first user - same as in App.js
+        const starterActivities = [
+          {
+            id: `${timestamp}_1_${randomId}`,
+            text: 'Welcome to StackMap!',
+            icon: '👋',
+            description: 'Tap activities to mark them complete',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_2_${randomId}`,
+            text: 'Try Edit Mode',
+            icon: '✏️',
+            description: 'Use the edit button to add, remove, and organize activities',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_3_${randomId}`,
+            text: 'Switch Users',
+            icon: '👤',
+            description: 'Tap your user pill to switch users or check-in',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_4_${randomId}`,
+            text: 'Share with Providers',
+            icon: '🔗',
+            description: 'Share your activities with caregivers via QR code or link',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_5_${randomId}`,
+            text: 'Sync Across Devices',
+            icon: '🔄',
+            description: 'Keep your data synced with zero-knowledge encryption',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_6_${randomId}`,
+            text: 'Import & Export',
+            icon: '📦',
+            description: 'Backup your data or transfer between devices',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_7_${randomId}`,
+            text: 'Preferences',
+            icon: '🎨',
+            description: 'Tap the palette icon to customize colors, animations, and display',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_8_${randomId}`,
+            text: 'Activities',
+            icon: '📋',
+            description: 'Tap the + icon to add new activities and build your library',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_9_${randomId}`,
+            text: 'Day',
+            icon: '📅',
+            description: 'Use the calendar icon to plan tomorrow or review past days',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_10_${randomId}`,
+            text: 'Access',
+            icon: '👥',
+            description: 'Add multiple users with the crown icon in preferences',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_11_${randomId}`,
+            text: 'Data',
+            icon: '💾',
+            description: 'Backup, restore, sync, and manage your StackMap data',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_12_${randomId}`,
+            text: 'Explore the Library',
+            icon: '📚',
+            description: 'Check out pre-made activity templates in the StackMap Library',
+            pinned: false,
+            completed: false
+          }
+        ];
+        
+        users.forEach((user, index) => {
+          const userId = `user_${index + 1}`;
+          if (index === 0) firstUserId = userId;
+          
+          usersObj[userId] = {
+            id: userId,
+            name: user.name,
+            icon: user.icon,
+            emoji: user.icon, // Keep for backwards compatibility
+            days: {
+              today: { activities: index === 0 ? starterActivities : [] },
+              tomorrow: { activities: [] }
+            },
+            deleted: false
+          };
+        });
+        
+        // Set users in store
+        useUserStore.getState().setUsers(usersObj);
+        
+        // Set the first user as current user
+        useAppStore.getState().setCurrentUser(firstUserId);
+        
+        // Log to verify users were set with activities
+        const verifyState = useAppStore.getState();
+        console.log('[Onboarding] After setting users, state check:', {
+          hasUsers: !!verifyState.users,
+          userCount: Object.keys(verifyState.users || {}).length,
+          firstUserActivities: firstUserId ? verifyState.users?.[firstUserId]?.days?.today?.activities?.length || 0 : 0,
+          firstUserName: firstUserId ? verifyState.users?.[firstUserId]?.name : null
+        });
+        
+        // Wait longer for store to fully update before sync
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      // Use the already generated code, or generate a new one if needed
+      let syncCode = generatedSyncCode;
+      if (!syncCode) {
+        syncCode = generateNewSyncCode();
+        // Wait for state to update
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      // IMPORTANT: Use enable() instead of initialize() for creating new sync
+      // initialize() with a recovery phrase only sets up encryption, doesn't actually enable sync!
+      const syncResult = await syncService.enable(syncCode);
+      
+      // No need to manually save to AsyncStorage - enable() handles all of that
+      // The enable() method will:
+      // 1. Set up encryption
+      // 2. Create sync group if new
+      // 3. Save state to AsyncStorage
+      // 4. Start sync timer
+      
+      setUserJourney(prev => ({ ...prev, syncEnabled: true }));
+      animateStepTransition('syncSuccess');
+    } catch (error) {
+//       console.error('Sync creation error:', error);
+      // If sync already exists (409), generate a new code for retry
+      if (error.message && error.message.includes('already exists')) {
+        generateNewSyncCode();
+        setSyncError('This sync code is already in use. A new code has been generated. Please try again.');
+      } else {
+        setSyncError(error.message || 'Failed to create sync. Please try again.');
+      }
+    } finally {
+      setSyncLoading(false);
+      // Clear status after a delay
+      setTimeout(() => {
+        setSyncStatusDetails({ stage: 'idle', message: '', progress: null });
+      }, 2000);
+    }
+  };
+
+  // Complete onboarding
+  const completeOnboarding = async () => {
+    const onboardingData = {
+      users,
+      pin: userJourney.pinEnabled ? pin : null,
+      syncEnabled: userJourney.syncEnabled,
+      recoveryPhrase: userJourney.syncEnabled ? (generatedSyncCode || recoveryPhrase) : null,
+    };
+    
+    onComplete(onboardingData);
+  };
+
+  // Render step content - render JSX directly to avoid component recreation
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 'welcome':
+        return renderWelcomeStep();
+      case 'userType':
+        return renderUserTypeStep();
+      case 'deviceStrategy':
+        return renderDeviceStrategyStep();
+      case 'userSetup':
+        return renderUserSetupStep();
+      case 'pinSetup':
+        return renderPinSetupStep();
+      case 'syncChoice':
+        return renderSyncChoiceStep();
+      case 'syncCreate':
+        return renderSyncCreateStep();
+      case 'existingUser':
+        return renderExistingUserStep();
+      case 'syncImport':
+        return renderSyncImportStep();
+      case 'syncSuccess':
+        return renderSyncSuccessStep();
+      case 'complete':
+        return renderCompleteStep();
+      default:
+        return renderWelcomeStep();
+    }
+  };
+
+  // Step Render Functions (not components to avoid recreation)
+  const renderWelcomeStep = () => (
+    <View style={styles.stepContainer}>
+      {/* Test components section removed */}
+      <>
+          <View style={styles.logoSection}>
+            <Logo size={screenWidth >= 768 ? 100 : 80} theme={defaultTheme} color={defaultTheme.primary} />
+            <Text style={styles.logoText}>StackMap</Text>
+            <Text style={styles.tagline}>Better days through shared understanding</Text>
+          </View>
+          
+          <View style={styles.optionsContainer}>
+            <TouchableOpacity
+              style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
+              onPress={() => {
+                setUserJourney(prev => ({ ...prev, journeyType: 'new' }));
+                animateStepTransition('userType');
+              }}
+            >
+              <Text style={styles.buttonText}>I'm new to StackMap</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => {
+                setUserJourney(prev => ({ ...prev, journeyType: 'existing' }));
+                animateStepTransition('existingUser');
+              }}
+            >
+              <Text style={[styles.secondaryButtonText, { color: defaultTheme.primary }]}>
+                I already use StackMap
+              </Text>
+            </TouchableOpacity>
+            
+            {/* Test button removed - sync tests no longer available */}
+          </View>
+          
+          <View style={styles.footerLinks}>
+            <TouchableOpacity
+              style={styles.footerLink}
+              onPress={() => onShowPrivacy?.()}
+            >
+              <Text style={[styles.footerLinkText, { color: defaultTheme.primary }]}>
+                Privacy Policy
+              </Text>
+            </TouchableOpacity>
+            
+            {Platform.OS === 'web' && onShowSupport && (
+              <>
+                <Text style={styles.footerSeparator}>•</Text>
+                <TouchableOpacity
+                  style={styles.footerLink}
+                  onPress={() => onShowSupport?.()}
+                >
+                  <Text style={[styles.footerLinkText, { color: defaultTheme.primary }]}>
+                    Support StackMap
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+          
+          <View style={styles.versionContainer}>
+            <Text style={styles.versionText}>v{BUILD_VERSION}</Text>
+          </View>
+        </>
+    </View>
+  );
+
+  const renderExistingUserStep = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.title}>Restore Your StackMap</Text>
+      <Text style={styles.subtitle}>
+        How would you like to recover your data?
+      </Text>
+      
+      <View style={styles.optionsContainer}>
+        <TouchableOpacity
+          style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
+          onPress={() => animateStepTransition('syncImport')}
+        >
+          <Icon name="cloud-download" size={40} color={defaultTheme.primary} />
+          <Text style={styles.optionTitle}>Join Sync</Text>
+          <Text style={styles.optionDescription}>
+            Connect with your other devices using a sync code
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
+          onPress={async () => {
+            try {
+              const result = await onImport();
+              if (result && result.success) {
+                // Import was successful, complete onboarding with imported data
+                onComplete({
+                  importedData: result.data,
+                  isImport: true,
+                });
+              }
+            } catch (error) {
+//               console.error('Import failed:', error);
+            }
+          }}
+        >
+          <Icon name="upload-file" size={40} color={defaultTheme.primary} />
+          <Text style={styles.optionTitle}>Import Backup</Text>
+          <Text style={styles.optionDescription}>
+            Restore from a local backup file
+          </Text>
+        </TouchableOpacity>
+      </View>
+      
+      <TouchableOpacity
+        style={styles.skipButton}
+        onPress={() => {
+          setUserJourney(prev => ({ ...prev, journeyType: 'new' }));
+          animateStepTransition('userType');
+        }}
+      >
+        <Text style={[styles.skipButtonText, { color: defaultTheme.textSecondary }]}>
+          Start fresh instead
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderUserTypeStep = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.title}>Who will use StackMap?</Text>
+      <Text style={styles.subtitle}>
+        This helps us customize your experience
+      </Text>
+      
+      <View style={styles.optionsContainer}>
+        <TouchableOpacity
+          style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
+          onPress={() => {
+            setUserJourney(prev => ({ ...prev, userType: 'self' }));
+            animateStepTransition('deviceStrategy');
+          }}
+        >
+          <Icon name="person" size={40} color={defaultTheme.primary} />
+          <Text style={styles.optionTitle}>Just Me</Text>
+          <Text style={styles.optionDescription}>
+            I'll use this for my own activities
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
+          onPress={() => {
+            setUserJourney(prev => ({ ...prev, userType: 'helper' }));
+            animateStepTransition('deviceStrategy');
+          }}
+        >
+          <Icon name="supervisor-account" size={40} color={defaultTheme.primary} />
+          <Text style={styles.optionTitle}>I'm Helping Someone</Text>
+          <Text style={styles.optionDescription}>
+            Parent, caregiver, or teacher
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
+          onPress={() => {
+            setUserJourney(prev => ({ ...prev, userType: 'group' }));
+            animateStepTransition('deviceStrategy');
+          }}
+        >
+          <Icon name="groups" size={40} color={defaultTheme.primary} />
+          <Text style={styles.optionTitle}>Multiple People</Text>
+          <Text style={styles.optionDescription}>
+            Family or classroom sharing
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderDeviceStrategyStep = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.title}>How many devices?</Text>
+      <Text style={styles.subtitle}>
+        Will you use StackMap on multiple devices?
+      </Text>
+      
+      <View style={styles.optionsContainer}>
+        <TouchableOpacity
+          style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
+          onPress={() => {
+            setUserJourney(prev => ({ ...prev, deviceStrategy: 'single' }));
+            animateStepTransition('userSetup');
+          }}
+        >
+          <Icon name="smartphone" size={40} color={defaultTheme.primary} />
+          <Text style={styles.optionTitle}>Just This Device</Text>
+          <Text style={styles.optionDescription}>
+            I'll only use StackMap here
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
+          onPress={() => {
+            setUserJourney(prev => ({ ...prev, deviceStrategy: 'multi', syncEnabled: true }));
+            animateStepTransition('userSetup');
+          }}
+        >
+          <Icon name="devices" size={40} color={defaultTheme.primary} />
+          <Text style={styles.optionTitle}>Multiple Devices</Text>
+          <Text style={styles.optionDescription}>
+            Phone, tablet, computer, etc.
+          </Text>
+        </TouchableOpacity>
+      </View>
+      
+      <TouchableOpacity
+        style={styles.skipButton}
+        onPress={() => animateStepTransition('userSetup')}
+      >
+        <Text style={[styles.skipButtonText, { color: defaultTheme.textSecondary }]}>
+          I'll decide later
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderUserSetupStep = () => {
+    const addUser = () => {
+      if (userName.trim()) {
+        const newUser = {
+          id: Date.now().toString(),
+          name: userName.trim(),
+          icon: selectedEmoji,
+        };
+        setUsers([...users, newUser]);
+        setUserName('');
+        setSelectedEmoji(DEFAULT_USER_ICON);
+      }
+    };
+
+    return (
+      <View style={styles.stepContainer}>
+        <Text style={styles.title}>
+          {users.length === 0 ? 'Create Your First User' : 'Add Another User?'}
+        </Text>
+        <Text style={styles.subtitle}>
+          {userJourney.userType === 'helper' 
+            ? 'Add the person you\'re helping'
+            : 'Set up your profile'}
+        </Text>
+        
+        {users.length > 0 && (
+          <View style={styles.usersList}>
+            {users.map(user => (
+              <View key={user.id} style={styles.userPill}>
+                <Text style={styles.userPillEmoji}>{user.icon}</Text>
+                <Text style={styles.userPillName}>{user.name}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+        
+        <View style={styles.inputGroup}>
+          {/* Display selected emoji if it's not one of the quick options */}
+          {!quickEmojis.includes(selectedEmoji) && (
+            <View style={styles.selectedEmojiDisplay}>
+              <Text style={styles.selectedEmojiText}>{selectedEmoji}</Text>
+              <Text style={styles.selectedEmojiLabel}>Selected emoji</Text>
+            </View>
+          )}
+          
+          <TextInput
+            style={styles.input}
+            placeholder="Enter name"
+            value={userName}
+            onChangeText={setUserName}
+            autoCapitalize="words"
+          />
+          
+          <View style={styles.emojiSelector}>
+            {quickEmojis.map(emoji => (
+              <TouchableOpacity
+                key={emoji}
+                style={[
+                  styles.emojiOption,
+                  selectedEmoji === emoji && { backgroundColor: defaultTheme.light },
+                ]}
+                onPress={() => setSelectedEmoji(emoji)}
+              >
+                <Text style={styles.emojiText}>{emoji}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={[
+                styles.emojiOption,
+                styles.moreEmojiOption,
+              ]}
+              onPress={() => setShowEmojiPicker(true)}
+            >
+              <Text style={[styles.emojiText, styles.moreEmojiText]}>…</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        <View style={styles.optionsContainer}>
+          <TouchableOpacity
+            style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
+            onPress={addUser}
+            disabled={!userName.trim()}
+          >
+            <Text style={styles.buttonText}>
+              {users.length === 0 ? 'Add User' : 'Add Another'}
+            </Text>
+          </TouchableOpacity>
+          
+          {users.length > 0 && (
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => {
+                if (userJourney.userType === 'group' || userJourney.userType === 'helper') {
+                  animateStepTransition('pinSetup');
+                } else if (userJourney.deviceStrategy === 'multi') {
+                  animateStepTransition('syncCreate');
+                } else {
+                  animateStepTransition('complete');
+                }
+              }}
+            >
+              <Text style={[styles.secondaryButtonText, { color: defaultTheme.primary }]}>
+                Continue
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        
+        {/* Emoji Picker Modal */}
+        {showEmojiPicker && (
+          <EmojiPicker
+            mode="modal"
+            visible={true}
+            onClose={() => setShowEmojiPicker(false)}
+            onSelect={emoji => {
+              setSelectedEmoji(emoji);
+              setShowEmojiPicker(false);
+            }}
+            theme={defaultTheme}
+            selectedEmoji={selectedEmoji}
+          />
+        )}
+      </View>
+    );
+  };
+
+  const renderPinSetupStep = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.title}>Protect with PIN?</Text>
+      <Text style={styles.subtitle}>
+        Keep your StackMap secure with a 4-digit PIN
+      </Text>
+      
+      <View style={styles.inputGroup}>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter 4-digit PIN"
+          value={pin}
+          onChangeText={setPin}
+          keyboardType="numeric"
+          secureTextEntry
+          maxLength={4}
+          autoComplete="off"
+          autoCorrect={false}
+          autoCapitalize="none"
+          spellCheck={false}
+        />
+        
+        {pin.length === 4 && (
+          <TextInput
+            style={styles.input}
+            placeholder="Confirm PIN"
+            value={confirmPin}
+            onChangeText={setConfirmPin}
+            keyboardType="numeric"
+            secureTextEntry
+            maxLength={4}
+            autoComplete="off"
+            autoCorrect={false}
+            autoCapitalize="none"
+            spellCheck={false}
+          />
+        )}
+        
+        {pinError && (
+          <Text style={styles.errorText}>{pinError}</Text>
+        )}
+      </View>
+      
+      <View style={styles.optionsContainer}>
+        <TouchableOpacity
+          style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
+          onPress={() => {
+            if (pin !== confirmPin) {
+              setPinError('PINs do not match');
+              return;
+            }
+            setUserJourney(prev => ({ ...prev, pinEnabled: true }));
+            if (userJourney.deviceStrategy === 'multi') {
+              animateStepTransition('syncCreate');
+            } else {
+              animateStepTransition('complete');
+            }
+          }}
+          disabled={pin.length !== 4 || confirmPin.length !== 4}
+        >
+          <Text style={styles.buttonText}>Set PIN</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.skipButton}
+          onPress={() => {
+            if (userJourney.deviceStrategy === 'multi') {
+              animateStepTransition('syncCreate');
+            } else {
+              animateStepTransition('complete');
+            }
+          }}
+        >
+          <Text style={[styles.skipButtonText, { color: defaultTheme.textSecondary }]}>
+            Skip for now
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderSyncChoiceStep = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.title}>Enable Sync?</Text>
+      <Text style={styles.subtitle}>
+        Access your StackMap on multiple devices
+      </Text>
+      
+      <View style={styles.optionsContainer}>
+        <TouchableOpacity
+          style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
+          onPress={() => animateStepTransition('syncCreate')}
+        >
+          <Icon name="cloud-upload" size={40} color={defaultTheme.primary} />
+          <Text style={styles.optionTitle}>Create New Sync</Text>
+          <Text style={styles.optionDescription}>
+            Start syncing across devices
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
+          onPress={() => animateStepTransition('syncImport')}
+        >
+          <Icon name="cloud-download" size={40} color={defaultTheme.primary} />
+          <Text style={styles.optionTitle}>Join Existing Sync</Text>
+          <Text style={styles.optionDescription}>
+            Connect to another device
+          </Text>
+        </TouchableOpacity>
+      </View>
+      
+      <TouchableOpacity
+        style={styles.skipButton}
+        onPress={() => animateStepTransition('complete')}
+      >
+        <Text style={[styles.skipButtonText, { color: defaultTheme.textSecondary }]}>
+          Skip for now
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderSyncCreateStep = () => (
+      <View style={styles.stepContainer}>
+        <Text style={styles.title}>Your Sync Code</Text>
+        <Text style={styles.subtitle}>
+          Save this code to sync with other devices
+        </Text>
+        
+        <View style={styles.syncCodeContainer}>
+          <Text style={styles.syncCode}>{generatedSyncCode}</Text>
+          <TouchableOpacity
+            style={[styles.copyButton, { backgroundColor: defaultTheme.primary }]}
+            onPress={copySyncCode}
+          >
+            <Icon name="content-copy" size={20} color="#fff" />
+            <Text style={styles.copyButtonText}>Copy</Text>
+          </TouchableOpacity>
+        </View>
+        
+        {showCopiedToast && (
+          <View style={styles.toast}>
+            <Text style={styles.toastText}>Copied to clipboard!</Text>
+          </View>
+        )}
+        
+        <Text style={styles.warningText}>
+          ⚠️ Save this code securely. You'll need it to sync other devices.
+        </Text>
+        
+        <View style={styles.optionsContainer}>
+          {syncLoading && syncStatusDetails.stage !== 'idle' && syncStatusDetails.stage !== 'error' && (
+            <View style={styles.syncStatusContainer}>
+              <ActivityIndicator size="small" color={defaultTheme.primary} />
+              <Text style={styles.syncStatusText}>{syncStatusDetails.message}</Text>
+            </View>
+          )}
+          
+          <TouchableOpacity
+            style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
+            onPress={createNewSync}
+            disabled={syncLoading}
+          >
+            {syncLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Enable Sync</Text>
+            )}
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={() => animateStepTransition('complete')}
+            disabled={syncLoading}
+          >
+            <Text style={[styles.skipButtonText, { color: defaultTheme.secondary }]}>
+              Skip for now
+            </Text>
+          </TouchableOpacity>
+        </View>
+        
+        {syncError && (
+          <Text style={styles.errorText}>{syncError}</Text>
+        )}
+      </View>
+    );
+
+  const renderSyncImportStep = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.title}>Enter Sync Code</Text>
+      <Text style={styles.subtitle}>
+        Join an existing StackMap
+      </Text>
+      
+      <View style={styles.inputGroup}>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter 32-character sync code"
+          value={recoveryPhrase}
+          onChangeText={setRecoveryPhrase}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        
+        {recoveryPhrase.length > 0 && (
+          <Text style={styles.charCount}>
+            {recoveryPhrase.replace(/[\s-]+/g, '').length}/32 characters
+          </Text>
+        )}
+      </View>
+      
+      {syncPreviewData && (
+        <View style={styles.previewContainer}>
+          <Text style={styles.previewTitle}>Found StackMap with:</Text>
+          <Text style={styles.previewText}>
+            • {syncPreviewData.userCount} user{syncPreviewData.userCount !== 1 ? 's' : ''}
+          </Text>
+          {syncPreviewData.hasLibrary && (
+            <Text style={styles.previewText}>• Activity library</Text>
+          )}
+        </View>
+      )}
+      
+      <View style={styles.optionsContainer}>
+        {syncLoading && syncStatusDetails.stage !== 'idle' && syncStatusDetails.stage !== 'error' && (
+          <View style={styles.syncStatusContainer}>
+            <ActivityIndicator size="small" color={defaultTheme.primary} />
+            <Text style={styles.syncStatusText}>{syncStatusDetails.message}</Text>
+          </View>
+        )}
+        
+        {!syncPreviewData ? (
+          <TouchableOpacity
+            style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
+            onPress={fetchSyncPreview}
+            disabled={syncLoading || recoveryPhrase.replace(/[\s-]+/g, '').length !== 32}
+          >
+            {syncLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Check Code</Text>
+            )}
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
+            onPress={importSyncData}
+            disabled={syncLoading}
+          >
+            {syncLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Import & Continue</Text>
+            )}
+          </TouchableOpacity>
+        )}
+        
+        {!syncSetupPhrase && (
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={() => animateStepTransition('userType')}
+          >
+            <Text style={[styles.skipButtonText, { color: defaultTheme.textSecondary }]}>
+              Start fresh instead
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+      
+      {syncError && (
+        <Text style={styles.errorText}>{syncError}</Text>
+      )}
+    </View>
+  );
+
+  const renderSyncSuccessStep = () => (
+    <View style={styles.stepContainer}>
+      <Icon name="check-circle" size={80} color={defaultTheme.primary} />
+      <Text style={styles.title}>Sync Enabled!</Text>
+      <Text style={styles.subtitle}>
+        Your StackMap will sync across all your devices
+      </Text>
+      
+      <View style={styles.successInfo}>
+        <Text style={styles.infoText}>
+          Your sync code has been saved securely
+        </Text>
+      </View>
+      
+      <TouchableOpacity
+        style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
+        onPress={() => animateStepTransition('complete')}
+      >
+        <Text style={styles.buttonText}>Continue</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderCompleteStep = () => (
+    <View style={styles.stepContainer}>
+      <Icon name="celebration" size={80} color={defaultTheme.primary} />
+      <Text style={styles.title}>All Set!</Text>
+      <Text style={styles.subtitle}>
+        Your StackMap is ready to use
+      </Text>
+      
+      <View style={styles.summaryContainer}>
+        <Text style={styles.summaryTitle}>Your Setup:</Text>
+        <Text style={styles.summaryText}>
+          • {users.length} user{users.length !== 1 ? 's' : ''} created
+        </Text>
+        {userJourney.pinEnabled && (
+          <Text style={styles.summaryText}>• PIN protection enabled</Text>
+        )}
+        {userJourney.syncEnabled && (
+          <Text style={styles.summaryText}>• Sync enabled</Text>
+        )}
+      </View>
+      
+      <TouchableOpacity
+        style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
+        onPress={completeOnboarding}
+      >
+        <Text style={styles.buttonText}>Start Using StackMap</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <SafeAreaView style={styles.safeArea}>
+          {currentStep !== 'welcome' && navigationHistory.length > 1 && (
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={goBack}
+            >
+              <Icon name="arrow-back" size={24} color={defaultTheme.primary} />
+            </TouchableOpacity>
+          )}
+          
+          <Animated.View
+            key={currentStep}
+            style={[
+              styles.contentContainer,
+              { opacity: fadeAnim },
+            ]}
+          >
+            {renderStepContent()}
+          </Animated.View>
+        </SafeAreaView>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+};
+
+const SafeAreaView = ({ children, style }) => {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[{ paddingTop: insets.top, paddingBottom: insets.bottom }, style]}>
+      {children}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  contentContainer: {
+    flex: 1,
+    padding: SPACING.lg,
+  },
+  backButton: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 20,
+    left: 20,
+    zIndex: 10,
+    padding: 10,
+  },
+  stepContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    maxWidth: screenWidth >= 768 ? 600 : '100%',
+    alignSelf: 'center',
+    width: '100%',
+  },
+  title: {
+    fontSize: screenWidth >= 768 ? 32 : 28,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontWeight: 'bold',
+    color: '#000',
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: screenWidth >= 768 ? 18 : 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
+    marginBottom: SPACING.xl,
+    textAlign: 'center',
+  },
+  optionsContainer: {
+    width: '100%',
+    marginTop: SPACING.lg,
+  },
+  syncStatusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+    marginBottom: SPACING.sm,
+  },
+  syncStatusText: {
+    fontSize: 14,
+    fontFamily: 'Comic Relief',
+    color: '#666',
+  },
+  primaryButton: {
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: RADIUS.lg,
+    marginBottom: SPACING.md,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontWeight: '600',
+  },
+  secondaryButton: {
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: RADIUS.lg,
+    borderWidth: 2,
+    borderColor: '#5C7E9D',
+    marginBottom: SPACING.md,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontWeight: '600',
+  },
+  skipButton: {
+    padding: SPACING.md,
+    alignItems: 'center',
+  },
+  skipButtonText: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  optionCard: {
+    padding: SPACING.lg,
+    borderRadius: RADIUS.lg,
+    borderWidth: 2,
+    marginBottom: SPACING.md,
+    alignItems: 'center',
+  },
+  optionTitle: {
+    fontSize: 18,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontWeight: '600',
+    color: '#000',
+    marginTop: SPACING.sm,
+  },
+  optionDescription: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
+    marginTop: SPACING.xs,
+    textAlign: 'center',
+  },
+  inputGroup: {
+    width: '100%',
+    marginBottom: SPACING.lg,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    marginBottom: SPACING.md,
+  },
+  emojiSelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: SPACING.md,
+  },
+  emojiOption: {
+    padding: SPACING.sm,
+    borderRadius: RADIUS.md,
+    width: 50,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emojiText: {
+    fontSize: 30,
+  },
+  moreEmojiOption: {
+    backgroundColor: '#f0f0f0',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  moreEmojiText: {
+    fontSize: 24,
+    color: '#666',
+    fontWeight: 'bold',
+  },
+  selectedEmojiDisplay: {
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+    padding: SPACING.md,
+    backgroundColor: '#f8f8f8',
+    borderRadius: RADIUS.lg,
+  },
+  selectedEmojiText: {
+    fontSize: 48,
+    marginBottom: SPACING.xs,
+  },
+  selectedEmojiLabel: {
+    fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
+  },
+  usersList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginBottom: SPACING.lg,
+  },
+  userPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.round,
+    margin: SPACING.xs,
+  },
+  userPillEmoji: {
+    fontSize: 20,
+    marginRight: SPACING.xs,
+  },
+  userPillName: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#000',
+  },
+  errorText: {
+    color: '#ff4444',
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    marginTop: SPACING.sm,
+    textAlign: 'center',
+  },
+  charCount: {
+    fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
+    textAlign: 'right',
+  },
+  syncCodeContainer: {
+    backgroundColor: '#f5f5f5',
+    padding: SPACING.lg,
+    borderRadius: RADIUS.lg,
+    marginVertical: SPACING.lg,
+    width: '100%',
+  },
+  syncCode: {
+    fontSize: 18,
+    fontFamily: 'monospace',
+    color: '#000',
+    textAlign: 'center',
+    marginBottom: SPACING.md,
+  },
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.md,
+  },
+  copyButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    marginLeft: SPACING.xs,
+  },
+  toast: {
+    position: 'absolute',
+    bottom: 100,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.md,
+  },
+  toastText: {
+    color: '#fff',
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  warningText: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#ff9800',
+    textAlign: 'center',
+    marginBottom: SPACING.lg,
+  },
+  previewContainer: {
+    backgroundColor: '#f5f5f5',
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.lg,
+    width: '100%',
+  },
+  previewTitle: {
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: SPACING.sm,
+  },
+  previewText: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
+    marginBottom: SPACING.xs,
+  },
+  successInfo: {
+    backgroundColor: '#e8f5e9',
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    marginVertical: SPACING.lg,
+    width: '100%',
+  },
+  infoText: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#2e7d32',
+    textAlign: 'center',
+  },
+  summaryContainer: {
+    backgroundColor: '#f5f5f5',
+    padding: SPACING.lg,
+    borderRadius: RADIUS.md,
+    marginVertical: SPACING.lg,
+    width: '100%',
+  },
+  summaryTitle: {
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: SPACING.sm,
+  },
+  summaryText: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
+    marginBottom: SPACING.xs,
+  },
+  logoSection: {
+    alignItems: 'center',
+    marginBottom: SPACING.xl,
+  },
+  logoText: {
+    fontSize: screenWidth >= 768 ? 36 : 32,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontWeight: 'bold',
+    color: '#000',
+    marginTop: SPACING.md,
+  },
+  tagline: {
+    fontSize: screenWidth >= 768 ? 16 : 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
+    marginTop: SPACING.xs,
+    textAlign: 'center',
+  },
+  footerLinks: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: SPACING.xl,
+    paddingVertical: SPACING.md,
+  },
+  footerLink: {
+    padding: SPACING.sm,
+  },
+  footerLinkText: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    textDecorationLine: 'underline',
+  },
+  footerSeparator: {
+    fontSize: 14,
+    color: '#666',
+    marginHorizontal: SPACING.sm,
+  },
+  versionContainer: {
+    marginTop: SPACING.md,
+    alignItems: 'center',
+  },
+  versionText: {
+    fontSize: 12,
+    color: '#999',
+    fontFamily: 'Comic Relief',
+  },
+});
+
+export default OnboardingUserCentered;
