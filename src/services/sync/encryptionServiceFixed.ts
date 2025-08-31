@@ -11,18 +11,14 @@ const util = require('tweetnacl-util');
 const encodeBase64 = (arr: Uint8Array): string => util.encodeBase64(arr);
 const decodeBase64 = (str: string): Uint8Array => util.decodeBase64(str);
 
-// UTF-8 encoding - always use manual implementation on iOS to avoid issues
+// UTF-8 encoding - ALWAYS use manual implementation to avoid platform issues
+// tweetnacl-util is broken on iOS (returns strings instead of Uint8Arrays)
 let encodeUTF8: (str: string) => Uint8Array;
 let decodeUTF8: (arr: Uint8Array) => string;
 
-// Check platform and TextEncoder availability
-const hasNativeTextEncoder = typeof TextEncoder !== 'undefined' && typeof TextDecoder !== 'undefined';
-console.log('[EncryptionFixed] Platform:', Platform.OS);
-console.log('[EncryptionFixed] TextEncoder available:', hasNativeTextEncoder);
-
-// Always use manual UTF-8 on iOS due to compatibility issues
-if (Platform.OS === 'ios' || !hasNativeTextEncoder) {
-  console.log('[EncryptionFixed] Using manual UTF-8 implementation');
+// ALWAYS use manual implementation - tweetnacl-util is unreliable
+console.log('[EncryptionFixed] Using manual UTF-8 implementation for all platforms');
+if (true) {  // Always true, keeping structure for clarity
   // Manual UTF-8 encoding that works reliably on all platforms
   encodeUTF8 = (str: string) => {
     const bytes: number[] = [];
@@ -85,12 +81,6 @@ if (Platform.OS === 'ios' || !hasNativeTextEncoder) {
     }
     return result;
   };
-} else {
-  console.log('[EncryptionFixed] Using native TextEncoder/TextDecoder');
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-  encodeUTF8 = (str: string) => encoder.encode(str);
-  decodeUTF8 = (arr: Uint8Array) => decoder.decode(arr);
 }
 
 const ENCRYPTION_VERSION = 2;
