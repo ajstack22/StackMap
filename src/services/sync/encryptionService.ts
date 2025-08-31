@@ -9,7 +9,7 @@ import nacl from 'tweetnacl';
 import util from 'tweetnacl-util';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import pako from 'pako';
-import { Platform } from 'react-native';
+import { Platform, Alert } from 'react-native';
 
 // Type helpers for tweetnacl-util with proper casting
 const encodeBase64 = (arr: Uint8Array): string =>
@@ -257,6 +257,14 @@ class EncryptionService {
    * Decrypt data using nacl secretbox
    */
   decryptData(encryptedData: string): any {
+    // Store debug info that we can retrieve
+    const debugInfo: any = {
+      version: 'v2025.08.31.24',
+      timestamp: new Date().toISOString(),
+      inputType: typeof encryptedData,
+      inputLength: encryptedData?.length || 0
+    };
+    
     if (!this.masterKey) {
       throw new Error('Encryption not initialized');
     }
@@ -285,6 +293,8 @@ class EncryptionService {
       if (!decrypted) {
         throw new Error('Decryption failed - invalid key or corrupted data');
       }
+      
+      console.log('[DECRYPTION] ✅ NaCl decryption succeeded, got', decrypted.length, 'bytes');
 
       // Check for metadata (version 2+)
       if (decrypted.length > 4) {
@@ -299,6 +309,34 @@ class EncryptionService {
           try {
             const metadataBytes = decrypted.slice(4, 4 + metadataLength);
             console.log('[DECRYPTION] Attempting to decode metadata bytes:', metadataBytes.length, 'bytes');
+            
+            // Debug: Check if metadata bytes are all zeros
+            const metadataPreview = Array.from(metadataBytes.slice(0, 10));
+            console.log('[DECRYPTION] Metadata bytes preview:', metadataPreview);
+            
+            // Check if the metadata is actually empty (all zeros or too short)
+            if (metadataBytes.every(byte => byte === 0) || metadataBytes.length < 2) {
+              console.log('[DECRYPTION] Metadata appears empty, skipping to data section');
+              // Skip metadata and try to parse the data directly
+              const dataBytes = decrypted.slice(4 + metadataLength);
+              if (dataBytes.length > 0) {
+                try {
+                  const dataStr = decodeUTF8(dataBytes);
+                  return JSON.parse(dataStr);
+                } catch (e) {
+                  // If that doesn't work, try decompressing first
+                  try {
+                    const decompressed = pako.inflate(dataBytes);
+                    const dataStr = decodeUTF8(decompressed);
+                    return JSON.parse(dataStr);
+                  } catch (e2) {
+                    console.log('[DECRYPTION] Could not parse data after empty metadata');
+                  }
+                }
+              }
+              throw new Error('Empty metadata');
+            }
+            
             const metadata: EncryptionMetadata = JSON.parse(
               decodeUTF8(metadataBytes),
             );
@@ -331,12 +369,15 @@ class EncryptionService {
 
       // Legacy format (no metadata) - only try this if metadata parsing failed or no metadata
       try {
+        console.log('[DECRYPTION] Trying legacy format (direct UTF-8 decode)');
         const decryptedStr = decodeUTF8(decrypted);
+        console.log('[DECRYPTION] UTF-8 decode succeeded, string length:', decryptedStr.length);
+        console.log('[DECRYPTION] String preview:', decryptedStr.substring(0, 100));
         return JSON.parse(decryptedStr);
       } catch (legacyError) {
         // If legacy format also fails, the data might be compressed without proper metadata
         // Try decompressing first
-        console.log('[DECRYPTION] Legacy format failed, attempting decompression:', legacyError);
+        console.log('[DECRYPTION] Legacy format failed:', legacyError.message);
         try {
           const decompressed = pako.inflate(decrypted);
           const decompressedStr = decodeUTF8(decompressed);
@@ -345,6 +386,22 @@ class EncryptionService {
           console.error('[DECRYPTION] All decryption attempts failed');
           console.error('[DECRYPTION] Decrypted data length:', decrypted.length);
           console.error('[DECRYPTION] First 50 bytes:', Array.from(decrypted.slice(0, 50)));
+          
+          // Log detailed debug info but don't show alert anymore
+          if (__DEV__) {
+            let metadataInfo = '';
+            if (decrypted.length > 4) {
+              const metadataLength = new DataView(
+                decrypted.buffer,
+                decrypted.byteOffset,
+                4,
+              ).getUint32(0, false);
+              const dataAfterMeta = decrypted.slice(4 + metadataLength, 4 + metadataLength + 20);
+              metadataInfo = `Metadata len: ${metadataLength}, Data after meta: ${Array.from(dataAfterMeta).slice(0, 10).join(',')}`;
+            }
+            console.log('[DECRYPTION] Final fallback failed.', metadataInfo);
+          }
+          
           throw new Error('Failed to decrypt data - invalid format or corrupted data');
         }
       }
