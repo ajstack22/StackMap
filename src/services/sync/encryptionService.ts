@@ -272,7 +272,9 @@ class EncryptionService {
         throw new Error('Empty encrypted data');
       }
       
+      console.log('[DECRYPTION] Starting decryption, encrypted data length:', encryptedData.length);
       const combined = decodeBase64(encryptedData);
+      console.log('[DECRYPTION] Base64 decoded to', combined.length, 'bytes');
 
       // Extract nonce and encrypted data
       const nonce = combined.slice(0, nacl.secretbox.nonceLength);
@@ -291,12 +293,16 @@ class EncryptionService {
           decrypted.byteOffset,
           4,
         ).getUint32(0, false);
+        console.log('[DECRYPTION] Metadata length:', metadataLength, 'Total decrypted length:', decrypted.length);
+        
         if (metadataLength > 0 && metadataLength < decrypted.length - 4) {
           try {
             const metadataBytes = decrypted.slice(4, 4 + metadataLength);
+            console.log('[DECRYPTION] Attempting to decode metadata bytes:', metadataBytes.length, 'bytes');
             const metadata: EncryptionMetadata = JSON.parse(
               decodeUTF8(metadataBytes),
             );
+            console.log('[DECRYPTION] Metadata parsed:', metadata);
             let dataBytes = decrypted.slice(4 + metadataLength);
 
             // Handle decompression if needed
@@ -315,13 +321,33 @@ class EncryptionService {
 
             const dataStr = decodeUTF8(dataBytes);
             return JSON.parse(dataStr);
-          } catch (error) {}
+          } catch (metadataError) {
+            // Log metadata parsing error but don't fail yet
+            console.log('[DECRYPTION] Metadata parsing error, trying legacy format:', metadataError);
+            // Don't fall through - this error means we should try legacy format
+          }
         }
       }
 
-      // Legacy format (no metadata)
-      const decryptedStr = decodeUTF8(decrypted);
-      return JSON.parse(decryptedStr);
+      // Legacy format (no metadata) - only try this if metadata parsing failed or no metadata
+      try {
+        const decryptedStr = decodeUTF8(decrypted);
+        return JSON.parse(decryptedStr);
+      } catch (legacyError) {
+        // If legacy format also fails, the data might be compressed without proper metadata
+        // Try decompressing first
+        console.log('[DECRYPTION] Legacy format failed, attempting decompression:', legacyError);
+        try {
+          const decompressed = pako.inflate(decrypted);
+          const decompressedStr = decodeUTF8(decompressed);
+          return JSON.parse(decompressedStr);
+        } catch (decompressionError) {
+          console.error('[DECRYPTION] All decryption attempts failed');
+          console.error('[DECRYPTION] Decrypted data length:', decrypted.length);
+          console.error('[DECRYPTION] First 50 bytes:', Array.from(decrypted.slice(0, 50)));
+          throw new Error('Failed to decrypt data - invalid format or corrupted data');
+        }
+      }
     } catch (error) {
       if (__DEV__) {
         console.error('[DECRYPTION] Decryption error:', error);
