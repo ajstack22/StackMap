@@ -30,7 +30,16 @@ class MinimalSyncService {
     this.onDataReceived = null; // Callback for when new data arrives
     
     // Load existing sync ID on initialization
-    this.loadExistingSyncId();
+    // Using setTimeout to prevent blocking the constructor and ensure AsyncStorage is ready
+    // This pattern was proven to work in the old syncService
+    setTimeout(() => {
+      console.log('[MinimalSync] Attempting to load existing sync ID (delayed for AsyncStorage)...');
+      this.loadExistingSyncId().then(() => {
+        console.log('[MinimalSync] Successfully loaded existing sync ID');
+      }).catch(error => {
+        console.log('[MinimalSync] Error loading existing sync ID:', error);
+      });
+    }, 1000); // 1 second delay, same as old syncService
     
     // Determine API URL based on environment
     if (typeof window !== 'undefined' && window.location) {
@@ -78,6 +87,7 @@ class MinimalSyncService {
   }
 
   async initDeviceId() {
+    console.log('[MinimalSync] Initializing device ID...');
     try {
       this.deviceId = await AsyncStorage.getItem('device_id');
       if (!this.deviceId) {
@@ -93,8 +103,10 @@ class MinimalSyncService {
   }
 
   async loadExistingSyncId() {
+    console.log('[MinimalSync] Checking for existing sync ID...');
     try {
       const storedSyncId = await AsyncStorage.getItem('@minimal_sync_id');
+      console.log('[MinimalSync] Stored sync ID result:', storedSyncId ? 'FOUND' : 'NOT FOUND');
       if (storedSyncId) {
         this.syncId = storedSyncId;
         console.log('[MinimalSync] 📥 Loaded existing sync ID:', this.syncId);
@@ -137,9 +149,26 @@ class MinimalSyncService {
   }
 
   generateId() {
-    return Array.from(crypto.getRandomValues(new Uint8Array(16)))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+    // Use the global crypto which is polyfilled by react-native-get-random-values
+    // On React Native, this is provided by the polyfill imported in index.js
+    if (typeof global.crypto !== 'undefined' && global.crypto.getRandomValues) {
+      return Array.from(global.crypto.getRandomValues(new Uint8Array(16)))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    } else if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      // Fallback for web
+      return Array.from(crypto.getRandomValues(new Uint8Array(16)))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    } else {
+      // Final fallback using Math.random (less secure but works everywhere)
+      console.warn('[MinimalSync] Using Math.random for ID generation - crypto not available');
+      return 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
   }
 
   /**

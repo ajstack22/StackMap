@@ -505,6 +505,12 @@ const App = () => {
     if (showOnboarding || showSetupWizard) return;
 
     const checkSyncStatus = async () => {
+      // Initialize sync service to properly load existing sync ID
+      if (syncService.initialize) {
+        console.log('[App] Initializing sync service...');
+        await syncService.initialize();
+      }
+      
       const enabled = await syncService.isEnabled();
       setSyncEnabled(enabled);
     };

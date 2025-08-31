@@ -30,9 +30,10 @@ import App from './App';
 import { name as appName } from './app.json';
 
 // Disable console logs on Android for performance
-if (Platform.OS === 'android' && __DEV__) {
-  disableAndroidLogs();
-}
+// TEMPORARILY DISABLED FOR DEBUGGING SYNC ISSUES
+// if (Platform.OS === 'android' && __DEV__) {
+//   disableAndroidLogs();
+// }
 
 // Suppress console warnings about Legacy Architecture
 if (__DEV__ && Platform.OS !== 'android') {

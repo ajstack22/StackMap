@@ -23,7 +23,7 @@ const ENCRYPTION_VERSION = 2; // Bumped for compression support
 const SALT_LENGTH = 16;
 const KEY_LENGTH = 32;
 const COMPRESSION_THRESHOLD = 1024; // Only compress if data > 1KB
-const KEY_DERIVATION_ITERATIONS = 100000; // TEMPORARY: Reverted to match server data encryption
+const KEY_DERIVATION_ITERATIONS = 100000; // Must match server for compatibility
 
 interface EncryptionMetadata {
   version: number;
@@ -38,6 +38,7 @@ interface DerivedKey {
 class EncryptionService {
   public masterKey: Uint8Array | null = null;
   public syncId: string | null = null;
+  private keyCache: { [key: string]: DerivedKey } = {}; // In-memory cache for derived keys
 
   /**
    * Generate a random recovery phrase (12 words from a wordlist)
@@ -59,8 +60,6 @@ class EncryptionService {
     recoveryPhrase: string,
     salt: Uint8Array | string | null = null,
   ): Promise<DerivedKey> {
-    // const startTime = Date.now(); // Commented out to avoid lint error
-
     // If no salt provided, generate one
     let saltBytes: Uint8Array;
     if (!salt) {
@@ -70,6 +69,35 @@ class EncryptionService {
     } else {
       saltBytes = salt;
     }
+
+    const saltStr = encodeBase64(saltBytes);
+    
+    // Check in-memory cache first (fastest)
+    const memoryCacheKey = `${recoveryPhrase}_${saltStr}`;
+    if (this.keyCache[memoryCacheKey]) {
+      console.log('[Encryption] Using in-memory cached key');
+      return this.keyCache[memoryCacheKey];
+    }
+
+    // Check AsyncStorage cache second (persistent but slower)
+    const storageCacheKey = `@derived_key_${recoveryPhrase.substring(0, 8)}_${saltStr.substring(0, 8)}`;
+    try {
+      const cachedKey = await AsyncStorage.getItem(storageCacheKey);
+      if (cachedKey) {
+        console.log('[Encryption] Using persistent cached key');
+        const result = {
+          key: decodeBase64(cachedKey),
+          salt: saltStr,
+        };
+        // Store in memory cache for faster access
+        this.keyCache[memoryCacheKey] = result;
+        return result;
+      }
+    } catch (error) {
+      console.log('[Encryption] Error loading cached key:', error);
+    }
+
+    console.log('[Encryption] Deriving key (this may take a moment)...');
 
     // Simple key derivation (in production, use proper PBKDF2)
     const phraseBytes = decodeUTF8(recoveryPhrase);
@@ -93,9 +121,11 @@ class EncryptionService {
         // Use setTimeout to allow UI updates and other events to process
         await new Promise(resolve => setTimeout(resolve, 0));
 
-        // Log timing info (commented out to avoid lint errors)
-        // const elapsed = Date.now() - startTime;
-        // const progress = (i / KEY_DERIVATION_ITERATIONS) * 100;
+        // Log progress
+        const progress = Math.round((i / KEY_DERIVATION_ITERATIONS) * 100);
+        if (i % (batchSize * 2) === 0) {
+          console.log(`[Encryption] Key derivation progress: ${progress}%`);
+        }
       }
 
       // Log progress in development mode
@@ -105,10 +135,24 @@ class EncryptionService {
     }
 
     const derivedKey = key.slice(0, KEY_LENGTH);
-    return {
+    const result: DerivedKey = {
       key: derivedKey,
-      salt: encodeBase64(saltBytes),
+      salt: saltStr,
     };
+    
+    // Store in memory cache (instant access in same session)
+    this.keyCache[memoryCacheKey] = result;
+    console.log('[Encryption] Stored key in memory cache');
+    
+    // Also store in AsyncStorage for persistence (helps on next app launch)
+    try {
+      await AsyncStorage.setItem(storageCacheKey, encodeBase64(derivedKey));
+      console.log('[Encryption] Stored key in persistent cache');
+    } catch (error) {
+      console.log('[Encryption] Error storing key in persistent cache:', error);
+    }
+    
+    return result;
   }
 
   /**
@@ -119,6 +163,15 @@ class EncryptionService {
     syncId: string,
     existingSalt: string | null = null,
   ): Promise<{ salt: string }> {
+    // Check if encryption is already initialized (key is cached in memory)
+    // This avoids expensive key derivation on every app start
+    if (this.masterKey && this.syncId === syncId) {
+      console.log('[Encryption] Using cached master key');
+      // Return the existing salt
+      const cachedSalt = await AsyncStorage.getItem('encryption_salt');
+      return { salt: cachedSalt || existingSalt || '' };
+    }
+
     const { key, salt } = await this.deriveKeyFromPhrase(
       recoveryPhrase,
       existingSalt,
