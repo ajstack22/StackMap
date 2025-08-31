@@ -28,9 +28,7 @@ import {
   RADIUS,
   THEMES,
 } from '../../constants';
-import SyncStoreTest from '../SyncStoreTest';
-import SyncDiagnostic from '../SyncDiagnostic';
-import ConflictResolutionTest from '../ConflictResolutionTest';
+// Test components removed - no longer needed
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const isTablet = () => screenWidth >= 768;
@@ -82,8 +80,7 @@ const OnboardingUserCentered = ({
   const [syncPreviewData, setSyncPreviewData] = useState(null);
   const [generatedSyncCode, setGeneratedSyncCode] = useState('');
   const [showCopiedToast, setShowCopiedToast] = useState(false);
-  const [showSyncTest, setShowSyncTest] = useState(false);
-  const [activeTestComponent, setActiveTestComponent] = useState('sync'); // 'sync' or 'conflict'
+  // Test component state removed - no longer needed
 
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -638,73 +635,8 @@ const OnboardingUserCentered = ({
   // Step Render Functions (not components to avoid recreation)
   const renderWelcomeStep = () => (
     <View style={styles.stepContainer}>
-      {showSyncTest ? (
-        <View style={{ flex: 1 }}>
-          <TouchableOpacity
-            style={[styles.secondaryButton, { marginBottom: 10 }]}
-            onPress={() => setShowSyncTest(false)}
-          >
-            <Text style={[styles.secondaryButtonText, { color: defaultTheme.primary }]}>
-              ← Back to Welcome
-            </Text>
-          </TouchableOpacity>
-          
-          {/* Test Component Selector */}
-          <View style={{ 
-            flexDirection: 'row', 
-            padding: 10,
-            backgroundColor: '#f5f5f5',
-            borderRadius: 8,
-            marginBottom: 10
-          }}>
-            <TouchableOpacity
-              style={{
-                flex: 1,
-                padding: 10,
-                marginRight: 5,
-                backgroundColor: activeTestComponent === 'sync' ? defaultTheme.primary : '#fff',
-                borderRadius: 5,
-                alignItems: 'center'
-              }}
-              onPress={() => setActiveTestComponent('sync')}
-            >
-              <Text style={{ 
-                color: activeTestComponent === 'sync' ? '#fff' : '#000',
-                fontWeight: 'bold'
-              }}>
-                Sync Diagnostic
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={{
-                flex: 1,
-                padding: 10,
-                marginLeft: 5,
-                backgroundColor: activeTestComponent === 'conflict' ? defaultTheme.primary : '#fff',
-                borderRadius: 5,
-                alignItems: 'center'
-              }}
-              onPress={() => setActiveTestComponent('conflict')}
-            >
-              <Text style={{ 
-                color: activeTestComponent === 'conflict' ? '#fff' : '#000',
-                fontWeight: 'bold'
-              }}>
-                Conflict Resolution
-              </Text>
-            </TouchableOpacity>
-          </View>
-          
-          {/* Render Active Test Component */}
-          {activeTestComponent === 'sync' ? (
-            <SyncDiagnostic />
-          ) : (
-            <ConflictResolutionTest />
-          )}
-        </View>
-      ) : (
-        <>
+      {/* Test components section removed */}
+      <>
           <View style={styles.logoSection}>
             <Logo size={screenWidth >= 768 ? 100 : 80} theme={defaultTheme} color={defaultTheme.primary} />
             <Text style={styles.logoText}>StackMap</Text>
@@ -734,17 +666,7 @@ const OnboardingUserCentered = ({
               </Text>
             </TouchableOpacity>
             
-            {/* Development/Testing Button */}
-            {Platform.OS === 'web' && (
-              <TouchableOpacity
-                style={[styles.secondaryButton, { backgroundColor: '#FF9800', marginTop: 20 }]}
-                onPress={() => setShowSyncTest(true)}
-              >
-                <Text style={[styles.buttonText, { color: '#FFF' }]}>
-                  🧪 Sync Testing
-                </Text>
-              </TouchableOpacity>
-            )}
+            {/* Test button removed - sync tests no longer available */}
           </View>
           
           <View style={styles.footerLinks}>
