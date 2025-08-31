@@ -9,7 +9,7 @@ import nacl from 'tweetnacl';
 import util from 'tweetnacl-util';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import pako from 'pako';
-import { Platform, Alert } from 'react-native';
+import { Platform } from 'react-native';
 
 // Type helpers for tweetnacl-util with proper casting
 const encodeBase64 = (arr: Uint8Array): string =>
@@ -257,14 +257,6 @@ class EncryptionService {
    * Decrypt data using nacl secretbox
    */
   decryptData(encryptedData: string): any {
-    // Store debug info that we can retrieve
-    const debugInfo: any = {
-      version: 'v2025.08.31.24',
-      timestamp: new Date().toISOString(),
-      inputType: typeof encryptedData,
-      inputLength: encryptedData?.length || 0
-    };
-    
     if (!this.masterKey) {
       throw new Error('Encryption not initialized');
     }
