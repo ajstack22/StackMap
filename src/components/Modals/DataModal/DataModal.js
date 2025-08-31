@@ -192,14 +192,8 @@ const DataModal = ({
   useEffect(() => {
     if (!syncEnabled) return;
 
-    const unsubscribe = syncService.addStatusListener(status => {
-      setSyncStatus(status.status);
-      if (status.lastSuccess) {
-        setLastSyncTime(status.lastSuccess);
-      }
-    });
-
-    return () => unsubscribe();
+    // Status listener not available in minimal sync service
+    // Status updates are handled through the sync store instead
   }, [syncEnabled]);
 
   const checkSyncStatus = async () => {
@@ -1025,10 +1019,10 @@ const DataModal = ({
           return;
         }
 
-        // Use enable method to join existing sync
-        const result = await syncService.enable(recoveryInput.trim());
+        // Use joinSync method to join existing sync
+        const result = await syncService.joinSync(recoveryInput.trim());
 
-        setSyncId(result.syncId);
+        setSyncId(result.syncId || syncService.syncId);
         setSyncRecoveryPhrase(recoveryInput.trim());
         setSyncEnabled(true);
         setShowRecoveryInput(false);

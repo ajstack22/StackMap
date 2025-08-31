@@ -20,15 +20,9 @@ const colors = {
 
 // Services to check with their file paths
 const SERVICES = {
-  syncService: 'src/services/sync/syncService.js',
-  encryptionService: 'src/services/sync/encryptionService.js',
-  conflictResolver: 'src/services/sync/conflictResolver.js',
-  dataValidator: 'src/services/sync/dataValidator.js',
-  syncQueue: 'src/services/sync/syncQueue.js',
-  networkMonitor: 'src/services/sync/networkMonitor.js',
-  changeTracker: 'src/services/sync/changeTracker.js',
-  syncThrottle: 'src/services/sync/syncThrottle.js',
-  syncHistory: 'src/services/sync/syncHistory.js',
+  syncService: 'src/services/sync/syncStoreIntegration.js', // Updated to actual sync service
+  minimalSync: 'src/services/sync/minimalSyncService.js',
+  encryptionService: 'src/services/sync/encryptionService.ts',
   dataNormalizer: 'src/utils/dataNormalizer.js'
 };
 
@@ -54,7 +48,8 @@ function extractMethods(filePath) {
   const methods = new Set();
   
   // Pattern 1: Class methods (async methodName() or methodName())
-  const classMethodRegex = /^\s*(async\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\s*\([^)]*\)\s*{/gm;
+  // Updated to handle TypeScript return types: methodName(): ReturnType {
+  const classMethodRegex = /^\s*(async\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\s*\([^)]*\)\s*(:.*?)?\s*{/gm;
   let match;
   while ((match = classMethodRegex.exec(content)) !== null) {
     methods.add(match[2]);
