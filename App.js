@@ -14,7 +14,6 @@ import {
   Image,
   Animated,
   ActivityIndicator,
-  Modal,
   AppState,
 } from 'react-native';
 
@@ -74,7 +73,6 @@ import {
   TYPOGRAPHY,
   SPACING,
   RADIUS,
-  COMMON_EMOJIS,
   DEFAULT_USER_ICON,
   DEFAULT_ACTIVITY_EMOJI,
   PIN_LENGTH,
@@ -87,7 +85,6 @@ import {
   getContainerPadding,
   CARD_LAYOUT,
   getBadgeDimensions,
-  FONT_SCALE,
   CUSTOM_IMAGE_SOURCES,
 } from './src/constants';
 
@@ -236,8 +233,6 @@ const App = () => {
   // Removed - now using Zustand store
 
   // Force ScrollView recalculation on Android modals
-  const preferencesScrollRef = useRef(null);
-  const settingsScrollRef = useRef(null);
   const [editingActivity, setEditingActivity] = useState(null);
   const [activityTitle, setActivityTitle] = useState('');
   const [activityDescription, setActivityDescription] = useState('');
@@ -246,8 +241,6 @@ const App = () => {
   const [showEditToolbar, setShowEditToolbar] = useState(false);
   const [showEditModeList, setShowEditModeList] = useState(false);
   const [editToolbarMoreExpanded, setEditToolbarMoreExpanded] = useState(false);
-  const [showEditIcons, setShowEditIcons] = useState(false);
-  const [syncEnabled, setSyncEnabled] = useState(false);
 
   // User management state
   const [showAddUserModal, setShowAddUserModal] = useState(false);
@@ -273,11 +266,9 @@ const App = () => {
   const [pinInput, setPinInput] = useState('');
 
   // Share modal state
-  const [shareUserId, setShareUserId] = useState(null);
   const [isSettingPin, setIsSettingPin] = useState(false);
   const [confirmPin, setConfirmPin] = useState('');
   const [hasPinProtection, setHasPinProtection] = useState(false);
-  const [showResetAppConfirm, setShowResetAppConfirm] = useState(false);
 
   // New modal states
   const [showDataModal, setShowDataModal] = useState(false);
@@ -318,7 +309,6 @@ const App = () => {
 
   // Debug logging for Android tablet issue
   if (Platform.OS === 'android') {}
-  const cardHeight = getCardHeight();
 
   // DEBUG for Android tablet
   if (Platform.OS === 'android') {
@@ -345,7 +335,6 @@ const App = () => {
   // ScrollView refs for forcing measurement on Android
 
   // Force re-render keys for Android scroll fix
-  const [settingsScrollKey, setSettingsScrollKey] = useState(0);
   const [preferencesScrollKey, setPreferencesScrollKey] = useState(0);
 
   // Pre-create interpolated values to avoid creating them during render
@@ -512,7 +501,7 @@ const App = () => {
       }
       
       const enabled = await syncService.isEnabled();
-      setSyncEnabled(enabled);
+      useSyncStore.getState().setSyncEnabled(enabled);
     };
 
     checkSyncStatus();
@@ -531,8 +520,8 @@ const App = () => {
         console.log('[App] App became active - checking sync');
         
         // Check if sync is enabled
-        const syncEnabled = await syncService.isEnabled();
-        if (syncEnabled) {
+        const isSyncEnabled = await syncService.isEnabled();
+        if (isSyncEnabled) {
           console.log('[App] Sync enabled - triggering manual sync');
           
           // Trigger immediate sync using the new method
@@ -687,10 +676,10 @@ const App = () => {
       ) {
         // Check if sync is enabled - if so, wait for sync to provide users
         // On iOS, skip this check to prevent freeze and rely on sync service state
-        const syncEnabled = Platform.OS === 'ios' 
+        const isSyncEnabled = Platform.OS === 'ios' 
           ? useSyncStore.getState().syncEnabled 
           : await AsyncStorage.getItem('@sync_enabled');
-        if (syncEnabled === 'true' || syncEnabled === true) {
+        if (isSyncEnabled === 'true' || isSyncEnabled === true) {
 
           // Give sync more time to load users
           setTimeout(() => {
@@ -758,15 +747,6 @@ const App = () => {
   // Data is now automatically persisted through Zustand
 
   // Helper function to clean up activities array and ensure no gaps
-  const cleanupActivities = activitiesArray => {
-    if (!activitiesArray || !Array.isArray(activitiesArray)) return [];
-
-    // Filter out any null, undefined, or deleted items
-    const validActivities = activitiesArray.filter(a => a && !a.deleted);
-
-    // If there are any gaps in the array (e.g., missing indices), this will fix them
-    return validActivities;
-  };
 
   // Handle sync setup from URL parameter
   useEffect(() => {
@@ -1159,7 +1139,7 @@ const App = () => {
             setCurrentDay(
               userData.currentDay || importedData.currentDay || 'today',
             );
-            const userActivities =
+            const currentUserActivities =
               userData.days?.[
                 userData.currentDay || importedData.currentDay || 'today'
               ]?.activities || [];
@@ -1552,7 +1532,8 @@ const App = () => {
     }
   };
 
-  const handleSetupWizardComplete = async setupData => {
+  // Removed unused function
+  const __unusedHandleSetupWizardComplete = async setupData => {
     try {
       // Mark onboarding as completed
       setHasCompletedOnboarding(true);
@@ -1754,7 +1735,8 @@ const App = () => {
     }
   };
 
-  const handleOnboardingSkip = async () => {
+  // Removed unused function
+  const __unusedHandleOnboardingSkip = async () => {
     try {
       // Mark onboarding as completed
       setHasCompletedOnboarding(true);
@@ -5455,7 +5437,7 @@ Users: ${userNames} (${userCount} total)
             ? handleOnboardingImportComplete
             : handleImportComplete
         }
-        onSyncStatusChange={enabled => setSyncEnabled(enabled)}
+        onSyncStatusChange={enabled => useSyncStore.getState().setSyncEnabled(enabled)}
         onShowSupport={() => {
           setShowDataModal(false);
           setTimeout(() => setShowSupportModal(true), 300);
@@ -5866,7 +5848,7 @@ Users: ${userNames} (${userCount} total)
           hasSecurePin={hasPinProtection}
           showToast={showToast}
           onImportComplete={handleOnboardingImportComplete}
-          onSyncStatusChange={enabled => setSyncEnabled(enabled)}
+          onSyncStatusChange={enabled => useSyncStore.getState().setSyncEnabled(enabled)}
           onShowSupport={() => {
             setShowDataModal(false);
             setTimeout(() => setShowSupportModal(true), 300);

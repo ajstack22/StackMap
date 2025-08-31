@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Logo from '../Logo/Logo';
 import syncService from '../../services/sync';
 import encryptionService from '../../services/sync/encryptionService';
+import { BUILD_VERSION } from '../../utils/version';
 import { useAppStore, useUserStore } from '../../stores';
 import {
   TYPOGRAPHY,
@@ -693,8 +694,11 @@ const OnboardingUserCentered = ({
               </>
             )}
           </View>
+          
+          <View style={styles.versionContainer}>
+            <Text style={styles.versionText}>v{BUILD_VERSION}</Text>
+          </View>
         </>
-      )}
     </View>
   );
 
@@ -1618,6 +1622,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginHorizontal: SPACING.sm,
+  },
+  versionContainer: {
+    marginTop: SPACING.md,
+    alignItems: 'center',
+  },
+  versionText: {
+    fontSize: 12,
+    color: '#999',
+    fontFamily: 'Comic Relief',
   },
 });
 

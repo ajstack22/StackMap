@@ -7,10 +7,10 @@ declare global {
     __onboardingImportResolve?: (data: any) => void;
     __onboardingImportReject?: (error: Error) => void;
 
-    // URL handlers
-    urlOpenPrivacy?: () => void;
-    urlOpenSupport?: () => void;
-    urlOpenGitHub?: () => void;
+    // URL handlers (used as boolean flags, not functions)
+    urlOpenPrivacy?: boolean;
+    urlOpenSupport?: boolean;
+    urlOpenGitHub?: boolean;
 
     // Debug flags
     __DEV__?: boolean;
@@ -29,6 +29,12 @@ declare global {
     // Sync debugging
     __syncDebug?: boolean;
     __syncLogs?: any[];
+    __syncDebugInfo?: any;
+    __syncJustJoined?: boolean;
+    __syncJoinedAt?: number;
+    
+    // Startup tracking
+    __stackMapStartupLogged?: boolean;
   }
 
   // Node.js global extensions
