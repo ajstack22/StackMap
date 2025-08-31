@@ -8,10 +8,14 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import minimalSync from './minimalSyncService';
 import conflictResolver from './conflictResolver';
+import encryptionService from './encryptionService';
 import { useUserStore, useSettingsStore, useLibraryStore } from '../../stores';
 import { normalizeSyncData } from '../../utils/dataNormalizer';
+import nacl from 'tweetnacl';
+import { encodeBase64, decodeBase64, encodeUTF8, decodeUTF8 } from 'tweetnacl-util';
 
 class SyncStoreIntegration {
   constructor() {
@@ -712,27 +716,243 @@ class SyncStoreIntegration {
   }
 
   /**
-   * Generate share token (stub for compatibility)
+   * Generate share token for secure sharing
    */
   generateShareToken(isAutoUpdate = false) {
-    // Generate a random token for sharing
-    const bytes = new Uint8Array(16);
-    crypto.getRandomValues(bytes);
-    return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+    // Generate a secure random key for the share
+    const shareKeyBytes = nacl.randomBytes(32);
+    
+    // Store the raw bytes temporarily for encryption
+    this._lastShareKeyBytes = shareKeyBytes;
+    
+    // Convert to URL-safe base64 token
+    const fullToken = encodeBase64(shareKeyBytes);
+    
+    // Make URL-safe by replacing + with - and / with _
+    // Also remove trailing = padding
+    const urlSafeToken = fullToken
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    
+    return urlSafeToken;
   }
 
   /**
    * Create share link (stub for compatibility)
    */
   async createShareLink(userId, options = {}) {
-    // Not implemented in new system yet
-    // Return a stub response
-    const token = this.generateShareToken();
-    return {
-      success: true,
-      shareUrl: `https://stackmap.app/share/${token}`,
-      token
-    };
+    if (!minimalSync.isEnabled || !minimalSync.syncId) {
+      throw new Error('Sync must be enabled to create share links');
+    }
+
+    const {
+      recipientName = '',
+      shareNote = '',
+      includeCompleted = true,
+      includeTomorrow = true,
+      expiresHours = 24,
+      autoUpdate = false,
+    } = options;
+
+    // Always generate V2 secure token
+    let accessToken = options.accessToken;
+    if (!accessToken) {
+      accessToken = this.generateShareToken();
+    }
+
+    try {
+      // Get current state
+      const userStore = useUserStore.getState();
+      const settingsStore = useSettingsStore.getState();
+      const user = userStore.users[userId];
+      
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // For local development, return a mock response
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          if (__DEV__) {
+            console.warn('Share links require deployment to stackmap.app. Returning mock data for local testing.');
+          }
+          const mockUrl = `https://stackmap.app?share=${accessToken}`;
+          return {
+            share_id: 'mock-' + Date.now(),
+            access_token: accessToken,
+            expires_at: new Date(Date.now() + expiresHours * 60 * 60 * 1000).toISOString(),
+            share_url: mockUrl,
+          };
+        }
+      }
+
+      // Prepare user data for sharing
+      const userData = {
+        id: userId,
+        name: user.name,
+        icon: user.icon,
+        days: user.days || {},
+        settings: user.settings || {
+          theme: settingsStore.currentTheme,
+        },
+      };
+
+      // Filter out deleted activities
+      if (userData.days) {
+        Object.keys(userData.days).forEach(day => {
+          if (userData.days[day]?.activities) {
+            userData.days[day].activities = userData.days[day].activities.filter(
+              activity => !activity.deleted
+            );
+          }
+        });
+      }
+
+      const deviceName = encryptionService.getDeviceName();
+
+      // Filter data client-side based on options
+      let filteredUserData = { ...userData };
+      if (!includeCompleted) {
+        // Remove completed activities
+        if (filteredUserData.days) {
+          Object.keys(filteredUserData.days).forEach(day => {
+            if (filteredUserData.days[day]?.activities) {
+              filteredUserData.days[day].activities = filteredUserData.days[day].activities.filter(
+                activity => !activity.completed
+              );
+            }
+          });
+        }
+      }
+      if (!includeTomorrow) {
+        // Remove tomorrow data
+        delete filteredUserData.days?.tomorrow;
+      }
+
+      // Create share data structure
+      const shareData = {
+        user: filteredUserData,
+        shared_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + expiresHours * 60 * 60 * 1000).toISOString(),
+        recipient_name: recipientName,
+        share_note: shareNote,
+        read_only: true,
+        version: 2,
+      };
+
+      // Encrypt with the token as the key
+      let shareKey;
+      if (this._lastShareKeyBytes) {
+        // Use the raw bytes we generated
+        shareKey = this._lastShareKeyBytes;
+        // Clear it after use for security
+        this._lastShareKeyBytes = null;
+      } else {
+        // Fallback: decode the token (for tokens passed in)
+        const paddedToken = accessToken.replace(/-/g, '+').replace(/_/g, '/');
+        // Add padding if needed
+        const padding = (4 - (paddedToken.length % 4)) % 4;
+        const fullToken = paddedToken + '='.repeat(padding);
+        shareKey = decodeBase64(fullToken);
+      }
+
+      // Use a simplified encryption for shares
+      const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
+      const messageBytes = decodeUTF8(JSON.stringify(shareData));
+      const encrypted = nacl.secretbox(messageBytes, nonce, shareKey);
+
+      // Combine nonce and ciphertext
+      const combined = new Uint8Array(nonce.length + encrypted.length);
+      combined.set(nonce);
+      combined.set(encrypted, nonce.length);
+      const encryptedData = encodeBase64(combined);
+
+      // Get API URL based on environment
+      const getShareApiUrl = () => {
+        // For iOS/Android development builds, use qual environment
+        if (__DEV__ && (Platform.OS === 'ios' || Platform.OS === 'android')) {
+          return 'https://stackmap.app/qual/api/sync';
+        }
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          const pathname = window.location.pathname;
+          if (pathname.includes('/qual/')) {
+            return 'https://stackmap.app/qual/api/sync';
+          }
+        }
+        return 'https://stackmap.app/api/sync';
+      };
+
+      const SHARE_API_URL = getShareApiUrl();
+      const requestBody = {
+        sync_id: minimalSync.syncId,
+        user_id: userId,
+        encrypted_data: encryptedData,
+        access_token: accessToken,
+        expires_hours: expiresHours,
+        recipient_name: recipientName,
+        share_note: shareNote,
+        include_completed: includeCompleted,
+        include_tomorrow: includeTomorrow,
+        auto_update: autoUpdate,
+        device_name: deviceName,
+        share_version: 2,
+      };
+
+      const shareUrl = `${SHARE_API_URL}/create_share.php`;
+      const response = await fetch(shareUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const responseText = await response.text();
+      if (!response.ok) {
+        // Try to parse as JSON first
+        try {
+          const errorData = JSON.parse(responseText);
+          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+        } catch (e) {
+          throw new Error(`Failed to create share: ${responseText}`);
+        }
+      }
+
+      const result = JSON.parse(responseText);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create share link');
+      }
+
+      // Store share info locally for later management
+      const shareInfo = {
+        shareId: result.share_id,
+        userId,
+        recipientName,
+        shareNote,
+        expiresAt: result.expires_at,
+        shareUrl: result.share_url,
+        accessToken: result.access_token || accessToken,
+        createdAt: new Date().toISOString(),
+        autoUpdate,
+      };
+
+      // Get existing shares and add new one
+      const stored = await AsyncStorage.getItem('@stackmap_shares');
+      const shares = stored ? JSON.parse(stored) : [];
+      shares.push(shareInfo);
+      await AsyncStorage.setItem('@stackmap_shares', JSON.stringify(shares));
+
+      return {
+        share_id: result.share_id,
+        access_token: result.access_token || accessToken,
+        expires_at: result.expires_at,
+        share_url: result.share_url,
+      };
+    } catch (error) {
+      console.error('[SyncStore] Failed to create share link:', error);
+      throw error;
+    }
   }
 
   /**
@@ -843,19 +1063,99 @@ class SyncStoreIntegration {
   }
 
   /**
-   * Delete share (stub)
+   * Delete share
    */
   async deleteShare(shareId) {
-    console.log('[SyncStore] Delete share (not implemented)');
-    return { success: true };
+    try {
+      // Get API URL based on environment
+      const getShareApiUrl = () => {
+        if (__DEV__ && (Platform.OS === 'ios' || Platform.OS === 'android')) {
+          return 'https://stackmap.app/qual/api/sync';
+        }
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          const pathname = window.location.pathname;
+          if (pathname.includes('/qual/')) {
+            return 'https://stackmap.app/qual/api/sync';
+          }
+        }
+        return 'https://stackmap.app/api/sync';
+      };
+
+      const SHARE_API_URL = getShareApiUrl();
+      const deleteUrl = `${SHARE_API_URL}/delete_share.php`;
+      
+      const response = await fetch(deleteUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          share_id: shareId,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        console.error('Server error deleting share:', result);
+        // Continue to remove from local storage even if server fails
+      }
+
+      // Then remove from local storage
+      const stored = await AsyncStorage.getItem('@stackmap_shares');
+      const shares = stored ? JSON.parse(stored) : [];
+      const filtered = shares.filter(share => share.shareId !== shareId);
+      await AsyncStorage.setItem('@stackmap_shares', JSON.stringify(filtered));
+
+      return true;
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Failed to delete share:', error);
+      }
+      throw error;
+    }
   }
 
   /**
-   * Get active shares (stub)
+   * Get active shares
    */
   async getActiveShares(userId) {
-    console.log('[SyncStore] Get active shares (not implemented)');
-    return [];
+    try {
+      const stored = await AsyncStorage.getItem('@stackmap_shares');
+      if (!stored) return [];
+      
+      const shares = JSON.parse(stored);
+      const now = new Date();
+      
+      // Process shares to mark as idle if expired but within grace period
+      const processedShares = shares.map(share => {
+        const expiryDate = new Date(share.expiresAt);
+        const gracePeriodEnd = new Date(expiryDate.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days grace
+        
+        if (expiryDate < now && gracePeriodEnd > now) {
+          // Mark as idle if expired but within grace period
+          return { ...share, status: 'idle' };
+        } else if (expiryDate >= now) {
+          // Still active
+          return { ...share, status: 'active' };
+        }
+        // Return null for shares past grace period
+        return null;
+      });
+      
+      // Filter out null entries (shares past grace period) and filter by userId if provided
+      const validShares = processedShares.filter(share => share !== null);
+      
+      if (userId) {
+        return validShares.filter(share => share.userId === userId);
+      }
+      
+      return validShares;
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Failed to get active shares:', error);
+      }
+      return [];
+    }
   }
 
   /**
