@@ -13,6 +13,7 @@ import {
   StatusBar,
   ActivityIndicator,
   Alert,
+  Modal,
 } from 'react-native';
 import DeferredStorage from '../../utils/deferredStorage';
 import { DEFAULT_USER_ICON } from '../../constants';
@@ -82,7 +83,7 @@ const OnboardingUserCentered = ({
   const [syncPreviewData, setSyncPreviewData] = useState(null);
   const [generatedSyncCode, setGeneratedSyncCode] = useState('');
   const [showCopiedToast, setShowCopiedToast] = useState(false);
-  // Test component state removed - no longer needed
+  const [showSyncDebugger, setShowSyncDebugger] = useState(false);
 
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -804,7 +805,7 @@ const OnboardingUserCentered = ({
         This helps us customize your experience
       </Text>
       
-      {/* iOS Encryption Test Button (Dev Only) */}
+      {/* iOS Debug Button (Dev Only) */}
       {__DEV__ && Platform.OS === 'ios' && (
         <TouchableOpacity
           style={{
@@ -816,13 +817,9 @@ const OnboardingUserCentered = ({
             borderRadius: 5,
             zIndex: 1000,
           }}
-          onPress={async () => {
-            Alert.alert('Running iOS Encryption Test...');
-            const simpleEncryption = require('../../services/sync/encryptionServiceSimple').default;
-            await simpleEncryption.runAllTests();
-          }}
+          onPress={() => setShowSyncDebugger(true)}
         >
-          <Text style={{ color: 'white', fontWeight: 'bold' }}>Test Encryption</Text>
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>Debug Sync</Text>
         </TouchableOpacity>
       )}
       
@@ -1362,6 +1359,21 @@ const OnboardingUserCentered = ({
           </Animated.View>
         </SafeAreaView>
       </ScrollView>
+
+      {/* Sync Debugger Modal */}
+      {showSyncDebugger && (
+        <Modal
+          animationType="slide"
+          transparent={false}
+          visible={showSyncDebugger}
+          onRequestClose={() => setShowSyncDebugger(false)}
+        >
+          {(() => {
+            const SyncDebugger = require('../SyncDebugger').default;
+            return <SyncDebugger onClose={() => setShowSyncDebugger(false)} />;
+          })()}
+        </Modal>
+      )}
     </KeyboardAvoidingView>
   );
 };
