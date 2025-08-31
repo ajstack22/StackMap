@@ -312,21 +312,31 @@ class EncryptionService {
               // Skip metadata and try to parse the data directly
               const dataBytes = decrypted.slice(4 + metadataLength);
               if (dataBytes.length > 0) {
-                try {
-                  const dataStr = decodeUTF8(dataBytes);
-                  return JSON.parse(dataStr);
-                } catch (e) {
-                  // If that doesn't work, try decompressing first
+                // Check for compression signature (zlib: 0x78 0x9C or 0x78 0xDA)
+                const isCompressed = dataBytes.length > 2 && 
+                  dataBytes[0] === 0x78 && 
+                  (dataBytes[1] === 0x9C || dataBytes[1] === 0xDA || dataBytes[1] === 0x5E || dataBytes[1] === 0x01);
+                
+                if (isCompressed) {
+                  console.log('[DECRYPTION] Data appears compressed (zlib header detected)');
                   try {
                     const decompressed = pako.inflate(dataBytes);
                     const dataStr = decodeUTF8(decompressed);
                     return JSON.parse(dataStr);
-                  } catch (e2) {
-                    console.log('[DECRYPTION] Could not parse data after empty metadata');
+                  } catch (e) {
+                    console.error('[DECRYPTION] Decompression failed:', e);
+                  }
+                } else {
+                  // Try uncompressed
+                  try {
+                    const dataStr = decodeUTF8(dataBytes);
+                    return JSON.parse(dataStr);
+                  } catch (e) {
+                    console.error('[DECRYPTION] Direct parse failed:', e);
                   }
                 }
               }
-              throw new Error('Empty metadata');
+              throw new Error('Empty metadata with unparseable data');
             }
             
             const metadata: EncryptionMetadata = JSON.parse(
