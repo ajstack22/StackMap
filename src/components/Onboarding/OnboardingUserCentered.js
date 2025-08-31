@@ -805,23 +805,23 @@ const OnboardingUserCentered = ({
         This helps us customize your experience
       </Text>
       
-      {/* iOS Debug Button (Dev Only) */}
-      {__DEV__ && Platform.OS === 'ios' && (
-        <TouchableOpacity
-          style={{
-            position: 'absolute',
-            top: 10,
-            right: 10,
-            backgroundColor: '#ff6b6b',
-            padding: 10,
-            borderRadius: 5,
-            zIndex: 1000,
-          }}
-          onPress={() => setShowSyncDebugger(true)}
-        >
-          <Text style={{ color: 'white', fontWeight: 'bold' }}>Debug Sync</Text>
-        </TouchableOpacity>
-      )}
+      {/* Debug Button - Always visible for testing */}
+      <TouchableOpacity
+        style={{
+          position: 'absolute',
+          top: 10,
+          right: 10,
+          backgroundColor: '#ff6b6b',
+          padding: 10,
+          borderRadius: 5,
+          zIndex: 1000,
+        }}
+        onPress={() => setShowSyncDebugger(true)}
+      >
+        <Text style={{ color: 'white', fontWeight: 'bold' }}>
+          Debug ({Platform.OS})
+        </Text>
+      </TouchableOpacity>
       
       <View style={styles.optionsContainer}>
         <TouchableOpacity
