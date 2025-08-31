@@ -214,12 +214,10 @@ class EncryptionService {
         }
       } catch (error) {
         if (__DEV__) {
-          if (__DEV__) {
-            console.warn(
-          '[ENCRYPTION] Compression failed, using uncompressed data:',
-          error,
-        );
-          }
+          console.warn(
+            '[ENCRYPTION] Compression failed, using uncompressed data:',
+            error,
+          );
         }
       }
     }
