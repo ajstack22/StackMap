@@ -674,6 +674,24 @@ const OnboardingUserCentered = ({
   // Step Render Functions (not components to avoid recreation)
   const renderWelcomeStep = () => (
     <View style={styles.stepContainer}>
+      {/* Debug Button - Always visible for testing */}
+      <TouchableOpacity
+        style={{
+          position: 'absolute',
+          top: 10,
+          right: 10,
+          backgroundColor: '#ff6b6b',
+          padding: 10,
+          borderRadius: 5,
+          zIndex: 1000,
+        }}
+        onPress={() => setShowSyncDebugger(true)}
+      >
+        <Text style={{ color: 'white', fontWeight: 'bold' }}>
+          Debug ({Platform.OS})
+        </Text>
+      </TouchableOpacity>
+      
       {/* Test components section removed */}
       <>
           <View style={styles.logoSection}>
