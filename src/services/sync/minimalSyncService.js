@@ -479,13 +479,8 @@ class MinimalSyncService {
           console.log('[MinimalSync] ⚠️ Sync group exists but no data yet, trying direct pull...');
           
           // Try pulling with since=0 to get all records
-          // Properly encode URL parameters
-          const pullParams = new URLSearchParams({
-            sync_id: this.syncId,
-            device_id: this.deviceId,
-            since: '0'
-          });
-          const pullUrl = `${this.API_BASE}/pull_timestamp.php?${pullParams.toString()}`;
+          // Encode parameters individually for React Native compatibility
+          const pullUrl = `${this.API_BASE}/pull_timestamp.php?sync_id=${encodeURIComponent(this.syncId)}&device_id=${encodeURIComponent(this.deviceId)}&since=0`;
           console.log('[MinimalSync] 📥 Attempting direct pull from:', pullUrl);
           
           const pullResponse = await fetch(pullUrl);
@@ -707,6 +702,15 @@ class MinimalSyncService {
       return { success: false, error: 'No device ID' };
     }
     
+    // Additional validation to prevent encoding issues
+    if (typeof this.syncId !== 'string' || typeof this.deviceId !== 'string') {
+      console.error('[MinimalSync] ❌ Invalid sync ID or device ID type:', {
+        syncIdType: typeof this.syncId,
+        deviceIdType: typeof this.deviceId
+      });
+      return { success: false, error: 'Invalid sync ID or device ID format' };
+    }
+    
     // Get the last timestamp and current local data
     let lastTimestamp = 0;
     let localData = null;
@@ -736,13 +740,8 @@ class MinimalSyncService {
     
     try {
       // Use timestamp endpoint - pull changes since last timestamp
-      // Properly encode URL parameters to avoid "Malformed decodeURI input" errors
-      const params = new URLSearchParams({
-        sync_id: this.syncId,
-        device_id: this.deviceId,
-        since: lastTimestamp.toString()
-      });
-      const url = `${this.API_BASE}/pull_timestamp.php?${params.toString()}`;
+      // Encode parameters individually for React Native compatibility
+      const url = `${this.API_BASE}/pull_timestamp.php?sync_id=${encodeURIComponent(this.syncId)}&device_id=${encodeURIComponent(this.deviceId)}&since=${lastTimestamp}`;
       console.log('[MinimalSync] 🌐 Pulling from:', url);
       
       const response = await fetch(url);

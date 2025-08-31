@@ -226,7 +226,8 @@ const OnboardingUserCentered = ({
         attempts++;
         console.log(`[OnboardingSync] Pull attempt ${attempts}/${maxAttempts}`);
         
-        pullResult = await minimalSync.pullData();
+        // Force full pull for onboarding preview (as per SYNC_SYSTEM_COMPLETE.md)
+        pullResult = await minimalSync.pullData(true);
         
         // The new minimalSync returns { success: boolean, data: decryptedData }
         if (!pullResult || !pullResult.success || !pullResult.data) {
