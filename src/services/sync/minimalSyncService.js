@@ -736,14 +736,46 @@ class MinimalSyncService {
     
     try {
       // Use timestamp endpoint - pull changes since last timestamp
+      // Ensure all values are valid strings before URL construction
+      if (!this.syncId || !this.deviceId) {
+        console.error('[MinimalSync] ❌ Missing required IDs:', {
+          syncId: this.syncId,
+          deviceId: this.deviceId
+        });
+        return { success: false, error: 'Missing sync ID or device ID' };
+      }
+      
       // Simple URL construction without encoding (hex IDs don't need it)
       const url = `${this.API_BASE}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=${lastTimestamp}`;
       console.log('[MinimalSync] 🌐 Pulling from:', url);
       
       const response = await fetch(url);
-      const responseText = await response.text();
-      console.log('[MinimalSync] 📡 Raw pull response:', responseText);
-      console.log('[MinimalSync] 📡 Response length:', responseText.length, 'bytes');
+      
+      // Try to get response text - iOS might have issues with certain encodings
+      let responseText;
+      try {
+        responseText = await response.text();
+        console.log('[MinimalSync] 📡 Raw pull response:', responseText);
+        console.log('[MinimalSync] 📡 Response length:', responseText.length, 'bytes');
+      } catch (textError) {
+        console.error('[MinimalSync] ❌ Error reading response text:', textError);
+        console.error('[MinimalSync] ❌ Response status:', response.status);
+        console.error('[MinimalSync] ❌ Response headers:', response.headers);
+        
+        // Try to get response as blob then convert to text
+        try {
+          const blob = await response.blob();
+          responseText = await blob.text();
+          console.log('[MinimalSync] 📡 Got response via blob:', responseText.substring(0, 100));
+        } catch (blobError) {
+          console.error('[MinimalSync] ❌ Blob fallback also failed:', blobError);
+          return {
+            success: false,
+            error: `Failed to read response: ${textError.message}`,
+            responseStatus: response.status
+          };
+        }
+      }
       
       // Check if response looks like JSON before parsing
       if (!responseText || (!responseText.startsWith('{') && !responseText.startsWith('['))) {
