@@ -484,9 +484,12 @@ class SyncStoreIntegration {
     if (result.success) {
       console.log('[SyncStore] ✅ Joined sync successfully');
       
-      // Apply the received data (conflict resolution will handle merging)
+      // IMPORTANT: When joining a sync, we completely replace local data
+      // with remote data - no merging. This is intentional to ensure
+      // the device fully adopts the sync group's state.
       if (result.data) {
-        await this.handleDataReceived(result.data);
+        console.log('[SyncStore] 📥 Replacing local data with sync group data (no merge)');
+        await this.applyState(result.data);
       }
       
       // Enable periodic sync

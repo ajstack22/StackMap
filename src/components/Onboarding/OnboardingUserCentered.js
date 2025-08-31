@@ -20,6 +20,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Logo from '../Logo/Logo';
 import syncService from '../../services/sync';
+import minimalSync from '../../services/sync/minimalSyncService';
 import encryptionService from '../../services/sync/encryptionService';
 import { BUILD_VERSION } from '../../utils/version';
 import { useAppStore, useUserStore } from '../../stores';
@@ -209,28 +210,31 @@ const OnboardingUserCentered = ({
       }
 
       console.log('[OnboardingSync] Initializing sync for preview...');
-      const syncId = await syncService.generateSyncId(phraseToUse);
-      const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
-      await encryptionService.initialize(phraseToUse, syncId, fixedSalt);
-      syncService.syncId = syncId; // Temporarily set for pullData
+      const syncId = await minimalSync.generateSyncId(phraseToUse);
+      
+      // Initialize encryption properly for onboarding preview
+      // This ensures device ID is set and encryption is ready
+      await minimalSync.initializeEncryption(phraseToUse, syncId);
+      console.log('[OnboardingSync] Encryption initialized with sync ID:', syncId);
 
       // Try pulling with retries for race conditions
       let pullResult = null;
       let attempts = 0;
       const maxAttempts = 3;
       
-      while (!pullResult && attempts < maxAttempts) {
+      while (!pullResult?.data && attempts < maxAttempts) {
         attempts++;
         console.log(`[OnboardingSync] Pull attempt ${attempts}/${maxAttempts}`);
         
-        pullResult = await syncService.pullData();
+        pullResult = await minimalSync.pullData();
         
-        if (!pullResult || !pullResult.encrypted_blob) {
+        // The new minimalSync returns { success: boolean, data: decryptedData }
+        if (!pullResult || !pullResult.success || !pullResult.data) {
           console.warn(`[OnboardingSync] Pull attempt ${attempts} returned:`, {
             hasResult: !!pullResult,
-            hasBlob: !!(pullResult?.encrypted_blob),
-            status: pullResult?.success,
-            message: pullResult?.message
+            success: pullResult?.success,
+            hasData: !!(pullResult?.data),
+            error: pullResult?.error
           });
           
           if (attempts < maxAttempts) {
@@ -243,7 +247,7 @@ const OnboardingUserCentered = ({
 
       if (!pullResult || !pullResult.success) {
         console.error('[OnboardingSync] Failed to get sync data after', attempts, 'attempts');
-        throw new Error('Failed to connect to sync group.');
+        throw new Error(pullResult?.error || 'Failed to connect to sync group.');
       }
       
       if (!pullResult.data) {
