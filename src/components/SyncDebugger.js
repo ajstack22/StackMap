@@ -163,17 +163,34 @@ const SyncDebugger = ({ onClose }) => {
         log(`Stack: ${e.stack}`);
       }
 
-      // Test 6: Sync ID Generation Test
-      log('\n--- Test 6: Sync ID Generation ---');
+      // Test 6: Sync ID Generation Test - CRITICAL
+      log('\n--- Test 6: CRITICAL SYNC ID TEST ---');
       try {
         const minimalSync = require('../services/sync/minimalSyncService').default;
         const testPhrase = '45530ecc83f2d5c304f041e37906e3b0';
+        
+        // Initialize minimalSync if needed
+        if (!minimalSync.API_BASE) {
+          minimalSync.API_BASE = 'https://stackmap.app/qual/api/sync';
+        }
+        
         const generatedId = await minimalSync.generateSyncId(testPhrase);
-        log(`Test phrase: ${testPhrase}`);
-        log(`Generated sync ID: ${generatedId}`);
-        log(`Expected sync ID should be consistent across platforms`);
+        log(`PHRASE: ${testPhrase}`);
+        log(`GENERATED ID: ${generatedId || 'NULL/UNDEFINED'}`);
+        log(`API BASE: ${minimalSync.API_BASE}`);
+        
+        // Also test direct key derivation
+        const encService = require('../services/sync/encryptionServiceFixed').default;
+        const fixedSalt = 'U3luY0lkU2FsdDEyMzQ1Njc4OTAxMjM0NQ==';
+        const { key } = await encService.deriveKeyFromPhrase(testPhrase, fixedSalt);
+        const syncIdBytes = key.slice(0, 16);
+        const directId = Array.from(syncIdBytes, byte =>
+          byte.toString(16).padStart(2, '0')
+        ).join('');
+        log(`DIRECT DERIVATION: ${directId}`);
       } catch (e) {
-        log(`Sync ID generation error: ${e.message}`);
+        log(`CRITICAL ERROR: ${e.message}`);
+        log(`Stack: ${e.stack}`);
       }
       
       // Test 7: Network test - try to fetch actual sync data
@@ -281,6 +298,61 @@ const SyncDebugger = ({ onClose }) => {
             Clear Sync Data
           </Text>
         </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.button, styles.testButton]} 
+          onPress={async () => {
+            try {
+              const minimalSync = require('../services/sync/minimalSyncService').default;
+              const encService = require('../services/sync/encryptionServiceFixed').default;
+              const testPhrase = '45530ecc83f2d5c304f041e37906e3b0';
+              
+              // Generate sync ID
+              const id = await minimalSync.generateSyncId(testPhrase);
+              
+              // Also do direct derivation for comparison
+              const fixedSalt = 'U3luY0lkU2FsdDEyMzQ1Njc4OTAxMjM0NQ==';
+              const { key } = await encService.deriveKeyFromPhrase(testPhrase, fixedSalt);
+              const syncIdBytes = key.slice(0, 16);
+              const directId = Array.from(syncIdBytes, byte =>
+                byte.toString(16).padStart(2, '0')
+              ).join('');
+              
+              // Test server connection
+              let serverTest = 'Not tested';
+              try {
+                const testUrl = `https://stackmap.app/qual/api/sync/pull_timestamp.php?sync_id=${id || directId}&device_id=test&since=0`;
+                const response = await fetch(testUrl);
+                const data = await response.json();
+                serverTest = data.success ? `✅ Success (${data.records ? data.records.length : 0} records)` : `❌ Failed: ${data.message || 'Unknown error'}`;
+              } catch (e) {
+                serverTest = `Network error: ${e.message}`;
+              }
+              
+              Alert.alert(
+                'Sync ID Test Results',
+                `Recovery Phrase:\n${testPhrase}\n\n` +
+                `Generated ID:\n${id || 'NULL/UNDEFINED'}\n\n` +
+                `Direct Derivation:\n${directId}\n\n` +
+                `IDs Match: ${id === directId ? '✅ YES' : '❌ NO'}\n\n` +
+                `Server Test:\n${serverTest}`,
+                [
+                  { text: 'Copy Results', onPress: () => {
+                    const results = `Phrase: ${testPhrase}\nGenerated: ${id || 'NULL'}\nDirect: ${directId}\nMatch: ${id === directId}\nServer: ${serverTest}`;
+                    Clipboard.setString(results);
+                  }},
+                  { text: 'OK' }
+                ]
+              );
+            } catch (error) {
+              Alert.alert('Error', `Test failed: ${error.message}`);
+            }
+          }}
+        >
+          <Text style={styles.buttonText}>
+            Test Sync ID
+          </Text>
+        </TouchableOpacity>
       </View>
       
       <ScrollView style={styles.results}>
@@ -340,6 +412,9 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     backgroundColor: '#ff6b6b',
+  },
+  testButton: {
+    backgroundColor: '#9b59b6',
   },
   buttonDisabled: {
     backgroundColor: '#ccc',

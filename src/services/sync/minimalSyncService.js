@@ -79,6 +79,10 @@ class MinimalSyncService {
       // __DEV__ is true in debug builds, false in release builds
       const isDevelopment = typeof __DEV__ !== 'undefined' ? __DEV__ : false;
       
+      console.log('[MinimalSync] Platform detected:', Platform.OS);
+      console.log('[MinimalSync] __DEV__ value:', __DEV__);
+      console.log('[MinimalSync] isDevelopment:', isDevelopment);
+      
       if (Platform.OS === 'ios' || Platform.OS === 'android') {
         if (isDevelopment) {
           // Development/Debug builds use QUAL
@@ -223,12 +227,27 @@ class MinimalSyncService {
    * Generate sync ID from recovery phrase (same as existing sync)
    */
   async generateSyncId(recoveryPhrase) {
+    console.log('[MinimalSync] generateSyncId called with phrase:', recoveryPhrase);
+    console.log('[MinimalSync] Platform:', Platform.OS);
+    
     const fixedSalt = 'U3luY0lkU2FsdDEyMzQ1Njc4OTAxMjM0NQ==';
+    console.log('[MinimalSync] Using fixed salt:', fixedSalt);
+    
     const { key } = await encryptionService.deriveKeyFromPhrase(recoveryPhrase, fixedSalt);
+    console.log('[MinimalSync] Derived key type:', typeof key);
+    console.log('[MinimalSync] Derived key length:', key ? key.length : 'null');
+    console.log('[MinimalSync] First 4 bytes of key:', key ? Array.from(key.slice(0, 4)) : 'null');
+    
     const syncIdBytes = key.slice(0, 16);
+    console.log('[MinimalSync] Sync ID bytes:', Array.from(syncIdBytes));
+    
     const syncId = Array.from(syncIdBytes, byte =>
       byte.toString(16).padStart(2, '0')
     ).join('');
+    
+    console.log('[MinimalSync] Generated sync ID:', syncId);
+    console.log('[MinimalSync] API BASE:', this.API_BASE);
+    
     return syncId;
   }
 
