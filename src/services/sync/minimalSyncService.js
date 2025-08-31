@@ -467,8 +467,11 @@ class MinimalSyncService {
           console.log('[MinimalSync] ⚠️ Sync group exists but no data yet, trying direct pull...');
           
           // Try pulling with since=0 to get all records
-          // Simple URL construction like in the working test UI
-          const pullUrl = `${this.API_BASE}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=0`;
+          // Manual URL construction to avoid iOS template literal issues
+          const pullUrl = this.API_BASE + '/pull_timestamp.php' + 
+                         '?sync_id=' + String(this.syncId || '') + 
+                         '&device_id=' + String(this.deviceId || '') + 
+                         '&since=0';
           console.log('[MinimalSync] 📥 Attempting direct pull from:', pullUrl);
           
           const pullResponse = await fetch(pullUrl);
@@ -756,7 +759,18 @@ class MinimalSyncService {
         timestampType: typeof lastTimestamp
       });
       
-      const url = `${this.API_BASE}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=${lastTimestamp}`;
+      // Build URL carefully to avoid iOS issues
+      // Ensure all values are strings and not undefined
+      const syncIdStr = String(this.syncId || '');
+      const deviceIdStr = String(this.deviceId || '');
+      const timestampStr = String(lastTimestamp || 0);
+      
+      // Manual URL construction to avoid template literal issues on iOS
+      const url = this.API_BASE + '/pull_timestamp.php' + 
+                  '?sync_id=' + syncIdStr + 
+                  '&device_id=' + deviceIdStr + 
+                  '&since=' + timestampStr;
+      
       console.log('[MinimalSync] 🌐 Pulling from:', url);
       console.log('[MinimalSync] 🌐 URL length:', url.length);
       
