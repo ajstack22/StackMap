@@ -872,40 +872,16 @@ class MinimalSyncService {
       }
       
       if (result.success && result.records && result.records.length > 0) {
-        // Try to decrypt records starting from the latest
-        let remoteData = null;
-        let successfulRecord = null; // Track which record was successfully decrypted
+        // Get the latest record
+        const latest = result.records[result.records.length - 1];
+        console.log('[MinimalSync] 🔐 Decrypting latest record from:', new Date(latest.timestamp).toISOString());
         
-        // Try the latest few records in case some are corrupted
-        const recordsToTry = result.records.slice(-3).reverse(); // Try last 3 records, newest first
-        
-        for (const record of recordsToTry) {
-          try {
-            console.log('[MinimalSync] 🔐 Trying to decrypt record from:', new Date(record.timestamp).toISOString());
-            
-            if (!record.encrypted_blob) {
-              console.log('[MinimalSync] ⚠️ Record has no encrypted blob, skipping');
-              continue;
-            }
-            
-            remoteData = encryptionService.decryptData(record.encrypted_blob);
-            successfulRecord = record;
-            console.log('[MinimalSync] ✅ Successfully decrypted record from:', new Date(record.timestamp).toISOString());
-            break; // Success, stop trying
-            
-          } catch (decryptError) {
-            console.warn('[MinimalSync] ⚠️ Failed to decrypt record:', {
-              timestamp: new Date(record.timestamp).toISOString(),
-              error: decryptError.message
-            });
-            // Continue to try next record
-          }
+        if (!latest.encrypted_blob) {
+          throw new Error('No encrypted blob in record');
         }
         
-        if (!remoteData) {
-          console.error('[MinimalSync] ❌ Could not decrypt any records');
-          throw new Error('Failed to decrypt sync data - all records appear corrupted');
-        }
+        const remoteData = encryptionService.decryptData(latest.encrypted_blob);
+        console.log('[MinimalSync] ✅ Decryption successful');
         
         console.log('[MinimalSync] 📦 Remote data received:', {
           isNull: remoteData === null,
@@ -944,7 +920,7 @@ class MinimalSyncService {
         // Store the merged result
         const dataToStore = {
           syncId: this.syncId,
-          timestamp: successfulRecord.timestamp,
+          timestamp: latest.timestamp,
           data: finalData
         };
         
@@ -958,7 +934,7 @@ class MinimalSyncService {
         return { 
           success: true, 
           data: finalData,
-          timestamp: successfulRecord.timestamp,
+          timestamp: latest.timestamp,
           hadConflicts: localData !== null,
           mergeLog: conflictResolver.getMergeLog()
         };
