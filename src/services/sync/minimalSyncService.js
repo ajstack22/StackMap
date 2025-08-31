@@ -43,15 +43,24 @@ class MinimalSyncService {
     
     // Determine API URL based on environment
     if (typeof window !== 'undefined' && window.location) {
-      // Web environment
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        // Local development - use relative URL to go through webpack proxy
-        this.API_BASE = '/api/sync';
-      } else if (window.location.href.includes('/qual/') || window.location.href.includes('qual.')) {
-        // QUAL environment - check for /qual/ in URL or qual subdomain
-        this.API_BASE = 'https://stackmap.app/qual/api/sync';
-      } else {
-        // Production
+      // Web environment - safely access location properties
+      try {
+        const hostname = window.location.hostname || '';
+        const href = window.location.href || '';
+        
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+          // Local development - use relative URL to go through webpack proxy
+          this.API_BASE = '/api/sync';
+        } else if (href.includes('/qual/') || href.includes('qual.')) {
+          // QUAL environment - check for /qual/ in URL or qual subdomain
+          this.API_BASE = 'https://stackmap.app/qual/api/sync';
+        } else {
+          // Production
+          this.API_BASE = 'https://stackmap.app/api/sync';
+        }
+      } catch (e) {
+        // Fallback if window.location access fails
+        console.log('[MinimalSync] Error accessing window.location:', e);
         this.API_BASE = 'https://stackmap.app/api/sync';
       }
     } else {
