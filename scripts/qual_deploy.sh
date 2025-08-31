@@ -389,18 +389,26 @@ if [ "$DEPLOY_ANDROID" = true ]; then
     # Install on connected devices
     DEVICES=$(adb devices 2>/dev/null | grep -E "device$|emulator" | cut -f1)
     if [ ! -z "$DEVICES" ]; then
+        echo "Found Android devices:"
         for DEVICE in $DEVICES; do
-            if [[ $DEVICE != emulator-* ]]; then
-                echo "Installing on physical device $DEVICE..."
-                adb -s $DEVICE install -r android/app/build/outputs/apk/debug/app-debug.apk 2>/dev/null || {
-                    adb -s $DEVICE uninstall com.stackmap 2>/dev/null || true
-                    adb -s $DEVICE install android/app/build/outputs/apk/debug/app-debug.apk
-                }
-            else
-                echo "Reloading Metro on emulator $DEVICE..."
-                adb -s $DEVICE shell input text "RR" 2>/dev/null || true
-            fi
+            # Get device model name
+            MODEL=$(adb -s $DEVICE shell getprop ro.product.model 2>/dev/null | tr -d '\r')
+            echo "  - $DEVICE ($MODEL)"
         done
+        echo ""
+        
+        for DEVICE in $DEVICES; do
+            MODEL=$(adb -s $DEVICE shell getprop ro.product.model 2>/dev/null | tr -d '\r')
+            echo "📱 Installing on $MODEL ($DEVICE)..."
+            adb -s $DEVICE install -r android/app/build/outputs/apk/debug/app-debug.apk 2>/dev/null || {
+                echo "  Uninstalling old version first..."
+                adb -s $DEVICE uninstall com.stackmap 2>/dev/null || true
+                adb -s $DEVICE install android/app/build/outputs/apk/debug/app-debug.apk
+            }
+            echo "  ✅ Installed on $MODEL"
+        done
+    else
+        echo "⚠️  No Android devices connected"
     fi
     
     DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n✅ Android: v$NEW_VERSION"
@@ -422,9 +430,17 @@ if [ "$DEPLOY_IOS" = true ] || [ "$DEPLOY_IOS_DEVICE" = true ]; then
         npx react-native run-ios --device || echo "⚠️  iOS device build failed"
         DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n✅ iOS Device: v$NEW_VERSION"
     else
-        echo "Building for iOS simulator..."
-        npx react-native run-ios --simulator="iPhone 16 Pro Max" || echo "⚠️  iOS simulator build failed"
-        DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n✅ iOS Simulator: v$NEW_VERSION"
+        echo "Building for iOS simulators..."
+        
+        # Deploy to iPhone 16 Pro Max
+        echo "📱 Deploying to iPhone 16 Pro Max..."
+        npx react-native run-ios --simulator="iPhone 16 Pro Max" || echo "⚠️  iPhone build failed"
+        
+        # Deploy to iPad Pro 11-inch (M4)
+        echo "📱 Deploying to iPad Pro 11-inch..."
+        npx react-native run-ios --simulator="iPad Pro 11-inch (M4)" || echo "⚠️  iPad build failed"
+        
+        DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n✅ iOS Simulators: v$NEW_VERSION (iPhone & iPad)"
     fi
     
     echo "✅ iOS deployment complete"
