@@ -11,7 +11,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import minimalSync from './minimalSyncService';
 import conflictResolver from './conflictResolver';
-import encryptionService from './encryptionService';
+// Use fixed encryption service that works on iOS
+import encryptionService from './encryptionServiceFixed';
 import { useUserStore, useSettingsStore, useLibraryStore } from '../../stores';
 import { normalizeSyncData } from '../../utils/dataNormalizer';
 import nacl from 'tweetnacl';

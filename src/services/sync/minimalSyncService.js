@@ -16,7 +16,8 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import conflictResolver from './conflictResolver';
-import encryptionService from './encryptionService';
+// Use fixed encryption service that works on iOS
+import encryptionService from './encryptionServiceFixed';
 
 class MinimalSyncService {
   constructor() {
