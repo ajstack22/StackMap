@@ -262,6 +262,16 @@ class EncryptionService {
     }
 
     try {
+      // Validate input
+      if (typeof encryptedData !== 'string') {
+        console.error('[DECRYPTION] Invalid input type:', typeof encryptedData);
+        throw new Error(`Expected string but got ${typeof encryptedData}`);
+      }
+      
+      if (!encryptedData) {
+        throw new Error('Empty encrypted data');
+      }
+      
       const combined = decodeBase64(encryptedData);
 
       // Extract nonce and encrypted data

@@ -879,6 +879,14 @@ class MinimalSyncService {
         
         let remoteData;
         try {
+          // Debug what we're trying to decrypt
+          console.log('[MinimalSync] 🔐 Encrypted blob type:', typeof latest.encrypted_blob);
+          console.log('[MinimalSync] 🔐 Encrypted blob value:', latest.encrypted_blob ? 'exists' : 'null/undefined');
+          
+          if (!latest.encrypted_blob) {
+            throw new Error('No encrypted blob in record');
+          }
+          
           remoteData = encryptionService.decryptData(latest.encrypted_blob);
           console.log('[MinimalSync] ✅ Decryption successful');
         } catch (decryptError) {
