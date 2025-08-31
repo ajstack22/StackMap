@@ -15,6 +15,7 @@ import {
   Animated,
   ActivityIndicator,
   AppState,
+  Modal,
 } from 'react-native';
 
 // Disable console logs on Android for performance
@@ -117,6 +118,7 @@ import OnboardingUserCentered from './src/components/Onboarding/OnboardingUserCe
 // SyncDiagnostic removed - test component no longer needed
 import ShareView from './src/components/ShareView/ShareView';
 import PinModal from './src/components/Modals/PinModal';
+import TestEncryption from './src/components/TestEncryption';
 import { STACKMAP_LIBRARY } from './src/constants/stackMapLibrary';
 
 // Component imports verified - all components are properly imported
@@ -286,6 +288,7 @@ const App = () => {
   const [syncPreviewPhrase, setSyncPreviewPhrase] = useState(null);
   const [showOnboardingImport, setShowOnboardingImport] = useState(false);
   const [onboardingImportData, setOnboardingImportData] = useState(null);
+  const [showTestEncryption, setShowTestEncryption] = useState(false);
 
   // Screen dimensions state
   const [screenDimensions, setScreenDimensions] = useState(() => {
@@ -5062,7 +5065,12 @@ Users: ${userNames} (${userCount} total)
             setShowUserModal(true);
           }}
           onLongPress={() => {
-            setShowUserModal(true);
+            // On iOS, long press triggers encryption test
+            if (Platform.OS === 'ios' && __DEV__) {
+              setShowTestEncryption(true);
+            } else {
+              setShowUserModal(true);
+            }
           }}
           position={{ bottom: fabBottom, top: fabTop, left: 20, zIndex: 10000, elevation: 200 }}
           theme={theme}
@@ -5780,6 +5788,31 @@ Users: ${userNames} (${userCount} total)
           showToast={showToast}
           theme={theme}
         />
+
+        {/* Test Encryption Modal (iOS debugging) */}
+        {showTestEncryption && (
+          <Modal
+            animationType="slide"
+            transparent={false}
+            visible={showTestEncryption}
+            onRequestClose={() => setShowTestEncryption(false)}
+          >
+            <TestEncryption />
+            <TouchableOpacity
+              style={{
+                position: 'absolute',
+                top: 50,
+                right: 20,
+                padding: 10,
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                borderRadius: 20,
+              }}
+              onPress={() => setShowTestEncryption(false)}
+            >
+              <Text style={{ color: 'white', fontSize: 16 }}>✕</Text>
+            </TouchableOpacity>
+          </Modal>
+        )}
 
         {/* Data Modal - Available during onboarding for import */}
         <DataModal
