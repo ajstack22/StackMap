@@ -165,17 +165,15 @@ const SyncDebugger = ({ onClose }) => {
 
       // Test 6: Sync ID Generation Test
       log('\n--- Test 6: Sync ID Generation ---');
-      if (recoveryPhrase) {
-        try {
-          const minimalSync = require('../services/sync/minimalSyncService').default;
-          const testPhrase = '45530ecc83f2d5c304f041e37906e3b0';
-          const generatedId = await minimalSync.generateSyncId(testPhrase);
-          log(`Test phrase: ${testPhrase}`);
-          log(`Generated sync ID: ${generatedId}`);
-          log(`Expected sync ID should be consistent across platforms`);
-        } catch (e) {
-          log(`Sync ID generation error: ${e.message}`);
-        }
+      try {
+        const minimalSync = require('../services/sync/minimalSyncService').default;
+        const testPhrase = '45530ecc83f2d5c304f041e37906e3b0';
+        const generatedId = await minimalSync.generateSyncId(testPhrase);
+        log(`Test phrase: ${testPhrase}`);
+        log(`Generated sync ID: ${generatedId}`);
+        log(`Expected sync ID should be consistent across platforms`);
+      } catch (e) {
+        log(`Sync ID generation error: ${e.message}`);
       }
       
       // Test 7: Network test - try to fetch actual sync data
