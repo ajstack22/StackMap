@@ -750,12 +750,8 @@ class MinimalSyncService {
     
     try {
       // Use timestamp endpoint - pull changes since last timestamp
-      // Ensure all parts are strings to avoid URL construction issues
-      const syncIdStr = String(this.syncId || '');
-      const deviceIdStr = String(this.deviceId || '');
-      const sinceStr = String(lastTimestamp || 0);
-      
-      const url = `${this.API_BASE}/pull_timestamp.php?sync_id=${syncIdStr}&device_id=${deviceIdStr}&since=${sinceStr}`;
+      // Simple URL construction without encoding (hex IDs don't need it)
+      const url = `${this.API_BASE}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=${lastTimestamp}`;
       console.log('[MinimalSync] 🌐 Pulling from:', url);
       
       const response = await fetch(url);
