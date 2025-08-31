@@ -11,18 +11,19 @@ const util = require('tweetnacl-util');
 const encodeBase64 = (arr: Uint8Array): string => util.encodeBase64(arr);
 const decodeBase64 = (str: string): Uint8Array => util.decodeBase64(str);
 
-// UTF-8 encoding - use native TextEncoder/TextDecoder or polyfill
+// UTF-8 encoding - always use manual implementation on iOS to avoid issues
 let encodeUTF8: (str: string) => Uint8Array;
 let decodeUTF8: (arr: Uint8Array) => string;
 
-if (typeof TextEncoder !== 'undefined' && typeof TextDecoder !== 'undefined') {
-  // Use native TextEncoder/TextDecoder (works on iOS)
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-  encodeUTF8 = (str: string) => encoder.encode(str);
-  decodeUTF8 = (arr: Uint8Array) => decoder.decode(arr);
-} else {
-  // Fallback to manual UTF-8 encoding for older environments
+// Check platform and TextEncoder availability
+const hasNativeTextEncoder = typeof TextEncoder !== 'undefined' && typeof TextDecoder !== 'undefined';
+console.log('[EncryptionFixed] Platform:', Platform.OS);
+console.log('[EncryptionFixed] TextEncoder available:', hasNativeTextEncoder);
+
+// Always use manual UTF-8 on iOS due to compatibility issues
+if (Platform.OS === 'ios' || !hasNativeTextEncoder) {
+  console.log('[EncryptionFixed] Using manual UTF-8 implementation');
+  // Manual UTF-8 encoding that works reliably on all platforms
   encodeUTF8 = (str: string) => {
     const bytes: number[] = [];
     for (let i = 0; i < str.length; i++) {
@@ -84,6 +85,12 @@ if (typeof TextEncoder !== 'undefined' && typeof TextDecoder !== 'undefined') {
     }
     return result;
   };
+} else {
+  console.log('[EncryptionFixed] Using native TextEncoder/TextDecoder');
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+  encodeUTF8 = (str: string) => encoder.encode(str);
+  decodeUTF8 = (arr: Uint8Array) => decoder.decode(arr);
 }
 
 const ENCRYPTION_VERSION = 2;
@@ -260,6 +267,8 @@ class FixedEncryptionService {
     }
 
     try {
+      console.log('[EncryptionFixed] Starting decryption...');
+      
       // Validate input
       if (typeof encryptedData !== 'string') {
         throw new Error(`Expected string but got ${typeof encryptedData}`);
@@ -269,7 +278,9 @@ class FixedEncryptionService {
         throw new Error('Empty encrypted data');
       }
       
+      console.log('[EncryptionFixed] Input length:', encryptedData.length);
       const combined = decodeBase64(encryptedData);
+      console.log('[EncryptionFixed] Decoded bytes:', combined.length);
 
       // Extract nonce and encrypted data
       const nonce = combined.slice(0, nacl.secretbox.nonceLength);
@@ -290,12 +301,16 @@ class FixedEncryptionService {
           (decrypted[2] << 8) | 
           decrypted[3];
         
+        console.log('[EncryptionFixed] Metadata length:', metadataLength);
+        console.log('[EncryptionFixed] First 10 bytes:', Array.from(decrypted.slice(0, 10)));
+        
         if (metadataLength > 0 && metadataLength < decrypted.length - 4) {
           try {
             const metadataBytes = decrypted.slice(4, 4 + metadataLength);
-            const metadata: EncryptionMetadata = JSON.parse(
-              decodeUTF8(metadataBytes),
-            );
+            console.log('[EncryptionFixed] Metadata bytes:', Array.from(metadataBytes.slice(0, 20)));
+            const metadataStr = decodeUTF8(metadataBytes);
+            console.log('[EncryptionFixed] Metadata string:', metadataStr);
+            const metadata: EncryptionMetadata = JSON.parse(metadataStr);
             let dataBytes = decrypted.slice(4 + metadataLength);
 
             // Handle decompression if needed
