@@ -16,8 +16,8 @@ const encodeBase64 = (arr: Uint8Array): string =>
   (util as any).encodeBase64(arr);
 const decodeBase64 = (str: string): Uint8Array =>
   (util as any).decodeBase64(str);
-const encodeUTF8 = (arr: Uint8Array): string => (util as any).encodeUTF8(arr);
-const decodeUTF8 = (str: string): Uint8Array => (util as any).decodeUTF8(str);
+const encodeUTF8 = (str: string): Uint8Array => (util as any).encodeUTF8(str);
+const decodeUTF8 = (arr: Uint8Array): string => (util as any).decodeUTF8(arr);
 
 const ENCRYPTION_VERSION = 2; // Bumped for compression support
 const SALT_LENGTH = 16;
@@ -100,7 +100,7 @@ class EncryptionService {
     console.log('[Encryption] Deriving key (this may take a moment)...');
 
     // Simple key derivation (in production, use proper PBKDF2)
-    const phraseBytes = decodeUTF8(recoveryPhrase);
+    const phraseBytes = encodeUTF8(recoveryPhrase);
     const combined = new Uint8Array(phraseBytes.length + saltBytes.length);
     combined.set(phraseBytes);
     combined.set(saltBytes, phraseBytes.length);
@@ -196,7 +196,7 @@ class EncryptionService {
 
     // Convert data to bytes
     const dataStr = JSON.stringify(data);
-    let dataBytes = decodeUTF8(dataStr);
+    let dataBytes = encodeUTF8(dataStr);
 
     // Prepare metadata
     const metadata: EncryptionMetadata = {
@@ -225,7 +225,7 @@ class EncryptionService {
     }
 
     // Encode metadata
-    const metadataBytes = decodeUTF8(JSON.stringify(metadata));
+    const metadataBytes = encodeUTF8(JSON.stringify(metadata));
     const metadataLength = new Uint8Array(4);
     new DataView(metadataLength.buffer).setUint32(
       0,
@@ -285,7 +285,7 @@ class EncryptionService {
           try {
             const metadataBytes = decrypted.slice(4, 4 + metadataLength);
             const metadata: EncryptionMetadata = JSON.parse(
-              encodeUTF8(metadataBytes),
+              decodeUTF8(metadataBytes),
             );
             let dataBytes = decrypted.slice(4 + metadataLength);
 
@@ -303,14 +303,14 @@ class EncryptionService {
               }
             }
 
-            const dataStr = encodeUTF8(dataBytes);
+            const dataStr = decodeUTF8(dataBytes);
             return JSON.parse(dataStr);
           } catch (error) {}
         }
       }
 
       // Legacy format (no metadata)
-      const decryptedStr = encodeUTF8(decrypted);
+      const decryptedStr = decodeUTF8(decrypted);
       return JSON.parse(decryptedStr);
     } catch (error) {
       if (__DEV__) {
