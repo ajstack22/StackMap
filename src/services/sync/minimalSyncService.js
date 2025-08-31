@@ -216,13 +216,26 @@ class MinimalSyncService {
    * Generate sync ID from recovery phrase (same as existing sync)
    */
   async generateSyncId(recoveryPhrase) {
-    const fixedSalt = 'U3luY0lkU2FsdDEyMzQ1Njc4OTAxMjM0NQ==';
-    const { key } = await encryptionService.deriveKeyFromPhrase(recoveryPhrase, fixedSalt);
-    const syncIdBytes = key.slice(0, 16);
-    const syncId = Array.from(syncIdBytes, byte =>
-      byte.toString(16).padStart(2, '0')
-    ).join('');
-    return syncId;
+    // CRITICAL: Use crypto.pbkdf2 directly instead of encryptionService.deriveKeyFromPhrase
+    // The encryptionService uses nacl.hash which generates different results
+    const crypto = require('crypto');
+    const fixedSalt = Buffer.from('U3luY0lkU2FsdDEyMzQ1Njc4OTAxMjM0NQ==', 'base64');
+    const iterations = 100000;
+    const keyLength = 32;
+    
+    return new Promise((resolve, reject) => {
+      crypto.pbkdf2(recoveryPhrase, fixedSalt, iterations, keyLength, 'sha256', (err, derivedKey) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        const syncIdBytes = derivedKey.slice(0, 16);
+        const syncId = Array.from(syncIdBytes, byte =>
+          byte.toString(16).padStart(2, '0')
+        ).join('');
+        resolve(syncId);
+      });
+    });
   }
 
   /**
