@@ -169,23 +169,9 @@ class MinimalSyncService {
     }
   }
 
-  /**
-   * Safe base64 encoding that handles Unicode
-   */
-  encodeBase64(str) {
-    // Convert string to UTF-8, then to base64
-    const utf8 = unescape(encodeURIComponent(str));
-    return btoa(utf8);
-  }
-
-  /**
-   * Safe base64 decoding that handles Unicode
-   */
-  decodeBase64(str) {
-    // Decode from base64, then from UTF-8
-    const utf8 = atob(str);
-    return decodeURIComponent(escape(utf8));
-  }
+  // Removed unused base64 encode/decode functions that used deprecated escape/unescape
+  // These were causing "Malformed decodeURI input" errors on iOS
+  // Encryption is handled by encryptionService which uses tweetnacl-util
 
   /**
    * Add metadata to data if it doesn't have it
@@ -759,8 +745,29 @@ class MinimalSyncService {
       console.log('[MinimalSync] 📡 Raw pull response:', responseText);
       console.log('[MinimalSync] 📡 Response length:', responseText.length, 'bytes');
       
+      // Check if response looks like JSON before parsing
+      if (!responseText || (!responseText.startsWith('{') && !responseText.startsWith('['))) {
+        console.error('[MinimalSync] ❌ Response is not JSON:', responseText.substring(0, 200));
+        return { 
+          success: false, 
+          error: `Invalid response format: ${responseText.substring(0, 100)}`,
+          rawResponse: responseText.substring(0, 500)
+        };
+      }
+      
       // Parse the response
-      const result = JSON.parse(responseText);
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('[MinimalSync] ❌ JSON parse error:', parseError);
+        console.error('[MinimalSync] ❌ Response that failed to parse:', responseText.substring(0, 500));
+        return {
+          success: false,
+          error: `JSON parse error: ${parseError.message}`,
+          rawResponse: responseText.substring(0, 500)
+        };
+      }
       console.log('[MinimalSync] 📡 Parsed response:', {
         success: result.success,
         hasRecords: !!result.records,
