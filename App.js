@@ -1,5 +1,5 @@
 // @ts-check
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -1139,10 +1139,6 @@ const App = () => {
             setCurrentDay(
               userData.currentDay || importedData.currentDay || 'today',
             );
-            const currentUserActivities =
-              userData.days?.[
-                userData.currentDay || importedData.currentDay || 'today'
-              ]?.activities || [];
             // Activities are now derived from users state, no need to set them separately
 
             // Restore user settings
@@ -1256,24 +1252,7 @@ const App = () => {
         // Activities are now derived from users state, no need to set them separately
         setShowOnboarding(false);
 
-        // Save the data
-        const dataToSave = {
-          version: 4,
-          currentUserId: newUserId,
-          currentDay: 'today',
-          users: newUsers,
-          globalSettings: {
-            themeColor: currentTheme,
-            bannerPosition: bannerPosition,
-            displayMode: displayMode,
-            taskCelebration: taskCelebration,
-            routineCelebration: routineCelebration,
-            pinEnabled: onboardingData?.pin ? true : false,
-            pin: onboardingData?.pin || null,
-          },
-          libraryTemplates: libraryTemplates,
-          library: library,
-        };
+        // Data saving handled by Zustand stores
         // Data is now persisted automatically through Zustand
         return;
       }
@@ -1454,22 +1433,6 @@ const App = () => {
       }, 500);
 
       // Save the data with the new values
-      const dataToSave = {
-        version: 4,
-        currentUserId: firstUserId,
-        currentDay: 'today',
-        users: newUsers,
-        globalSettings: {
-          themeColor: currentTheme,
-          bannerPosition: bannerPosition,
-          displayMode: displayMode,
-          taskCelebration: taskCelebration,
-          routineCelebration: routineCelebration,
-          pinEnabled: onboardingData.pin ? true : false,
-        },
-        libraryTemplates: libraryTemplates,
-        library: library,
-      };
       // Data is now persisted automatically through Zustand
     } catch (error) {
       if (__DEV__) {
@@ -3966,7 +3929,6 @@ Users: ${userNames} (${userCount} total)
       // Don't close DataModal here - it handles its own closing
       // setShowDataModal(false);
       setShowAccessModal(false);
-      setShowResetAppConfirm(false);
 
       // Show success toast
       showToast({ message: 'App reset successfully', type: 'success' });
