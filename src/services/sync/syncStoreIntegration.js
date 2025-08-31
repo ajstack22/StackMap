@@ -502,7 +502,25 @@ class SyncStoreIntegration {
       
       return true;
     } else {
-      console.error('[SyncStore] ❌ Join sync failed:', result.error);
+      // Check if the error is because sync doesn't exist (404)
+      const is404 = result.error && (
+        result.error.includes('404') || 
+        result.error.includes('not found') || 
+        result.error.includes('Sync group not found') || 
+        result.error.includes('does not exist')
+      );
+      
+      if (is404) {
+        // Sync group doesn't exist, create it with the recovery phrase
+        // This will use the same sync ID derived from the recovery phrase
+        const createResult = await this.createSync();
+        
+        if (createResult) {
+          return { ...createResult, isNewSync: true };
+        }
+      }
+      
+      // Only throw error if it's not a 404 or if create failed
       throw new Error(result.error);
     }
   }
