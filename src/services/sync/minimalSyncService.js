@@ -414,10 +414,14 @@ class MinimalSyncService {
     this.deviceId = await encryptionService.getDeviceId();
     
     console.log('[MinimalSync] 🌐 Fetching from server to join sync...');
+    console.log('[MinimalSync] Sync ID:', this.syncId);
+    console.log('[MinimalSync] Device ID:', this.deviceId);
+    console.log('[MinimalSync] API Base:', this.API_BASE);
     
     try {
       // Use timestamp endpoint for joining (POST request)
       const url = `${this.API_BASE}/join_timestamp.php`;
+      console.log('[MinimalSync] Full URL:', url);
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
