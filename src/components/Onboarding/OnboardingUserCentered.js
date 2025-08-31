@@ -210,10 +210,27 @@ const OnboardingUserCentered = ({
       }
 
       console.log('[OnboardingSync] Initializing sync for preview...');
-      const syncId = await minimalSync.generateSyncId(phraseToUse);
+      
+      // Ensure minimalSync is ready (device ID initialized)
+      if (!minimalSync.deviceId) {
+        console.log('[OnboardingSync] Waiting for device ID...');
+        await minimalSync.initDeviceId();
+      }
+      
+      let syncId;
+      try {
+        syncId = await minimalSync.generateSyncId(phraseToUse);
+        console.log('[OnboardingSync] Generated sync ID:', syncId);
+      } catch (genError) {
+        console.error('[OnboardingSync] Error generating sync ID:', genError);
+        throw new Error(`Failed to generate sync ID: ${genError.message}`);
+      }
+      
+      // CRITICAL: Set the syncId on minimalSync BEFORE initializeEncryption (like syncService does)
+      // This ensures syncId is available even if there's an issue during initialization
+      minimalSync.syncId = syncId;
       
       // Initialize encryption properly for onboarding preview
-      // This ensures device ID is set and encryption is ready
       await minimalSync.initializeEncryption(phraseToUse, syncId);
       console.log('[OnboardingSync] Encryption initialized with sync ID:', syncId);
 
