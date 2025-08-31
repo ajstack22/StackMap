@@ -19,13 +19,14 @@ import {
 } from 'react-native';
 
 // Disable console logs on Android for performance
-if (Platform.OS === 'android' && __DEV__) {
-  console.log = () => {};
-  console.warn = () => {};
-  console.error = () => {};
-  console.info = () => {};
-  console.debug = () => {};
-}
+// TEMPORARILY ENABLED FOR DEBUGGING SYNC ISSUES
+// if (Platform.OS === 'android' && __DEV__) {
+//   console.log = () => {};
+//   console.warn = () => {};
+//   console.error = () => {};
+//   console.info = () => {};
+//   console.debug = () => {};
+// }
 
 // Import our custom Text and TextInput components that use Comic Relief
 import { Text } from './src/components/Typography';
