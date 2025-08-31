@@ -134,7 +134,7 @@ import useSyncStore from './src/stores/useSyncStore';
 // Import services
 import encryptionService from './src/services/sync/encryptionService';
 import syncService from './src/services/sync';
-import './src/utils/stateDebugger'; // Add state change tracking
+// State debugger removed - no longer needed
 
 // Import utilities
 import {
