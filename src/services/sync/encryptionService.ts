@@ -306,37 +306,25 @@ class EncryptionService {
             const metadataPreview = Array.from(metadataBytes.slice(0, 10));
             console.log('[DECRYPTION] Metadata bytes preview:', metadataPreview);
             
-            // Check if the metadata is actually empty (all zeros or too short)
-            if (metadataBytes.every(byte => byte === 0) || metadataBytes.length < 2) {
-              console.log('[DECRYPTION] Metadata appears empty, skipping to data section');
-              // Skip metadata and try to parse the data directly
+            // TEMPORARY: Handle data encrypted with buggy encodeUTF8 (pre-v2025.08.31.24)
+            // This can be removed once all old sync data is cleared
+            if (metadataBytes.every(byte => byte === 0)) {
+              console.warn('[DECRYPTION] Found legacy data with broken metadata (pre-v24 bug), attempting recovery');
               const dataBytes = decrypted.slice(4 + metadataLength);
-              if (dataBytes.length > 0) {
-                // Check for compression signature (zlib: 0x78 0x9C or 0x78 0xDA)
-                const isCompressed = dataBytes.length > 2 && 
-                  dataBytes[0] === 0x78 && 
-                  (dataBytes[1] === 0x9C || dataBytes[1] === 0xDA || dataBytes[1] === 0x5E || dataBytes[1] === 0x01);
-                
-                if (isCompressed) {
-                  console.log('[DECRYPTION] Data appears compressed (zlib header detected)');
-                  try {
-                    const decompressed = pako.inflate(dataBytes);
-                    const dataStr = decodeUTF8(decompressed);
-                    return JSON.parse(dataStr);
-                  } catch (e) {
-                    console.error('[DECRYPTION] Decompression failed:', e);
-                  }
-                } else {
-                  // Try uncompressed
-                  try {
-                    const dataStr = decodeUTF8(dataBytes);
-                    return JSON.parse(dataStr);
-                  } catch (e) {
-                    console.error('[DECRYPTION] Direct parse failed:', e);
-                  }
+              
+              // The data is likely compressed based on the 0x78 signature we saw
+              if (dataBytes.length > 2 && dataBytes[0] === 0x78) {
+                try {
+                  const decompressed = pako.inflate(dataBytes);
+                  const dataStr = decodeUTF8(decompressed);
+                  const parsed = JSON.parse(dataStr);
+                  console.warn('[DECRYPTION] Successfully recovered legacy data - please re-sync to fix permanently');
+                  return parsed;
+                } catch (e) {
+                  console.error('[DECRYPTION] Could not recover legacy data:', e);
                 }
               }
-              throw new Error('Empty metadata with unparseable data');
+              throw new Error('Corrupted legacy sync data - please create a new sync');
             }
             
             const metadata: EncryptionMetadata = JSON.parse(
