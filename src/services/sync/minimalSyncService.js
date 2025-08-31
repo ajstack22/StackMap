@@ -233,6 +233,7 @@ class MinimalSyncService {
     await encryptionService.initialize(recoveryPhrase, syncId, fixedSalt);
     this.encryptionReady = true;
     this.recoveryPhrase = recoveryPhrase;
+    this.syncId = syncId; // CRITICAL: Set the sync ID for pullData to work
     
     // Ensure device ID is set
     if (!this.deviceId) {
