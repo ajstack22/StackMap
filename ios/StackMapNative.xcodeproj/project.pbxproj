@@ -295,7 +295,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 250801;
+				CURRENT_PROJECT_VERSION = 250831045;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = StackMapNative/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = StackMap;
@@ -305,7 +305,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 25.08.01;
+				MARKETING_VERSION = 2025.08.31.45;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -328,7 +328,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 250801;
+				CURRENT_PROJECT_VERSION = 250831045;
 				INFOPLIST_FILE = StackMapNative/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = StackMap;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
@@ -337,7 +337,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 25.08.01;
+				MARKETING_VERSION = 2025.08.31.45;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
