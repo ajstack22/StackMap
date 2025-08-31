@@ -320,11 +320,24 @@ const SyncDebugger = ({ onClose }) => {
               
               // Test server connection
               let serverTest = 'Not tested';
+              const apiBase = minimalSync.API_BASE || 'https://stackmap.app/qual/api/sync';
               try {
-                const testUrl = `https://stackmap.app/qual/api/sync/pull_timestamp.php?sync_id=${id || directId}&device_id=test&since=0`;
+                const testUrl = `${apiBase}/pull_timestamp.php?sync_id=${id || directId}&device_id=test&since=0`;
                 const response = await fetch(testUrl);
-                const data = await response.json();
-                serverTest = data.success ? `✅ Success (${data.records ? data.records.length : 0} records)` : `❌ Failed: ${data.message || 'Unknown error'}`;
+                const text = await response.text();
+                
+                let data;
+                try {
+                  data = JSON.parse(text);
+                } catch (parseErr) {
+                  // Not JSON, might be HTML error page
+                  serverTest = `❌ Non-JSON response: ${text.substring(0, 100)}`;
+                  data = null;
+                }
+                
+                if (data) {
+                  serverTest = data.success ? `✅ Success (${data.records ? data.records.length : 0} records)` : `❌ Failed: ${data.message || 'Unknown error'}`;
+                }
               } catch (e) {
                 serverTest = `Network error: ${e.message}`;
               }
@@ -335,10 +348,11 @@ const SyncDebugger = ({ onClose }) => {
                 `Generated ID:\n${id || 'NULL/UNDEFINED'}\n\n` +
                 `Direct Derivation:\n${directId}\n\n` +
                 `IDs Match: ${id === directId ? '✅ YES' : '❌ NO'}\n\n` +
+                `API Base:\n${apiBase}\n\n` +
                 `Server Test:\n${serverTest}`,
                 [
                   { text: 'Copy Results', onPress: () => {
-                    const results = `Phrase: ${testPhrase}\nGenerated: ${id || 'NULL'}\nDirect: ${directId}\nMatch: ${id === directId}\nServer: ${serverTest}`;
+                    const results = `Phrase: ${testPhrase}\nGenerated: ${id || 'NULL'}\nDirect: ${directId}\nMatch: ${id === directId}\nAPI Base: ${apiBase}\nServer: ${serverTest}`;
                     Clipboard.setString(results);
                   }},
                   { text: 'OK' }
