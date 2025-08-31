@@ -746,10 +746,32 @@ class MinimalSyncService {
       }
       
       // Simple URL construction without encoding (hex IDs don't need it)
+      console.log('[MinimalSync] 🔍 URL components:', {
+        API_BASE: this.API_BASE,
+        syncId: this.syncId,
+        syncIdType: typeof this.syncId,
+        deviceId: this.deviceId,
+        deviceIdType: typeof this.deviceId,
+        lastTimestamp: lastTimestamp,
+        timestampType: typeof lastTimestamp
+      });
+      
       const url = `${this.API_BASE}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=${lastTimestamp}`;
       console.log('[MinimalSync] 🌐 Pulling from:', url);
+      console.log('[MinimalSync] 🌐 URL length:', url.length);
       
-      const response = await fetch(url);
+      // Add debugging for fetch call
+      console.log('[MinimalSync] 📡 About to call fetch...');
+      let response;
+      try {
+        response = await fetch(url);
+        console.log('[MinimalSync] 📡 Fetch completed, status:', response.status);
+      } catch (fetchError) {
+        console.error('[MinimalSync] ❌ Fetch error:', fetchError);
+        console.error('[MinimalSync] ❌ Fetch error message:', fetchError.message);
+        console.error('[MinimalSync] ❌ Fetch error stack:', fetchError.stack);
+        throw fetchError;
+      }
       
       // Try to get response text - iOS might have issues with certain encodings
       let responseText;
