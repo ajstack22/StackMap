@@ -872,32 +872,39 @@ class MinimalSyncService {
       }
       
       if (result.success && result.records && result.records.length > 0) {
-        // Get the latest record from timestamp API
-        const latest = result.records[result.records.length - 1];
-        console.log('[MinimalSync] 🔐 About to decrypt blob of length:', latest.encrypted_blob?.length);
-        console.log('[MinimalSync] 🔐 Blob preview:', latest.encrypted_blob?.substring(0, 50) + '...');
+        // Try to decrypt records starting from the latest
+        let remoteData = null;
+        let successfulRecord = null;
         
-        let remoteData;
-        try {
-          // Debug what we're trying to decrypt
-          console.log('[MinimalSync] 🔐 Encrypted blob type:', typeof latest.encrypted_blob);
-          console.log('[MinimalSync] 🔐 Encrypted blob value:', latest.encrypted_blob ? 'exists' : 'null/undefined');
-          
-          if (!latest.encrypted_blob) {
-            throw new Error('No encrypted blob in record');
+        // Try the latest few records in case some are corrupted
+        const recordsToTry = result.records.slice(-3).reverse(); // Try last 3 records, newest first
+        
+        for (const record of recordsToTry) {
+          try {
+            console.log('[MinimalSync] 🔐 Trying to decrypt record from:', new Date(record.timestamp).toISOString());
+            
+            if (!record.encrypted_blob) {
+              console.log('[MinimalSync] ⚠️ Record has no encrypted blob, skipping');
+              continue;
+            }
+            
+            remoteData = encryptionService.decryptData(record.encrypted_blob);
+            successfulRecord = record;
+            console.log('[MinimalSync] ✅ Successfully decrypted record from:', new Date(record.timestamp).toISOString());
+            break; // Success, stop trying
+            
+          } catch (decryptError) {
+            console.warn('[MinimalSync] ⚠️ Failed to decrypt record:', {
+              timestamp: new Date(record.timestamp).toISOString(),
+              error: decryptError.message
+            });
+            // Continue to try next record
           }
-          
-          remoteData = encryptionService.decryptData(latest.encrypted_blob);
-          console.log('[MinimalSync] ✅ Decryption successful');
-        } catch (decryptError) {
-          console.error('[MinimalSync] ❌ Decryption failed:', decryptError);
-          console.error('[MinimalSync] ❌ Error details:', {
-            message: decryptError.message,
-            stack: decryptError.stack,
-            encryptionReady: this.encryptionReady,
-            hasRecoveryPhrase: !!this.recoveryPhrase
-          });
-          throw decryptError;
+        }
+        
+        if (!remoteData) {
+          console.error('[MinimalSync] ❌ Could not decrypt any records');
+          throw new Error('Failed to decrypt sync data - all records appear corrupted');
         }
         
         console.log('[MinimalSync] 📦 Remote data received:', {
