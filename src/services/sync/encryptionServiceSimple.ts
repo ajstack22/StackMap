@@ -2,7 +2,6 @@
 // Starting from absolute basics that work on web/Android
 
 import nacl from 'tweetnacl';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 // Use minimal type casting for tweetnacl-util
