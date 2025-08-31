@@ -163,8 +163,23 @@ const SyncDebugger = ({ onClose }) => {
         log(`Stack: ${e.stack}`);
       }
 
-      // Test 6: Network test - try to fetch actual sync data
-      log('\n--- Test 6: Network Fetch ---');
+      // Test 6: Sync ID Generation Test
+      log('\n--- Test 6: Sync ID Generation ---');
+      if (recoveryPhrase) {
+        try {
+          const minimalSync = require('../services/sync/minimalSyncService').default;
+          const testPhrase = '45530ecc83f2d5c304f041e37906e3b0';
+          const generatedId = await minimalSync.generateSyncId(testPhrase);
+          log(`Test phrase: ${testPhrase}`);
+          log(`Generated sync ID: ${generatedId}`);
+          log(`Expected sync ID should be consistent across platforms`);
+        } catch (e) {
+          log(`Sync ID generation error: ${e.message}`);
+        }
+      }
+      
+      // Test 7: Network test - try to fetch actual sync data
+      log('\n--- Test 7: Network Fetch ---');
       try {
         const syncId = await AsyncStorage.getItem('@minimal_sync_id');
         if (syncId) {
@@ -200,8 +215,8 @@ const SyncDebugger = ({ onClose }) => {
         log(`Network error: ${e.message}`);
       }
 
-      // Test 7: Manual UTF-8 implementation
-      log('\n--- Test 7: Manual UTF-8 ---');
+      // Test 8: Manual UTF-8 implementation
+      log('\n--- Test 8: Manual UTF-8 ---');
       try {
         // Manual UTF-8 encode
         const manualEncodeUTF8 = (str) => {
