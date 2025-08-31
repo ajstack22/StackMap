@@ -20,7 +20,7 @@ import encryptionService from './encryptionService';
 
 class MinimalSyncService {
   constructor() {
-    console.log('[MinimalSync] 🚀 Constructor called');
+    // Constructor initialization
     this.syncId = null;
     this.deviceId = null;
     this.pullInterval = null;
@@ -124,7 +124,7 @@ class MinimalSyncService {
           
           // CRITICAL: Set isEnabled flag after successfully loading sync
           this.isEnabled = true;
-          console.log('[MinimalSync] ✅ Sync re-enabled from stored data');
+          console.log('[Sync] Enabled');
         } else {
           console.warn('[MinimalSync] ⚠️ Sync ID found but no recovery phrase - sync disabled');
           this.syncId = null; // Clear sync ID if we can't decrypt
@@ -134,14 +134,10 @@ class MinimalSyncService {
         const storedData = await AsyncStorage.getItem('@minimal_sync_data');
         if (storedData) {
           const parsed = JSON.parse(storedData);
-          console.log('[MinimalSync] 📦 Found existing data from previous session:', {
-            syncId: parsed.syncId,
-            hasData: !!parsed.data,
-            timestamp: parsed.timestamp
-          });
+          // Found existing sync data from previous session
         }
       } else {
-        console.log('[MinimalSync] ℹ️ No existing sync ID found');
+        // No existing sync ID found
       }
     } catch (error) {
       console.log('[MinimalSync] Error loading existing sync ID:', error);
@@ -301,13 +297,13 @@ class MinimalSyncService {
       data: dataWithMetadata
     };
     
-    console.log('[MinimalSync] 💾 Storing locally first...');
+    // Store sync data locally
     console.log('[MinimalSync] 📝 Storing with timestamp-1 to ensure first pull includes our record');
     await AsyncStorage.setItem('@minimal_sync_data', JSON.stringify(dataToStore));
     
     // Verify it was stored
     const verify = await AsyncStorage.getItem('@minimal_sync_data');
-    console.log('[MinimalSync] ✅ Local storage verified:', verify ? 'SUCCESS' : 'FAILED');
+    if (!verify) console.error('[Sync] Failed to verify local storage');
     
     // Test encryption before sending
     console.log('[MinimalSync] 🔐 Testing encryption...');
@@ -341,7 +337,7 @@ class MinimalSyncService {
     
     try {
       // Use timestamp-based endpoint (tables should exist on server)
-      console.log('[MinimalSync] 🚀 Calling create_timestamp.php with sync_id:', this.syncId);
+      // Creating sync on server
       console.log('[MinimalSync] 🚀 Full URL:', `${this.API_BASE}/create_timestamp.php`);
       
       const response = await fetch(`${this.API_BASE}/create_timestamp.php`, {

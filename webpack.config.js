@@ -187,7 +187,9 @@ module.exports = {
       new TerserPlugin({
         terserOptions: {
           compress: {
-            drop_console: false,  // Keep console.log for debugging
+            drop_console: true,  // Remove console logs in production
+            drop_debugger: true,  // Remove debugger statements
+            pure_funcs: ['console.log', 'console.debug'],  // Remove specific console methods
           },
         },
       }),

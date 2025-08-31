@@ -963,16 +963,9 @@ const DataModal = ({
     // Use setTimeout to ensure the UI updates before the async operation
     setTimeout(async () => {
       try {
-        console.log('[DataModal] 🚀 Starting sync creation...');
-        
         // CRITICAL: Use create() for "Create New Sync" button
         // This ensures we get the right sync ID and recovery phrase
         const result = await syncService.create();
-        console.log('[DataModal] 📦 Sync create result:', {
-          syncId: result.syncId,
-          recoveryPhraseLength: result.recoveryPhrase?.length,
-          isNewSync: result.isNewSync
-        });
         
         // Immediately capture the frozen values to prevent any modification
         const finalSyncId = result.syncId;
@@ -1032,14 +1025,8 @@ const DataModal = ({
           return;
         }
 
-        console.log('[DataModal] 🔗 Attempting to join sync with recovery phrase...');
-        
         // Use enable method to join existing sync
         const result = await syncService.enable(recoveryInput.trim());
-        console.log('[DataModal] 📦 Join sync result:', {
-          syncId: result.syncId,
-          success: !!result.syncId
-        });
 
         setSyncId(result.syncId);
         setSyncRecoveryPhrase(recoveryInput.trim());
