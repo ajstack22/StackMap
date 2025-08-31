@@ -6,6 +6,28 @@ const SyncDebugger = ({ onClose }) => {
   const [results, setResults] = useState('');
   const [running, setRunning] = useState(false);
 
+  const clearSyncData = async () => {
+    try {
+      await AsyncStorage.removeItem('@minimal_sync_id');
+      await AsyncStorage.removeItem('@sync_phrase');
+      await AsyncStorage.removeItem('encryption_salt');
+      await AsyncStorage.removeItem('device_id');
+      
+      // Clear all sync-related keys
+      const keys = await AsyncStorage.getAllKeys();
+      const syncKeys = keys.filter(key => 
+        key.includes('sync') || 
+        key.includes('derived_key') || 
+        key.includes('encryption')
+      );
+      await AsyncStorage.multiRemove(syncKeys);
+      
+      Alert.alert('Success', 'Sync data cleared. You can now join a fresh sync.');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to clear sync data: ' + error.message);
+    }
+  };
+
   const runComprehensiveTest = async () => {
     setRunning(true);
     const logs = [];
@@ -218,15 +240,26 @@ const SyncDebugger = ({ onClose }) => {
         </TouchableOpacity>
       </View>
       
-      <TouchableOpacity 
-        style={[styles.button, running && styles.buttonDisabled]} 
-        onPress={runComprehensiveTest}
-        disabled={running}
-      >
-        <Text style={styles.buttonText}>
-          {running ? 'Running Tests...' : 'Run Comprehensive Debug'}
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity 
+          style={[styles.button, running && styles.buttonDisabled]} 
+          onPress={runComprehensiveTest}
+          disabled={running}
+        >
+          <Text style={styles.buttonText}>
+            {running ? 'Running Tests...' : 'Run Debug'}
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.button, styles.clearButton]} 
+          onPress={clearSyncData}
+        >
+          <Text style={styles.buttonText}>
+            Clear Sync Data
+          </Text>
+        </TouchableOpacity>
+      </View>
       
       <ScrollView style={styles.results}>
         <Text style={styles.resultsText}>{results || 'Press button to start debugging'}</Text>
@@ -260,12 +293,22 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#666',
   },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 20,
+    marginTop: 10,
+  },
   button: {
     backgroundColor: '#007AFF',
     padding: 15,
-    margin: 20,
+    flex: 1,
+    marginHorizontal: 5,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  clearButton: {
+    backgroundColor: '#ff6b6b',
   },
   buttonDisabled: {
     backgroundColor: '#ccc',
