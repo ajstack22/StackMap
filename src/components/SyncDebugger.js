@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert, Clipboard } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SyncDebugger = ({ onClose }) => {
   const [results, setResults] = useState('');
   const [running, setRunning] = useState(false);
+
+  const copyResults = () => {
+    if (results) {
+      Clipboard.setString(results);
+      Alert.alert('Copied!', 'Debug results copied to clipboard');
+    } else {
+      Alert.alert('No Results', 'Run the debug test first');
+    }
+  };
 
   const clearSyncData = async () => {
     try {
@@ -264,6 +273,15 @@ const SyncDebugger = ({ onClose }) => {
       <ScrollView style={styles.results}>
         <Text style={styles.resultsText}>{results || 'Press button to start debugging'}</Text>
       </ScrollView>
+      
+      {results && (
+        <TouchableOpacity 
+          style={styles.copyButton}
+          onPress={copyResults}
+        >
+          <Text style={styles.copyButtonText}>Copy Results</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -330,6 +348,19 @@ const styles = StyleSheet.create({
     fontFamily: 'Courier',
     fontSize: 12,
     lineHeight: 18,
+  },
+  copyButton: {
+    backgroundColor: '#4CAF50',
+    padding: 15,
+    margin: 20,
+    marginTop: 0,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  copyButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
