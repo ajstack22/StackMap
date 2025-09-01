@@ -77,22 +77,37 @@ class MinimalSyncService {
       // Mobile environments
       // Check if we're in development mode using __DEV__ global
       // __DEV__ is true in debug builds, false in release builds
-      const isDevelopment = typeof __DEV__ !== 'undefined' ? __DEV__ : false;
+      let isDevelopment = false;
       
-      console.log('[MinimalSync] Platform detected:', Platform.OS);
-      console.log('[MinimalSync] __DEV__ value:', __DEV__);
-      console.log('[MinimalSync] isDevelopment:', isDevelopment);
+      try {
+        isDevelopment = typeof __DEV__ !== 'undefined' ? __DEV__ : false;
+        console.log('[MinimalSync] Platform detected:', Platform.OS);
+        console.log('[MinimalSync] typeof __DEV__:', typeof __DEV__);
+        console.log('[MinimalSync] __DEV__ value:', __DEV__);
+        console.log('[MinimalSync] isDevelopment:', isDevelopment);
+      } catch (e) {
+        console.log('[MinimalSync] Error checking __DEV__:', e.message);
+        // If __DEV__ doesn't exist or errors, assume development
+        isDevelopment = true;
+      }
       
       if (Platform.OS === 'ios' || Platform.OS === 'android') {
-        if (isDevelopment) {
-          // Development/Debug builds use QUAL
-          this.API_BASE = 'https://stackmap.app/qual/api/sync';
-          console.log('[MinimalSync] Mobile DEBUG build - using QUAL API');
-        } else {
-          // Production/Release builds use production API
-          this.API_BASE = 'https://stackmap.app/api/sync';
-          console.log('[MinimalSync] Mobile RELEASE build - using production API');
-        }
+        // TEMPORARY FIX: Force QUAL for all mobile builds until we figure out
+        // why Pixel Tablet is detecting as release build
+        // if (isDevelopment) {
+        //   // Development/Debug builds use QUAL
+        //   this.API_BASE = 'https://stackmap.app/qual/api/sync';
+        //   console.log('[MinimalSync] Mobile DEBUG build - using QUAL API');
+        // } else {
+        //   // Production/Release builds use production API
+        //   this.API_BASE = 'https://stackmap.app/api/sync';
+        //   console.log('[MinimalSync] Mobile RELEASE build - using production API');
+        // }
+        
+        // FORCE QUAL for all mobile builds temporarily
+        this.API_BASE = 'https://stackmap.app/qual/api/sync';
+        console.log('[MinimalSync] Mobile build - FORCING QUAL API (temporary fix for Pixel Tablet)');
+        console.log('[MinimalSync] Was detected as:', isDevelopment ? 'DEBUG' : 'RELEASE');
       } else {
         // Default for other non-web environments
         this.API_BASE = 'https://stackmap.app/api/sync';
