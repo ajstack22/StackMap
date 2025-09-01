@@ -83,7 +83,6 @@ const OnboardingUserCentered = ({
   const [syncPreviewData, setSyncPreviewData] = useState(null);
   const [generatedSyncCode, setGeneratedSyncCode] = useState('');
   const [showCopiedToast, setShowCopiedToast] = useState(false);
-  const [showSyncDebugger, setShowSyncDebugger] = useState(false);
 
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -674,25 +673,6 @@ const OnboardingUserCentered = ({
   // Step Render Functions (not components to avoid recreation)
   const renderWelcomeStep = () => (
     <View style={styles.stepContainer}>
-      {/* Debug Button - Always visible for testing */}
-      <TouchableOpacity
-        style={{
-          position: 'absolute',
-          top: 10,
-          right: 10,
-          backgroundColor: '#ff6b6b',
-          padding: 10,
-          borderRadius: 5,
-          zIndex: 1000,
-        }}
-        onPress={() => setShowSyncDebugger(true)}
-      >
-        <Text style={{ color: 'white', fontWeight: 'bold' }}>
-          Debug ({Platform.OS})
-        </Text>
-      </TouchableOpacity>
-      
-      {/* Test components section removed */}
       <>
           <View style={styles.logoSection}>
             <Logo size={screenWidth >= 768 ? 100 : 80} theme={defaultTheme} color={defaultTheme.primary} />
@@ -822,24 +802,6 @@ const OnboardingUserCentered = ({
       <Text style={styles.subtitle}>
         This helps us customize your experience
       </Text>
-      
-      {/* Debug Button - Always visible for testing */}
-      <TouchableOpacity
-        style={{
-          position: 'absolute',
-          top: 10,
-          right: 10,
-          backgroundColor: '#ff6b6b',
-          padding: 10,
-          borderRadius: 5,
-          zIndex: 1000,
-        }}
-        onPress={() => setShowSyncDebugger(true)}
-      >
-        <Text style={{ color: 'white', fontWeight: 'bold' }}>
-          Debug ({Platform.OS})
-        </Text>
-      </TouchableOpacity>
       
       <View style={styles.optionsContainer}>
         <TouchableOpacity
@@ -1377,21 +1339,6 @@ const OnboardingUserCentered = ({
           </Animated.View>
         </SafeAreaView>
       </ScrollView>
-
-      {/* Sync Debugger Modal */}
-      {showSyncDebugger && (
-        <Modal
-          animationType="slide"
-          transparent={false}
-          visible={showSyncDebugger}
-          onRequestClose={() => setShowSyncDebugger(false)}
-        >
-          {(() => {
-            const SyncDebugger = require('../SyncDebugger').default;
-            return <SyncDebugger onClose={() => setShowSyncDebugger(false)} />;
-          })()}
-        </Modal>
-      )}
     </KeyboardAvoidingView>
   );
 };
