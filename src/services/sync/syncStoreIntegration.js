@@ -892,8 +892,10 @@ class SyncStoreIntegration {
 
       // Get API URL based on environment
       const getShareApiUrl = () => {
-        // For iOS/Android development builds, use qual environment
-        if (__DEV__ && (Platform.OS === 'ios' || Platform.OS === 'android')) {
+        // TEMPORARY FIX: Force QUAL for all mobile builds
+        // (matching the fix in minimalSyncService.js for Pixel Tablet issue)
+        if (Platform.OS === 'ios' || Platform.OS === 'android') {
+          console.log('[SyncStore] Mobile build - FORCING QUAL API (temporary fix for Pixel Tablet)');
           return 'https://stackmap.app/qual/api/sync';
         }
         if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -1091,7 +1093,10 @@ class SyncStoreIntegration {
     try {
       // Get API URL based on environment
       const getShareApiUrl = () => {
-        if (__DEV__ && (Platform.OS === 'ios' || Platform.OS === 'android')) {
+        // TEMPORARY FIX: Force QUAL for all mobile builds
+        // (matching the fix in minimalSyncService.js for Pixel Tablet issue)
+        if (Platform.OS === 'ios' || Platform.OS === 'android') {
+          console.log('[SyncStore] Mobile build - FORCING QUAL API (temporary fix for Pixel Tablet)');
           return 'https://stackmap.app/qual/api/sync';
         }
         if (Platform.OS === 'web' && typeof window !== 'undefined') {
