@@ -892,11 +892,10 @@ class SyncStoreIntegration {
 
       // Get API URL based on environment
       const getShareApiUrl = () => {
-        // TEMPORARY FIX: Force QUAL for all mobile builds
-        // (matching the fix in minimalSyncService.js for Pixel Tablet issue)
+        // Mobile builds use production API (release builds will hit production)
         if (Platform.OS === 'ios' || Platform.OS === 'android') {
-          console.log('[SyncStore] Mobile build - FORCING QUAL API (temporary fix for Pixel Tablet)');
-          return 'https://stackmap.app/qual/api/sync';
+          // Note: Debug/release detection happens in minimalSyncService.js
+          return 'https://stackmap.app/api/sync';
         }
         if (Platform.OS === 'web' && typeof window !== 'undefined') {
           const pathname = window.location.pathname;
@@ -1093,11 +1092,10 @@ class SyncStoreIntegration {
     try {
       // Get API URL based on environment
       const getShareApiUrl = () => {
-        // TEMPORARY FIX: Force QUAL for all mobile builds
-        // (matching the fix in minimalSyncService.js for Pixel Tablet issue)
+        // Mobile builds use production API (release builds will hit production)
         if (Platform.OS === 'ios' || Platform.OS === 'android') {
-          console.log('[SyncStore] Mobile build - FORCING QUAL API (temporary fix for Pixel Tablet)');
-          return 'https://stackmap.app/qual/api/sync';
+          // Note: Debug/release detection happens in minimalSyncService.js
+          return 'https://stackmap.app/api/sync';
         }
         if (Platform.OS === 'web' && typeof window !== 'undefined') {
           const pathname = window.location.pathname;
@@ -1189,7 +1187,16 @@ class SyncStoreIntegration {
    * Get API URL
    */
   getApiUrl() {
-    return 'https://stackmap.app/qual/api/sync/';
+    // This method is deprecated - API URL is determined dynamically based on environment
+    // Mobile: Uses minimalSyncService.js which detects debug/release
+    // Web: Uses window.location to detect qual vs prod
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const pathname = window.location.pathname;
+      if (pathname.includes('/qual/')) {
+        return 'https://stackmap.app/qual/api/sync/';
+      }
+    }
+    return 'https://stackmap.app/api/sync/';
   }
 
   /**

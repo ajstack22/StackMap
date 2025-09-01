@@ -92,22 +92,16 @@ class MinimalSyncService {
       }
       
       if (Platform.OS === 'ios' || Platform.OS === 'android') {
-        // TEMPORARY FIX: Force QUAL for all mobile builds until we figure out
-        // why Pixel Tablet is detecting as release build
-        // if (isDevelopment) {
-        //   // Development/Debug builds use QUAL
-        //   this.API_BASE = 'https://stackmap.app/qual/api/sync';
-        //   console.log('[MinimalSync] Mobile DEBUG build - using QUAL API');
-        // } else {
-        //   // Production/Release builds use production API
-        //   this.API_BASE = 'https://stackmap.app/api/sync';
-        //   console.log('[MinimalSync] Mobile RELEASE build - using production API');
-        // }
-        
-        // FORCE QUAL for all mobile builds temporarily
-        this.API_BASE = 'https://stackmap.app/qual/api/sync';
-        console.log('[MinimalSync] Mobile build - FORCING QUAL API (temporary fix for Pixel Tablet)');
-        console.log('[MinimalSync] Was detected as:', isDevelopment ? 'DEBUG' : 'RELEASE');
+        // Use appropriate API based on build type
+        if (isDevelopment) {
+          // Development/Debug builds use QUAL
+          this.API_BASE = 'https://stackmap.app/qual/api/sync';
+          console.log('[MinimalSync] Mobile DEBUG build - using QUAL API');
+        } else {
+          // Production/Release builds use production API
+          this.API_BASE = 'https://stackmap.app/api/sync';
+          console.log('[MinimalSync] Mobile RELEASE build - using production API');
+        }
       } else {
         // Default for other non-web environments
         this.API_BASE = 'https://stackmap.app/api/sync';
