@@ -1,0 +1,44 @@
+# Prevent directory listing
+Options -Indexes
+
+# Set index.html as default
+DirectoryIndex index.html
+
+# Enable RewriteEngine for SPA routing
+RewriteEngine On
+
+# Set the base for rewrites in the /qual/ subdirectory
+RewriteBase /qual/
+
+# Handle new secure share URLs - /qual/share/[id] format (XXXX-XXXX or hex)
+RewriteRule ^share/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)/?$ index.html [L,NC]
+
+# Handle new secure sync URLs - /qual/sync/[invite] format (XXXX-XXXX or hex)
+RewriteRule ^sync/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)/?$ index.html [L,NC]
+
+# Redirect old share format to migration page (temporary)
+RewriteCond %{QUERY_STRING} ^share=([^&]+)$
+RewriteRule ^/?$ share-migrate.html?token=%1 [R=302,L]
+
+# Redirect old sync format to migration page (temporary)
+RewriteCond %{QUERY_STRING} ^sync=([^&]+)$
+RewriteRule ^/?$ sync-migrate.html?phrase=%1 [R=302,L]
+
+# Handle SPA routing - redirect all non-file requests to index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/qual/api/
+RewriteRule ^.*$ index.html [L]
+
+# Ensure correct MIME types
+<IfModule mod_mime.c>
+    AddType application/javascript .js
+    AddType text/css .css
+    AddType application/json .json
+    AddType application/manifest+json .webmanifest
+    AddType font/ttf .ttf
+    AddType font/woff .woff
+    AddType font/woff2 .woff2
+    AddType image/png .png
+    AddType image/jpeg .jpg .jpeg
+</IfModule>
