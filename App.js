@@ -359,6 +359,39 @@ const App = () => {
   useEffect(() => {
     // Check for URL params (logging disabled for cleaner startup)
     if (Platform.OS === 'web') {
+      // Check for new path-based sync invite format first
+      const pathname = window.location.pathname;
+      let syncInviteCode = null;
+      let recoveryPhrase = null;
+      
+      // Check for /sync/[invite-code] or /qual/sync/[invite-code]
+      const syncPathMatch = pathname.match(/\/sync\/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)\/?$/);
+      if (syncPathMatch) {
+        syncInviteCode = syncPathMatch[1].toUpperCase();
+        
+        // Check for recovery phrase in fragment
+        if (window.location.hash) {
+          recoveryPhrase = window.location.hash.substring(1);
+          // Clear the fragment immediately
+          window.history.replaceState(
+            null,
+            document.title,
+            window.location.pathname + window.location.search
+          );
+        }
+        
+        console.log('[App] Sync invite detected:', {
+          inviteCode: syncInviteCode,
+          hasRecoveryPhrase: !!recoveryPhrase
+        });
+        
+        // Store for handling after initialization
+        window.syncInviteData = {
+          inviteCode: syncInviteCode,
+          recoveryPhrase: recoveryPhrase
+        };
+      }
+      
       // Get the raw query string to handle + characters properly
       const search = window.location.search;
       // Initial URL check
@@ -380,10 +413,12 @@ const App = () => {
       }
 
       // Log URL params only if they exist
-      if (token || syncPhrase || privacyParam || supportParam) {
+      if (token || syncPhrase || privacyParam || supportParam || syncInviteCode) {
         console.log('[App] URL params:', {
           search: window.location.search,
+          pathname: window.location.pathname,
           syncPhrase,
+          syncInviteCode,
           decoded: syncPhrase ? decodeURIComponent(syncPhrase) : null,
           privacy: privacyParam,
           supportus: supportParam,
@@ -659,6 +694,13 @@ const App = () => {
         Object.keys(users).length === 0 &&
         !showOnboarding
       ) {
+        // Check if this is a sync invite URL - if so, show abbreviated join flow
+        if (Platform.OS === 'web' && window.syncInviteData) {
+          console.log('[App] Sync invite detected - showing join flow instead of full onboarding');
+          // Pass sync invite data to onboarding for abbreviated flow
+          window.syncInviteMode = true;
+        }
+        
         // Showing onboarding - no users and not completed
         setShowOnboarding(true);
         setIsInitializing(false);

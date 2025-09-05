@@ -100,9 +100,33 @@ const OnboardingUserCentered = ({
     }
   }, [currentStep, generatedSyncCode]);
 
-  // Pre-populate if coming from sync URL
+  // Pre-populate if coming from sync URL or sync invite
   useEffect(() => {
-    if (syncSetupPhrase) {
+    // Check for sync invite mode first
+    if (Platform.OS === 'web' && window.syncInviteData) {
+      console.log('[Onboarding] Sync invite mode detected:', window.syncInviteData);
+      
+      // If we have both invite code and recovery phrase, auto-join
+      if (window.syncInviteData.inviteCode && window.syncInviteData.recoveryPhrase) {
+        // Construct the full sync code in the new format
+        const fullSyncCode = `${window.syncInviteData.inviteCode}#${window.syncInviteData.recoveryPhrase}`;
+        setRecoveryPhrase(fullSyncCode);
+        setUserJourney(prev => ({ ...prev, journeyType: 'existing' }));
+        // Go directly to sync import step
+        setCurrentStep('syncImport');
+        
+        // Auto-trigger the sync preview after a brief delay
+        setTimeout(() => {
+          fetchSyncPreview();
+        }, 500);
+      } else if (window.syncInviteData.inviteCode) {
+        // We have invite code but no recovery phrase - show minimal UI to get phrase
+        setRecoveryPhrase(window.syncInviteData.inviteCode);
+        setUserJourney(prev => ({ ...prev, journeyType: 'existing', inviteCode: window.syncInviteData.inviteCode }));
+        setCurrentStep('syncImport');
+      }
+    } else if (syncSetupPhrase) {
+      // Legacy sync URL format
       setRecoveryPhrase(syncSetupPhrase);
       setUserJourney(prev => ({ ...prev, journeyType: 'existing' }));
       setCurrentStep('syncImport');
