@@ -55,18 +55,40 @@ const OnboardingUserCentered = ({
     card: '#F5F5F5',
   };
 
+  // Check for sync invite data to determine initial step
+  const getInitialStep = () => {
+    if (Platform.OS === 'web' && window.syncInviteData) {
+      return 'syncImport';  // Go directly to sync import for invite URLs
+    }
+    if (syncSetupPhrase) {
+      return 'syncImport';  // Also for legacy sync URLs
+    }
+    return 'welcome';
+  };
+  
   // Navigation state
-  const [currentStep, setCurrentStep] = useState('welcome');
-  const [navigationHistory, setNavigationHistory] = useState(['welcome']);
+  const [currentStep, setCurrentStep] = useState(getInitialStep());
+  const [navigationHistory, setNavigationHistory] = useState([getInitialStep()]);
 
+  // Get initial journey type for sync invites
+  const getInitialJourney = () => {
+    const baseJourney = {
+      journeyType: null, // 'new' or 'existing'
+      userType: null, // 'self', 'helper', 'group'
+      deviceStrategy: null, // 'single' or 'multi'
+      syncEnabled: false,
+      pinEnabled: false,
+    };
+    
+    if ((Platform.OS === 'web' && window.syncInviteData) || syncSetupPhrase) {
+      baseJourney.journeyType = 'existing';  // Set as existing user for sync invites
+    }
+    
+    return baseJourney;
+  };
+  
   // User choices state
-  const [userJourney, setUserJourney] = useState({
-    journeyType: null, // 'new' or 'existing'
-    userType: null, // 'self', 'helper', 'group'
-    deviceStrategy: null, // 'single' or 'multi'
-    syncEnabled: false,
-    pinEnabled: false,
-  });
+  const [userJourney, setUserJourney] = useState(getInitialJourney());
 
   // User data state
   const [userName, setUserName] = useState('');
@@ -76,8 +98,23 @@ const OnboardingUserCentered = ({
   const [confirmPin, setConfirmPin] = useState('');
   const [pinError, setPinError] = useState('');
 
+  // Get initial recovery phrase from sync invite data
+  const getInitialRecoveryPhrase = () => {
+    if (Platform.OS === 'web' && window.syncInviteData) {
+      if (window.syncInviteData.inviteCode && window.syncInviteData.recoveryPhrase) {
+        return `${window.syncInviteData.inviteCode}#${window.syncInviteData.recoveryPhrase}`;
+      } else if (window.syncInviteData.inviteCode) {
+        return window.syncInviteData.inviteCode;
+      }
+    }
+    if (syncSetupPhrase) {
+      return syncSetupPhrase;
+    }
+    return '';
+  };
+  
   // Sync state
-  const [recoveryPhrase, setRecoveryPhrase] = useState('');
+  const [recoveryPhrase, setRecoveryPhrase] = useState(getInitialRecoveryPhrase());
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncError, setSyncError] = useState('');
   const [syncPreviewData, setSyncPreviewData] = useState(null);
@@ -100,38 +137,19 @@ const OnboardingUserCentered = ({
     }
   }, [currentStep, generatedSyncCode]);
 
-  // Pre-populate if coming from sync URL or sync invite
+  // Auto-trigger sync preview for invite URLs with full data
   useEffect(() => {
-    // Check for sync invite mode first
-    if (Platform.OS === 'web' && window.syncInviteData) {
-      console.log('[Onboarding] Sync invite mode detected:', window.syncInviteData);
-      
-      // If we have both invite code and recovery phrase, auto-join
+    // Only auto-trigger if we're on the sync import step with a complete invite
+    if (currentStep === 'syncImport' && Platform.OS === 'web' && window.syncInviteData) {
       if (window.syncInviteData.inviteCode && window.syncInviteData.recoveryPhrase) {
-        // Construct the full sync code in the new format
-        const fullSyncCode = `${window.syncInviteData.inviteCode}#${window.syncInviteData.recoveryPhrase}`;
-        setRecoveryPhrase(fullSyncCode);
-        setUserJourney(prev => ({ ...prev, journeyType: 'existing' }));
-        // Go directly to sync import step
-        setCurrentStep('syncImport');
-        
+        console.log('[Onboarding] Auto-triggering sync preview for invite URL');
         // Auto-trigger the sync preview after a brief delay
         setTimeout(() => {
           fetchSyncPreview();
         }, 500);
-      } else if (window.syncInviteData.inviteCode) {
-        // We have invite code but no recovery phrase - show minimal UI to get phrase
-        setRecoveryPhrase(window.syncInviteData.inviteCode);
-        setUserJourney(prev => ({ ...prev, journeyType: 'existing', inviteCode: window.syncInviteData.inviteCode }));
-        setCurrentStep('syncImport');
       }
-    } else if (syncSetupPhrase) {
-      // Legacy sync URL format
-      setRecoveryPhrase(syncSetupPhrase);
-      setUserJourney(prev => ({ ...prev, journeyType: 'existing' }));
-      setCurrentStep('syncImport');
     }
-  }, [syncSetupPhrase]);
+  }, [currentStep]); // Only trigger on initial mount when currentStep is set
 
   // Fade in animation
   useEffect(() => {
