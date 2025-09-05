@@ -117,8 +117,8 @@ try {
         throw new Exception('Failed to generate unique invite code');
     }
     
-    // Calculate expiration
-    $expiresAt = date('Y-m-d H:i:s', time() + ($expiresHours * 3600));
+    // Calculate expiration using UTC consistently
+    $expiresAt = gmdate('Y-m-d H:i:s', time() + ($expiresHours * 3600));
     
     // Store invite
     $stmt = $db->prepare("

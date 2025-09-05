@@ -74,7 +74,8 @@ try {
             throw new Exception('Invite code not found');
         }
         
-        if ($invite['expires_at'] < date('Y-m-d H:i:s')) {
+        // Use UTC consistently for time comparisons
+        if ($invite['expires_at'] < gmdate('Y-m-d H:i:s')) {
             throw new Exception('Invite code has expired');
         }
         
@@ -88,7 +89,7 @@ try {
             SET 
                 use_count = use_count + 1,
                 used_at = CASE 
-                    WHEN used_at IS NULL THEN NOW() 
+                    WHEN used_at IS NULL THEN ? 
                     ELSE used_at 
                 END,
                 used_by_device = CASE
@@ -99,6 +100,7 @@ try {
         ");
         
         $updateStmt->execute([
+            gmdate('Y-m-d H:i:s'),
             $deviceId ?? $deviceName,
             $deviceId ?? $deviceName,
             $invite['id']

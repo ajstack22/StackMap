@@ -45,6 +45,9 @@ try {
     $db = Database::getInstance()->getConnection();
     
     // Check if invite exists and is valid
+    // Use UTC timestamps consistently
+    $currentTime = gmdate('Y-m-d H:i:s');
+    
     $stmt = $db->prepare("
         SELECT 
             sync_id,
@@ -54,11 +57,11 @@ try {
             note
         FROM sync_invites
         WHERE invite_code = ?
-        AND expires_at > NOW()
+        AND expires_at > ?
         AND use_count < max_uses
     ");
     
-    $stmt->execute([$inviteCode]);
+    $stmt->execute([$inviteCode, $currentTime]);
     $invite = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$invite) {
@@ -72,7 +75,7 @@ try {
         $check = $checkStmt->fetch(PDO::FETCH_ASSOC);
         
         if ($check) {
-            if ($check['expires_at'] < date('Y-m-d H:i:s')) {
+            if ($check['expires_at'] < $currentTime) {
                 throw new Exception('Invite code has expired');
             }
             if ($check['use_count'] >= $check['max_uses']) {
@@ -80,7 +83,7 @@ try {
             }
         }
         
-        throw new Exception('Invalid invite code');
+        throw new Exception('Invalid or expired invite code');
     }
     
     // Get the latest encrypted data for this sync
