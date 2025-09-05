@@ -150,6 +150,20 @@ const OnboardingUserCentered = ({
       }
     }
   }, [currentStep]); // Only trigger on initial mount when currentStep is set
+  
+  // Auto-import sync data when preview is fetched from invite URL
+  useEffect(() => {
+    // Check if we have preview data and are coming from an invite URL with full data
+    if (syncPreviewData && currentStep === 'syncImport' && Platform.OS === 'web' && window.syncInviteData) {
+      if (window.syncInviteData.inviteCode && window.syncInviteData.recoveryPhrase) {
+        console.log('[Onboarding] Auto-importing sync data from invite URL');
+        // Auto-trigger the import after a brief delay for UI to update
+        setTimeout(() => {
+          importSyncData();
+        }, 500);
+      }
+    }
+  }, [syncPreviewData]); // Trigger when syncPreviewData is set
 
   // Fade in animation
   useEffect(() => {
