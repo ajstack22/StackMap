@@ -81,6 +81,15 @@ prepare_deployment() {
     cp -r web/build/fonts . 2>/dev/null || true
     cp -r web/build/icons . 2>/dev/null || true
     
+    # Fix paths for QUAL environment (needs absolute paths for nested URLs)
+    if [[ "$DEPLOY_ENV" == "qual" ]]; then
+        echo "📝 Fixing paths for QUAL environment..."
+        # Replace relative paths with absolute paths in index.html
+        sed -i.bak 's|src="./|src="/qual/|g' index.html
+        sed -i.bak 's|href="./|href="/qual/|g' index.html
+        rm index.html.bak
+    fi
+    
     # Stage ONLY the current build files (not old bundles)
     git add -f index.html manifest.json service-worker.js workbox-*.js
     
@@ -92,6 +101,13 @@ prepare_deployment() {
     
     # Add asset directories
     git add -f fonts/ icons/ 2>/dev/null || true
+    
+    # Add .htaccess for QUAL environment
+    if [[ "$DEPLOY_ENV" == "qual" ]] && [[ -f "qual/.htaccess" ]]; then
+        echo "📝 Including .htaccess for QUAL..."
+        cp qual/.htaccess .
+        git add -f .htaccess
+    fi
     
     # Create deployment commit with metadata
     DEPLOY_MSG="Deploy to ${DEPLOY_ENV}: $(date +%Y-%m-%d_%H:%M:%S)
