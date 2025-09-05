@@ -119,6 +119,16 @@ class MinimalSyncService {
     // Track encryption initialization
     this.encryptionReady = false;
     this.recoveryPhrase = null;
+    
+    // Rate limiting properties
+    this.lastRequest = {};
+    this.MIN_REQUEST_INTERVAL = 200; // 200ms between requests
+    
+    // Recovery phrase management
+    this.pendingRecoveryPhrase = null;
+    
+    // Check for recovery phrase in URL fragment
+    this.checkForRecoveryPhrase();
   }
 
   async initDeviceId() {
@@ -192,19 +202,68 @@ class MinimalSyncService {
         .map(b => b.toString(16).padStart(2, '0'))
         .join('');
     } else {
-      // Final fallback using Math.random (less secure but works everywhere)
-      console.warn('[MinimalSync] Using Math.random for ID generation - crypto not available');
-      return 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0;
-        const v = c == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
+      // Use nacl.randomBytes as secure fallback (already available)
+      console.warn('[MinimalSync] Using nacl.randomBytes for ID generation');
+      const bytes = nacl.randomBytes(16);
+      return Array.from(bytes)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
     }
   }
 
   // Removed unused base64 encode/decode functions that used deprecated escape/unescape
   // These were causing "Malformed decodeURI input" errors on iOS
   // Encryption is handled by encryptionService which uses tweetnacl-util
+  
+  /**
+   * Rate limiting to prevent rapid API calls
+   */
+  async rateLimitCheck(action) {
+    const now = Date.now();
+    const last = this.lastRequest[action] || 0;
+    
+    const waitTime = this.MIN_REQUEST_INTERVAL - (now - last);
+    if (waitTime > 0) {
+      console.log(`[MinimalSync] Rate limiting ${action} - waiting ${waitTime}ms`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+    
+    this.lastRequest[action] = Date.now();
+  }
+  
+  /**
+   * Check for recovery phrase in URL fragment and clear it
+   */
+  checkForRecoveryPhrase() {
+    if (typeof window === 'undefined' || !window.location.hash) {
+      return;
+    }
+    
+    const fragment = window.location.hash.substring(1);
+    
+    // Clear immediately
+    if (fragment) {
+      window.history.replaceState(
+        null,
+        document.title,
+        window.location.pathname + window.location.search
+      );
+      
+      // Use if it looks like a recovery phrase (32 hex characters)
+      if (fragment.length === 32 && /^[a-f0-9]+$/i.test(fragment)) {
+        this.pendingRecoveryPhrase = fragment;
+        console.log('[MinimalSync] Found and cleared recovery phrase from URL');
+        
+        // Clear from memory after 10 seconds if unused
+        setTimeout(() => {
+          if (this.pendingRecoveryPhrase === fragment) {
+            this.pendingRecoveryPhrase = null;
+            console.log('[MinimalSync] Cleared unused pending recovery phrase');
+          }
+        }, 10000);
+      }
+    }
+  }
 
   /**
    * Add metadata to data if it doesn't have it
@@ -657,6 +716,9 @@ class MinimalSyncService {
       return { success: false, error: 'Encryption not ready' };
     }
     
+    // Apply rate limiting
+    await this.rateLimitCheck('push');
+    
     // No protection period needed - conflict resolution handles everything
     const timestamp = Date.now();
     
@@ -736,6 +798,9 @@ class MinimalSyncService {
       console.error('[MinimalSync] ❌ No sync ID');
       return { success: false, error: 'No sync ID' };
     }
+    
+    // Apply rate limiting
+    await this.rateLimitCheck('pull');
     
     // Ensure device ID is initialized
     if (!this.deviceId) {
@@ -1160,6 +1225,9 @@ class MinimalSyncService {
   async joinWithInviteCode(inviteCode, recoveryPhrase = null) {
     console.log('[MinimalSync] Joining sync with invite code:', inviteCode);
     
+    // Apply rate limiting
+    await this.rateLimitCheck('joinWithInvite');
+    
     // Normalize invite code
     inviteCode = inviteCode.toUpperCase().trim();
     
@@ -1174,17 +1242,28 @@ class MinimalSyncService {
       
       console.log('[MinimalSync] Invite validated, sync_id:', validateResult.sync_id);
       
-      // Step 2: Get recovery phrase (from parameter, URL fragment, or user input)
+      // Step 2: Get recovery phrase (from parameter, pending, or URL fragment)
+      recoveryPhrase = recoveryPhrase || this.pendingRecoveryPhrase;
+      
       if (!recoveryPhrase) {
         // Check if we're in a browser and have a fragment
         if (typeof window !== 'undefined' && window.location.hash) {
           recoveryPhrase = window.location.hash.substring(1);
+          // Clear the fragment immediately after reading
+          window.history.replaceState(
+            null,
+            document.title,
+            window.location.pathname + window.location.search
+          );
         }
         
         if (!recoveryPhrase) {
           throw new Error('Recovery phrase required to decrypt sync data');
         }
       }
+      
+      // Clear pending recovery phrase after use
+      this.pendingRecoveryPhrase = null;
       
       // Step 3: Initialize encryption with recovery phrase
       const fixedSalt = 'U3RhY2tNYXBTeW5jU2FsdDIwMjQ=';
@@ -1231,6 +1310,9 @@ class MinimalSyncService {
   // Validate an invite code without joining
   async validateInviteCode(inviteCode) {
     console.log('[MinimalSync] Validating invite code:', inviteCode);
+    
+    // Apply rate limiting
+    await this.rateLimitCheck('validate');
     
     try {
       const response = await fetch(`${this.API_BASE}/validate_invite.php?code=${inviteCode}`);

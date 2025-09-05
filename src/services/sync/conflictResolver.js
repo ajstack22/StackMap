@@ -537,9 +537,25 @@ class ConflictResolver {
    * Generate a simple device ID
    */
   generateDeviceId() {
-    // Simple hex ID (16 chars)
-    return Math.random().toString(16).substring(2, 10) + 
-           Math.random().toString(16).substring(2, 10);
+    // Use crypto.getRandomValues for secure ID generation
+    if (typeof global !== 'undefined' && global.crypto?.getRandomValues) {
+      const bytes = new Uint8Array(8);
+      global.crypto.getRandomValues(bytes);
+      return Array.from(bytes)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    } else if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      const bytes = new Uint8Array(8);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    } else {
+      // Fallback: use Date.now() and a counter for uniqueness
+      const timestamp = Date.now().toString(16);
+      const counter = (this.idCounter = (this.idCounter || 0) + 1).toString(16).padStart(4, '0');
+      return timestamp + counter;
+    }
   }
 
   /**
