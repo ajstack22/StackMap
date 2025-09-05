@@ -1319,7 +1319,8 @@ class MinimalSyncService {
       const result = await response.json();
       
       return {
-        valid: result.success,
+        success: result.success,  // Changed from 'valid' to 'success' for consistency
+        valid: result.success,     // Keep for backward compatibility
         syncId: result.sync_id,
         expiresAt: result.expires_at,
         note: result.invite_note,
@@ -1328,7 +1329,8 @@ class MinimalSyncService {
     } catch (error) {
       console.error('[MinimalSync] Failed to validate invite code:', error);
       return {
-        valid: false,
+        success: false,  // Changed from 'valid' to 'success'
+        valid: false,     // Keep for backward compatibility
         error: error.message
       };
     }
