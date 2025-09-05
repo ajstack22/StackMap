@@ -1,455 +1,353 @@
-# StackMap Sync System Documentation
+# StackMap Sync System - Complete Technical Documentation
 
-**Last Updated: August 2025**
+## Quick Start for LLM Developers
 
-## 🎯 Current Implementation Status (v2025.08.18+)
+### What This System Does
+StackMap implements a **zero-knowledge, encrypted sync system** that enables real-time data synchronization across devices without server access to user data. Think of it as a privacy-first alternative to Firebase/iCloud sync.
 
-**StackMap uses the complex sync architecture** - the simplified version was reverted in August 2025 due to AsyncStorage issues.
+### Core Concepts in 30 Seconds
+- **Zero-Knowledge**: Server stores encrypted blobs only - never sees plaintext
+- **Recovery Phrase**: 32-char hex string generates all crypto keys client-side  
+- **Conflict Resolution**: Last-write-wins at field level with 3-second merge window
+- **Real-time Sync**: Push on change, 30-second periodic pull
+- **No User Accounts**: Authentication via cryptographic proof only
 
-### Architecture Overview
-- **Strategy**: Last-write-wins with timestamp-based conflict resolution (v2025.08.25+)
-- **Components**: Full service with queue, throttling, network monitoring (9 supporting modules)
-- **Service File**: `/src/services/sync/syncService.js` (~2200 lines)
-- **URL Format**: `stackmap.app/?sync=<32-char-hex>`
-- **Recovery Phrase**: 32 character hexadecimal (no spaces)
-- **Periodic Sync**: 30-second interval when enabled
-- **Sync Triggers**: App visibility, data changes (5s debounce), manual, periodic
-- **Offline Support**: Queue system for offline changes
+## Architecture Overview
 
-## 🔄 Data Flow Summary
+### System Components
+```
+Frontend (React Native/Web)
+├── minimalSyncService.js - Simplified sync orchestrator
+├── encryptionServiceFixed.ts - TweetNaCl crypto (iOS-fixed UTF-8)  
+├── syncStoreIntegration.js - Zustand store bridge
+├── conflictResolver.js - Field-level merge logic
+└── debugSync.js - Debug utilities
 
-### Push (Client → Server)
-1. **Gather Data**: From 4 stores (users, library, settings, app state)
-2. **Normalize Fields**: Activities use `text` (not name/title) and `icon` (not emoji)
-3. **Encrypt**: PBKDF2 key derivation (100k iterations) → NaCl secretbox encryption
-4. **Send**: POST encrypted blob with sync_id and version to server
-5. **Store**: Server saves encrypted data (zero-knowledge storage)
+Backend (PHP/MySQL - Zero Knowledge)
+├── create_timestamp.php - Initialize sync group
+├── push_timestamp.php - Store encrypted blob with timestamps
+├── pull_timestamp.php - Retrieve encrypted blob since timestamp
+├── join_timestamp.php - Join existing sync group
+├── create_share.php - Create time-limited share links
+├── access_share.php - Access shared data
+└── MySQL: sync_data table with encrypted blobs
+```
 
-### Pull (Server → Client)
-1. **Request**: GET with sync_id from server
-2. **Receive**: Encrypted blob and metadata
-3. **Decrypt**: Extract nonce → decrypt with master key
-4. **Validate**: Check/repair data structure
-5. **Resolve**: Handle conflicts (last-write-wins)
-6. **Update**: Split data across 4 specialized stores
+### Data Flow
 
-## 🔐 Zero-Knowledge Architecture
-
-### Core Principles
-- **Server never sees plaintext data**: All data is encrypted client-side before transmission
-- **No user accounts**: Authentication based solely on cryptographic proofs
-- **No metadata exposure**: Server only stores encrypted blobs with minimal metadata
-- **User-controlled**: Complete user control over data lifecycle
-
-### Security Implementation
-- **Encryption**: TweetNaCl.js (XSalsa20-Poly1305)
-- **Key Derivation**: PBKDF2 with 100,000 iterations
-- **Recovery Phrase**: 32-character hexadecimal string (never sent to server)
-- **Sync ID**: Derived from recovery phrase using NaCl hash with fixed salt
-- **Master Key**: NaCl-hash-derived from recovery phrase + encryption salt
-- **Device ID**: Unique identifier for each device
-- **Data Expiration**: 6-month automatic cleanup for abandoned data
-
-### Encryption Process
+#### Push Flow (Device → Server)
 ```javascript
-// 1. Key Derivation
-recoveryPhrase = "32 character hex string"
-fixedSalt = "U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=" // Base64
-masterKey = PBKDF2(recoveryPhrase + fixedSalt, iterations: 100000)
-
-// 2. Encryption
-nonce = randomBytes(24)
-encryptedData = nacl.secretbox(JSON.stringify(data), nonce, masterKey)
-encryptedBlob = base64(nonce + encryptedData)
+1. User action → Zustand store update
+2. Store observer triggers sync
+3. Gather data from 4 stores (users, library, settings, app)
+4. Normalize fields: {text, icon} not {name/title, emoji}
+5. Derive key using nacl.hash iterations (not PBKDF2)
+6. Encrypt: nacl.secretbox(data, nonce, key)
+7. POST to server: {sync_id, encrypted_blob, timestamp}
+8. Server stores blob (knows nothing about contents)
 ```
 
-## 📊 API Reference
-
-### Base URL
-```
-https://stackmap.app/api/sync
-```
-
-### Endpoints
-
-#### 1. Create Sync Group
-**POST /create.php**
-```json
-{
-  "sync_id": "string (32 hex characters)",
-  "encrypted_blob": "string (base64 encoded)",
-  "recovery_salt": "string (base64 encoded)",
-  "device_id": "string (32 hex characters)"
-}
+#### Pull Flow (Server → Device)
+```javascript
+1. 30-second periodic pull OR manual trigger
+2. Server returns encrypted blob + metadata
+3. Decrypt: nacl.secretbox.open(blob, nonce, key)
+4. Validate & repair data structure
+5. Resolve conflicts (field timestamps, 3-sec window)
+6. Update Zustand stores via specific methods
+7. UI re-renders from store changes
 ```
 
-#### 2. Push Data
-**POST /push.php**
-```json
-{
-  "sync_id": "string (hash of recovery phrase)",
-  "device_id": "string",
-  "device_name": "string (optional)",
-  "encrypted_blob": "string (base64: nonce + encrypted data)",
-  "sync_type": "full",
-  "version": "number (timestamp for conflict detection)",
-  "metadata": {
-    "last_modified": "ISO 8601 timestamp",
-    "device_info": "optional device metadata"
+## Implementation Guide
+
+### 1. Setting Up Sync (Frontend)
+
+```javascript
+// Initialize sync with recovery phrase
+import minimalSyncService from './services/sync/minimalSyncService';
+
+// Generate or use existing recovery phrase
+const recoveryPhrase = generateRecoveryPhrase(); // 32 hex chars
+
+// Enable sync (simplified API)
+await minimalSyncService.enableSync(recoveryPhrase, isNewSync);
+// isNewSync: true for creating new, false for joining existing
+
+// Sync triggers automatically on data changes
+```
+
+### 2. Encryption Implementation
+
+```javascript
+// Key derivation using nacl.hash (NOT PBKDF2)
+import nacl from 'tweetnacl';
+
+class EncryptionServiceFixed {
+  KEY_DERIVATION_ITERATIONS = 100000;
+  
+  async deriveKeyFromPhrase(phrase, salt) {
+    // Use fixed salt for sync ID generation
+    const fixedSalt = 'U3RhY2tNYXBTeW5jU2FsdDIwMjQ=';
+    let key = this.encodeUTF8(phrase + salt);
+    
+    // Simple iteration using nacl.hash
+    for (let i = 0; i < this.KEY_DERIVATION_ITERATIONS; i++) {
+      key = nacl.hash(key);
+    }
+    
+    return key.slice(0, 32); // Use first 32 bytes
+  }
+  
+  encrypt(data, key) {
+    const nonce = nacl.randomBytes(24);
+    const message = this.encodeUTF8(JSON.stringify(data));
+    const encrypted = nacl.secretbox(message, nonce, key);
+    
+    // Combine nonce + ciphertext
+    return this.encodeBase64(
+      new Uint8Array([...nonce, ...encrypted])
+    );
+  }
+  
+  // Manual UTF-8 implementation for iOS compatibility
+  encodeUTF8(str) {
+    const bytes = [];
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      if (char < 0x80) {
+        bytes.push(char);
+      } else if (char < 0x800) {
+        bytes.push(0xc0 | (char >> 6));
+        bytes.push(0x80 | (char & 0x3f));
+      }
+      // ... handle multi-byte chars
+    }
+    return new Uint8Array(bytes);
   }
 }
 ```
 
-#### 3. Pull Data
-**GET /pull.php?sync_id={syncId}&device_id={deviceId}**
+### 3. Conflict Resolution
 
-Response:
-```json
-{
-  "success": true,
-  "encrypted_blob": "string (base64)",
-  "version": 2,
-  "last_modified": "2024-01-20T12:34:56Z",
-  "device_id": "string",
-  "device_name": "string"
-}
-```
-
-#### 4. Delete Sync Data
-**POST /delete.php**
-```json
-{
-  "sync_id": "string",
-  "device_id": "string"
-}
-```
-
-#### 5. Health Check
-**GET /health.php**
-
-### Data Structure (v4)
-```json
-{
-  "version": 4,
-  "syncType": "full",
-  "syncTimestamp": 1705761296000,
-  "deviceInfo": {
-    "id": "device_id",
-    "name": "Device Name"
-  },
-  "currentDay": "today",
-  "currentUser": "user_id",
-  "users": {
-    "user_id": {
-      "id": "user_id",
-      "name": "User Name",
-      "icon": "emoji",
-      "days": {
-        "today": {
-          "activities": [
-            {
-              "id": "activity_id",
-              "text": "Activity",
-              "icon": "emoji",
-              "completed": false,
-              "pinned": false,
-              "modifiedAt": 1724601600000
-            }
-          ]
-        }
-      },
-      "settings": { "theme": "stackBlue" }
-    }
-  },
-  "library": {
-    "categories": [],
-    "userAddedActivityIds": []
-  },
-  "globalSettings": {
-    "currentTheme": "stackBlue",
-    "bannerPosition": "top",
-    "pinEnabled": false
-  },
-  "hasCompletedOnboarding": true
-}
-```
-
-### Field Normalization Rules
-- **Activities**: Use `text` (not name/title), `icon` (not emoji)
-- **Users**: `icon` required, `name` as string only
-- **Timestamps**: `modifiedAt` field for conflict resolution (defaults to 0)
-- **Always include fallbacks**: `activity.text || activity.name || activity.title`
-
-## 🔄 Conflict Resolution (v2025.08.25+)
-
-### Timestamp-Based Resolution
-Activities use `modifiedAt` timestamps for conflict resolution during sync:
-
-1. **When timestamps differ**: Higher timestamp wins (most recent edit)
-2. **When only one has timestamp**: Timestamped version wins
-3. **When neither has timestamp**: Falls back to content comparison
-4. **Default value**: Activities without timestamps default to `modifiedAt: 0`
-
-### Activity Operations That Update Timestamps
-- **Edit activity**: Sets `modifiedAt: Date.now()`
-- **Add from library**: Sets `modifiedAt: Date.now()`
-- **Reorder activities**: Updates `modifiedAt` for moved items
-- **Toggle completion**: Sets `modifiedAt: Date.now()`
-- **Import data**: Activities get `modifiedAt: 0` if missing
-
-### Sync Timing to Prevent Self-Conflicts
-- **Debounce**: 10 seconds after last change (increased from 5s)
-- **Skip window**: 5 seconds after push (prevents immediate pull-back)
-- **Periodic sync**: Every 30 seconds when enabled
-- **Merge strategy**: Fresh store data merged with incoming changes
-
-## 🔧 Service Architecture
-
-### Main Components
-1. **syncService.js** - Main sync orchestration
-2. **encryptionService.js** - TweetNaCl encryption/decryption
-3. **conflictResolver.js** - Handles merge conflicts
-4. **dataValidator.js** - Validates sync data integrity
-5. **dataNormalizer.js** - Normalizes field names
-6. **syncQueue.ts** - Manages sync queue for offline support
-7. **networkMonitor.js** - Monitors network status
-8. **changeTracker.js** - Tracks local changes for incremental sync
-9. **syncThrottle.js** - Throttles sync requests
-10. **syncHistory.js** - Maintains sync history for debugging
-
-### Sync Flow
-```mermaid
-graph TD
-    A[Local State Changes] --> B[Normalize Fields]
-    B --> C[Encrypt Data]
-    C --> D[Push to Server]
-    D --> E[Server Stores Blob]
-    
-    F[Pull Request] --> G[Server Returns Blob]
-    G --> H[Decrypt Data]
-    H --> I[Validate Structure]
-    I --> J{Conflicts?}
-    J -->|Yes| K[Resolve]
-    J -->|No| L[Apply State]
-    K --> L
-    L --> M[Update Stores]
-    M --> N[UI Updates]
-```
-
-### Store Integration
-The sync system integrates with 4 specialized stores:
-- **useUserStore**: Users and activities
-- **useLibraryStore**: Activity templates and categories
-- **useSettingsStore**: Global settings and preferences
-- **useAppStore**: Current user/day selection
-
-**Critical**: Always use store-specific methods for updates:
 ```javascript
-// CORRECT - updates the specialized user store
+// Field-level last-write-wins with merge window
+class ConflictResolver {
+  MERGE_WINDOW = 3000; // 3 seconds
+  
+  mergeData(local, remote) {
+    // Compare field timestamps
+    const localTime = local.fieldTimestamps?.users || 0;
+    const remoteTime = remote.fieldTimestamps?.users || 0;
+    
+    // Within merge window: merge arrays
+    if (Math.abs(localTime - remoteTime) < this.MERGE_WINDOW) {
+      return this.mergeArrays(local.users, remote.users);
+    }
+    
+    // Outside window: take newer
+    return localTime > remoteTime ? local : remote;
+  }
+  
+  mergeArrays(local, remote) {
+    // Combine and deduplicate by ID
+    const combined = [...local, ...remote];
+    return Array.from(
+      new Map(combined.map(item => [item.id, item])).values()
+    );
+  }
+}
+```
+
+### 4. Backend API (PHP Example)
+
+```php
+// push_timestamp.php - Zero-knowledge storage with timestamps
+<?php
+header('Content-Type: application/json');
+
+// Get encrypted data (server never decrypts)
+$input = json_decode(file_get_contents('php://input'), true);
+
+$sync_id = $input['sync_id'];  // Hash of recovery phrase
+$blob = $input['encrypted_blob'];  // Base64 encrypted data
+$timestamp = $input['timestamp'];  // Unix timestamp in ms
+
+// Store encrypted blob with timestamp
+$stmt = $pdo->prepare("
+  INSERT INTO sync_data (sync_id, encrypted_blob, timestamp, device_id)
+  VALUES (?, ?, ?, ?)
+  ON DUPLICATE KEY UPDATE 
+    encrypted_blob = VALUES(encrypted_blob),
+    timestamp = VALUES(timestamp)
+");
+
+$stmt->execute([$sync_id, $blob, $timestamp, $input['device_id']]);
+
+echo json_encode(['success' => true, 'timestamp' => $timestamp]);
+?>
+```
+
+## Critical Implementation Details
+
+### Field Normalization (MUST FOLLOW)
+```javascript
+// Activities MUST use these field names
+activity = {
+  id: 'unique-id',
+  text: 'Activity Name',  // NOT name, NOT title
+  icon: '🎮',            // NOT emoji
+  completed: false,
+  // ... other fields
+}
+
+// Users MUST use these field names  
+user = {
+  id: 'unique-id',
+  name: 'User Name',     // String only
+  icon: '👤',           // NOT emoji
+  // ... other fields
+}
+```
+
+### Store Update Pattern (CRITICAL)
+```javascript
+// CORRECT - Use store-specific methods
 useUserStore.getState().setUsers(users);
 useSettingsStore.getState().updateSettings(settings);
-useLibraryStore.getState().setLibrary(library);
 
-// WRONG - doesn't update underlying stores properly
-useAppStore.setState({ users });
+// WRONG - Never use generic setState
+useAppStore.setState({ users });  // Will break sync
 ```
 
-## 🛠️ Troubleshooting Guide
+### Sync Triggers
+- **Periodic**: Every 30 seconds (fixed interval)
+- **Manual**: User-initiated sync button
+- **Data Changes**: Through store integration
+- **Visibility**: App foreground/background transitions
 
-### Common Issues
+### Security Considerations
+1. **Recovery Phrase**: Never sent to server, only its hash
+2. **Sync ID**: Generated using nacl.hash iterations
+3. **Master Key**: Derived separately for encryption
+4. **Nonce**: Random 24 bytes per encryption
+5. **Iterations**: 100,000 nacl.hash iterations
+6. **UTF-8**: Manual implementation for iOS compatibility
 
-#### 1. Activities Not Syncing Between Devices
-**Symptoms**: Users sync correctly but activities show as empty
-**Causes**: Field naming mismatch, using `name`/`title` instead of `text`
-**Solution**: Use correct field names with fallbacks:
+## API Endpoints (Actual Implementation)
+
+### Sync Endpoints
+- `POST /create_timestamp.php` - Create new sync group
+- `POST /join_timestamp.php` - Join existing sync group  
+- `POST /push_timestamp.php` - Push encrypted data
+- `GET /pull_timestamp.php` - Pull data since timestamp
+
+### Share Endpoints
+- `POST /create_share.php` - Create share link
+- `GET /access_share.php` - Access shared data
+
+## Troubleshooting Common Issues
+
+### "Data doesn't sync to Device B"
 ```javascript
-activity.text || activity.name || activity.title
-activity.icon || activity.emoji
+// Check sync is enabled
+console.log('[MinimalSync] Sync enabled:', minimalSyncService.isEnabled);
+
+// Verify same recovery phrase
+console.log('[MinimalSync] Sync ID:', minimalSyncService.syncId);
+
+// Force manual pull
+await minimalSyncService.pullData(true); // forceFullPull
+
+// Check console for [MinimalSync] prefixed logs
 ```
 
-#### 2. Target Icon (🎯) Appearing Incorrectly
-**Symptoms**: Target icon appears when editing activities
-**Causes**: Components using `emoji` field instead of `icon`
-**Solution**: Always use `icon` field with fallback:
+### "Changes don't persist after refresh"
 ```javascript
-setEditEmoji(activity.icon || activity.emoji || '');
-```
+// Ensure AsyncStorage is working (mobile)
+import AsyncStorage from '@react-native-async-storage/async-storage';
+const test = await AsyncStorage.setItem('test', 'value');
+const retrieved = await AsyncStorage.getItem('test');
 
-#### 3. "User missing icon or emoji" Errors
-**Symptoms**: Icons present in demo data but missing after sync
-**Causes**: Using `useAppStore.setState()` instead of specialized store methods
-**Solution**: Use proper store methods for updates:
-```javascript
-// Fixed to use store-specific methods
-const userStore = require('../../stores/useUserStore.js').default;
-userStore.getState().setUsers(users);
-```
-
-#### 4. Network Suspension After Computer Sleep
-**Symptoms**: `net::ERR_NETWORK_IO_SUSPENDED` errors after computer wakes
-**Solution**: Automatic retry with exponential backoff:
-```javascript
-// Retries with delays: 1s, 2s, 4s, max 8s
-if (error.message.includes('ERR_NETWORK_IO_SUSPENDED')) {
-  const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 8000);
-  await new Promise(resolve => setTimeout(resolve, backoffDelay));
-  return this.pullData(retryCount + 1);
-}
-```
-
-### Debug Commands
-```javascript
-// Check sync status
-syncService.syncEnabled  // Should be true
-syncService.syncId       // Should be 32-char hex
-syncService.syncStatus   // Should be 'idle' or 'syncing'
-
-// Check data structure
-const state = syncService.getCurrentState();
-console.log('Sync data valid?', 
-  state.users && state.library && state.globalSettings
-);
-
-// Force fresh pull
-async function debugPull() {
-  const data = await syncService.pullData();
-  const decrypted = syncService.encryptionService.decryptData(data.encrypted_blob);
-  console.log('Server data:', decrypted);
-}
-```
-
-## 🧪 Testing Procedures
-
-### Manual Test Procedure
-1. **Setup Device A**:
-   - Clear all data
-   - Import demo data (`data/demo-data-kids.json`)
-   - Enable sync and copy recovery phrase
-
-2. **Setup Device B**:
-   - Clear all data
-   - Join sync with recovery phrase
-   - Wait for sync to complete
-
-3. **Verify**:
-   - [ ] All users appear with correct data
-   - [ ] Activities display with correct icons
-   - [ ] Edit mode shows correct icons
-   - [ ] Changes sync bidirectionally
-
-### Automated Verification
-```javascript
-// Check sync status and data integrity
-const sync = syncService;
-console.log('Sync enabled:', sync.syncEnabled);
-console.log('Last success:', new Date(sync.lastSyncSuccess));
-
+// Check store persistence
 const state = useAppStore.getState();
-Object.entries(state.users).forEach(([id, user]) => {
-  const activities = user.days?.today?.activities || [];
-  console.log(`User ${user.name}: ${activities.length} activities`);
-  activities.forEach(a => {
-    if (!a.text) console.warn('Missing text field:', a);
-    if (!a.icon && !a.emoji) console.warn('Missing icon:', a);
-  });
+console.log('Persisted state:', state);
+```
+
+### "iOS UTF-8 Issues"
+The implementation uses a manual UTF-8 encoder/decoder because tweetnacl-util returns strings instead of Uint8Arrays on iOS. This is handled in `encryptionServiceFixed.ts`.
+
+## Production Deployment Checklist
+
+### Frontend
+- [ ] Environment detection for API URLs (qual vs prod)
+- [ ] 100,000 nacl.hash iterations
+- [ ] Manual UTF-8 implementation for iOS
+- [ ] 30-second pull interval
+- [ ] Field normalization in place
+
+### Backend  
+- [ ] HTTPS only (no HTTP)
+- [ ] Rate limiting on API endpoints
+- [ ] Database indexes on sync_id, timestamp
+- [ ] Automated backup of encrypted blobs
+- [ ] 6-month data retention policy
+
+### Monitoring
+- [ ] Check [MinimalSync] console logs
+- [ ] Monitor encryption/decryption errors
+- [ ] API response time monitoring
+- [ ] Storage usage alerts
+
+## Minimal Sync Service Methods
+
+```javascript
+// Core operations
+minimalSyncService.enableSync(recoveryPhrase, isNewSync)
+minimalSyncService.disableSync()
+minimalSyncService.pushData(data)
+minimalSyncService.pullData(forceFullPull)
+minimalSyncService.getSyncId()
+
+// Data operations  
+minimalSyncService.setDataCallback(callback)
+minimalSyncService.testSyncConnection()
+
+// Internal
+minimalSyncService.startPullInterval()
+minimalSyncService.stopPullInterval()
+```
+
+### Data Callback
+```javascript
+// Set callback for when data is received
+minimalSyncService.setDataCallback((data) => {
+  console.log('New data received:', data);
+  // Update stores with received data
 });
 ```
 
-## 🚨 Emergency Recovery
+## Key Differences from Original Documentation
 
-### If Sync is Completely Broken
-1. **Export data from working device**:
-   - Settings → Data → Export
-   - Save the JSON file
+1. **Service Name**: Uses `minimalSyncService.js` not `syncService.js`
+2. **API Endpoints**: Uses `*_timestamp.php` variants not simple names
+3. **Key Derivation**: Uses nacl.hash iterations, NOT PBKDF2
+4. **UTF-8 Handling**: Manual implementation for iOS compatibility
+5. **Pull Interval**: Fixed 30 seconds, not configurable
+6. **API**: Simplified - no events, just data callbacks
+7. **Encryption**: Uses `encryptionServiceFixed.ts` for iOS issues
 
-2. **Reset sync on all devices**:
-   - Settings → Sync → Delete Sync
-   - Clear app data if needed
+## License & Usage
 
-3. **Import data on primary device**:
-   - Settings → Data → Import
-   - Select saved JSON file
+This documentation describes StackMap's actual sync implementation as of January 2025. The concepts and architecture patterns are available for learning and adaptation in other projects. When implementing similar systems:
 
-4. **Re-enable sync**:
-   - Create new sync group
-   - Share new recovery phrase
-
-### Force Local Data to Server
-```javascript
-// Force push local state
-async function forcePush() {
-  syncService.lastSyncVersion = 0;  // Reset version
-  await syncService.syncWithQueue();
-}
-forcePush();
-```
-
-## 📝 Best Practices
-
-### Security
-1. **Key Management**:
-   - Never store master keys in plaintext
-   - Use platform-specific secure storage
-   - Clear keys from memory after use
-
-2. **Error Handling**:
-   - Never expose internal errors to users
-   - Log security events for monitoring
-   - Use timing-safe comparisons
-
-3. **Input Validation**:
-   - Validate all inputs server-side
-   - Use parameterized queries
-   - Implement size limits
-
-### Performance
-1. **Sync Optimization**:
-   - Debounce rapid changes (5 seconds)
-   - Use periodic sync (30 seconds)
-   - Implement offline queue
-
-2. **Data Minimization**:
-   - Only sync necessary fields
-   - Compress data when beneficial
-   - Use efficient data structures
-
-### Development
-1. **Field Conventions**:
-   - Activities: Always use `text` and `icon` fields
-   - Users: Ensure `icon` field is preserved
-   - Include fallbacks for backward compatibility
-
-2. **Store Updates**:
-   - Use store-specific methods (`setUsers()`, `updateSettings()`)
-   - Never use `useAppStore.setState()` for complex updates
-   - Verify store subscriptions trigger properly
-
-## 📚 Related Documentation
-
-- **Field Conventions**: `/prompts/core/field-conventions.md`
-- **Data Structure**: `/docs/DATA_STRUCTURE.md`
-- **Store Architecture**: `/docs/STORE_ARCHITECTURE.md`
-- **Testing Guide**: `/docs/SIMPLE_TESTING_GUIDE.md`
-- **Deployment**: `/prompts/core/deployment.md`
-
-## 🔗 External References
-
-### Libraries Used
-- **TweetNaCl.js**: High-security cryptographic library
-- **PBKDF2**: Key derivation function
-- **pako**: Compression library
-
-### Standards Followed
-- **RFC 8018**: PKCS #5 v2.1 (PBKDF2)
-- **RFC 7539**: ChaCha20-Poly1305
-- **BIP39**: Mnemonic recovery phrases
+1. Always prioritize user privacy (zero-knowledge)
+2. Use established crypto libraries (don't roll your own)
+3. Handle platform-specific issues (iOS UTF-8)
+4. Plan for conflict resolution early
+5. Test with real-world network conditions
 
 ---
 
-## Support
-
-For sync-related issues:
-- Check console for `[Sync]` debug messages
-- Review troubleshooting section above
-- File issues at the GitHub repository
-- Email: support@stackmap.app
+*Last Updated: January 2025*
+*StackMap Version: Minimal Sync Implementation*
+*Note: This reflects the ACTUAL implementation, not the idealized architecture*

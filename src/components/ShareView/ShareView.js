@@ -15,7 +15,7 @@ import util from 'tweetnacl-util';
 import createStyles from './styles';
 import { CUSTOM_IMAGE_SOURCES, getCustomImageSource } from '../../constants';
 
-const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
+const ShareView = ({ shareToken, shareId, theme = { primary: '#667eea' } }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [shareData, setShareData] = useState(null);
@@ -38,10 +38,34 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
   }, []);
 
   useEffect(() => {
-    if (shareToken) {
+    // Detect which format we're using
+    const path = window.location.pathname;
+    
+    if (path.startsWith('/share/')) {
+      // New V3 format: /share/[id]#[key]
+      const id = path.split('/share/')[1];
+      const key = window.location.hash.substring(1);
+      
+      if (id && key) {
+        loadShareDataV3(id, key);
+      } else if (id) {
+        setError('Invalid share link - missing security key');
+        setLoading(false);
+      }
+    } else if (shareToken) {
+      // Legacy V2 format: ?share=[token]
       loadShareData();
+    } else if (shareId) {
+      // Prop-based V3 format
+      const key = window.location.hash.substring(1);
+      if (key) {
+        loadShareDataV3(shareId, key);
+      } else {
+        setError('Invalid share link - missing security key');
+        setLoading(false);
+      }
     }
-  }, [shareToken]);
+  }, [shareToken, shareId]);
 
   const loadShareData = async () => {
     try {
@@ -82,7 +106,7 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
         return;
       }
 
-      if (data.version === 2) {
+      if (data.version === 2 || data.version === 3) {
         try {
           // Decrypt the data client-side
           const encryptedData = data.encrypted_data;
@@ -151,6 +175,86 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
       }
     }
     return <Text style={styles.userIcon}>{user.icon || '😀'}</Text>;
+  };
+
+  // New function for V3 format
+  const loadShareDataV3 = async (shareId, encryptionKey) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Use relative path to work in both qual and prod environments
+      const apiPath =
+        Platform.OS === 'web' && window.location.pathname.includes('/qual/')
+          ? '/qual/api/sync/access_share.php'
+          : '/api/sync/access_share.php';
+
+      // V3: Fetch by ID only (key not sent to server)
+      const response = await fetch(`${apiPath}?id=${shareId}`);
+
+      if (!response.ok) {
+        throw new Error('Failed to load share data');
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Invalid share link');
+      }
+
+      // V3 decryption using key from fragment
+      if (data.version === 3) {
+        try {
+          const encryptedData = data.encrypted_data;
+
+          // Convert key back from URL-safe format
+          const paddedKey = encryptionKey.replace(/-/g, '+').replace(/_/g, '/');
+          const padding = (4 - (paddedKey.length % 4)) % 4;
+          const fullKey = paddedKey + '='.repeat(padding);
+          const shareKey = util.decodeBase64(fullKey);
+
+          // Decode the encrypted data
+          const combined = util.decodeBase64(encryptedData);
+
+          // Extract nonce and ciphertext
+          const nonce = combined.slice(0, nacl.secretbox.nonceLength);
+          const ciphertext = combined.slice(nacl.secretbox.nonceLength);
+
+          // Decrypt
+          const decrypted = nacl.secretbox.open(ciphertext, nonce, shareKey);
+          if (!decrypted) {
+            throw new Error('Failed to decrypt share data - invalid key');
+          }
+
+          // Parse decrypted data
+          const decryptedString = util.encodeUTF8(decrypted);
+          const shareData = JSON.parse(decryptedString);
+
+          // Format for display
+          setShareData({
+            user: shareData.user,
+            recipient_name: data.recipient_name,
+            share_note: data.share_note,
+            shared_at: shareData.shared_at,
+            expires_at: data.expires_at,
+            testMode: false,
+            version: 3,
+          });
+        } catch (decryptError) {
+          console.error('Decryption error:', decryptError);
+          setError('Failed to decrypt share data. The link may be invalid.');
+        }
+      } else {
+        // Handle V2 data if accessed via ID (backward compat)
+        setError('This share uses an older format. Please ask for a new share link.');
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading share:', error);
+      setError(error.message || 'Failed to load share');
+      setLoading(false);
+    }
   };
 
   const renderActivity = (activity, index) => {

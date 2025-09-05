@@ -1,6 +1,9 @@
 package com.stackmapnative
 
+import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
+import androidx.core.view.WindowCompat
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -25,5 +28,11 @@ class MainActivity : ReactActivity() {
     // Set the theme back to AppTheme before onCreate to maintain splash until React Native is ready
     setTheme(R.style.AppTheme)
     super.onCreate(savedInstanceState)
+    
+    // Enable edge-to-edge display for Android 15+ (API 35+)
+    // This uses the new recommended approach instead of deprecated methods
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      WindowCompat.setDecorFitsSystemWindows(window, false)
+    }
   }
 }

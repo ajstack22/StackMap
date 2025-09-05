@@ -26,32 +26,61 @@ require_once 'config.php';
 require_once 'database.php';
 
 try {
-    // Get token from query parameter
-    $token = $_GET['token'] ?? '';
+    // Support both old (?token=) and new (?id=) parameters
+    $token = $_GET['token'] ?? null;
+    $shareId = $_GET['id'] ?? null;
     
-    // Validate token format - V2 tokens only
-    if (!preg_match('/^[A-Za-z0-9_-]{24,}$/', $token)) {
-        throw new Exception('Invalid token format - V2 tokens required');
+    // Determine which format we're using
+    if ($shareId) {
+        // V3: Access by share ID only (no token)
+        if (!preg_match('/^[a-f0-9]{16}$/', $shareId)) {
+            throw new Exception('Invalid share ID format');
+        }
+    } elseif ($token) {
+        // V2: Legacy token-based access
+        if (!preg_match('/^[A-Za-z0-9_-]{24,}$/', $token)) {
+            throw new Exception('Invalid token format');
+        }
+    } else {
+        throw new Exception('Missing required parameter: token or id');
     }
     
     $db = Database::getInstance()->getConnection();
     
-    // Fetch share data including version
-    $stmt = $db->prepare("
-        SELECT 
-            share_id,
-            encrypted_data,
-            recipient_name,
-            share_note,
-            expires_at,
-            accessed_count,
-            share_version
-        FROM share_links
-        WHERE access_token = ?
-        AND expires_at > NOW()
-    ");
-    
-    $stmt->execute([$token]);
+    // Fetch share data based on format
+    if ($shareId) {
+        // V3: Query by share_id
+        $stmt = $db->prepare("
+            SELECT 
+                share_id,
+                encrypted_data,
+                recipient_name,
+                share_note,
+                expires_at,
+                accessed_count,
+                share_version
+            FROM share_links
+            WHERE share_id = ?
+            AND expires_at > NOW()
+        ");
+        $stmt->execute([$shareId]);
+    } else {
+        // V2: Query by token
+        $stmt = $db->prepare("
+            SELECT 
+                share_id,
+                encrypted_data,
+                recipient_name,
+                share_note,
+                expires_at,
+                accessed_count,
+                share_version
+            FROM share_links
+            WHERE access_token = ?
+            AND expires_at > NOW()
+        ");
+        $stmt->execute([$token]);
+    }
     $share = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$share) {
@@ -64,19 +93,29 @@ try {
     }
     
     // Update access count and timestamp
-    $updateStmt = $db->prepare("
-        UPDATE share_links 
-        SET accessed_count = accessed_count + 1,
-            last_accessed_at = NOW()
-        WHERE access_token = ?
-    ");
-    $updateStmt->execute([$token]);
+    if ($shareId) {
+        $updateStmt = $db->prepare("
+            UPDATE share_links 
+            SET accessed_count = accessed_count + 1,
+                last_accessed_at = NOW()
+            WHERE share_id = ?
+        ");
+        $updateStmt->execute([$shareId]);
+    } else {
+        $updateStmt = $db->prepare("
+            UPDATE share_links 
+            SET accessed_count = accessed_count + 1,
+                last_accessed_at = NOW()
+            WHERE access_token = ?
+        ");
+        $updateStmt->execute([$token]);
+    }
     
-    // V2 only: Zero-knowledge encrypted share
     // Return encrypted data for client-side decryption
+    // Version indicates encryption format
     echo json_encode([
         'success' => true,
-        'version' => 2,
+        'version' => intval($share['share_version']) ?: 2,
         'encrypted_data' => $share['encrypted_data'],
         'recipient_name' => $share['recipient_name'],
         'share_note' => $share['share_note'],

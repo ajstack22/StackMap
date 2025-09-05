@@ -919,7 +919,7 @@ class SyncStoreIntegration {
         include_tomorrow: includeTomorrow,
         auto_update: autoUpdate,
         device_name: deviceName,
-        share_version: 2,
+        share_version: 3,  // Use new secure version
       };
 
       const shareUrl = `${SHARE_API_URL}/create_share.php`;
@@ -947,6 +947,9 @@ class SyncStoreIntegration {
         throw new Error(result.error || 'Failed to create share link');
       }
 
+      // For V3, append the access token as a fragment (never sent to server)
+      const secureShareUrl = result.share_url + '#' + (result.access_token || accessToken);
+      
       // Store share info locally for later management
       const shareInfo = {
         shareId: result.share_id,
@@ -954,7 +957,7 @@ class SyncStoreIntegration {
         recipientName,
         shareNote,
         expiresAt: result.expires_at,
-        shareUrl: result.share_url,
+        shareUrl: secureShareUrl,  // Use secure URL with fragment
         accessToken: result.access_token || accessToken,
         createdAt: new Date().toISOString(),
         autoUpdate,
@@ -970,7 +973,7 @@ class SyncStoreIntegration {
         share_id: result.share_id,
         access_token: result.access_token || accessToken,
         expires_at: result.expires_at,
-        share_url: result.share_url,
+        share_url: secureShareUrl,  // Return secure URL with fragment
       };
     } catch (error) {
       console.error('[SyncStore] Failed to create share link:', error);

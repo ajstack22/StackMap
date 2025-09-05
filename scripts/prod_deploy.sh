@@ -15,6 +15,13 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Function to update mobile versions
+update_mobile_versions() {
+    echo -e "${YELLOW}📱 Updating mobile app versions...${NC}"
+    ./scripts/update-mobile-versions.sh
+    echo
+}
+
 # Function to build Android AAB (production)
 build_android_aab() {
     echo -e "${YELLOW}📱 Building Android AAB for Production...${NC}"
@@ -187,14 +194,17 @@ case "${1:-menu}" in
         ;;
     "android")
         verify_api_urls
+        update_mobile_versions
         build_android_aab
         ;;
     "ios")
         verify_api_urls
+        update_mobile_versions
         build_ios_archive
         ;;
     "all")
         verify_api_urls
+        update_mobile_versions
         deploy_web_to_prod
         build_android_aab
         build_ios_archive

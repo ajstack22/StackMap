@@ -34,9 +34,10 @@ try {
         throw new Exception('Invalid request data');
     }
     
-    // Only accept V2 encrypted shares
-    if (!isset($data['share_version']) || $data['share_version'] !== 2) {
-        throw new Exception('Only V2 encrypted shares are supported');
+    // Accept both V2 and V3 encrypted shares
+    $version = $data['share_version'] ?? 2;
+    if (!in_array($version, [2, 3])) {
+        throw new Exception('Invalid share version. Supported versions: 2, 3');
     }
     
     // V2 required fields
@@ -72,7 +73,10 @@ try {
     }
     
     // Generate unique share ID
-    $shareId = bin2hex(random_bytes(16));
+    // For V3, use shorter ID for cleaner URLs
+    $shareId = ($version === 3) 
+        ? substr(bin2hex(random_bytes(12)), 0, 16)  // 16 char ID for URL
+        : bin2hex(random_bytes(16));  // Keep 32 char for V2
     
     // Store in database
     $db = Database::getInstance()->getConnection();
@@ -105,15 +109,23 @@ try {
         $data['include_tomorrow'] ?? true,
         $expiresAt,
         $data['device_name'] ?? 'Unknown Device',
-        2,  // Always version 2
+        $version,  // Store actual version
         $data['auto_update'] ?? false  // Auto-update flag
     ]);
     
     // Generate environment-appropriate share URL
     $isQual = strpos($_SERVER['REQUEST_URI'] ?? '', '/qual/') !== false;
-    $shareUrl = $isQual 
-        ? 'https://stackmap.app/qual/?share=' . $token
-        : 'https://stackmap.app?share=' . $token;
+    
+    if ($version === 3) {
+        // V3: Clean URL without token (client adds as fragment)
+        $baseUrl = $isQual ? 'https://stackmap.app/qual' : 'https://stackmap.app';
+        $shareUrl = $baseUrl . '/share/' . $shareId;
+    } else {
+        // V2: Legacy format with token in query
+        $shareUrl = $isQual 
+            ? 'https://stackmap.app/qual/?share=' . $token
+            : 'https://stackmap.app?share=' . $token;
+    }
     
     // Return success with share URL
     echo json_encode([

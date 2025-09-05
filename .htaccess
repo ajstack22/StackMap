@@ -7,6 +7,20 @@ DirectoryIndex index.html
 # Enable RewriteEngine for SPA routing
 RewriteEngine On
 
+# Handle new secure share URLs - /share/[id] format
+RewriteRule ^share/([a-fA-F0-9]+)/?$ index.html [L]
+
+# Handle new secure sync URLs - /sync/[invite] format  
+RewriteRule ^sync/([a-fA-F0-9]+)/?$ index.html [L]
+
+# Redirect old share format to migration page (temporary)
+RewriteCond %{QUERY_STRING} ^share=([^&]+)$
+RewriteRule ^/?$ /share-migrate.html?token=%1 [R=302,L]
+
+# Redirect old sync format to migration page (temporary)
+RewriteCond %{QUERY_STRING} ^sync=([^&]+)$
+RewriteRule ^/?$ /sync-migrate.html?phrase=%1 [R=302,L]
+
 # Handle SPA routing - redirect all non-file requests to index.html
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Share Link Update - StackMap</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Comic Neue', 'Comic Sans MS', cursive, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    
+    .logo {
+      font-size: 60px;
+      margin-bottom: 20px;
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 28px;
+    }
+    
+    .warning {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+    
+    .warning h2 {
+      color: #856404;
+      margin-bottom: 10px;
+      font-size: 20px;
+    }
+    
+    .warning p {
+      color: #856404;
+      line-height: 1.6;
+    }
+    
+    .button {
+      background: #667eea;
+      color: white;
+      padding: 14px 32px;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: inline-block;
+      text-decoration: none;
+      margin-top: 20px;
+    }
+    
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .loading {
+      color: #667eea;
+      font-size: 18px;
+      margin: 20px 0;
+    }
+    
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .info {
+      background: #d1ecf1;
+      border: 2px solid #bee5eb;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+      display: none;
+    }
+    
+    .info h3 {
+      color: #0c5460;
+      margin-bottom: 10px;
+    }
+    
+    .info p {
+      color: #0c5460;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">📱</div>
+    <h1>StackMap Share Link Update</h1>
+    
+    <div class="warning">
+      <h2>Security Update Required</h2>
+      <p>We've improved our security to better protect your shared data!</p>
+      <p>This share link needs to be updated to our new secure format.</p>
+    </div>
+    
+    <div id="loadingMessage" class="loading" style="display: none;">
+      <span class="spinner"></span>
+      <span>Checking share link...</span>
+    </div>
+    
+    <div id="successMessage" class="info">
+      <h3>✅ Redirecting to your share...</h3>
+      <p>We've updated your link to the new secure format.</p>
+    </div>
+    
+    <div id="errorMessage" class="info">
+      <h3>⚠️ This share link has expired or is invalid</h3>
+      <p>Share links expire after the time set by the person who shared them.</p>
+      <p>Please ask them to create a new share link for you.</p>
+    </div>
+    
+    <a href="/" class="button">Go to StackMap</a>
+  </div>
+  
+  <script>
+    // Auto-redirect if we can extract and convert the token
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token');
+      
+      if (token && token.length > 16) {
+        // Show loading message
+        document.getElementById('loadingMessage').style.display = 'block';
+        
+        try {
+          // Try to split old token format into ID and key
+          // Assuming first 16 chars are ID, rest is key
+          const shareId = token.substring(0, 16);
+          const encryptionKey = token.substring(16);
+          
+          // Redirect to new secure format
+          const newUrl = `/share/${shareId}#${encryptionKey}`;
+          
+          // Show success message briefly
+          document.getElementById('successMessage').style.display = 'block';
+          
+          // Redirect after a short delay
+          setTimeout(() => {
+            window.location.href = newUrl;
+          }, 1500);
+          
+        } catch (error) {
+          console.error('Failed to migrate share link:', error);
+          document.getElementById('loadingMessage').style.display = 'none';
+          document.getElementById('errorMessage').style.display = 'block';
+        }
+      } else {
+        // Invalid or missing token
+        document.getElementById('errorMessage').style.display = 'block';
+      }
+    })();
+  </script>
+</body>
+</html>

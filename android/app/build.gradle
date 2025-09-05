@@ -82,8 +82,8 @@ android {
         applicationId "com.stackmapnative"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 250831045
-        versionName "2025.08.31.45"
+        versionCode 250901001
+        versionName "25.09.01"
     }
     signingConfigs {
         debug {
@@ -99,6 +99,20 @@ android {
             keyPassword System.getenv("STACKMAP_KEY_PASSWORD") ?: project.findProperty("MYAPP_RELEASE_KEY_PASSWORD")
         }
     }
+    
+    // Enable 16KB page size alignment for Android 15+ devices
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+            // Ensure 16KB alignment for native libraries
+            keepDebugSymbols += "**/*.so"
+        }
+        // Ensure proper alignment for uncompressed shared libraries
+        dex {
+            useLegacyPackaging = false
+        }
+    }
+    
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
@@ -107,6 +121,11 @@ android {
             signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            
+            // Ensure native libraries are aligned for 16KB page sizes
+            ndk {
+                debugSymbolLevel = 'FULL'
+            }
         }
     }
 }
