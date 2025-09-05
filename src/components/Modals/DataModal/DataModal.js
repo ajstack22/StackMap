@@ -96,7 +96,6 @@ const DataModal = ({
   const [syncError, setSyncError] = useState('');
   const [showRecoveryPhrase, setShowRecoveryPhrase] = useState(false); // Hidden by default now
   const [showDisableSyncConfirm, setShowDisableSyncConfirm] = useState(false);
-  const [inviteCodeInput, setInviteCodeInput] = useState('');
   const [showDeleteServerDataConfirm, setShowDeleteServerDataConfirm] =
     useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -1851,9 +1850,9 @@ const DataModal = ({
 
             {/* Invite Code Generation */}
             <View style={styles.inviteSection}>
-              <Text style={styles.sectionTitle}>Create Invite Code</Text>
+              <Text style={styles.sectionTitle}>Share This Sync</Text>
               <Text style={styles.sectionDescription}>
-                Generate a temporary code for others to join your sync
+                Generate a temporary invite code for others to join
               </Text>
               <ModalButton
                 theme={theme}
@@ -1863,17 +1862,34 @@ const DataModal = ({
                 onPress={async () => {
                   try {
                     setSyncLoading(true);
+                    setSyncError('');
+                    
+                    // Get the recovery phrase from the sync service if state doesn't have it
+                    const currentPhrase = syncRecoveryPhrase || syncService.recoveryPhrase;
+                    if (!currentPhrase) {
+                      throw new Error('Recovery phrase not available. Please disable and re-enable sync.');
+                    }
+                    
+                    console.log('[DataModal] Creating invite code...');
                     const result = await syncService.createInviteCode(24, 5, 'Manual invite');
+                    console.log('[DataModal] Invite code result:', result);
+                    
                     if (result && result.inviteCode) {
-                      const inviteString = `${result.inviteCode}#${syncRecoveryPhrase}`;
+                      const inviteString = `${result.inviteCode}#${currentPhrase}`;
                       copyToClipboard(inviteString, 'Invite code copied!');
                       showToast({ 
                         message: `Invite code copied: ${result.inviteCode} (expires in 24h)`, 
                         type: 'success' 
                       });
+                    } else {
+                      throw new Error('No invite code returned from service');
                     }
                   } catch (error) {
-                    showToast({ message: 'Failed to generate invite code', type: 'error' });
+                    console.error('[DataModal] Failed to generate invite code:', error);
+                    showToast({ 
+                      message: error.message || 'Failed to generate invite code', 
+                      type: 'error' 
+                    });
                   } finally {
                     setSyncLoading(false);
                   }
@@ -1906,75 +1922,6 @@ const DataModal = ({
               />
             </View>
 
-            {/* Join Sync Section */}
-            <View style={styles.inviteSection}>
-              <Text style={styles.sectionTitle}>Join Existing Sync</Text>
-              <TextInput
-                style={styles.inviteInput}
-                placeholder="Enter invite code (e.g., ABCD-1234#key...)"
-                value={inviteCodeInput}
-                onChangeText={setInviteCodeInput}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <ModalButton
-                theme={theme}
-                variant="secondary"
-                label="Join Sync"
-                icon="group-add"
-                onPress={async () => {
-                  if (!inviteCodeInput) {
-                    showToast({ message: 'Please enter an invite code', type: 'error' });
-                    return;
-                  }
-                  
-                  try {
-                    setSyncLoading(true);
-                    
-                    // Parse the input
-                    let inviteCode, recoveryPhrase;
-                    if (inviteCodeInput.includes('#')) {
-                      [inviteCode, recoveryPhrase] = inviteCodeInput.split('#');
-                    } else if (/^[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(inviteCodeInput)) {
-                      showToast({ message: 'Please include the recovery key after #', type: 'error' });
-                      return;
-                    } else {
-                      // Legacy format - just the recovery phrase
-                      recoveryPhrase = inviteCodeInput.replace(/[\s-]+/g, '');
-                    }
-                    
-                    if (inviteCode) {
-                      // Use invite code
-                      const result = await syncService.joinWithInviteCode(inviteCode, recoveryPhrase);
-                      if (result.success) {
-                        showToast({ message: 'Successfully joined sync!', type: 'success' });
-                        setInviteCodeInput('');
-                        // Refresh sync status
-                        checkSyncStatus();
-                      } else {
-                        throw new Error(result.error || 'Failed to join sync');
-                      }
-                    } else {
-                      // Legacy - just enable with recovery phrase
-                      await syncService.enable(recoveryPhrase);
-                      showToast({ message: 'Sync enabled!', type: 'success' });
-                      setInviteCodeInput('');
-                      checkSyncStatus();
-                    }
-                  } catch (error) {
-                    showToast({ 
-                      message: error.message || 'Failed to join sync', 
-                      type: 'error' 
-                    });
-                  } finally {
-                    setSyncLoading(false);
-                  }
-                }}
-                disabled={syncLoading || !inviteCodeInput}
-                loading={syncLoading}
-                fullWidth
-              />
-            </View>
 
             {/* QR Code - Hidden for now until we generate invite codes */}
             {false && (
