@@ -1877,8 +1877,9 @@ const DataModal = ({
                     console.log('[DataModal] Invite code result:', result);
                     
                     if (result && result.inviteCode) {
-                      const fullSyncKey = `${result.inviteCode}#${currentPhrase}`;
-                      console.log('[DataModal] Generated full sync key');
+                      // Store the full invite URL with the recovery phrase as fragment
+                      const fullSyncKey = `${result.inviteUrl}#${currentPhrase}`;
+                      console.log('[DataModal] Generated full sync key with URL:', fullSyncKey);
                       setGeneratedSyncKey(fullSyncKey);
                       setShowGeneratedKey(true);
                       showToast({ 
@@ -1909,7 +1910,13 @@ const DataModal = ({
                   <Text style={styles.syncKeyLabel}>Your Sync Key (Valid 24 hours)</Text>
                   <View style={styles.syncKeyBox}>
                     <Text style={styles.syncKeyText} selectable>
-                      {generatedSyncKey}
+                      {(() => {
+                        // Display just the key part (not the full URL)
+                        const urlParts = generatedSyncKey.split('#');
+                        const recoveryPhrase = urlParts[1];
+                        const inviteCode = urlParts[0].split('/').pop();
+                        return `${inviteCode}#${recoveryPhrase}`;
+                      })()}
                     </Text>
                   </View>
                   
@@ -1921,7 +1928,12 @@ const DataModal = ({
                       label="Copy Key"
                       icon="content-copy"
                       onPress={() => {
-                        copyToClipboard(generatedSyncKey, 'Sync key copied!');
+                        // Extract just the invite code and recovery phrase (without the URL part)
+                        const urlParts = generatedSyncKey.split('#');
+                        const recoveryPhrase = urlParts[1];
+                        const inviteCode = urlParts[0].split('/').pop();
+                        const keyOnly = `${inviteCode}#${recoveryPhrase}`;
+                        copyToClipboard(keyOnly, 'Sync key copied!');
                         showToast({ 
                           message: 'Sync key copied to clipboard!', 
                           type: 'success' 
@@ -1936,9 +1948,8 @@ const DataModal = ({
                       label="Copy URL"
                       icon="link"
                       onPress={() => {
-                        const [inviteCode, recoveryPhrase] = generatedSyncKey.split('#');
-                        const syncUrl = `https://stackmap.app/sync/${inviteCode}#${recoveryPhrase}`;
-                        copyToClipboard(syncUrl, 'Sync URL copied!');
+                        // generatedSyncKey already contains the full URL with fragment
+                        copyToClipboard(generatedSyncKey, 'Sync URL copied!');
                         showToast({ 
                           message: 'Sync URL copied to clipboard!', 
                           type: 'success' 
@@ -1961,13 +1972,16 @@ const DataModal = ({
                         // Get recovery phrase - extract from current key if needed
                         let currentPhrase = syncRecoveryPhrase || syncService.getRecoveryPhrase();
                         if (!currentPhrase && generatedSyncKey) {
-                          currentPhrase = generatedSyncKey.split('#')[1];
+                          // Extract recovery phrase from the URL format
+                          const parts = generatedSyncKey.split('#');
+                          currentPhrase = parts[1]; // Recovery phrase is after the #
                         }
                         
                         const result = await syncService.createInviteCode(24, 5, 'Manual invite');
                         
                         if (result && result.inviteCode) {
-                          const fullSyncKey = `${result.inviteCode}#${currentPhrase}`;
+                          // Store the full invite URL with the recovery phrase as fragment
+                          const fullSyncKey = `${result.inviteUrl}#${currentPhrase}`;
                           setGeneratedSyncKey(fullSyncKey);
                           showToast({ 
                             message: 'New sync key generated!', 
