@@ -85,7 +85,7 @@ try {
     // Check if sync exists (optional - could skip for privacy)
     $checkStmt = $db->prepare("
         SELECT COUNT(*) as count 
-        FROM sync_data_timestamp 
+        FROM sync_records 
         WHERE sync_id = ?
         LIMIT 1
     ");

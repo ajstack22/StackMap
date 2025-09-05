@@ -87,11 +87,11 @@ try {
     $dataStmt = $db->prepare("
         SELECT 
             encrypted_blob,
-            timestamp,
-            device_name
-        FROM sync_data_timestamp
+            client_timestamp as timestamp,
+            device_id as device_name
+        FROM sync_records
         WHERE sync_id = ?
-        ORDER BY timestamp DESC
+        ORDER BY client_timestamp DESC
         LIMIT 1
     ");
     
