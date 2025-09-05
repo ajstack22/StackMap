@@ -94,7 +94,6 @@ const DataModal = ({
   const [recoveryInput, setRecoveryInput] = useState('');
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncError, setSyncError] = useState('');
-  const [showRecoveryPhrase, setShowRecoveryPhrase] = useState(false); // Hidden by default now
   const [showDisableSyncConfirm, setShowDisableSyncConfirm] = useState(false);
   const [showDeleteServerDataConfirm, setShowDeleteServerDataConfirm] =
     useState(false);
@@ -973,7 +972,6 @@ const DataModal = ({
         setSyncEnabled(true);
         setSyncId(finalSyncId);  // This sets the sync ID state
         setSyncRecoveryPhrase(finalRecoveryPhrase);  // This sets what gets DISPLAYED
-        setShowRecoveryPhrase(true); // Keep showing it
         
 
         if (onSyncStatusChange) {
@@ -1841,187 +1839,168 @@ const DataModal = ({
             </Text>
           </View>
 
-          {/* Sync Key Card - Always show buttons and QR, optionally show key text */}
-          <View style={styles.recoveryPhraseCard}>
-            <View style={styles.syncKeyHeader}>
-              <Icon name="warning" size={20} color="#ff9800" />
-              <Text style={styles.recoveryPhraseWarning}>
-                Save this sync key! You'll need it to sync other devices.
-              </Text>
-            </View>
-
-            {/* Sync Key Generation Section */}
-            <View style={styles.inviteSection}>
-              <Text style={styles.sectionTitle}>Share Your Sync</Text>
-              <Text style={styles.sectionDescription}>
-                Generate a sync key for others to join your data sync
-              </Text>
-              
-              {!showGeneratedKey ? (
-                <ModalButton
-                  theme={theme}
-                  variant="primary"
-                  label="Generate Sync Key"
-                  icon="vpn-key"
-                  onPress={async () => {
-                    try {
-                      setSyncLoading(true);
-                      setSyncError('');
-                      
-                      // Get the recovery phrase from the sync service if state doesn't have it
-                      const currentPhrase = syncRecoveryPhrase || syncService.getRecoveryPhrase();
-                      if (!currentPhrase) {
-                        throw new Error('Recovery phrase not available. Please disable and re-enable sync.');
-                      }
-                      
-                      console.log('[DataModal] Creating invite code...');
-                      const result = await syncService.createInviteCode(24, 5, 'Manual invite');
-                      console.log('[DataModal] Invite code result:', result);
-                      
-                      if (result && result.inviteCode) {
-                        const fullSyncKey = `${result.inviteCode}#${currentPhrase}`;
-                        setGeneratedSyncKey(fullSyncKey);
-                        setShowGeneratedKey(true);
-                        showToast({ 
-                          message: 'Sync key generated! Valid for 24 hours.', 
-                          type: 'success' 
-                        });
-                      } else {
-                        throw new Error('No invite code returned from service');
-                      }
-                    } catch (error) {
-                      console.error('[DataModal] Failed to generate sync key:', error);
-                      showToast({ 
-                        message: error.message || 'Failed to generate sync key', 
-                        type: 'error' 
-                      });
-                    } finally {
-                      setSyncLoading(false);
-                    }
-                  }}
-                  disabled={syncLoading}
-                  loading={syncLoading}
-                  fullWidth
-                />
-              ) : (
-                <>
-                  {/* Generated Sync Key Display */}
-                  <View style={styles.syncKeyDisplay}>
-                    <Text style={styles.syncKeyLabel}>Sync Key (Valid for 24 hours)</Text>
-                    <View style={styles.syncKeyBox}>
-                      <Text style={styles.syncKeyText} selectable>
-                        {generatedSyncKey}
-                      </Text>
-                    </View>
-                    
-                    {/* Action Buttons */}
-                    <View style={styles.syncKeyActions}>
-                      <ModalButton
-                        theme={theme}
-                        variant="secondary"
-                        label="Copy Key"
-                        icon="content-copy"
-                        onPress={() => {
-                          copyToClipboard(generatedSyncKey, 'Sync key copied!');
-                          showToast({ 
-                            message: 'Sync key copied to clipboard!', 
-                            type: 'success' 
-                          });
-                        }}
-                        compact
-                      />
-                      
-                      <ModalButton
-                        theme={theme}
-                        variant="secondary"
-                        label="Copy URL"
-                        icon="link"
-                        onPress={() => {
-                          const [inviteCode] = generatedSyncKey.split('#');
-                          const syncUrl = `https://stackmap.app/sync/${inviteCode}#${generatedSyncKey.split('#')[1]}`;
-                          copyToClipboard(syncUrl, 'Sync URL copied!');
-                          showToast({ 
-                            message: 'Sync URL copied to clipboard!', 
-                            type: 'success' 
-                          });
-                        }}
-                        compact
-                      />
-                    </View>
-                    
-                    {/* Generate New Button */}
-                    <ModalButton
-                      theme={theme}
-                      variant="ghost"
-                      label="Generate New Key"
-                      icon="refresh"
-                      onPress={async () => {
-                        try {
-                          setSyncLoading(true);
-                          const currentPhrase = syncRecoveryPhrase || syncService.recoveryPhrase;
-                          const result = await syncService.createInviteCode(24, 5, 'Manual invite');
-                          
-                          if (result && result.inviteCode) {
-                            const fullSyncKey = `${result.inviteCode}#${currentPhrase}`;
-                            setGeneratedSyncKey(fullSyncKey);
-                            showToast({ 
-                              message: 'New sync key generated!', 
-                              type: 'success' 
-                            });
-                          }
-                        } catch (error) {
-                          showToast({ 
-                            message: 'Failed to generate new key', 
-                            type: 'error' 
-                          });
-                        } finally {
-                          setSyncLoading(false);
-                        }
-                      }}
-                      disabled={syncLoading}
-                      loading={syncLoading}
-                      fullWidth
-                    />
-                  </View>
-                </>
-              )}
-            </View>
-
-            {/* Recovery Key for Advanced Users (Hidden by default) */}
-            <View style={styles.advancedSection}>
+          {/* Simplified Sync Key Section */}
+          <View style={styles.syncSection}>
+            <Text style={styles.sectionTitle}>Sync Key</Text>
+            <Text style={styles.sectionDescription}>
+              Generate a key to sync your data across devices or share with others
+            </Text>
+            
+            {!showGeneratedKey ? (
               <ModalButton
                 theme={theme}
-                variant="ghost"
-                label={showRecoveryPhrase ? 'Hide Recovery Phrase (Advanced)' : 'Show Recovery Phrase (Advanced)'}
-                icon={showRecoveryPhrase ? "visibility-off" : "visibility"}
-                onPress={() => setShowRecoveryPhrase(!showRecoveryPhrase)}
-                compact
+                variant="primary"
+                label="Generate Sync Key"
+                icon="vpn-key"
+                onPress={async () => {
+                  try {
+                    console.log('[DataModal] Generate Sync Key button pressed');
+                    setSyncLoading(true);
+                    setSyncError('');
+                    
+                    // Try to get recovery phrase from multiple sources
+                    let currentPhrase = syncRecoveryPhrase;
+                    console.log('[DataModal] Recovery phrase from state:', !!currentPhrase);
+                    
+                    if (!currentPhrase) {
+                      console.log('[DataModal] Trying syncService.getRecoveryPhrase()...');
+                      currentPhrase = syncService.getRecoveryPhrase();
+                      console.log('[DataModal] Recovery phrase from service:', !!currentPhrase);
+                    }
+                    
+                    if (!currentPhrase) {
+                      throw new Error('Recovery phrase not available. Please disable and re-enable sync.');
+                    }
+                    
+                    console.log('[DataModal] Creating invite code with recovery phrase...');
+                    const result = await syncService.createInviteCode(24, 5, 'Manual invite');
+                    console.log('[DataModal] Invite code result:', result);
+                    
+                    if (result && result.inviteCode) {
+                      const fullSyncKey = `${result.inviteCode}#${currentPhrase}`;
+                      console.log('[DataModal] Generated full sync key');
+                      setGeneratedSyncKey(fullSyncKey);
+                      setShowGeneratedKey(true);
+                      showToast({ 
+                        message: 'Sync key generated! Valid for 24 hours.', 
+                        type: 'success' 
+                      });
+                    } else {
+                      throw new Error('Failed to generate invite code');
+                    }
+                  } catch (error) {
+                    console.error('[DataModal] Error generating sync key:', error);
+                    showToast({ 
+                      message: error.message || 'Failed to generate sync key', 
+                      type: 'error' 
+                    });
+                  } finally {
+                    setSyncLoading(false);
+                  }
+                }}
+                disabled={syncLoading}
+                loading={syncLoading}
+                fullWidth
               />
-              
-              {showRecoveryPhrase && (
-                <View style={styles.recoveryPhraseContainer}>
-                  <Text style={styles.recoveryPhraseLabel}>Raw Recovery Phrase</Text>
-                  <Text style={styles.recoveryPhraseNote}>
-                    This is your permanent recovery phrase. The sync keys above are temporary and easier to share.
-                  </Text>
-                  <Text style={styles.recoveryPhrase} selectable>
-                    {syncRecoveryPhrase || 'Loading...'}
-                  </Text>
+            ) : (
+              <>
+                {/* Generated Sync Key Display */}
+                <View style={styles.syncKeyDisplay}>
+                  <Text style={styles.syncKeyLabel}>Your Sync Key (Valid 24 hours)</Text>
+                  <View style={styles.syncKeyBox}>
+                    <Text style={styles.syncKeyText} selectable>
+                      {generatedSyncKey}
+                    </Text>
+                  </View>
+                  
+                  {/* Action Buttons */}
+                  <View style={styles.syncKeyActions}>
+                    <ModalButton
+                      theme={theme}
+                      variant="secondary"
+                      label="Copy Key"
+                      icon="content-copy"
+                      onPress={() => {
+                        copyToClipboard(generatedSyncKey, 'Sync key copied!');
+                        showToast({ 
+                          message: 'Sync key copied to clipboard!', 
+                          type: 'success' 
+                        });
+                      }}
+                      compact
+                    />
+                    
+                    <ModalButton
+                      theme={theme}
+                      variant="secondary"
+                      label="Copy URL"
+                      icon="link"
+                      onPress={() => {
+                        const [inviteCode, recoveryPhrase] = generatedSyncKey.split('#');
+                        const syncUrl = `https://stackmap.app/sync/${inviteCode}#${recoveryPhrase}`;
+                        copyToClipboard(syncUrl, 'Sync URL copied!');
+                        showToast({ 
+                          message: 'Sync URL copied to clipboard!', 
+                          type: 'success' 
+                        });
+                      }}
+                      compact
+                    />
+                  </View>
+                  
+                  {/* Additional Actions */}
+                  <ModalButton
+                    theme={theme}
+                    variant="ghost"
+                    label="Generate New Key"
+                    icon="refresh"
+                    onPress={async () => {
+                      try {
+                        setSyncLoading(true);
+                        
+                        // Get recovery phrase - extract from current key if needed
+                        let currentPhrase = syncRecoveryPhrase || syncService.getRecoveryPhrase();
+                        if (!currentPhrase && generatedSyncKey) {
+                          currentPhrase = generatedSyncKey.split('#')[1];
+                        }
+                        
+                        const result = await syncService.createInviteCode(24, 5, 'Manual invite');
+                        
+                        if (result && result.inviteCode) {
+                          const fullSyncKey = `${result.inviteCode}#${currentPhrase}`;
+                          setGeneratedSyncKey(fullSyncKey);
+                          showToast({ 
+                            message: 'New sync key generated!', 
+                            type: 'success' 
+                          });
+                        }
+                      } catch (error) {
+                        showToast({ 
+                          message: 'Failed to generate new key', 
+                          type: 'error' 
+                        });
+                      } finally {
+                        setSyncLoading(false);
+                      }
+                    }}
+                    disabled={syncLoading}
+                    loading={syncLoading}
+                    fullWidth
+                  />
+                  
+                  <ModalButton
+                    theme={theme}
+                    variant="ghost"
+                    label="Hide Sync Key"
+                    icon="visibility-off"
+                    onPress={() => {
+                      setShowGeneratedKey(false);
+                      setGeneratedSyncKey('');
+                    }}
+                    fullWidth
+                  />
                 </View>
-              )}
-            </View>
-
-
-            {/* QR Code - Hidden for now until we generate invite codes */}
-            {false && (
-              <View style={styles.qrCodeContainer}>
-                <QRCode
-                  value="https://stackmap.app"
-                  size={200}
-                  backgroundColor="#ffffff"
-                  color="#000000"
-                />
-              </View>
+              </>
             )}
           </View>
 

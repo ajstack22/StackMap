@@ -1054,6 +1054,12 @@ export const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     gap: SPACING.sm,
   },
+  syncSection: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: RADIUS.medium,
+    padding: SPACING.lg,
+    marginVertical: SPACING.md,
+  },
   advancedSection: {
     marginTop: SPACING.md,
     paddingTop: SPACING.md,
