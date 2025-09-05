@@ -1023,4 +1023,48 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  syncKeyDisplay: {
+    marginTop: SPACING.md,
+  },
+  syncKeyLabel: {
+    fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    color: '#666',
+    marginBottom: SPACING.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  syncKeyBox: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: RADIUS.small,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  syncKeyText: {
+    fontSize: 14,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    color: '#000',
+    lineHeight: 20,
+  },
+  syncKeyActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.md,
+    gap: SPACING.sm,
+  },
+  advancedSection: {
+    marginTop: SPACING.md,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  recoveryPhraseNote: {
+    fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#999',
+    marginBottom: SPACING.sm,
+    fontStyle: 'italic',
+  },
 });
