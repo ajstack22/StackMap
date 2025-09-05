@@ -8,6 +8,8 @@ StackMap implements a **zero-knowledge, encrypted sync system** that enables rea
 ### Core Concepts in 30 Seconds
 - **Zero-Knowledge**: Server stores encrypted blobs only - never sees plaintext
 - **Recovery Phrase**: 32-char hex string generates all crypto keys client-side  
+- **Invite Codes**: Temporary 8-char codes (XXXX-XXXX) for secure sharing
+- **Unified Format**: `ABCD-1234#recoveryPhrase` for both sync and share
 - **Conflict Resolution**: Last-write-wins at field level with 3-second merge window
 - **Real-time Sync**: Push on change, 30-second periodic pull
 - **No User Accounts**: Authentication via cryptographic proof only
@@ -28,9 +30,12 @@ Backend (PHP/MySQL - Zero Knowledge)
 ├── push_timestamp.php - Store encrypted blob with timestamps
 ├── pull_timestamp.php - Retrieve encrypted blob since timestamp
 ├── join_timestamp.php - Join existing sync group
-├── create_share.php - Create time-limited share links
-├── access_share.php - Access shared data
-└── MySQL: sync_data table with encrypted blobs
+├── create_invite.php - Generate temporary invite codes
+├── validate_invite.php - Check invite code validity
+├── use_invite.php - Mark invite as used after join
+├── create_share.php - Create time-limited share links (V3)
+├── access_share.php - Access shared data (V3)
+└── MySQL: sync_data + sync_invites tables
 ```
 
 ### Data Flow
@@ -69,11 +74,15 @@ import minimalSyncService from './services/sync/minimalSyncService';
 // Generate or use existing recovery phrase
 const recoveryPhrase = generateRecoveryPhrase(); // 32 hex chars
 
-// Enable sync (simplified API)
-await minimalSyncService.enableSync(recoveryPhrase, isNewSync);
-// isNewSync: true for creating new, false for joining existing
+// Create new sync with invite code
+await minimalSyncService.enable(recoveryPhrase);
+const invite = await minimalSyncService.createInviteCode(24, 5); // 24h, 5 uses
+console.log(`Share this: ${invite.inviteCode}#${recoveryPhrase}`);
 
-// Sync triggers automatically on data changes
+// Join existing sync with invite code
+const inviteString = 'ABCD-1234#recoveryPhrase';
+const [inviteCode, phrase] = inviteString.split('#');
+await minimalSyncService.joinWithInviteCode(inviteCode, phrase);
 ```
 
 ### 2. Encryption Implementation
@@ -241,9 +250,66 @@ useAppStore.setState({ users });  // Will break sync
 - `POST /push_timestamp.php` - Push encrypted data
 - `GET /pull_timestamp.php` - Pull data since timestamp
 
-### Share Endpoints
-- `POST /create_share.php` - Create share link
-- `GET /access_share.php` - Access shared data
+### Share Endpoints  
+- `POST /create_share.php` - Create share link (V3 with XXXX-XXXX format)
+- `GET /access_share.php` - Access shared data (V3)
+
+### Invite Code Endpoints (New - Jan 2025)
+- `POST /create_invite.php` - Generate invite code (XXXX-XXXX)
+- `POST /validate_invite.php` - Check if invite is valid
+- `POST /use_invite.php` - Mark invite as used after successful join
+
+## Unified Invite Code System (Jan 2025)
+
+### Overview
+Both sync and share features now use identical invite code formats for consistency and security.
+
+### Unified Format
+Both features use the same `XXXX-XXXX#key` pattern:
+
+- **Share URL**: `https://stackmap.app/share/WXYZ-5678#accessToken`
+- **Sync URL**: `https://stackmap.app/sync/ABCD-1234#recoveryPhrase`
+- **Manual Entry**: `XXXX-XXXX#encryptionKey`
+- **Invite Code**: 8 characters (XXXX-XXXX), no ambiguous chars (0/O, 1/I/L)
+- **Fragment (#)**: Encryption key after # never reaches server (browser security)
+
+### Security Properties
+1. **Zero-Knowledge Maintained**: Server only sees invite code, never the recovery phrase
+2. **Temporary Access**: Invite codes expire (1-168 hours configurable)
+3. **Usage Limits**: 1-10 uses per invite code
+4. **No Logs**: Recovery phrases stay in URL fragments, invisible to server logs
+
+### Creating an Invite
+```javascript
+// Generate invite code (expires in 24h, max 5 uses)
+const result = await syncService.createInviteCode(24, 5, 'Family invite');
+const inviteString = `${result.inviteCode}#${recoveryPhrase}`;
+// Share: ABCD-1234#GVcxCuLm9Q6lKczLWBt1PX17q94XY79XI20-FDiaeI
+```
+
+### Using an Invite
+```javascript
+// Parse the combined format
+const input = 'ABCD-1234#GVcxCuLm9Q6lKczLWBt1PX17q94XY79XI20-FDiaeI';
+const [inviteCode, recoveryPhrase] = input.split('#');
+
+// Join with invite code
+await syncService.joinWithInviteCode(inviteCode, recoveryPhrase);
+```
+
+### Database Schema
+```sql
+CREATE TABLE sync_invites (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  invite_code VARCHAR(9) UNIQUE NOT NULL,  -- Format: XXXX-XXXX
+  sync_id VARCHAR(32) NOT NULL,           -- Hash of recovery phrase
+  expires_at TIMESTAMP NOT NULL,          -- Default 24h from creation
+  max_uses INT DEFAULT 1,                 -- How many times usable
+  use_count INT DEFAULT 0,                -- Current usage count
+  created_by_device VARCHAR(64),          -- Device that created invite
+  note VARCHAR(255)                       -- Optional note
+);
+```
 
 ## Troubleshooting Common Issues
 

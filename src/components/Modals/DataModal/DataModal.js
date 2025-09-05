@@ -94,8 +94,9 @@ const DataModal = ({
   const [recoveryInput, setRecoveryInput] = useState('');
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncError, setSyncError] = useState('');
-  const [showRecoveryPhrase, setShowRecoveryPhrase] = useState(true); // Show by default
+  const [showRecoveryPhrase, setShowRecoveryPhrase] = useState(false); // Hidden by default now
   const [showDisableSyncConfirm, setShowDisableSyncConfirm] = useState(false);
+  const [inviteCodeInput, setInviteCodeInput] = useState('');
   const [showDeleteServerDataConfirm, setShowDeleteServerDataConfirm] =
     useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -1848,101 +1849,144 @@ const DataModal = ({
               </Text>
             </View>
 
-            {/* Key text with toggle */}
+            {/* Invite Code Generation */}
+            <View style={styles.inviteSection}>
+              <Text style={styles.sectionTitle}>Create Invite Code</Text>
+              <Text style={styles.sectionDescription}>
+                Generate a temporary code for others to join your sync
+              </Text>
+              <ModalButton
+                theme={theme}
+                variant="primary"
+                label="Generate Invite Code"
+                icon="add-link"
+                onPress={async () => {
+                  try {
+                    setSyncLoading(true);
+                    const result = await syncService.createInviteCode(24, 5, 'Manual invite');
+                    if (result && result.inviteCode) {
+                      const inviteString = `${result.inviteCode}#${syncRecoveryPhrase}`;
+                      copyToClipboard(inviteString, 'Invite code copied!');
+                      showToast({ 
+                        message: `Invite code copied: ${result.inviteCode} (expires in 24h)`, 
+                        type: 'success' 
+                      });
+                    }
+                  } catch (error) {
+                    showToast({ message: 'Failed to generate invite code', type: 'error' });
+                  } finally {
+                    setSyncLoading(false);
+                  }
+                }}
+                disabled={syncLoading}
+                loading={syncLoading}
+                fullWidth
+              />
+            </View>
+
+            {/* Recovery Key (Hidden by default) */}
             {showRecoveryPhrase && (
               <View style={styles.recoveryPhraseContainer}>
+                <Text style={styles.recoveryPhraseLabel}>Recovery Key (Keep Secret)</Text>
                 <Text style={styles.recoveryPhrase} selectable>
-                  {syncRecoveryPhrase || (
-                    syncEnabled 
-                      ? 'Recovery phrase unavailable. Try refreshing the browser or disable and re-enable sync.'
-                      : 'Loading sync key...'
-                  )}
+                  {syncRecoveryPhrase || 'Loading...'}
                 </Text>
               </View>
             )}
 
-            {/* Toggle button for key visibility */}
+            {/* Toggle for advanced users */}
             <View style={styles.keyToggleContainer}>
               <ModalButton
                 theme={theme}
-                variant="secondary"
-                label={showRecoveryPhrase ? 'Hide Key' : 'Show Key'}
+                variant="ghost"
+                label={showRecoveryPhrase ? 'Hide Recovery Key' : 'Show Recovery Key (Advanced)'}
                 icon={showRecoveryPhrase ? "visibility-off" : "visibility"}
                 onPress={() => setShowRecoveryPhrase(!showRecoveryPhrase)}
                 compact
               />
             </View>
 
-            {/* Action buttons - Always visible */}
-            <View style={styles.keyActionButtonRow}>
-              <ModalButton
-                theme={theme}
-                variant="primary"
-                label="Copy Key"
-                icon="content-copy"
-                onPress={() => {
-                  if (!syncRecoveryPhrase) {
-                    showToast({ message: 'Sync key not available', type: 'error' });
-                    return;
-                  }
-                  copyToClipboard(syncRecoveryPhrase, 'Sync key copied!');
-                }}
-                style={styles.syncActionButton}
+            {/* Join Sync Section */}
+            <View style={styles.inviteSection}>
+              <Text style={styles.sectionTitle}>Join Existing Sync</Text>
+              <TextInput
+                style={styles.inviteInput}
+                placeholder="Enter invite code (e.g., ABCD-1234#key...)"
+                value={inviteCodeInput}
+                onChangeText={setInviteCodeInput}
+                autoCapitalize="none"
+                autoCorrect={false}
               />
               <ModalButton
                 theme={theme}
-                variant="primary"
-                label="Copy URL"
-                icon="link"
-                onPress={() => {
-                  if (!syncRecoveryPhrase) {
-                    showToast({ message: 'Sync key not available', type: 'error' });
+                variant="secondary"
+                label="Join Sync"
+                icon="group-add"
+                onPress={async () => {
+                  if (!inviteCodeInput) {
+                    showToast({ message: 'Please enter an invite code', type: 'error' });
                     return;
                   }
-                  let syncUrl;
-                  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                    const basePath = window.location.pathname.endsWith('/')
-                      ? window.location.pathname
-                      : window.location.pathname + '/';
-                    syncUrl = `${window.location.origin}${basePath}?sync=${encodeURIComponent(
-                      syncRecoveryPhrase,
-                    )}`;
-                  } else {
-                    syncUrl = `https://stackmap.app/?sync=${encodeURIComponent(
-                      syncRecoveryPhrase,
-                    )}`;
+                  
+                  try {
+                    setSyncLoading(true);
+                    
+                    // Parse the input
+                    let inviteCode, recoveryPhrase;
+                    if (inviteCodeInput.includes('#')) {
+                      [inviteCode, recoveryPhrase] = inviteCodeInput.split('#');
+                    } else if (/^[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(inviteCodeInput)) {
+                      showToast({ message: 'Please include the recovery key after #', type: 'error' });
+                      return;
+                    } else {
+                      // Legacy format - just the recovery phrase
+                      recoveryPhrase = inviteCodeInput.replace(/[\s-]+/g, '');
+                    }
+                    
+                    if (inviteCode) {
+                      // Use invite code
+                      const result = await syncService.joinWithInviteCode(inviteCode, recoveryPhrase);
+                      if (result.success) {
+                        showToast({ message: 'Successfully joined sync!', type: 'success' });
+                        setInviteCodeInput('');
+                        // Refresh sync status
+                        checkSyncStatus();
+                      } else {
+                        throw new Error(result.error || 'Failed to join sync');
+                      }
+                    } else {
+                      // Legacy - just enable with recovery phrase
+                      await syncService.enable(recoveryPhrase);
+                      showToast({ message: 'Sync enabled!', type: 'success' });
+                      setInviteCodeInput('');
+                      checkSyncStatus();
+                    }
+                  } catch (error) {
+                    showToast({ 
+                      message: error.message || 'Failed to join sync', 
+                      type: 'error' 
+                    });
+                  } finally {
+                    setSyncLoading(false);
                   }
-                  copyToClipboard(syncUrl, 'Sync URL copied!');
                 }}
-                style={styles.syncActionButton}
+                disabled={syncLoading || !inviteCodeInput}
+                loading={syncLoading}
+                fullWidth
               />
             </View>
 
-            {/* QR Code - Always visible */}
-            <View style={styles.qrCodeContainer}>
-              <QRCode
-                value={(() => {
-                  if (!syncRecoveryPhrase) {
-                    return 'https://stackmap.app';
-                  }
-                  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                    const basePath = window.location.pathname.endsWith('/')
-                      ? window.location.pathname
-                      : window.location.pathname + '/';
-                    return `${window.location.origin}${basePath}?sync=${encodeURIComponent(
-                      syncRecoveryPhrase,
-                    )}`;
-                  } else {
-                    return `https://stackmap.app/?sync=${encodeURIComponent(
-                      syncRecoveryPhrase,
-                    )}`;
-                  }
-                })()}
-                size={200}
-                backgroundColor="#ffffff"
-                color="#000000"
-              />
-            </View>
+            {/* QR Code - Hidden for now until we generate invite codes */}
+            {false && (
+              <View style={styles.qrCodeContainer}>
+                <QRCode
+                  value="https://stackmap.app"
+                  size={200}
+                  backgroundColor="#ffffff"
+                  color="#000000"
+                />
+              </View>
+            )}
           </View>
 
           <View style={styles.inPanelButtonContainer}>

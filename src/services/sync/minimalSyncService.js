@@ -15,6 +15,7 @@
 
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import nacl from 'tweetnacl';
 import conflictResolver from './conflictResolver';
 // Use fixed encryption service that works on iOS
 import encryptionService from './encryptionServiceFixed';
@@ -1102,6 +1103,164 @@ class MinimalSyncService {
     this.syncId = null;
     this.isEnabled = false;
     console.log('[MinimalSync] ✅ All data cleared');
+  }
+
+  // Get current sync ID
+  getSyncId() {
+    return this.syncId;
+  }
+
+  // Create a shareable invite code for sync
+  async createInviteCode(expiresHours = 24, maxUses = 1, note = null) {
+    console.log('[MinimalSync] Creating invite code...');
+    
+    if (!this.syncId || !this.recoveryPhrase) {
+      throw new Error('Sync must be enabled to create invite codes');
+    }
+    
+    try {
+      const response = await fetch(`${this.API_BASE}/create_invite.php`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sync_id: this.syncId,
+          device_id: this.deviceId,
+          expires_hours: expiresHours,
+          max_uses: maxUses,
+          note: note
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create invite code');
+      }
+      
+      // Append recovery phrase as fragment (never sent to server)
+      const inviteUrl = `${result.invite_url}#${this.recoveryPhrase}`;
+      
+      console.log('[MinimalSync] ✅ Invite code created:', result.invite_code);
+      
+      return {
+        inviteCode: result.invite_code,
+        inviteUrl: inviteUrl,
+        expiresAt: result.expires_at,
+        maxUses: result.max_uses
+      };
+    } catch (error) {
+      console.error('[MinimalSync] Failed to create invite code:', error);
+      throw error;
+    }
+  }
+  
+  // Join sync using an invite code
+  async joinWithInviteCode(inviteCode, recoveryPhrase = null) {
+    console.log('[MinimalSync] Joining sync with invite code:', inviteCode);
+    
+    // Normalize invite code
+    inviteCode = inviteCode.toUpperCase().trim();
+    
+    try {
+      // Step 1: Validate invite code
+      const validateResponse = await fetch(`${this.API_BASE}/validate_invite.php?code=${inviteCode}`);
+      const validateResult = await validateResponse.json();
+      
+      if (!validateResult.success) {
+        throw new Error(validateResult.error || 'Invalid invite code');
+      }
+      
+      console.log('[MinimalSync] Invite validated, sync_id:', validateResult.sync_id);
+      
+      // Step 2: Get recovery phrase (from parameter, URL fragment, or user input)
+      if (!recoveryPhrase) {
+        // Check if we're in a browser and have a fragment
+        if (typeof window !== 'undefined' && window.location.hash) {
+          recoveryPhrase = window.location.hash.substring(1);
+        }
+        
+        if (!recoveryPhrase) {
+          throw new Error('Recovery phrase required to decrypt sync data');
+        }
+      }
+      
+      // Step 3: Initialize encryption with recovery phrase
+      const fixedSalt = 'U3RhY2tNYXBTeW5jU2FsdDIwMjQ=';
+      const { key } = await encryptionService.deriveKeyFromPhrase(recoveryPhrase, fixedSalt);
+      const syncIdBuffer = nacl.hash(key);
+      const syncId = Array.from(syncIdBuffer.slice(0, 16))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      
+      // Verify sync ID matches
+      if (syncId !== validateResult.sync_id) {
+        throw new Error('Recovery phrase does not match this sync group');
+      }
+      
+      // Step 4: Enable sync with the recovery phrase
+      await this.enableSync(recoveryPhrase, false);
+      
+      // Step 5: Mark invite as used
+      await fetch(`${this.API_BASE}/use_invite.php`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          invite_code: inviteCode,
+          device_id: this.deviceId,
+          device_name: this.getDeviceName()
+        })
+      });
+      
+      console.log('[MinimalSync] ✅ Successfully joined sync via invite code');
+      
+      return {
+        success: true,
+        syncId: syncId
+      };
+      
+    } catch (error) {
+      console.error('[MinimalSync] Failed to join with invite code:', error);
+      throw error;
+    }
+  }
+  
+  // Validate an invite code without joining
+  async validateInviteCode(inviteCode) {
+    console.log('[MinimalSync] Validating invite code:', inviteCode);
+    
+    try {
+      const response = await fetch(`${this.API_BASE}/validate_invite.php?code=${inviteCode}`);
+      const result = await response.json();
+      
+      return {
+        valid: result.success,
+        syncId: result.sync_id,
+        expiresAt: result.expires_at,
+        note: result.invite_note,
+        error: result.error
+      };
+    } catch (error) {
+      console.error('[MinimalSync] Failed to validate invite code:', error);
+      return {
+        valid: false,
+        error: error.message
+      };
+    }
+  }
+  
+  // Helper to get device name
+  getDeviceName() {
+    if (Platform.OS === 'ios') {
+      return 'iOS Device';
+    } else if (Platform.OS === 'android') {
+      return 'Android Device';
+    } else {
+      return 'Web Browser';
+    }
   }
 }
 

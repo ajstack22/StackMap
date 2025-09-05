@@ -82,6 +82,7 @@ const OnboardingUserCentered = ({
   const [syncError, setSyncError] = useState('');
   const [syncPreviewData, setSyncPreviewData] = useState(null);
   const [generatedSyncCode, setGeneratedSyncCode] = useState('');
+  const [generatedInviteCode, setGeneratedInviteCode] = useState('');
   const [showCopiedToast, setShowCopiedToast] = useState(false);
 
   // Animation refs
@@ -180,48 +181,66 @@ const OnboardingUserCentered = ({
     return hexCode;
   };
 
-  // Copy sync code to clipboard
-  const copySyncCode = async () => {
+  // Copy to clipboard utility
+  const copyToClipboard = async (text, message) => {
     try {
       if (Platform.OS === 'web') {
-        await navigator.clipboard.writeText(generatedSyncCode);
+        await navigator.clipboard.writeText(text);
       } else {
         const Clipboard = require('@react-native-clipboard/clipboard').default;
-        Clipboard.setString(generatedSyncCode);
+        Clipboard.setString(text);
       }
       setShowCopiedToast(true);
       setTimeout(() => setShowCopiedToast(false), 2000);
     } catch (error) {
-//       console.error('Failed to copy:', error);
+      console.log('Failed to copy:', error);
     }
   };
 
   // Fetch sync preview
   const fetchSyncPreview = async () => {
     console.log('[OnboardingSync] ===== START fetchSyncPreview =====');
-    console.log('[OnboardingSync] Raw recovery phrase:', recoveryPhrase);
-    console.log('[OnboardingSync] Recovery phrase type:', typeof recoveryPhrase);
-    console.log('[OnboardingSync] Recovery phrase length:', recoveryPhrase.length);
+    console.log('[OnboardingSync] Raw input:', recoveryPhrase);
     
     setSyncLoading(true);
     setSyncError('');
     
     try {
-      console.log('[OnboardingSync] About to process recovery phrase...');
-      // Log character codes to detect invisible characters
-      const charCodes = [];
-      for (let i = 0; i < recoveryPhrase.length; i++) {
-        charCodes.push(recoveryPhrase.charCodeAt(i));
-      }
-      console.log('[OnboardingSync] Character codes:', charCodes);
+      // Parse input to handle both formats
+      let inviteCode = null;
+      let phraseToUse = '';
       
-      // Support both old format (plain hex) and new format (with dashes)
-      const phraseToUse = recoveryPhrase.trim().replace(/[\s-]+/g, '');
+      const trimmed = recoveryPhrase.trim();
+      
+      if (trimmed.includes('#')) {
+        // New format: ABCD-1234#recoveryPhrase
+        const [code, phrase] = trimmed.split('#');
+        inviteCode = code.toUpperCase();
+        phraseToUse = phrase?.replace(/[\s-]+/g, '') || '';
+        console.log('[OnboardingSync] Using invite code format:', inviteCode);
+      } else if (/^[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(trimmed)) {
+        // Just an invite code without recovery phrase
+        throw new Error('Please enter the complete sync code including the recovery key after #');
+      } else {
+        // Legacy format - just the recovery phrase
+        phraseToUse = trimmed.replace(/[\s-]+/g, '');
+        console.log('[OnboardingSync] Using legacy format');
+      }
+      
       console.log('[OnboardingSync] Processed phrase:', phraseToUse);
-      console.log('[OnboardingSync] Processed phrase char codes:', phraseToUse.split('').map(c => c.charCodeAt(0)));
 
       if (phraseToUse.length !== 32 || !/^[a-f0-9]+$/i.test(phraseToUse)) {
-        throw new Error('Invalid sync code format');
+        throw new Error('Invalid recovery phrase format - must be 32 characters');
+      }
+      
+      // If we have an invite code, validate it first
+      if (inviteCode) {
+        console.log('[OnboardingSync] Validating invite code:', inviteCode);
+        const validateResult = await minimalSync.validateInviteCode(inviteCode);
+        if (!validateResult.success) {
+          throw new Error(validateResult.error || 'Invalid or expired invite code');
+        }
+        console.log('[OnboardingSync] Invite code validated successfully');
       }
 
       console.log('[OnboardingSync] Initializing sync for preview...');
@@ -354,8 +373,38 @@ const OnboardingUserCentered = ({
     setSyncError('');
     
     try {
-      // Support both old format (plain hex) and new format (with dashes)
-      const phraseToUse = recoveryPhrase.trim().replace(/[\s-]+/g, '');
+      // Parse input to handle both formats
+      let inviteCode = null;
+      let phraseToUse = '';
+      
+      const trimmed = recoveryPhrase.trim();
+      
+      if (trimmed.includes('#')) {
+        // New format: ABCD-1234#recoveryPhrase
+        const [code, phrase] = trimmed.split('#');
+        inviteCode = code.toUpperCase();
+        phraseToUse = phrase?.replace(/[\s-]+/g, '') || '';
+        console.log('[OnboardingImport] Using invite code format:', inviteCode);
+      } else {
+        // Legacy format - just the recovery phrase
+        phraseToUse = trimmed.replace(/[\s-]+/g, '');
+        console.log('[OnboardingImport] Using legacy format');
+      }
+      
+      if (phraseToUse.length !== 32 || !/^[a-f0-9]+$/i.test(phraseToUse)) {
+        throw new Error('Invalid recovery phrase format');
+      }
+      
+      // If we have an invite code, use it to join
+      if (inviteCode) {
+        console.log('[OnboardingImport] Using invite code to join sync:', inviteCode);
+        const joinResult = await syncService.joinWithInviteCode(inviteCode, phraseToUse);
+        if (!joinResult.success) {
+          throw new Error(joinResult.error || 'Failed to join sync with invite code');
+        }
+        // joinWithInviteCode handles everything including marking the invite as used
+        console.log('[OnboardingImport] Successfully joined via invite code');
+      }
       
       // Initialize temporarily just to decrypt (don't enable sync yet)
       let syncId = await syncService.generateSyncId(phraseToUse);
@@ -603,7 +652,7 @@ const OnboardingUserCentered = ({
 
       // IMPORTANT: Use enable() instead of initialize() for creating new sync
       // initialize() with a recovery phrase only sets up encryption, doesn't actually enable sync!
-      const syncResult = await syncService.enable(syncCode);
+      await syncService.enable(syncCode);
       
       // No need to manually save to AsyncStorage - enable() handles all of that
       // The enable() method will:
@@ -611,6 +660,19 @@ const OnboardingUserCentered = ({
       // 2. Create sync group if new
       // 3. Save state to AsyncStorage
       // 4. Start sync timer
+      
+      // Generate an invite code for easy sharing
+      try {
+        console.log('[OnboardingSync] Generating invite code for new sync...');
+        const inviteResult = await syncService.createInviteCode(24, 5, 'Initial setup');
+        if (inviteResult && inviteResult.inviteCode) {
+          setGeneratedInviteCode(inviteResult.inviteCode);
+          console.log('[OnboardingSync] Generated invite code:', inviteResult.inviteCode);
+        }
+      } catch (inviteError) {
+        console.log('[OnboardingSync] Could not generate invite code:', inviteError.message);
+        // Non-critical error - sync still works without invite code
+      }
       
       setUserJourney(prev => ({ ...prev, syncEnabled: true }));
       animateStepTransition('syncSuccess');
@@ -1115,23 +1177,37 @@ const OnboardingUserCentered = ({
     </View>
   );
 
-  const renderSyncCreateStep = () => (
+  const renderSyncCreateStep = () => {
+    // Show the combined format if we have an invite code
+    const displayCode = generatedInviteCode 
+      ? `${generatedInviteCode}#${generatedSyncCode}`
+      : generatedSyncCode;
+    
+    return (
       <View style={styles.stepContainer}>
         <Text style={styles.title}>Your Sync Code</Text>
         <Text style={styles.subtitle}>
-          Save this code to sync with other devices
+          Save this code to share with other devices
         </Text>
         
         <View style={styles.syncCodeContainer}>
-          <Text style={styles.syncCode}>{generatedSyncCode}</Text>
+          <Text style={styles.syncCode}>{displayCode}</Text>
           <TouchableOpacity
             style={[styles.copyButton, { backgroundColor: defaultTheme.primary }]}
-            onPress={copySyncCode}
+            onPress={() => {
+              copyToClipboard(displayCode, 'Sync code copied!');
+            }}
           >
             <Icon name="content-copy" size={20} color="#fff" />
             <Text style={styles.copyButtonText}>Copy</Text>
           </TouchableOpacity>
         </View>
+        
+        {generatedInviteCode && (
+          <Text style={styles.syncCodeHint}>
+            Invite code expires in 24 hours • Up to 5 uses
+          </Text>
+        )}
         
         {showCopiedToast && (
           <View style={styles.toast}>
@@ -1172,18 +1248,59 @@ const OnboardingUserCentered = ({
         )}
       </View>
     );
+  };
 
-  const renderSyncImportStep = () => (
+  const renderSyncImportStep = () => {
+    // Parse the input to handle both formats:
+    // New format: ABCD-1234#recoveryPhrase  
+    // Legacy format: just the 32-char recovery phrase
+    const parseInput = (input) => {
+      const trimmed = input.trim();
+      
+      // Check for new format with invite code
+      if (trimmed.includes('#')) {
+        const [inviteCode, phrase] = trimmed.split('#');
+        return {
+          inviteCode: inviteCode.toUpperCase(),
+          recoveryPhrase: phrase || '',
+          isInviteFormat: true
+        };
+      }
+      
+      // Check if it looks like an invite code (XXXX-XXXX)
+      if (/^[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(trimmed)) {
+        return {
+          inviteCode: trimmed.toUpperCase(),
+          recoveryPhrase: '',
+          isInviteFormat: true,
+          needsRecoveryPhrase: true
+        };
+      }
+      
+      // Legacy format - just the recovery phrase
+      return {
+        inviteCode: null,
+        recoveryPhrase: trimmed.replace(/[\s-]+/g, ''),
+        isInviteFormat: false
+      };
+    };
+    
+    const parsed = parseInput(recoveryPhrase);
+    const displayCharCount = parsed.isInviteFormat 
+      ? parsed.recoveryPhrase.length 
+      : parsed.recoveryPhrase.length;
+    
+    return (
     <View style={styles.stepContainer}>
-      <Text style={styles.title}>Enter Sync Code</Text>
+      <Text style={styles.title}>Join Sync</Text>
       <Text style={styles.subtitle}>
-        Join an existing StackMap
+        Enter your sync code to connect
       </Text>
       
       <View style={styles.inputGroup}>
         <TextInput
           style={styles.input}
-          placeholder="Enter 32-character sync code"
+          placeholder="e.g., ABCD-1234#recovery... or just recovery phrase"
           value={recoveryPhrase}
           onChangeText={setRecoveryPhrase}
           autoCapitalize="none"
@@ -1192,7 +1309,11 @@ const OnboardingUserCentered = ({
         
         {recoveryPhrase.length > 0 && (
           <Text style={styles.charCount}>
-            {recoveryPhrase.replace(/[\s-]+/g, '').length}/32 characters
+            {parsed.isInviteFormat && parsed.inviteCode ? (
+              <>Invite: {parsed.inviteCode} • Key: {displayCharCount}/32 chars</>
+            ) : (
+              <>{displayCharCount}/32 characters</>
+            )}
           </Text>
         )}
       </View>
@@ -1214,7 +1335,7 @@ const OnboardingUserCentered = ({
           <TouchableOpacity
             style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
             onPress={fetchSyncPreview}
-            disabled={syncLoading || recoveryPhrase.replace(/[\s-]+/g, '').length !== 32}
+            disabled={syncLoading || (!parsed.inviteCode && parsed.recoveryPhrase.length !== 32)}
           >
             {syncLoading ? (
               <ActivityIndicator color="#fff" />
@@ -1253,6 +1374,7 @@ const OnboardingUserCentered = ({
       )}
     </View>
   );
+  };
 
   const renderSyncSuccessStep = () => (
     <View style={styles.stepContainer}>
@@ -1547,6 +1669,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginLeft: SPACING.xs,
+  },
+  syncCodeHint: {
+    fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: SPACING.xs,
   },
   toast: {
     position: 'absolute',

@@ -33,7 +33,9 @@ try {
     // Determine which format we're using
     if ($shareId) {
         // V3: Access by share ID only (no token)
-        if (!preg_match('/^[a-f0-9]{16}$/', $shareId)) {
+        // Accept both XXXX-XXXX invite format and legacy 16-char hex
+        if (!preg_match('/^[A-Z0-9]{4}-[A-Z0-9]{4}$/i', $shareId) && 
+            !preg_match('/^[a-f0-9]{16}$/i', $shareId)) {
             throw new Exception('Invalid share ID format');
         }
     } elseif ($token) {

@@ -73,10 +73,21 @@ try {
     }
     
     // Generate unique share ID
-    // For V3, use shorter ID for cleaner URLs
-    $shareId = ($version === 3) 
-        ? substr(bin2hex(random_bytes(12)), 0, 16)  // 16 char ID for URL
-        : bin2hex(random_bytes(16));  // Keep 32 char for V2
+    // For V3, use invite code format XXXX-XXXX
+    if ($version === 3) {
+        // Generate readable invite code (no ambiguous characters)
+        $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $shareId = '';
+        for ($i = 0; $i < 8; $i++) {
+            if ($i == 4) {
+                $shareId .= '-';
+            }
+            $shareId .= $chars[random_int(0, strlen($chars) - 1)];
+        }
+    } else {
+        // Keep 32 char hex for V2 backwards compatibility
+        $shareId = bin2hex(random_bytes(16));
+    }
     
     // Store in database
     $db = Database::getInstance()->getConnection();
