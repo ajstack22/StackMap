@@ -407,10 +407,6 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
   // Show all activities from today (or first available day)
   const dayKey = days.today ? 'today' : Object.keys(days)[0];
   const activities = days[dayKey]?.activities || [];
-  const completedCount = activities.filter(
-    a => a.completed && !a.deleted,
-  ).length;
-  const totalCount = activities.filter(a => !a.deleted).length;
 
   const handleClose = () => {
     if (Platform.OS === 'web') {
@@ -443,7 +439,7 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
           style={styles.fab}
           onPress={() => setShowPreferencesModal(true)}
         >
-          <Icon name="palette" size={24} color="#ffffff" />
+          <Icon name="palette" size={24} color={theme.primary} />
         </TouchableOpacity>
 
         {/* Center Content */}
@@ -463,9 +459,6 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
               {user?.name || 'User'}
             </Text>
           </TouchableOpacity>
-          <Text style={styles.progressText}>
-            {completedCount} of {totalCount} activities completed
-          </Text>
         </View>
 
         {/* Right FAB - Close */}
@@ -473,7 +466,7 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
           style={styles.fab}
           onPress={handleClose}
         >
-          <Icon name="close" size={24} color="#ffffff" />
+          <Icon name="close" size={24} color={theme.primary} />
         </TouchableOpacity>
       </View>
 

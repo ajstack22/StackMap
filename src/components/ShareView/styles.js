@@ -85,19 +85,26 @@ const createStyles = themeColor =>
       }),
     },
     fab: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: '#ffffff',
+      borderWidth: 2,
+      borderColor: 'rgba(0, 0, 0, 0.1)',
       justifyContent: 'center',
       alignItems: 'center',
       ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 3,
+        },
+        android: {
+          elevation: 2,
+        },
         web: {
-          cursor: 'pointer',
-          transition: 'background-color 0.2s',
-          ':hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.3)',
-          },
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
         },
       }),
     },
