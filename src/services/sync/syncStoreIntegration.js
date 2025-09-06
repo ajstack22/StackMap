@@ -933,7 +933,7 @@ class SyncStoreIntegration {
         include_tomorrow: includeTomorrow,
         auto_update: autoUpdate,
         device_name: deviceName,
-        share_version: 3,  // Use new secure version
+        share_version: Platform.OS === 'web' ? 3 : 2,  // V3 for web, V2 for mobile (server compatibility)
       };
 
       const shareUrl = `${SHARE_API_URL}/create_share.php`;
@@ -961,9 +961,15 @@ class SyncStoreIntegration {
         throw new Error(result.error || 'Failed to create share link');
       }
 
-      // For V3, the share_url is /share/[id] and we append the key as fragment
-      // The access_token is the encryption key
-      const secureShareUrl = result.share_url + '#' + (result.access_token || accessToken);
+      // Handle different URL formats based on version
+      let secureShareUrl;
+      if (Platform.OS === 'web' && requestBody.share_version === 3) {
+        // V3: the share_url is /share/[id] and we append the key as fragment
+        secureShareUrl = result.share_url + '#' + (result.access_token || accessToken);
+      } else {
+        // V2: Use the URL as-is (includes token in query parameter)
+        secureShareUrl = result.share_url;
+      }
       
       // Store share info locally for later management
       const shareInfo = {

@@ -1,11 +1,12 @@
 # Pending Changes
 
-## Title: Fix iOS Window.location Undefined Error
+## Title: Fix iOS Share Version Compatibility
 
 ### Changes Made:
-- Added proper platform checks before accessing window.location
-- Fixed minimalSyncService.js checkForRecoveryPhrase() for React Native
-- Added window.location existence checks in joinWithInviteCode()
-- Updated syncStoreIntegration.js with robust browser detection
-- Prevents "Cannot read property 'hash' of undefined" error on iOS
+- Fixed window.location undefined errors on iOS with proper platform checks
+- Set share_version to 2 for mobile platforms (iOS/Android) for server compatibility
+- Keep share_version 3 for web platform
+- Handle different URL formats based on share version
+- V2 shares use query parameter format for mobile
+- V3 shares use hash fragment format for web
 
