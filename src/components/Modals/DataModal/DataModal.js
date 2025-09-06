@@ -303,25 +303,40 @@ const DataModal = ({
   const loadActiveShares = async () => {
     try {
       const shares = await syncService.getActiveShares();
+      console.log('[DataModal] Loaded shares:', shares);
       const userShares = {};
 
       // Group shares by user
-      if (users) {
-        Object.entries(users).forEach(([userId, user]) => {
-          const userActiveShares = shares.filter(
-            share => share.userId === userId,
-          );
-          if (userActiveShares.length > 0) {
-            userShares[userId] = {
-              user,
-              shares: userActiveShares,
-            };
-          }
-        });
+      if (shares && shares.length > 0) {
+        // If shares don't have proper userId, group them under a generic "All Shares" category
+        const hasUserIds = shares.some(share => share.userId && share.userId !== 'unknown');
+        
+        if (hasUserIds && users) {
+          // Group by actual users
+          Object.entries(users).forEach(([userId, user]) => {
+            const userActiveShares = shares.filter(
+              share => share.userId === userId,
+            );
+            if (userActiveShares.length > 0) {
+              userShares[userId] = {
+                user,
+                shares: userActiveShares,
+              };
+            }
+          });
+        } else {
+          // Group all shares together
+          userShares['all'] = {
+            user: { name: 'All Shares', icon: '📤' },
+            shares: shares,
+          };
+        }
       }
 
       setActiveShares(userShares);
-    } catch (error) {}
+    } catch (error) {
+      console.error('[DataModal] Error loading shares:', error);
+    }
   };
 
   // Toggle export selection
@@ -2408,74 +2423,6 @@ const DataModal = ({
               </View>
             </>
           )}
-
-          {/* Active Shares */}
-          {Object.keys(activeShares).length > 0 && (
-            <View style={styles.shareSection}>
-              <TouchableOpacity
-                style={styles.shareSectionHeader}
-                onPress={() => setShowActiveShares(!showActiveShares)}
-              >
-                <Text style={styles.shareSectionTitle}>Active Shares</Text>
-                <Icon
-                  name={showActiveShares ? 'expand-less' : 'expand-more'}
-                  size={24}
-                  color="#666"
-                />
-              </TouchableOpacity>
-
-              {showActiveShares &&
-                Object.entries(activeShares).map(
-                  ([userId, { user, shares }]) => (
-                    <View key={userId} style={styles.userSharesContainer}>
-                      <View style={styles.userSharesHeader}>
-                        <Text style={styles.userSharesEmoji}>
-                          {user.icon || '😀'}
-                        </Text>
-                        <Text style={styles.userSharesName}>{user.name}</Text>
-                        <Text style={styles.userSharesCount}>
-                          {shares.length} active
-                        </Text>
-                      </View>
-                      {shares.map(share => (
-                        <View
-                          key={share.shareId}
-                          style={styles.activeShareCard}
-                        >
-                          <View style={styles.activeShareInfo}>
-                            {share.recipientName && (
-                              <Text style={styles.activeShareRecipient}>
-                                To: {share.recipientName}
-                              </Text>
-                            )}
-                            <Text style={styles.activeShareDate}>
-                              Expires:{' '}
-                              {share.expiresAt
-                                ? new Date(share.expiresAt).toLocaleDateString()
-                                : 'N/A'}
-                            </Text>
-                            {share.autoUpdate && (
-                              <View style={styles.activeShareBadge}>
-                                <Icon name="sync" size={12} color="#4caf50" />
-                                <Text style={styles.activeShareBadgeText}>
-                                  Auto-update
-                                </Text>
-                              </View>
-                            )}
-                          </View>
-                          <TouchableOpacity
-                            onPress={() => handleDeleteShare(share.shareId)}
-                            style={styles.activeShareDelete}
-                          >
-                            <Icon name="delete" size={20} color="#d32f2f" />
-                          </TouchableOpacity>
-                        </View>
-                      ))}
-                    </View>
-                  ),
-                )}
-            </View>
-          )}
         </View>
       ) : (
         // Share Created View
@@ -2601,6 +2548,71 @@ const DataModal = ({
               />
             </View>
           </View>
+        </View>
+      )}
+      
+      {/* Active Shares - Show at bottom regardless of state */}
+      {Object.keys(activeShares).length > 0 && (
+        <View style={[styles.shareSection, { marginTop: 20 }]}>
+          <TouchableOpacity
+            style={styles.shareSectionHeader}
+            onPress={() => setShowActiveShares(!showActiveShares)}
+          >
+            <Text style={styles.shareSectionTitle}>Active Shares</Text>
+            <Icon
+              name={showActiveShares ? 'expand-less' : 'expand-more'}
+              size={24}
+              color="#666"
+            />
+          </TouchableOpacity>
+
+          {showActiveShares &&
+            Object.entries(activeShares).map(
+              ([userId, { user, shares }]) => (
+                <View key={userId} style={styles.userSharesContainer}>
+                  <View style={styles.userSharesHeader}>
+                    <Text style={styles.userSharesEmoji}>
+                      {user.icon || '😀'}
+                    </Text>
+                    <Text style={styles.userSharesName}>{user.name}</Text>
+                    <Text style={styles.userSharesCount}>
+                      {shares.length} active
+                    </Text>
+                  </View>
+                  {shares.map(share => (
+                    <View
+                      key={share.shareId}
+                      style={styles.activeShareCard}
+                    >
+                      <View style={styles.activeShareInfo}>
+                        {share.recipientName && (
+                          <Text style={styles.activeShareRecipient}>
+                            To: {share.recipientName}
+                          </Text>
+                        )}
+                        <Text style={styles.activeShareDate}>
+                          Expires:{' '}
+                          {share.expiresAt
+                            ? new Date(share.expiresAt).toLocaleDateString()
+                            : 'N/A'}
+                        </Text>
+                        {share.shareNote && (
+                          <Text style={styles.activeShareNote} numberOfLines={1}>
+                            {share.shareNote}
+                          </Text>
+                        )}
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => handleDeleteShare(share.shareId)}
+                        style={styles.activeShareDelete}
+                      >
+                        <Icon name="delete" size={20} color="#d32f2f" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              ),
+            )}
         </View>
       )}
     </ScrollView>
