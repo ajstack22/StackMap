@@ -1139,7 +1139,6 @@ const DataModal = ({
   // Handle delete server data
   const handleDeleteServerData = async () => {
     console.log('[DataModal] handleDeleteServerData called');
-    addDebugMessage('Delete handler called');
     
     // Close the modal immediately
     setShowDeleteServerDataConfirm(false);
@@ -1147,57 +1146,28 @@ const DataModal = ({
     try {
       setSyncLoading(true);
       
-      // Check current sync service state
-      addDebugMessage(`syncService type: ${typeof syncService}`);
-      addDebugMessage(`Has getSyncId: ${!!syncService.getSyncId}`);
-      
       const currentSyncId = syncService.getSyncId ? syncService.getSyncId() : 
                            syncService.minimalSync?.syncId || 
                            syncService.syncId;
-      addDebugMessage(`Current sync ID: ${currentSyncId || 'NONE'}`);
-      addDebugMessage(`Sync ID length: ${currentSyncId ? currentSyncId.length : 0}`);
-      
-      // Check the URL to see if we're on QUAL or PROD
-      const currentUrl = window.location.href;
-      addDebugMessage(`Current URL: ${currentUrl}`);
-      const isQual = currentUrl.includes('/qual/');
-      addDebugMessage(`Is QUAL environment: ${isQual}`);
       
       if (!currentSyncId) {
-        addDebugMessage('ERROR: No sync ID available!');
         throw new Error('No sync ID available - sync may not be enabled');
-      }
-
-      // First, let's try a test pull to see if the sync ID is valid
-      addDebugMessage('Testing if sync ID is valid with server...');
-      try {
-        // Try to check if sync exists
-        const testUrl = isQual ? 
-          `https://stackmap.app/qual/api/sync/check_sync.php` : 
-          `https://stackmap.app/api/sync/check_sync.php`;
-        addDebugMessage(`Checking: ${testUrl}`);
-      } catch (e) {
-        addDebugMessage(`Check failed: ${e.message}`);
       }
       
       console.log('[DataModal] Calling syncService.deleteFromServer()');
-      addDebugMessage('Attempting to delete from BOTH QUAL and Production...');
-      addDebugMessage(`Sync ID being deleted: ${currentSyncId}`);
       
       // Delete all server data for this sync ID - checks both environments
       const deleteResult = await syncService.deleteFromServer();
-      addDebugMessage(`Delete result: ${JSON.stringify(deleteResult)}`);
       
       if (deleteResult && deleteResult.success) {
-        addDebugMessage('SUCCESS: Data deleted from server(s)');
+        console.log('[DataModal] SUCCESS: Data deleted from server(s)');
       }
 
       console.log('[DataModal] Server data deleted, disabling sync');
-      addDebugMessage('Disabling sync...');
       
       // Disable sync after deleting server data
       await syncService.disable();
-      addDebugMessage('Sync disabled');
+      console.log('[DataModal] Sync disabled');
 
       setSyncEnabled(false);
       setSyncId(null);
@@ -1208,10 +1178,8 @@ const DataModal = ({
       }
 
       showToast({ message: 'Server data deleted and sync disabled', type: 'success' });
-      addDebugMessage('SUCCESS: Server data deleted');
     } catch (error) {
       console.error('[DataModal] Error deleting server data:', error);
-      addDebugMessage(`ERROR: ${error.message}`);
       
       showToast({
         message: 'Unable to delete server data. Please contact support if this persists.',
@@ -2207,31 +2175,6 @@ const DataModal = ({
               </Text>
             </View>
           </View>
-          
-          {/* DEBUG PANEL - TEMPORARY */}
-          {debugMessages.length > 0 && (
-            <View style={{
-              backgroundColor: '#f0f0f0',
-              padding: 10,
-              marginTop: 10,
-              borderRadius: 5,
-              borderWidth: 1,
-              borderColor: '#ccc'
-            }}>
-              <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>Debug Messages:</Text>
-              {debugMessages.map((msg, i) => (
-                <Text key={i} style={{ fontSize: 12, color: '#333', marginBottom: 2 }}>
-                  {msg}
-                </Text>
-              ))}
-              <TouchableOpacity 
-                onPress={() => setDebugMessages([])}
-                style={{ marginTop: 5 }}
-              >
-                <Text style={{ color: 'blue', fontSize: 12 }}>Clear Debug</Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
       )}
     </ScrollView>
