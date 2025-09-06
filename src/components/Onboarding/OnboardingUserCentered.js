@@ -1553,7 +1553,6 @@ const OnboardingUserCentered = ({
           )}
         </View>
       )}
-      </View>
       
       {syncError && (
         <Text style={styles.errorText}>{syncError}</Text>
