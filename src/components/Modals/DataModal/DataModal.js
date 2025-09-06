@@ -1902,9 +1902,9 @@ const DataModal = ({
               <>
                 {/* Generated Sync Key Display */}
                 <View style={styles.syncKeyDisplay}>
-                  <View style={styles.shareField}>
-                    <Text style={styles.shareFieldLabel}>Device Invite</Text>
-                    <Text style={styles.shareFieldHelper}>Valid for 24 hours • Max 5 uses</Text>
+                  <View style={[styles.shareField, { alignItems: 'center' }]}>
+                    <Text style={[styles.shareFieldLabel, { textAlign: 'center' }]}>Device Invite</Text>
+                    <Text style={[styles.shareFieldHelper, { textAlign: 'center' }]}>Valid for 24 hours • Max 5 uses</Text>
                   </View>
                   <View style={styles.syncKeyBox}>
                     <Text style={styles.syncKeyText} selectable>
@@ -1929,8 +1929,8 @@ const DataModal = ({
                     </View>
                   </View>
                   
-                  {/* Action Buttons */}
-                  <View style={styles.syncKeyActions}>
+                  {/* Action Buttons - Centered */}
+                  <View style={[styles.syncKeyActions, { justifyContent: 'center' }]}>
                     <ModalButton
                       theme={theme}
                       variant="secondary"
@@ -1968,48 +1968,54 @@ const DataModal = ({
                     />
                   </View>
                   
-                  {/* Additional Actions */}
-                  <ModalButton
-                    theme={theme}
-                    variant="secondary"
-                    label="Generate New Key"
-                    icon="refresh"
-                    onPress={async () => {
-                      try {
-                        setSyncLoading(true);
-                        
-                        // Get recovery phrase - extract from current key if needed
-                        let currentPhrase = syncRecoveryPhrase || syncService.getRecoveryPhrase();
-                        if (!currentPhrase && generatedSyncKey) {
-                          // Extract recovery phrase from the URL format
-                          const parts = generatedSyncKey.split('#');
-                          currentPhrase = parts[1]; // Recovery phrase is after the #
-                        }
-                        
-                        const result = await syncService.createInviteCode(24, 5, 'Manual invite');
-                        
-                        if (result && result.inviteCode) {
-                          // The inviteUrl already includes the recovery phrase as a fragment
-                          const fullSyncKey = result.inviteUrl;
-                          setGeneratedSyncKey(fullSyncKey);
+                  {/* Generate New Key with explanation */}
+                  <View style={{ alignItems: 'center', marginTop: 16 }}>
+                    <View style={styles.shareInstructionItem}>
+                      <Icon name="refresh" size={16} color="#000" />
+                      <Text style={styles.shareInstructionText}>Generate new key if key above has expired</Text>
+                    </View>
+                    <ModalButton
+                      theme={theme}
+                      variant="secondary"
+                      label="Generate New Key"
+                      icon="refresh"
+                      onPress={async () => {
+                        try {
+                          setSyncLoading(true);
+                          
+                          // Get recovery phrase - extract from current key if needed
+                          let currentPhrase = syncRecoveryPhrase || syncService.getRecoveryPhrase();
+                          if (!currentPhrase && generatedSyncKey) {
+                            // Extract recovery phrase from the URL format
+                            const parts = generatedSyncKey.split('#');
+                            currentPhrase = parts[1]; // Recovery phrase is after the #
+                          }
+                          
+                          const result = await syncService.createInviteCode(24, 5, 'Manual invite');
+                          
+                          if (result && result.inviteCode) {
+                            // The inviteUrl already includes the recovery phrase as a fragment
+                            const fullSyncKey = result.inviteUrl;
+                            setGeneratedSyncKey(fullSyncKey);
+                            showToast({ 
+                              message: 'New sync key generated!', 
+                              type: 'success' 
+                            });
+                          }
+                        } catch (error) {
                           showToast({ 
-                            message: 'New sync key generated!', 
-                            type: 'success' 
+                            message: 'Failed to generate new key', 
+                            type: 'error' 
                           });
+                        } finally {
+                          setSyncLoading(false);
                         }
-                      } catch (error) {
-                        showToast({ 
-                          message: 'Failed to generate new key', 
-                          type: 'error' 
-                        });
-                      } finally {
-                        setSyncLoading(false);
-                      }
-                    }}
-                    disabled={syncLoading}
-                    loading={syncLoading}
-                    fullWidth
-                  />
+                      }}
+                      disabled={syncLoading}
+                      loading={syncLoading}
+                      style={{ marginTop: 8 }}
+                    />
+                  </View>
                   
                 </View>
               </>
@@ -2031,7 +2037,7 @@ const DataModal = ({
             
             <ModalButton
               theme={theme}
-              variant="warning"
+              variant="danger"
               label="Disable Sync"
               icon="sync-disabled"
               onPress={() => {
