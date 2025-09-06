@@ -2738,31 +2738,24 @@ const App = () => {
 
           await RNFS.writeFile(filePath, jsonData, 'utf8');
 
-          // Show success dialog with share option
+          // Show success dialog with instructions
           Alert.alert(
-            'Export Successful!',
+            'Export Successful! ✅',
             `Your data has been saved to:
-Downloads/${fileName}
+📁 Downloads/${fileName}
 
-Would you like to share it to another app?`,
+To use this file:
+• Import it back into StackMap using the Import button
+• Share it via your file manager app
+• Transfer it to another device via email or cloud storage
+
+The file will remain in your Downloads folder until you delete it.`,
             [
               {
-                text: 'No Thanks',
-                style: 'cancel',
+                text: 'Got it!',
+                style: 'default',
                 onPress: () => {
-                  showToast({ message: 'Export saved to Downloads' });
-                },
-              },
-              {
-                text: 'Share',
-                onPress: async () => {
-                  try {
-                    await Share.share({
-                      url: `file://${filePath}`,
-                      title: 'StackMap Export',
-                      message: `Exported: ${fileName}`,
-                    });
-                  } catch (shareError) {}
+                  showToast({ message: '✅ Export saved to Downloads' });
                 },
               },
             ],

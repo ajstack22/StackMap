@@ -621,9 +621,21 @@ const DataModal = ({
 
         if (uniqueFiles.length === 0) {
           Alert.alert(
-            'No StackMap Files Found',
-            'To import data:\n\n1. First export your data using the Export button\n2. The file will be saved to your Downloads folder\n3. Try importing again\n\nNote: On newer Android versions, apps have limited file access.',
-            [{ text: 'OK' }],
+            'How to Import Your Data 📱',
+            'Your exported StackMap files are saved in the Downloads folder.\n\nTo access them:\n\n1. Open your phone\'s Files app\n2. Navigate to Downloads\n3. Look for files starting with "stackmap-export"\n4. You can open them with StackMap from there\n\nOr use the Export button first to create a backup file.',
+            [
+              { 
+                text: 'Open Files App',
+                onPress: () => {
+                  // Try to open the file manager
+                  if (Platform.OS === 'android') {
+                    const { Linking } = require('react-native');
+                    Linking.openURL('content://com.android.documentsui.documents/root/downloads');
+                  }
+                }
+              },
+              { text: 'OK', style: 'cancel' }
+            ],
           );
           setLoading(false);
           return;
