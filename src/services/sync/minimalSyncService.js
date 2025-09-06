@@ -1224,6 +1224,8 @@ class MinimalSyncService {
   // Join sync using an invite code
   async joinWithInviteCode(inviteCode, recoveryPhrase = null) {
     console.log('[MinimalSync] Joining sync with invite code:', inviteCode);
+    console.log('[MinimalSync] Recovery phrase provided:', recoveryPhrase ? `${recoveryPhrase.substring(0, 8)}...` : 'null');
+    console.log('[MinimalSync] Recovery phrase length:', recoveryPhrase ? recoveryPhrase.length : 0);
     
     // Apply rate limiting
     await this.rateLimitCheck('joinWithInvite');
@@ -1266,16 +1268,23 @@ class MinimalSyncService {
       this.pendingRecoveryPhrase = null;
       
       // Step 3: Generate sync ID from recovery phrase using the standard method
+      console.log('[MinimalSync] About to generate sync ID from recovery phrase:', recoveryPhrase ? `${recoveryPhrase.substring(0, 8)}...` : 'null');
       const syncId = await this.generateSyncId(recoveryPhrase);
-      console.log('[MinimalSync] Generated sync ID:', syncId, 'Expected:', validateResult.sync_id);
+      console.log('[MinimalSync] Generated sync ID:', syncId);
+      console.log('[MinimalSync] Expected sync ID:', validateResult.sync_id);
+      console.log('[MinimalSync] Sync IDs match?', syncId === validateResult.sync_id);
       
       // Verify sync ID matches
       if (syncId !== validateResult.sync_id) {
+        console.error('[MinimalSync] Sync ID mismatch!');
+        console.error('[MinimalSync] Recovery phrase (first 8 chars):', recoveryPhrase.substring(0, 8));
+        console.error('[MinimalSync] Generated:', syncId);
+        console.error('[MinimalSync] Expected:', validateResult.sync_id);
         throw new Error('Recovery phrase does not match this sync group');
       }
       
-      // Step 4: Enable sync with the recovery phrase
-      await this.enableSync(recoveryPhrase, false);
+      // Step 4: Join the sync group with the recovery phrase
+      await this.joinSync(recoveryPhrase);
       
       // Step 5: Mark invite as used
       await fetch(`${this.API_BASE}/use_invite.php`, {
