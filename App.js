@@ -364,8 +364,13 @@ const App = () => {
       let syncInviteCode = null;
       let recoveryPhrase = null;
       
+      console.log('[App] Checking for sync URL. Pathname:', pathname);
+      console.log('[App] Hash:', window.location.hash);
+      
       // Check for /sync/[invite-code] or /qual/sync/[invite-code]
-      const syncPathMatch = pathname.match(/\/sync\/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)\/?$/);
+      // Updated regex to properly handle /qual/sync/ paths
+      const syncPathMatch = pathname.match(/(?:\/qual)?\/sync\/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)\/?$/i);
+      console.log('[App] Sync path match result:', syncPathMatch);
       if (syncPathMatch) {
         syncInviteCode = syncPathMatch[1].toUpperCase();
         
