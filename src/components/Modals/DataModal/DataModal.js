@@ -1905,7 +1905,7 @@ const DataModal = ({
                   <View style={[styles.shareField, { alignItems: 'center' }]}>
                     <Text style={[styles.shareFieldLabel, { textAlign: 'center', fontSize: 16 }]}>Device Invite</Text>
                   </View>
-                  <Text style={[styles.syncKeyText, { textAlign: 'center', marginTop: 8, marginBottom: 4 }]} selectable>
+                  <Text style={[styles.syncKeyText, { textAlign: 'center', marginTop: 8, marginBottom: 4, fontWeight: 'bold' }]} selectable>
                     {(() => {
                       // Display just the key part (not the full URL)
                       const urlParts = generatedSyncKey.split('#');
@@ -1932,8 +1932,8 @@ const DataModal = ({
                     </View>
                   </View>
                   
-                  {/* Action Buttons - Centered */}
-                  <View style={[styles.syncKeyActions, { justifyContent: 'center' }]}>
+                  {/* Action Buttons - Centered with wrapping */}
+                  <View style={[styles.syncKeyActions, { justifyContent: 'center', flexWrap: 'wrap' }]}>
                     <ModalButton
                       theme={theme}
                       variant="primary"
