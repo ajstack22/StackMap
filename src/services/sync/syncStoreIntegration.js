@@ -1081,7 +1081,7 @@ class SyncStoreIntegration {
   // ============================================
 
   /**
-   * Delete all data from server
+   * Delete all data from server - tries both QUAL and PROD to ensure data is truly deleted
    */
   async deleteFromServer() {
     console.log('[SyncStore] Deleting all data from server...');
@@ -1097,52 +1097,64 @@ class SyncStoreIntegration {
       
       const deviceId = minimalSync.deviceId || 'unknown';
       
-      // Get API URL based on environment
-      const getApiUrl = () => {
-        // Mobile builds use production API
-        if (Platform.OS === 'ios' || Platform.OS === 'android') {
-          return 'https://stackmap.app/api/sync';
-        }
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          const pathname = window.location.pathname;
-          if (pathname.includes('/qual/')) {
-            return 'https://stackmap.app/qual/api/sync';
-          }
-        }
-        return 'https://stackmap.app/api/sync';
-      };
-      
-      const API_URL = getApiUrl();
-      const deleteUrl = `${API_URL}/delete.php`;
-      
       const requestBody = {
         sync_id: syncId,
         device_id: deviceId
       };
       
-      console.log('[SyncStore] Calling delete endpoint:', deleteUrl);
-      console.log('[SyncStore] Request body:', JSON.stringify(requestBody));
+      // Try to delete from BOTH environments to ensure data is truly gone
+      const environments = [
+        { name: 'QUAL', url: 'https://stackmap.app/qual/api/sync/delete.php' },
+        { name: 'Production', url: 'https://stackmap.app/api/sync/delete.php' }
+      ];
       
-      const response = await fetch(deleteUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-      });
+      let deletedFromAny = false;
+      let errors = [];
       
-      const data = await response.json();
-      console.log('[SyncStore] Server response:', response.status, data);
-      
-      if (!response.ok) {
-        console.error('[SyncStore] Delete failed - sync ID may not match server records');
-        console.error('[SyncStore] Sync ID sent:', syncId);
-        console.error('[SyncStore] Device ID sent:', deviceId);
-        throw new Error(data.error || `Delete failed with status ${response.status}`);
+      for (const env of environments) {
+        console.log(`[SyncStore] Attempting delete from ${env.name}: ${env.url}`);
+        
+        try {
+          const response = await fetch(env.url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody)
+          });
+          
+          const data = await response.json();
+          console.log(`[SyncStore] ${env.name} response:`, response.status, data);
+          
+          if (response.ok) {
+            console.log(`[SyncStore] Successfully deleted from ${env.name}`);
+            deletedFromAny = true;
+          } else if (response.status === 404) {
+            console.log(`[SyncStore] No data found in ${env.name} (already deleted or never existed)`);
+            // Not an error - data doesn't exist
+          } else {
+            errors.push(`${env.name}: ${data.error || response.status}`);
+          }
+        } catch (fetchError) {
+          console.error(`[SyncStore] Failed to contact ${env.name}:`, fetchError);
+          errors.push(`${env.name}: ${fetchError.message}`);
+        }
       }
       
-      console.log('[SyncStore] Server data deleted successfully:', data);
-      return { success: true, message: data.message };
+      // If we deleted from at least one environment, that's a success
+      if (deletedFromAny) {
+        console.log('[SyncStore] Server data deleted successfully from at least one environment');
+        return { success: true, message: 'Server data deleted successfully' };
+      }
+      
+      // If all attempts resulted in 404 (not found), that's okay - data is gone
+      if (errors.length === 0) {
+        console.log('[SyncStore] No data found in any environment - already deleted');
+        return { success: true, message: 'Data already deleted or never existed on server' };
+      }
+      
+      // If we have errors from both environments, report them
+      throw new Error(`Failed to delete from all environments: ${errors.join('; ')}`);
       
     } catch (error) {
       console.error('[SyncStore] Error deleting server data:', error);

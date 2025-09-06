@@ -1152,16 +1152,15 @@ const DataModal = ({
       }
       
       console.log('[DataModal] Calling syncService.deleteFromServer()');
-      addDebugMessage('Calling deleteFromServer...');
+      addDebugMessage('Attempting to delete from BOTH QUAL and Production...');
       addDebugMessage(`Sync ID being deleted: ${currentSyncId}`);
       
-      // Delete all server data for this sync ID
+      // Delete all server data for this sync ID - checks both environments
       const deleteResult = await syncService.deleteFromServer();
       addDebugMessage(`Delete result: ${JSON.stringify(deleteResult)}`);
       
-      // Even if server says "not found", we should still disable sync locally
       if (deleteResult && deleteResult.success) {
-        addDebugMessage('Server delete successful or data already gone');
+        addDebugMessage('SUCCESS: Data deleted from server(s)');
       }
 
       console.log('[DataModal] Server data deleted, disabling sync');
@@ -1184,10 +1183,12 @@ const DataModal = ({
     } catch (error) {
       console.error('[DataModal] Error deleting server data:', error);
       addDebugMessage(`ERROR: ${error.message}`);
+      
       showToast({
-        message: error.message || 'Failed to delete server data',
+        message: 'Unable to delete server data. Please contact support if this persists.',
         type: 'error',
       });
+      
       // Re-check sync status in case of error
       checkSyncStatus();
     } finally {
