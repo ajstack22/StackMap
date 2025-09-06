@@ -1222,6 +1222,58 @@ class SyncStoreIntegration {
    */
   async getActiveShares(userId) {
     try {
+      // Try to fetch from server first
+      const deviceId = await this.getDeviceId();
+      
+      // Get API URL based on environment
+      const getShareApiUrl = () => {
+        if (Platform.OS === 'ios' || Platform.OS === 'android') {
+          return 'https://stackmap.app/api/sync';
+        }
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          const pathname = window.location.pathname;
+          if (pathname.includes('/qual/')) {
+            return 'https://stackmap.app/qual/api/sync';
+          }
+        }
+        return 'https://stackmap.app/api/sync';
+      };
+      
+      const SHARE_API_URL = getShareApiUrl();
+      const listUrl = `${SHARE_API_URL}/list_shares.php?device_id=${deviceId}`;
+      
+      try {
+        const response = await fetch(listUrl);
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            // Convert server format to local format
+            const shares = data.active_shares.map(share => ({
+              shareId: share.share_id,
+              userId: userId || 'unknown',
+              recipientName: share.recipient_name,
+              shareNote: share.share_note,
+              expiresAt: share.expires_at,
+              createdAt: share.created_at,
+              accessCount: share.access_count,
+              status: 'active'
+            }));
+            
+            // Update local storage with server data
+            await AsyncStorage.setItem('@stackmap_shares', JSON.stringify(shares));
+            
+            if (userId) {
+              return shares.filter(share => share.userId === userId);
+            }
+            return shares;
+          }
+        }
+      } catch (fetchError) {
+        console.log('[SyncService] Could not fetch shares from server, using local storage');
+      }
+      
+      // Fallback to local storage
       const stored = await AsyncStorage.getItem('@stackmap_shares');
       if (!stored) return [];
       

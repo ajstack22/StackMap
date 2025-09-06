@@ -33,8 +33,9 @@
         window.__hashCapturedAt = new Date().toISOString();
         console.log('[HTML] Hash captured immediately:', window.__initialHash);
         
-        // Also try to parse sync data right away
         const pathname = window.location.pathname;
+        
+        // Parse sync data right away
         if (pathname.includes('/sync/')) {
           const match = pathname.match(/\/sync\/([A-Z0-9]{4}-[A-Z0-9]{4})/i);
           if (match) {
@@ -44,6 +45,19 @@
               recoveryPhrase: window.__initialHash.substring(1).split('#')[0]
             };
             console.log('[HTML] Early sync data:', window.__earlySyncData);
+          }
+        }
+        
+        // Parse share data right away
+        if (pathname.includes('/share/')) {
+          const match = pathname.match(/\/share\/([A-Za-z0-9\-_]+)/);
+          if (match) {
+            window.__earlyShareData = {
+              shareId: match[1],
+              hash: window.__initialHash,
+              encryptionKey: window.__initialHash.substring(1)
+            };
+            console.log('[HTML] Early share data:', window.__earlyShareData);
           }
         }
       } else {

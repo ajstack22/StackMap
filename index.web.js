@@ -4,6 +4,15 @@ import App from './App';
 // Import passive events configuration to improve scroll performance
 import './web/passiveEvents';
 
+// Capture share data immediately on web
+if (Platform.OS === 'web' && window.__earlyShareData) {
+  console.log('[index.web.js] Using immediately captured share data:', window.__earlyShareData);
+  window.shareDataImmediate = {
+    shareId: window.__earlyShareData.shareId,
+    encryptionKey: window.__earlyShareData.encryptionKey
+  };
+}
+
 // Disable useNativeDriver warnings on web
 if (Platform.OS === 'web') {
   // Store the original console methods

@@ -15,7 +15,7 @@ import util from 'tweetnacl-util';
 import createStyles from './styles';
 import { CUSTOM_IMAGE_SOURCES, getCustomImageSource } from '../../constants';
 
-const ShareView = ({ shareToken, shareId, theme = { primary: '#667eea' } }) => {
+const ShareView = ({ shareToken, shareId, shareKey, theme = { primary: '#667eea' } }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [shareData, setShareData] = useState(null);
@@ -38,34 +38,44 @@ const ShareView = ({ shareToken, shareId, theme = { primary: '#667eea' } }) => {
   }, []);
 
   useEffect(() => {
-    // Detect which format we're using
-    const path = window.location.pathname;
-    
-    if (path.startsWith('/share/')) {
-      // New V3 format: /share/[id]#[key]
-      const id = path.split('/share/')[1];
-      const key = window.location.hash.substring(1);
-      
-      if (id && key) {
-        loadShareDataV3(id, key);
-      } else if (id) {
-        setError('Invalid share link - missing security key');
-        setLoading(false);
-      }
-    } else if (shareToken) {
-      // Legacy V2 format: ?share=[token]
-      loadShareData();
-    } else if (shareId) {
-      // Prop-based V3 format
-      const key = window.location.hash.substring(1);
-      if (key) {
-        loadShareDataV3(shareId, key);
-      } else {
-        setError('Invalid share link - missing security key');
-        setLoading(false);
-      }
+    // If we have shareId and shareKey from props (best case - captured immediately)
+    if (shareId && shareKey) {
+      console.log('[ShareView] Using share data from props:', { shareId, keyLength: shareKey?.length });
+      loadShareDataV3(shareId, shareKey);
     }
-  }, [shareToken, shareId]);
+    // Legacy V2 format: ?share=[token]
+    else if (shareToken) {
+      console.log('[ShareView] Using legacy share token');
+      loadShareData();
+    }
+    // Fallback: try to detect from URL (shouldn't happen with proper capture)
+    else if (Platform.OS === 'web') {
+      const path = window.location.pathname;
+      
+      if (path.includes('/share/')) {
+        const match = path.match(/\/share\/([A-Za-z0-9\-_]+)/);
+        const id = match?.[1];
+        const key = window.location.hash.substring(1);
+        
+        if (id && key) {
+          console.log('[ShareView] Fallback: detected share from URL');
+          loadShareDataV3(id, key);
+        } else if (id) {
+          setError('Invalid share link - missing security key');
+          setLoading(false);
+        } else {
+          setError('Invalid share link format');
+          setLoading(false);
+        }
+      } else {
+        setError('No share data provided');
+        setLoading(false);
+      }
+    } else {
+      setError('No share data provided');
+      setLoading(false);
+    }
+  }, [shareToken, shareId, shareKey]);
 
   const loadShareData = async () => {
     try {

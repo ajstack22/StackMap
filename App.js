@@ -397,6 +397,8 @@ const App = () => {
 
   // Check for share token in URL (web only)
   const [shareToken, setShareToken] = useState(null);
+  const [shareId, setShareId] = useState(null);
+  const [shareKey, setShareKey] = useState(null);
   const [syncSetupPhrase, setSyncSetupPhrase] = useState(null);
   const [isInitializing, setIsInitializing] = useState(false); // Prevent race conditions
   
@@ -433,6 +435,26 @@ const App = () => {
             fullUrl: window.location.href,
             noImmediateData: true
           };
+        }
+      }
+      
+      // Check for share data captured immediately
+      if (window.shareDataImmediate) {
+        console.log('[App] Using immediately captured share data:', window.shareDataImmediate);
+        setShareId(window.shareDataImmediate.shareId);
+        setShareKey(window.shareDataImmediate.encryptionKey);
+      } else {
+        // Fallback to checking in useEffect (shouldn't happen for share URLs with hash)
+        const pathname = window.location.pathname;
+        const sharePathMatch = pathname.match(/(?:\/qual)?\/share\/([A-Za-z0-9\-_]+)\/?$/);
+        
+        if (sharePathMatch) {
+          console.log('[App] Warning: Share URL detected in useEffect but no immediate data captured');
+          setShareId(sharePathMatch[1]);
+          // Try to get hash if still available
+          if (window.location.hash) {
+            setShareKey(window.location.hash.substring(1));
+          }
         }
       }
       
@@ -5823,9 +5845,14 @@ Users: ${userNames} (${userCount} total)
     );
   }
 
-  // Show share view if share token is present
-  if (shareToken) {
-    return <ShareView shareToken={shareToken} theme={theme} />;
+  // Show share view if share token or share ID is present
+  if (shareToken || shareId) {
+    return <ShareView 
+      shareToken={shareToken} 
+      shareId={shareId}
+      shareKey={shareKey}
+      theme={theme} 
+    />;
   }
 
   // Show onboarding if needed

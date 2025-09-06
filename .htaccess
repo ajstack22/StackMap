@@ -7,11 +7,13 @@ DirectoryIndex index.html
 # Enable RewriteEngine for SPA routing
 RewriteEngine On
 
-# Handle new secure share URLs - /share/[id] format (XXXX-XXXX or hex)
-RewriteRule ^share/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)/?$ index.html [L,NC]
+# Handle new secure share URLs - /share/[id] format (various formats)
+RewriteRule ^share/([A-Za-z0-9\-_]+)/?$ index.html [L,NC]
+RewriteRule ^qual/share/([A-Za-z0-9\-_]+)/?$ index.html [L,NC]
 
 # Handle new secure sync URLs - /sync/[invite] format (XXXX-XXXX or hex)
 RewriteRule ^sync/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)/?$ index.html [L,NC]
+RewriteRule ^qual/sync/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)/?$ index.html [L,NC]
 
 # Redirect old share format to migration page (temporary)
 RewriteCond %{QUERY_STRING} ^share=([^&]+)$
