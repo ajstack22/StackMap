@@ -2570,27 +2570,27 @@ const DataModal = ({
       )}
       
       {/* Debug Panel for Share Tab */}
-      <View style={[styles.shareSection, { marginTop: 20, backgroundColor: '#f5f5f5', padding: 10, borderRadius: 8 }]}>
-        <Text style={[styles.shareSectionTitle, { color: '#666' }]}>🔍 Debug Info</Text>
-        <View style={{ marginTop: 10 }}>
+      <View style={[styles.shareSection, styles.debugPanel]}>
+        <Text style={[styles.shareSectionTitle, styles.debugTitle]}>🔍 Debug Info</Text>
+        <View style={styles.debugMessagesContainer}>
           {shareDebugMessages.length > 0 ? (
             shareDebugMessages.map((msg, idx) => (
-              <Text key={idx} style={{ fontSize: 12, fontFamily: 'monospace', marginVertical: 2 }}>
+              <Text key={idx} style={styles.debugMessage}>
                 {msg}
               </Text>
             ))
           ) : (
-            <Text style={{ fontSize: 12, fontStyle: 'italic' }}>No debug messages yet</Text>
+            <Text style={styles.debugEmptyMessage}>No debug messages yet</Text>
           )}
         </View>
         <TouchableOpacity 
-          style={{ marginTop: 10, padding: 8, backgroundColor: '#4CAF50', borderRadius: 4 }}
+          style={styles.debugRefreshButton}
           onPress={() => {
             setShareDebugMessages([]);
             loadActiveShares();
           }}
         >
-          <Text style={{ color: '#fff', textAlign: 'center', fontWeight: 'bold' }}>Refresh Shares</Text>
+          <Text style={styles.debugRefreshButtonText}>Refresh Shares</Text>
         </TouchableOpacity>
       </View>
       

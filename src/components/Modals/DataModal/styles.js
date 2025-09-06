@@ -1094,4 +1094,40 @@ export const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
     fontStyle: 'italic',
   },
+  
+  // Debug panel styles
+  debugPanel: {
+    marginTop: 20,
+    backgroundColor: '#f5f5f5',
+    padding: 10,
+    borderRadius: 8,
+  },
+  debugTitle: {
+    color: '#666',
+  },
+  debugMessagesContainer: {
+    marginTop: 10,
+  },
+  debugMessage: {
+    fontSize: 12,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    marginVertical: 2,
+    color: '#000',
+  },
+  debugEmptyMessage: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    color: '#666',
+  },
+  debugRefreshButton: {
+    marginTop: 10,
+    padding: 8,
+    backgroundColor: '#4CAF50',
+    borderRadius: 4,
+  },
+  debugRefreshButtonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
 });
