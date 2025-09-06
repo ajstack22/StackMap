@@ -15,17 +15,18 @@ import util from 'tweetnacl-util';
 import createStyles from './styles';
 import { CUSTOM_IMAGE_SOURCES, getCustomImageSource } from '../../constants';
 
-const ShareView = ({ shareToken, shareId, shareKey, theme = { primary: '#667eea' } }) => {
+const ShareView = ({ shareToken, shareId, shareKey, theme = { primary: '#5C7E9D' } }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [shareData, setShareData] = useState(null);
   const [selectedDay, setSelectedDay] = useState('today');
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [windowWidth, setWindowWidth] = useState(
     Platform.OS === 'web' ? window.innerWidth : 0,
   );
 
-  const styles = createStyles(isDarkMode);
+  // Use StackMap blue theme
+  const stackBlue = '#5C7E9D';
+  const styles = createStyles(stackBlue);
 
   useEffect(() => {
     if (Platform.OS === 'web') {
@@ -422,31 +423,16 @@ const ShareView = ({ shareToken, shareId, shareKey, theme = { primary: '#667eea'
           </View>
         </View>
         <View style={styles.headerControls}>
-          {/* Dark Mode Toggle */}
-          <TouchableOpacity
-            style={styles.darkModeToggle}
-            onPress={() => setIsDarkMode(!isDarkMode)}
-          >
-            <Icon
-              name={isDarkMode ? 'brightness-7' : 'brightness-4'}
-              size={24}
-              color={isDarkMode ? '#fff' : '#666'}
-            />
-            <Text
-              style={[
-                styles.darkModeText,
-                { color: isDarkMode ? '#fff' : '#666' },
-              ]}
-            >
-              {isDarkMode ? 'Light' : 'Dark'}
-            </Text>
-          </TouchableOpacity>
           {/* Try StackMap button - desktop only */}
           {Platform.OS === 'web' && windowWidth > 768 && (
             <TouchableOpacity
               style={styles.ctaButton}
               onPress={() => (window.location.href = '/')}
             >
+              <Image
+                source={{ uri: '/icons/icon-192.png' }}
+                style={styles.ctaButtonImage}
+              />
               <Text style={styles.ctaButtonText}>Try StackMap</Text>
             </TouchableOpacity>
           )}
@@ -542,6 +528,10 @@ const ShareView = ({ shareToken, shareId, shareKey, theme = { primary: '#667eea'
             style={styles.mobileCtaButton}
             onPress={() => (window.location.href = '/')}
           >
+            <Image
+              source={{ uri: '/icons/icon-192.png' }}
+              style={styles.mobileCtaButtonImage}
+            />
             <Text style={styles.mobileCtaButtonText}>Try StackMap</Text>
           </TouchableOpacity>
         </View>
