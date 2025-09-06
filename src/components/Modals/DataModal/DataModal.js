@@ -119,13 +119,6 @@ const DataModal = ({
   const [selectedShareUser, setSelectedShareUser] = useState(null);
   const [showShareQR, setShowShareQR] = useState(false);
   
-  // DEBUG: Share tab debug state
-  const [shareDebugMessages, setShareDebugMessages] = useState([]);
-  const addShareDebugMessage = (msg) => {
-    const timestamp = new Date().toLocaleTimeString();
-    setShareDebugMessages(prev => [...prev, `${timestamp}: ${msg}`].slice(-20));
-    console.log(`[ShareDebug] ${msg}`);
-  };
 
   // Tabs configuration - filter out unnecessary tabs for onboarding
   const tabs = isOnboarding
@@ -304,14 +297,7 @@ const DataModal = ({
 
   const loadActiveShares = async () => {
     try {
-      addShareDebugMessage('Loading active shares...');
       const shares = await syncService.getActiveShares();
-      addShareDebugMessage(`Loaded ${shares ? shares.length : 0} shares`);
-      
-      if (shares && shares.length > 0) {
-        addShareDebugMessage(`Share IDs: ${shares.map(s => s.shareId).join(', ')}`);
-      }
-      
       const userShares = {};
 
       // Group shares by user
@@ -320,7 +306,6 @@ const DataModal = ({
         const hasUserIds = shares.some(share => share.userId && share.userId !== 'unknown');
         
         if (hasUserIds && users) {
-          addShareDebugMessage('Grouping shares by user');
           // Group by actual users
           Object.entries(users).forEach(([userId, user]) => {
             const userActiveShares = shares.filter(
@@ -334,21 +319,16 @@ const DataModal = ({
             }
           });
         } else {
-          addShareDebugMessage('Grouping all shares together');
           // Group all shares together
           userShares['all'] = {
             user: { name: 'All Shares', icon: '📤' },
             shares: shares,
           };
         }
-      } else {
-        addShareDebugMessage('No shares found');
       }
 
-      addShareDebugMessage(`Grouped into ${Object.keys(userShares).length} categories`);
       setActiveShares(userShares);
     } catch (error) {
-      addShareDebugMessage(`Error: ${error.message}`);
       console.error('[DataModal] Error loading shares:', error);
     }
   };
@@ -1226,14 +1206,12 @@ const DataModal = ({
     }
 
     setShareLoading(true);
-    addShareDebugMessage('Creating share link...');
     try {
       // Generate token if not already generated
       let token = shareToken;
       if (!token) {
         token = syncService.generateShareToken(true);
         setShareToken(token);
-        addShareDebugMessage(`Generated token: ${token.substring(0, 8)}...`);
       }
 
       const result = await syncService.createShareLink(selectedShareUser, {
@@ -1248,8 +1226,6 @@ const DataModal = ({
 
       setShareUrl(result.share_url);
       setShareToken(result.access_token || token); // Save the token from the result
-      addShareDebugMessage(`Share created: ${result.share_id}`);
-      addShareDebugMessage(`URL: ${result.share_url}`);
       showToast({ message: 'Share link created!' });
       loadActiveShares();
     } catch (error) {
@@ -2462,34 +2438,7 @@ const DataModal = ({
         </View>
       )}
       
-      {/* Debug Panel for Share Tab */}
-      <View style={[styles.shareSection, styles.debugPanel]}>
-        <Text style={[styles.shareSectionTitle, styles.debugTitle]}>🔍 Debug Info</Text>
-        <View style={styles.debugMessagesContainer}>
-          {shareDebugMessages.length > 0 ? (
-            shareDebugMessages.map((msg, idx) => (
-              <Text key={idx} style={styles.debugMessage}>
-                {msg}
-              </Text>
-            ))
-          ) : (
-            <Text style={styles.debugEmptyMessage}>No debug messages yet</Text>
-          )}
-        </View>
-        <TouchableOpacity 
-          style={styles.debugRefreshButton}
-          onPress={() => {
-            setShareDebugMessages([]);
-            loadActiveShares();
-          }}
-        >
-          <Text style={styles.debugRefreshButtonText}>Refresh Shares</Text>
-        </TouchableOpacity>
-      </View>
-      
       {/* Active Shares - Show at bottom regardless of state */}
-      {console.log('[DataModal] Active shares object:', activeShares)}
-      {console.log('[DataModal] Active shares keys:', Object.keys(activeShares))}
       {Object.keys(activeShares).length > 0 ? (
         <View style={[styles.shareSection, { marginTop: 20 }]}>
           <TouchableOpacity
@@ -2590,8 +2539,6 @@ const DataModal = ({
           }
           // Load active shares when switching to share tab
           if (newTab === 1) {
-            console.log('[DataModal] Switching to share tab, loading shares...');
-            addShareDebugMessage('Tab opened - loading shares...');
             loadActiveShares();
           }
           setActiveTab(newTab);

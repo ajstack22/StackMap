@@ -787,15 +787,75 @@ chmod 644 /var/www/manylla.com/api/sync/*.php
 echo "Sync system deployed!"
 ```
 
+### Share System Implementation Details
+
+#### Database Tables (Critical - January 2025)
+**IMPORTANT**: Share system uses `share_links` table, NOT `shares` table!
+
+```sql
+CREATE TABLE share_links (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  share_id VARCHAR(32) UNIQUE NOT NULL,
+  access_token VARCHAR(255) NOT NULL,
+  sync_id VARCHAR(32) NOT NULL,  -- Links to sync_groups
+  user_id VARCHAR(100),
+  encrypted_data TEXT NOT NULL,
+  recipient_name VARCHAR(255),
+  share_note TEXT,
+  expires_at DATETIME NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_by_device VARCHAR(255),
+  auto_update BOOLEAN DEFAULT FALSE,
+  share_version INT DEFAULT 3,
+  include_completed BOOLEAN DEFAULT TRUE,
+  include_tomorrow BOOLEAN DEFAULT TRUE,
+  INDEX idx_sync_id (sync_id),
+  INDEX idx_expires (expires_at)
+);
+```
+
+#### Share URL Evolution
+- **V2 (Legacy)**: `?share=[64-char-token]` - Token in query parameter
+- **V3 (Current)**: `/share/[8-char-id]#[encryption-key]` - Key in hash fragment
+- **Key Point**: Hash fragments are NEVER sent to server (browser security)
+
+#### Common Pitfalls & Solutions (January 2025)
+
+1. **Database Table Mismatch**
+   - **Issue**: `create_share.php` writes to `share_links`, but `list_shares.php` reads from `shares`
+   - **Solution**: All share operations MUST use `share_links` table
+
+2. **Wrong ID Parameter**
+   - **Issue**: Shares tied to `sync_id` but API expects `device_id`
+   - **Solution**: Use `sync_id` for all share operations
+
+3. **Hash Fragment Loss**
+   - **Issue**: React loads after browser strips hash
+   - **Solution**: Capture hash immediately in index.html:
+   ```html
+   <script>
+     if (window.location.hash) {
+       window.__initialHash = window.location.hash;
+     }
+   </script>
+   ```
+
+4. **Environment Detection**
+   - **Issue**: QUAL and production share same database
+   - **Solution**: Check URL path for `/qual/` to determine environment
+
 ### Final Recommendations for Manylla
 
-1. **Start Simple:** Get basic push/pull working before adding invites
-2. **Test Early:** Set up staging environment immediately
-3. **Monitor Everything:** Log all sync operations initially
-4. **Plan for Scale:** Implement cleanup routines from day 1
-5. **Document Decisions:** Why you chose specific approaches
-6. **Security First:** Audit all endpoints before launch
-7. **User Trust:** Make delete operations thorough and verifiable
+1. **Database First:** Ensure all tables exist and match PHP expectations
+2. **Test URLs Early:** Verify hash fragments are captured before React
+3. **Separate Environments:** Use different databases for staging/production
+4. **Consistent Naming:** Always use `share_links` table, `sync_id` parameter
+5. **Monitor Everything:** Log all sync operations initially
+6. **Plan for Scale:** Implement cleanup routines from day 1
+7. **Document Decisions:** Why you chose specific approaches
+8. **Security First:** Audit all endpoints before launch
+9. **User Trust:** Make delete operations thorough and verifiable
+10. **Learn from StackMap:** Review this document's lessons learned section!
 
 ---
 
