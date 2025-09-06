@@ -1115,23 +1115,31 @@ class SyncStoreIntegration {
       const API_URL = getApiUrl();
       const deleteUrl = `${API_URL}/delete.php`;
       
+      const requestBody = {
+        sync_id: syncId,
+        device_id: deviceId
+      };
+      
       console.log('[SyncStore] Calling delete endpoint:', deleteUrl);
-      console.log('[SyncStore] With sync_id:', syncId);
+      console.log('[SyncStore] Request body:', JSON.stringify(requestBody));
       
       const response = await fetch(deleteUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          sync_id: syncId,
-          device_id: deviceId
-        })
+        body: JSON.stringify(requestBody)
       });
       
       const data = await response.json();
+      console.log('[SyncStore] Server response:', response.status, data);
       
       if (!response.ok) {
+        // If it's a 404 (not found), that might be okay - data may already be deleted
+        if (response.status === 404) {
+          console.log('[SyncStore] Data not found on server - may already be deleted');
+          return { success: true, message: 'Data already deleted or not found' };
+        }
         throw new Error(data.error || `Delete failed with status ${response.status}`);
       }
       

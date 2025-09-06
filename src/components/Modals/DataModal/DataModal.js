@@ -1139,10 +1139,16 @@ const DataModal = ({
 
       console.log('[DataModal] Calling syncService.deleteFromServer()');
       addDebugMessage('Calling deleteFromServer...');
+      addDebugMessage(`Sync ID being deleted: ${currentSyncId}`);
       
       // Delete all server data for this sync ID
       const deleteResult = await syncService.deleteFromServer();
       addDebugMessage(`Delete result: ${JSON.stringify(deleteResult)}`);
+      
+      // Even if server says "not found", we should still disable sync locally
+      if (deleteResult && deleteResult.success) {
+        addDebugMessage('Server delete successful or data already gone');
+      }
 
       console.log('[DataModal] Server data deleted, disabling sync');
       addDebugMessage('Disabling sync...');
