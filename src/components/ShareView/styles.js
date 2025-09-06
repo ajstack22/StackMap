@@ -71,11 +71,10 @@ const createStyles = themeColor =>
       }),
     },
     header: {
-      backgroundColor: '#ffffff',
+      backgroundColor: themeColor || '#5C7E9D',
       paddingHorizontal: 16,
       paddingVertical: 20,
-      borderBottomWidth: 2,
-      borderBottomColor: 'rgba(92, 126, 157, 0.1)',
+      borderBottomWidth: 0,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -102,14 +101,14 @@ const createStyles = themeColor =>
       width: 48,
       height: 48,
       borderRadius: 24,
-      backgroundColor: themeColor || '#5C7E9D',
+      backgroundColor: '#ffffff',
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: 12,
     },
     userIcon: {
       fontSize: 24,
-      color: '#ffffff',
+      color: themeColor || '#5C7E9D',
       fontFamily: TYPOGRAPHY.fontFamily.regular,
     },
     userImage: {
@@ -119,7 +118,7 @@ const createStyles = themeColor =>
     userName: {
       fontSize: 18,
       fontWeight: '700',
-      color: '#000000',
+      color: '#ffffff',
       fontFamily: Platform.select({
         ios: 'Comic Relief',
         android: 'ComicRelief-Bold',
@@ -128,7 +127,7 @@ const createStyles = themeColor =>
     },
     shareInfo: {
       fontSize: 12,
-      color: '#666666',
+      color: 'rgba(255, 255, 255, 0.8)',
       marginTop: 2,
       fontFamily: Platform.select({
         ios: 'Comic Relief',
@@ -138,7 +137,7 @@ const createStyles = themeColor =>
     },
     recipientInfo: {
       fontSize: 12,
-      color: '#666666',
+      color: 'rgba(255, 255, 255, 0.8)',
       fontStyle: 'italic',
       fontFamily: Platform.select({
         ios: 'Comic Relief',
@@ -190,6 +189,17 @@ const createStyles = themeColor =>
       fontFamily: Platform.select({
         ios: 'Comic Relief',
         android: 'ComicRelief-Regular',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    progressInfo: {
+      fontSize: 14,
+      color: '#ffffff',
+      marginTop: 4,
+      fontWeight: '600',
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Bold',
         web: "'Comic Relief', 'Comic Sans MS', cursive",
       }),
     },

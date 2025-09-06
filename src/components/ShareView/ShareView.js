@@ -19,7 +19,6 @@ const ShareView = ({ shareToken, shareId, shareKey, theme = { primary: '#5C7E9D'
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [shareData, setShareData] = useState(null);
-  const [selectedDay, setSelectedDay] = useState('today');
   const [windowWidth, setWindowWidth] = useState(
     Platform.OS === 'web' ? window.innerWidth : 0,
   );
@@ -400,7 +399,9 @@ const ShareView = ({ shareToken, shareId, shareKey, theme = { primary: '#5C7E9D'
 
   const { user, shared_at, expires_at, recipient_name, share_note } = shareData;
   const days = user?.days || {};
-  const activities = days[selectedDay]?.activities || [];
+  // Show all activities from today (or first available day)
+  const dayKey = days.today ? 'today' : Object.keys(days)[0];
+  const activities = days[dayKey]?.activities || [];
   const completedCount = activities.filter(
     a => a.completed && !a.deleted,
   ).length;
@@ -420,6 +421,9 @@ const ShareView = ({ shareToken, shareId, shareKey, theme = { primary: '#5C7E9D'
             {recipient_name && (
               <Text style={styles.recipientInfo}>For: {recipient_name}</Text>
             )}
+            <Text style={styles.progressInfo}>
+              {completedCount} of {totalCount} activities completed
+            </Text>
           </View>
         </View>
         <View style={styles.headerControls}>
@@ -433,7 +437,7 @@ const ShareView = ({ shareToken, shareId, shareKey, theme = { primary: '#5C7E9D'
                 source={{ uri: '/icons/icon-192.png' }}
                 style={styles.ctaButtonImage}
               />
-              <Text style={styles.ctaButtonText}>Try StackMap</Text>
+              <Text style={styles.ctaButtonText}>StackMap</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -447,46 +451,6 @@ const ShareView = ({ shareToken, shareId, shareKey, theme = { primary: '#5C7E9D'
         </View>
       )}
 
-      {/* Day Selector */}
-      <View style={styles.daySelector}>
-        {Object.keys(days).map(day => (
-          <TouchableOpacity
-            key={day}
-            style={[styles.dayTab, selectedDay === day && styles.dayTabActive]}
-            onPress={() => setSelectedDay(day)}
-          >
-            <Text
-              style={[
-                styles.dayTabText,
-                selectedDay === day && styles.dayTabTextActive,
-              ]}
-            >
-              {day.charAt(0).toUpperCase() + day.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Progress Summary */}
-      <View style={styles.progressSummary}>
-        <Text style={styles.progressText}>
-          {completedCount} of {totalCount} activities completed
-        </Text>
-        <View style={styles.progressBar}>
-          <View
-            style={[
-              styles.progressFill,
-              {
-                width:
-                  totalCount > 0
-                    ? `${(completedCount / totalCount) * 100}%`
-                    : '0%',
-                backgroundColor: theme.primary,
-              },
-            ]}
-          />
-        </View>
-      </View>
 
       {/* Activities */}
       <ScrollView
@@ -499,7 +463,7 @@ const ShareView = ({ shareToken, shareId, shareKey, theme = { primary: '#5C7E9D'
           <View style={styles.emptyState}>
             <Icon name="event" size={48} color="#ccc" />
             <Text style={styles.emptyStateText}>
-              No activities for {selectedDay}
+              No activities to display
             </Text>
           </View>
         )}
@@ -532,7 +496,7 @@ const ShareView = ({ shareToken, shareId, shareKey, theme = { primary: '#5C7E9D'
               source={{ uri: '/icons/icon-192.png' }}
               style={styles.mobileCtaButtonImage}
             />
-            <Text style={styles.mobileCtaButtonText}>Try StackMap</Text>
+            <Text style={styles.mobileCtaButtonText}>StackMap</Text>
           </TouchableOpacity>
         </View>
       )}
