@@ -1906,17 +1906,15 @@ const DataModal = ({
                     <Text style={[styles.shareFieldLabel, { textAlign: 'center' }]}>Device Invite</Text>
                     <Text style={[styles.shareFieldHelper, { textAlign: 'center' }]}>Valid for 24 hours • Max 5 uses</Text>
                   </View>
-                  <View style={styles.syncKeyBox}>
-                    <Text style={styles.syncKeyText} selectable>
-                      {(() => {
-                        // Display just the key part (not the full URL)
-                        const urlParts = generatedSyncKey.split('#');
-                        const recoveryPhrase = urlParts[1];
-                        const inviteCode = urlParts[0].split('/').pop();
-                        return `${inviteCode}#${recoveryPhrase}`;
-                      })()}
-                    </Text>
-                  </View>
+                  <Text style={[styles.syncKeyText, { textAlign: 'center', marginVertical: 16 }]} selectable>
+                    {(() => {
+                      // Display just the key part (not the full URL)
+                      const urlParts = generatedSyncKey.split('#');
+                      const recoveryPhrase = urlParts[1];
+                      const inviteCode = urlParts[0].split('/').pop();
+                      return `${inviteCode}#${recoveryPhrase}`;
+                    })()}
+                  </Text>
                   
                   {/* All Instructions Grouped Together */}
                   <View style={[styles.shareInstructions, { alignItems: 'center' }]}>
@@ -1930,7 +1928,7 @@ const DataModal = ({
                     </View>
                     <View style={[styles.shareInstructionItem, { justifyContent: 'center' }]}>
                       <Icon name="refresh" size={16} color="#000" />
-                      <Text style={styles.shareInstructionText}>Generate new key if key above has expired</Text>
+                      <Text style={styles.shareInstructionText}>Regenerate key if key above has expired</Text>
                     </View>
                   </View>
                   
@@ -1938,7 +1936,7 @@ const DataModal = ({
                   <View style={[styles.syncKeyActions, { justifyContent: 'center' }]}>
                     <ModalButton
                       theme={theme}
-                      variant="secondary"
+                      variant="primary"
                       label="Copy Key"
                       icon="content-copy"
                       onPress={() => {
@@ -1975,7 +1973,7 @@ const DataModal = ({
                     <ModalButton
                       theme={theme}
                       variant="secondary"
-                      label="Generate New Key"
+                      label="Regenerate Key"
                       icon="refresh"
                       onPress={async () => {
                         try {
