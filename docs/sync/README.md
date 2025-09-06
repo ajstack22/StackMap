@@ -269,9 +269,19 @@ Both features use the same `XXXX-XXXX#key` pattern:
 
 - **Share URL**: `https://stackmap.app/share/WXYZ-5678#accessToken`
 - **Sync URL**: `https://stackmap.app/sync/ABCD-1234#recoveryPhrase`
+- **Sync URL (QUAL)**: `https://stackmap.app/qual/sync/ABCD-1234#recoveryPhrase`
 - **Manual Entry**: `XXXX-XXXX#encryptionKey`
 - **Invite Code**: 8 characters (XXXX-XXXX), no ambiguous chars (0/O, 1/I/L)
 - **Fragment (#)**: Encryption key after # never reaches server (browser security)
+
+### URL Auto-Registration (Sep 2025)
+When a user visits a sync URL with both invite code and recovery phrase:
+1. App detects `/sync/[invite-code]` in pathname
+2. Extracts recovery phrase from URL fragment (after #)
+3. Stores data in `window.syncInviteData`
+4. Onboarding auto-triggers sync preview if both parts present
+5. Auto-imports data after successful preview
+6. URL fragment is immediately cleared for security
 
 ### Security Properties
 1. **Zero-Knowledge Maintained**: Server only sees invite code, never the recovery phrase
@@ -283,8 +293,13 @@ Both features use the same `XXXX-XXXX#key` pattern:
 ```javascript
 // Generate invite code (expires in 24h, max 5 uses)
 const result = await syncService.createInviteCode(24, 5, 'Family invite');
+// result.inviteUrl already includes the recovery phrase as a fragment
+// Example: https://stackmap.app/sync/ABCD-1234#GVcxCuLm9Q6lKczLWBt1PX17q94XY79XI20-FDiaeI
+const shareableUrl = result.inviteUrl;
+
+// For manual entry, extract the code and phrase:
 const inviteString = `${result.inviteCode}#${recoveryPhrase}`;
-// Share: ABCD-1234#GVcxCuLm9Q6lKczLWBt1PX17q94XY79XI20-FDiaeI
+// Example: ABCD-1234#GVcxCuLm9Q6lKczLWBt1PX17q94XY79XI20-FDiaeI
 ```
 
 ### Using an Invite
@@ -401,6 +416,7 @@ minimalSyncService.setDataCallback((data) => {
 5. **Pull Interval**: Fixed 30 seconds, not configurable
 6. **API**: Simplified - no events, just data callbacks
 7. **Encryption**: Uses `encryptionServiceFixed.ts` for iOS issues
+8. **Invite URLs**: `createInviteCode()` returns `inviteUrl` with recovery phrase already appended as fragment (Sep 2025)
 
 ## License & Usage
 

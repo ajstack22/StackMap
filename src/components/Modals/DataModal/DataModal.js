@@ -1877,8 +1877,8 @@ const DataModal = ({
                     console.log('[DataModal] Invite code result:', result);
                     
                     if (result && result.inviteCode) {
-                      // Store the full invite URL with the recovery phrase as fragment
-                      const fullSyncKey = `${result.inviteUrl}#${currentPhrase}`;
+                      // The inviteUrl already includes the recovery phrase as a fragment
+                      const fullSyncKey = result.inviteUrl;
                       console.log('[DataModal] Generated full sync key with URL:', fullSyncKey);
                       setGeneratedSyncKey(fullSyncKey);
                       setShowGeneratedKey(true);
@@ -1980,8 +1980,8 @@ const DataModal = ({
                         const result = await syncService.createInviteCode(24, 5, 'Manual invite');
                         
                         if (result && result.inviteCode) {
-                          // Store the full invite URL with the recovery phrase as fragment
-                          const fullSyncKey = `${result.inviteUrl}#${currentPhrase}`;
+                          // The inviteUrl already includes the recovery phrase as a fragment
+                          const fullSyncKey = result.inviteUrl;
                           setGeneratedSyncKey(fullSyncKey);
                           showToast({ 
                             message: 'New sync key generated!', 

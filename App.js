@@ -371,7 +371,11 @@ const App = () => {
         
         // Check for recovery phrase in fragment
         if (window.location.hash) {
-          recoveryPhrase = window.location.hash.substring(1);
+          // Handle multiple hashes in the fragment (defensive fix for duplicate fragments)
+          const fragment = window.location.hash.substring(1);
+          const parts = fragment.split('#');
+          recoveryPhrase = parts[0]; // Take only the first part if duplicated
+          
           // Clear the fragment immediately
           window.history.replaceState(
             null,
