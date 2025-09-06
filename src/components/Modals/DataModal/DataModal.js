@@ -119,10 +119,12 @@ const DataModal = ({
   const [selectedShareUser, setSelectedShareUser] = useState(null);
   const [showShareQR, setShowShareQR] = useState(false);
   
-  // DEBUG: Temporary debug state
-  const [debugMessages, setDebugMessages] = useState([]);
-  const addDebugMessage = (msg) => {
-    setDebugMessages(prev => [...prev, `${new Date().toLocaleTimeString()}: ${msg}`].slice(-10));
+  // DEBUG: Share tab debug state
+  const [shareDebugMessages, setShareDebugMessages] = useState([]);
+  const addShareDebugMessage = (msg) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setShareDebugMessages(prev => [...prev, `${timestamp}: ${msg}`].slice(-20));
+    console.log(`[ShareDebug] ${msg}`);
   };
 
   // Tabs configuration - filter out unnecessary tabs for onboarding
@@ -302,8 +304,14 @@ const DataModal = ({
 
   const loadActiveShares = async () => {
     try {
+      addShareDebugMessage('Loading active shares...');
       const shares = await syncService.getActiveShares();
-      console.log('[DataModal] Loaded shares:', shares);
+      addShareDebugMessage(`Loaded ${shares ? shares.length : 0} shares`);
+      
+      if (shares && shares.length > 0) {
+        addShareDebugMessage(`Share IDs: ${shares.map(s => s.shareId).join(', ')}`);
+      }
+      
       const userShares = {};
 
       // Group shares by user
@@ -312,6 +320,7 @@ const DataModal = ({
         const hasUserIds = shares.some(share => share.userId && share.userId !== 'unknown');
         
         if (hasUserIds && users) {
+          addShareDebugMessage('Grouping shares by user');
           // Group by actual users
           Object.entries(users).forEach(([userId, user]) => {
             const userActiveShares = shares.filter(
@@ -325,16 +334,21 @@ const DataModal = ({
             }
           });
         } else {
+          addShareDebugMessage('Grouping all shares together');
           // Group all shares together
           userShares['all'] = {
             user: { name: 'All Shares', icon: '📤' },
             shares: shares,
           };
         }
+      } else {
+        addShareDebugMessage('No shares found');
       }
 
+      addShareDebugMessage(`Grouped into ${Object.keys(userShares).length} categories`);
       setActiveShares(userShares);
     } catch (error) {
+      addShareDebugMessage(`Error: ${error.message}`);
       console.error('[DataModal] Error loading shares:', error);
     }
   };
@@ -1244,12 +1258,14 @@ const DataModal = ({
     }
 
     setShareLoading(true);
+    addShareDebugMessage('Creating share link...');
     try {
       // Generate token if not already generated
       let token = shareToken;
       if (!token) {
         token = syncService.generateShareToken(true);
         setShareToken(token);
+        addShareDebugMessage(`Generated token: ${token.substring(0, 8)}...`);
       }
 
       const result = await syncService.createShareLink(selectedShareUser, {
@@ -1264,6 +1280,8 @@ const DataModal = ({
 
       setShareUrl(result.share_url);
       setShareToken(result.access_token || token); // Save the token from the result
+      addShareDebugMessage(`Share created: ${result.share_id}`);
+      addShareDebugMessage(`URL: ${result.share_url}`);
       showToast({ message: 'Share link created!' });
       loadActiveShares();
     } catch (error) {
@@ -2550,6 +2568,31 @@ const DataModal = ({
           </View>
         </View>
       )}
+      
+      {/* Debug Panel for Share Tab */}
+      <View style={[styles.shareSection, { marginTop: 20, backgroundColor: '#f5f5f5', padding: 10, borderRadius: 8 }]}>
+        <Text style={[styles.shareSectionTitle, { color: '#666' }]}>🔍 Debug Info</Text>
+        <View style={{ marginTop: 10 }}>
+          {shareDebugMessages.length > 0 ? (
+            shareDebugMessages.map((msg, idx) => (
+              <Text key={idx} style={{ fontSize: 12, fontFamily: 'monospace', marginVertical: 2 }}>
+                {msg}
+              </Text>
+            ))
+          ) : (
+            <Text style={{ fontSize: 12, fontStyle: 'italic' }}>No debug messages yet</Text>
+          )}
+        </View>
+        <TouchableOpacity 
+          style={{ marginTop: 10, padding: 8, backgroundColor: '#4CAF50', borderRadius: 4 }}
+          onPress={() => {
+            setShareDebugMessages([]);
+            loadActiveShares();
+          }}
+        >
+          <Text style={{ color: '#fff', textAlign: 'center', fontWeight: 'bold' }}>Refresh Shares</Text>
+        </TouchableOpacity>
+      </View>
       
       {/* Active Shares - Show at bottom regardless of state */}
       {Object.keys(activeShares).length > 0 && (
