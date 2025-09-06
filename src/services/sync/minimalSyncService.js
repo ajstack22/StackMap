@@ -235,7 +235,11 @@ class MinimalSyncService {
    * Check for recovery phrase in URL fragment and clear it
    */
   checkForRecoveryPhrase() {
-    if (typeof window === 'undefined' || !window.location.hash) {
+    // Only run on web platform - window.location doesn't exist on React Native
+    if (typeof window === 'undefined' || 
+        typeof window.location === 'undefined' ||
+        !window.location || 
+        !window.location.hash) {
       return;
     }
     
@@ -1249,7 +1253,10 @@ class MinimalSyncService {
       
       if (!recoveryPhrase) {
         // Check if we're in a browser and have a fragment
-        if (typeof window !== 'undefined' && window.location.hash) {
+        if (typeof window !== 'undefined' && 
+            typeof window.location !== 'undefined' &&
+            window.location && 
+            window.location.hash) {
           recoveryPhrase = window.location.hash.substring(1);
           // Clear the fragment immediately after reading
           window.history.replaceState(

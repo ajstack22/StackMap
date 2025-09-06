@@ -808,7 +808,7 @@ class SyncStoreIntegration {
       }
 
       // For local development, return a mock response
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
           if (__DEV__) {
             console.warn('Share links require deployment to stackmap.app. Returning mock data for local testing.');
@@ -911,7 +911,7 @@ class SyncStoreIntegration {
           // Note: Debug/release detection happens in minimalSyncService.js
           return 'https://stackmap.app/api/sync';
         }
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
           const pathname = window.location.pathname;
           if (pathname.includes('/qual/')) {
             return 'https://stackmap.app/qual/api/sync';
@@ -1190,7 +1190,7 @@ class SyncStoreIntegration {
           // Note: Debug/release detection happens in minimalSyncService.js
           return 'https://stackmap.app/api/sync';
         }
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
           const pathname = window.location.pathname;
           if (pathname.includes('/qual/')) {
             return 'https://stackmap.app/qual/api/sync';
@@ -1341,7 +1341,7 @@ class SyncStoreIntegration {
     // This method is deprecated - API URL is determined dynamically based on environment
     // Mobile: Uses minimalSyncService.js which detects debug/release
     // Web: Uses window.location to detect qual vs prod
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
       const pathname = window.location.pathname;
       if (pathname.includes('/qual/')) {
         return 'https://stackmap.app/qual/api/sync/';
