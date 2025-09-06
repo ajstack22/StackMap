@@ -1081,11 +1081,64 @@ class SyncStoreIntegration {
   // ============================================
 
   /**
-   * Delete from server (stub)
+   * Delete all data from server
    */
   async deleteFromServer() {
-    console.log('[SyncStore] Delete from server (not implemented)');
-    return { success: true };
+    console.log('[SyncStore] Deleting all data from server...');
+    
+    try {
+      // Check if we have sync credentials
+      if (!this.minimalSync.syncId) {
+        throw new Error('No sync ID available');
+      }
+      
+      const deviceId = this.minimalSync.deviceId || 'unknown';
+      
+      // Get API URL based on environment
+      const getApiUrl = () => {
+        // Mobile builds use production API
+        if (Platform.OS === 'ios' || Platform.OS === 'android') {
+          return 'https://stackmap.app/api/sync';
+        }
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          const pathname = window.location.pathname;
+          if (pathname.includes('/qual/')) {
+            return 'https://stackmap.app/qual/api/sync';
+          }
+        }
+        return 'https://stackmap.app/api/sync';
+      };
+      
+      const API_URL = getApiUrl();
+      const deleteUrl = `${API_URL}/delete.php`;
+      
+      console.log('[SyncStore] Calling delete endpoint:', deleteUrl);
+      console.log('[SyncStore] With sync_id:', this.minimalSync.syncId);
+      
+      const response = await fetch(deleteUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sync_id: this.minimalSync.syncId,
+          device_id: deviceId
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || `Delete failed with status ${response.status}`);
+      }
+      
+      console.log('[SyncStore] Server data deleted successfully:', data);
+      return { success: true, message: data.message };
+      
+    } catch (error) {
+      console.error('[SyncStore] Error deleting server data:', error);
+      throw error;
+    }
   }
 
   /**
