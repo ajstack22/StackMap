@@ -1103,30 +1103,39 @@ const DataModal = ({
 
   // Handle delete server data
   const handleDeleteServerData = async () => {
+    console.log('[DataModal] handleDeleteServerData called');
+    
+    // Close the modal immediately
+    setShowDeleteServerDataConfirm(false);
+    
     try {
       setSyncLoading(true);
 
+      console.log('[DataModal] Calling syncService.deleteFromServer()');
       // Delete all server data for this sync ID
       await syncService.deleteFromServer();
 
+      console.log('[DataModal] Server data deleted, disabling sync');
       // Disable sync after deleting server data
       await syncService.disable();
 
       setSyncEnabled(false);
       setSyncId(null);
       setSyncRecoveryPhrase('');
-      setShowDeleteServerDataConfirm(false);
 
       if (onSyncStatusChange) {
         onSyncStatusChange(false);
       }
 
-      showToast({ message: 'Server data deleted and sync disabled' });
+      showToast({ message: 'Server data deleted and sync disabled', type: 'success' });
     } catch (error) {
+      console.error('[DataModal] Error deleting server data:', error);
       showToast({
         message: error.message || 'Failed to delete server data',
         type: 'error',
       });
+      // Re-check sync status in case of error
+      checkSyncStatus();
     } finally {
       setSyncLoading(false);
     }
