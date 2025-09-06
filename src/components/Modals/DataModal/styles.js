@@ -656,6 +656,27 @@ export const styles = StyleSheet.create({
     color: '#000',
     marginBottom: SPACING.xs,
   },
+  shareFieldHelper: {
+    fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
+    marginTop: 2,
+  },
+  shareInstructions: {
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  shareInstructionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginBottom: SPACING.xs,
+  },
+  shareInstructionText: {
+    fontSize: 13,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
+  },
   shareInput: {
     backgroundColor: '#F5F5F5',
     borderRadius: 12,
@@ -1033,13 +1054,6 @@ export const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-  },
-  syncKeyHelperText: {
-    fontSize: 13,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#666',
-    marginBottom: SPACING.md,
-    lineHeight: 20,
   },
   syncKeyBox: {
     backgroundColor: '#fff',

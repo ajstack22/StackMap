@@ -1840,11 +1840,8 @@ const DataModal = ({
           </View>
 
           {/* Add Device Section */}
-          <View style={styles.syncSection}>
-            <Text style={styles.sectionTitle}>Add a Device</Text>
-            <Text style={styles.sectionDescription}>
-              Generate an invite to add another device or share access
-            </Text>
+          <View style={styles.shareSection}>
+            <Text style={styles.shareSectionTitle}>Add a Device</Text>
             
             {!showGeneratedKey ? (
               <ModalButton
@@ -1907,11 +1904,10 @@ const DataModal = ({
               <>
                 {/* Generated Sync Key Display */}
                 <View style={styles.syncKeyDisplay}>
-                  <Text style={styles.syncKeyLabel}>Device Invite (Valid 24 hours)</Text>
-                  <Text style={styles.syncKeyHelperText}>
-                    • Use the URL to join via browser
-                    • Copy the Sync Key for mobile apps or manual entry
-                  </Text>
+                  <View style={styles.shareField}>
+                    <Text style={styles.shareFieldLabel}>Device Invite</Text>
+                    <Text style={styles.shareFieldHelper}>Valid for 24 hours • Max 5 uses</Text>
+                  </View>
                   <View style={styles.syncKeyBox}>
                     <Text style={styles.syncKeyText} selectable>
                       {(() => {
@@ -1922,6 +1918,17 @@ const DataModal = ({
                         return `${inviteCode}#${recoveryPhrase}`;
                       })()}
                     </Text>
+                  </View>
+                  
+                  <View style={styles.shareInstructions}>
+                    <View style={styles.shareInstructionItem}>
+                      <Icon name="language" size={16} color="#666" />
+                      <Text style={styles.shareInstructionText}>Use the URL for browser access</Text>
+                    </View>
+                    <View style={styles.shareInstructionItem}>
+                      <Icon name="smartphone" size={16} color="#666" />
+                      <Text style={styles.shareInstructionText}>Copy sync key for mobile apps</Text>
+                    </View>
                   </View>
                   
                   {/* Action Buttons */}
