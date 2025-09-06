@@ -1903,10 +1903,9 @@ const DataModal = ({
                 {/* Generated Sync Key Display */}
                 <View style={styles.syncKeyDisplay}>
                   <View style={[styles.shareField, { alignItems: 'center' }]}>
-                    <Text style={[styles.shareFieldLabel, { textAlign: 'center' }]}>Device Invite</Text>
-                    <Text style={[styles.shareFieldHelper, { textAlign: 'center' }]}>Valid for 24 hours • Max 5 uses</Text>
+                    <Text style={[styles.shareFieldLabel, { textAlign: 'center', fontSize: 16 }]}>Device Invite</Text>
                   </View>
-                  <Text style={[styles.syncKeyText, { textAlign: 'center', marginVertical: 16 }]} selectable>
+                  <Text style={[styles.syncKeyText, { textAlign: 'center', marginTop: 8, marginBottom: 4 }]} selectable>
                     {(() => {
                       // Display just the key part (not the full URL)
                       const urlParts = generatedSyncKey.split('#');
@@ -1915,6 +1914,7 @@ const DataModal = ({
                       return `${inviteCode}#${recoveryPhrase}`;
                     })()}
                   </Text>
+                  <Text style={[styles.shareFieldHelper, { textAlign: 'center', marginBottom: 16 }]}>Valid for 24 hours • Max 5 uses</Text>
                   
                   {/* All Instructions Grouped Together */}
                   <View style={[styles.shareInstructions, { alignItems: 'center' }]}>
