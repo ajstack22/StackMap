@@ -7,25 +7,30 @@ import {
   TouchableOpacity,
   Image,
   Platform,
+  SafeAreaView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { format } from 'date-fns';
 import nacl from 'tweetnacl';
 import util from 'tweetnacl-util';
 import createStyles from './styles';
-import { CUSTOM_IMAGE_SOURCES, getCustomImageSource } from '../../constants';
+import { CUSTOM_IMAGE_SOURCES, getCustomImageSource, THEMES } from '../../constants';
+import PreferencesModal from '../Modals/PreferencesModal';
+import { BUILD_VERSION } from '../../utils/version';
 
-const ShareView = ({ shareToken, shareId, shareKey, theme = { primary: '#5C7E9D' } }) => {
+const ShareView = ({ shareToken, shareId, shareKey }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [shareData, setShareData] = useState(null);
   const [windowWidth, setWindowWidth] = useState(
     Platform.OS === 'web' ? window.innerWidth : 0,
   );
-
-  // Use StackMap blue theme
-  const stackBlue = '#5C7E9D';
-  const styles = createStyles(stackBlue);
+  const [showPreferencesModal, setShowPreferencesModal] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState('stackBlue');
+  
+  // Get theme from state
+  const theme = THEMES[currentTheme] || THEMES.stackBlue;
+  const styles = createStyles(theme.primary);
 
   useEffect(() => {
     if (Platform.OS === 'web') {
@@ -407,40 +412,69 @@ const ShareView = ({ shareToken, shareId, shareKey, theme = { primary: '#5C7E9D'
   ).length;
   const totalCount = activities.filter(a => !a.deleted).length;
 
+  const handleClose = () => {
+    if (Platform.OS === 'web') {
+      window.location.href = 'https://stackmap.com';
+    }
+  };
+
+  const handleSaveTheme = (newTheme) => {
+    setCurrentTheme(newTheme);
+  };
+
+  const handlePrivacyPress = () => {
+    if (Platform.OS === 'web') {
+      window.open('https://stackmap.com/privacy', '_blank');
+    }
+  };
+
+  const handleSupportPress = () => {
+    if (Platform.OS === 'web') {
+      window.open('https://stackmap.com/support', '_blank');
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.primary }]}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.userInfo}>
-          <View style={styles.userIconContainer}>{renderUserIcon(user)}</View>
-          <View style={styles.userTextContainer}>
-            <Text style={styles.userName}>{user.name}'s Progress</Text>
-            <Text style={styles.shareInfo}>
-              Shared {format(new Date(shared_at), 'MMM d, yyyy h:mm a')}
-            </Text>
-            {recipient_name && (
-              <Text style={styles.recipientInfo}>For: {recipient_name}</Text>
-            )}
-            <Text style={styles.progressInfo}>
-              {completedCount} of {totalCount} activities completed
-            </Text>
+        {/* Left FAB - Preferences */}
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => setShowPreferencesModal(true)}
+        >
+          <Icon name="palette" size={24} color="#ffffff" />
+        </TouchableOpacity>
+
+        {/* Center Content */}
+        <View style={styles.headerCenter}>
+          <View style={styles.logoRow}>
+            <Image
+              source={{ uri: '/icons/icon-192.png' }}
+              style={styles.logoImage}
+            />
+            <Text style={styles.logoText}>StackMap</Text>
           </View>
+          <TouchableOpacity style={styles.userPill} activeOpacity={0.8}>
+            <Text style={styles.userEmoji}>
+              {user?.icon || '👤'}
+            </Text>
+            <Text style={styles.userNamePill}>
+              {user?.name || 'User'}
+            </Text>
+          </TouchableOpacity>
+          <Text style={styles.progressText}>
+            {completedCount} of {totalCount} activities completed
+          </Text>
         </View>
-        <View style={styles.headerControls}>
-          {/* Try StackMap button - desktop only */}
-          {Platform.OS === 'web' && windowWidth > 768 && (
-            <TouchableOpacity
-              style={styles.ctaButton}
-              onPress={() => (window.location.href = '/')}
-            >
-              <Image
-                source={{ uri: '/icons/icon-192.png' }}
-                style={styles.ctaButtonImage}
-              />
-              <Text style={styles.ctaButtonText}>StackMap</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+
+        {/* Right FAB - Close */}
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={handleClose}
+        >
+          <Icon name="close" size={24} color="#ffffff" />
+        </TouchableOpacity>
       </View>
 
       {/* Share Note */}
@@ -485,22 +519,18 @@ const ShareView = ({ shareToken, shareId, shareKey, theme = { primary: '#5C7E9D'
         </Text>
       </View>
 
-      {/* Mobile Try StackMap button */}
-      {Platform.OS === 'web' && windowWidth <= 768 && (
-        <View style={styles.mobileCtaContainer}>
-          <TouchableOpacity
-            style={styles.mobileCtaButton}
-            onPress={() => (window.location.href = '/')}
-          >
-            <Image
-              source={{ uri: '/icons/icon-192.png' }}
-              style={styles.mobileCtaButtonImage}
-            />
-            <Text style={styles.mobileCtaButtonText}>StackMap</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
+      {/* Preferences Modal */}
+      <PreferencesModal
+        visible={showPreferencesModal}
+        onClose={() => setShowPreferencesModal(false)}
+        theme={theme}
+        currentTheme={currentTheme}
+        setCurrentTheme={setCurrentTheme}
+        onSaveTheme={handleSaveTheme}
+        onPrivacyPress={handlePrivacyPress}
+        onSupportPress={handleSupportPress}
+      />
+    </SafeAreaView>
   );
 };
 

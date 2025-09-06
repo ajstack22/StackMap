@@ -73,16 +73,85 @@ const createStyles = themeColor =>
     header: {
       backgroundColor: themeColor || '#5C7E9D',
       paddingHorizontal: 16,
-      paddingVertical: 20,
-      borderBottomWidth: 0,
+      paddingVertical: 16,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      flexWrap: 'wrap',
+      minHeight: 80,
       ...Platform.select({
         web: {
-          paddingHorizontal: 24,
+          paddingHorizontal: 20,
         },
+      }),
+    },
+    fab: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      ...Platform.select({
+        web: {
+          cursor: 'pointer',
+          transition: 'background-color 0.2s',
+          ':hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.3)',
+          },
+        },
+      }),
+    },
+    headerCenter: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 8,
+    },
+    logoRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    logoImage: {
+      width: 24,
+      height: 24,
+      marginRight: 6,
+    },
+    logoText: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: '#ffffff',
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Bold',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    userPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 20,
+    },
+    userEmoji: {
+      fontSize: 18,
+      marginRight: 6,
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Regular',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    userNamePill: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: themeColor || '#5C7E9D',
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Bold',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
       }),
     },
     userInfo: {
@@ -139,31 +208,6 @@ const createStyles = themeColor =>
       fontSize: 12,
       color: 'rgba(255, 255, 255, 0.8)',
       fontStyle: 'italic',
-      fontFamily: Platform.select({
-        ios: 'Comic Relief',
-        android: 'ComicRelief-Regular',
-        web: "'Comic Relief', 'Comic Sans MS', cursive",
-      }),
-    },
-    ctaButton: {
-      backgroundColor: '#ffffff',
-      paddingHorizontal: 20,
-      paddingVertical: 10,
-      borderRadius: 8,
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 2,
-      borderColor: themeColor || '#5C7E9D',
-    },
-    ctaButtonImage: {
-      width: 20,
-      height: 20,
-      marginRight: 8,
-    },
-    ctaButtonText: {
-      color: themeColor || '#5C7E9D',
-      fontSize: 14,
-      fontWeight: '600',
       fontFamily: Platform.select({
         ios: 'Comic Relief',
         android: 'ComicRelief-Regular',
