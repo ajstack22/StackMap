@@ -1918,14 +1918,19 @@ const DataModal = ({
                     </Text>
                   </View>
                   
-                  <View style={styles.shareInstructions}>
-                    <View style={styles.shareInstructionItem}>
+                  {/* All Instructions Grouped Together */}
+                  <View style={[styles.shareInstructions, { alignItems: 'center' }]}>
+                    <View style={[styles.shareInstructionItem, { justifyContent: 'center' }]}>
                       <Icon name="language" size={16} color="#000" />
                       <Text style={styles.shareInstructionText}>Use the URL for browser access</Text>
                     </View>
-                    <View style={styles.shareInstructionItem}>
+                    <View style={[styles.shareInstructionItem, { justifyContent: 'center' }]}>
                       <Icon name="smartphone" size={16} color="#000" />
                       <Text style={styles.shareInstructionText}>Copy sync key for mobile apps</Text>
+                    </View>
+                    <View style={[styles.shareInstructionItem, { justifyContent: 'center' }]}>
+                      <Icon name="refresh" size={16} color="#000" />
+                      <Text style={styles.shareInstructionText}>Generate new key if key above has expired</Text>
                     </View>
                   </View>
                   
@@ -1966,14 +1971,7 @@ const DataModal = ({
                       }}
                       compact
                     />
-                  </View>
-                  
-                  {/* Generate New Key with explanation */}
-                  <View style={{ alignItems: 'center', marginTop: 16 }}>
-                    <View style={styles.shareInstructionItem}>
-                      <Icon name="refresh" size={16} color="#000" />
-                      <Text style={styles.shareInstructionText}>Generate new key if key above has expired</Text>
-                    </View>
+                    
                     <ModalButton
                       theme={theme}
                       variant="secondary"
@@ -2013,7 +2011,6 @@ const DataModal = ({
                       }}
                       disabled={syncLoading}
                       loading={syncLoading}
-                      style={{ marginTop: 8 }}
                     />
                   </View>
                   
