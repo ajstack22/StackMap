@@ -144,6 +144,15 @@ const OnboardingUserCentered = ({
     }
   }, [currentStep]); // Don't include recoveryPhrase to avoid infinite loop
 
+  // Clear the sync URL path to prevent issues with bookmarking
+  useEffect(() => {
+    if (Platform.OS === 'web' && currentStep === 'syncImport' && window.location.pathname.includes('/sync/')) {
+      // Replace the URL without the /sync/ part after we've captured the data
+      const newPath = window.location.pathname.replace(/\/sync\/[^\/]+\/?/, '/');
+      window.history.replaceState(null, document.title, newPath);
+    }
+  }, [currentStep]); // Run when entering sync import step
+
   // Generate sync code when reaching the syncCreate step
   useEffect(() => {
     if (currentStep === 'syncCreate' && !generatedSyncCode) {
@@ -1366,14 +1375,6 @@ const OnboardingUserCentered = ({
       ? parsed.recoveryPhrase.length 
       : parsed.recoveryPhrase.length;
     
-    // Clear the sync URL path to prevent issues with bookmarking
-    useEffect(() => {
-      if (Platform.OS === 'web' && window.location.pathname.includes('/sync/')) {
-        // Replace the URL without the /sync/ part after we've captured the data
-        const newPath = window.location.pathname.replace(/\/sync\/[^\/]+\/?/, '/');
-        window.history.replaceState(null, document.title, newPath);
-      }
-    }, []); // Run once on mount
     
     return (
     <View style={styles.stepContainer}>
