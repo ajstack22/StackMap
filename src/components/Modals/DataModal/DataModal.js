@@ -2641,6 +2641,10 @@ const DataModal = ({
             setIncludeTomorrow(true);
             setAutoUpdate(true);
           }
+          // Load active shares when switching to share tab
+          if (newTab === 1) {
+            loadActiveShares();
+          }
           setActiveTab(newTab);
         }}
       >

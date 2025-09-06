@@ -977,6 +977,8 @@ class SyncStoreIntegration {
         createdAt: new Date().toISOString(),
         autoUpdate,
       };
+      
+      console.log('[SyncStore] Storing share info:', shareInfo);
 
       // Get existing shares and add new one
       const stored = await AsyncStorage.getItem('@stackmap_shares');
@@ -1258,10 +1260,12 @@ class SyncStoreIntegration {
       const listUrl = `${SHARE_API_URL}/list_shares.php?device_id=${deviceId}`;
       
       try {
+        console.log('[SyncService] Fetching shares from:', listUrl);
         const response = await fetch(listUrl);
         
         if (response.ok) {
           const data = await response.json();
+          console.log('[SyncService] Server response:', data);
           if (data.success) {
             // Convert server format to local format
             const shares = data.active_shares.map(share => ({
@@ -1275,6 +1279,7 @@ class SyncStoreIntegration {
               status: 'active'
             }));
             
+            console.log('[SyncService] Converted shares from server:', shares);
             // Update local storage with server data
             await AsyncStorage.setItem('@stackmap_shares', JSON.stringify(shares));
             
@@ -1283,16 +1288,23 @@ class SyncStoreIntegration {
             }
             return shares;
           }
+        } else {
+          console.log('[SyncService] Server returned error:', response.status);
         }
       } catch (fetchError) {
-        console.log('[SyncService] Could not fetch shares from server, using local storage');
+        console.log('[SyncService] Could not fetch shares from server:', fetchError.message);
       }
       
       // Fallback to local storage
+      console.log('[SyncService] Falling back to local storage');
       const stored = await AsyncStorage.getItem('@stackmap_shares');
-      if (!stored) return [];
+      if (!stored) {
+        console.log('[SyncService] No shares in local storage');
+        return [];
+      }
       
       const shares = JSON.parse(stored);
+      console.log('[SyncService] Shares from local storage:', shares);
       const now = new Date();
       
       // Process shares to mark as idle if expired but within grace period
