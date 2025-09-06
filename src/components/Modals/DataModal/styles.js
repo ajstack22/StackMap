@@ -1034,6 +1034,13 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  syncKeyHelperText: {
+    fontSize: 13,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
+    marginBottom: SPACING.md,
+    lineHeight: 20,
+  },
   syncKeyBox: {
     backgroundColor: '#fff',
     borderWidth: 1,

@@ -1839,19 +1839,19 @@ const DataModal = ({
             </Text>
           </View>
 
-          {/* Simplified Sync Key Section */}
+          {/* Add Device Section */}
           <View style={styles.syncSection}>
-            <Text style={styles.sectionTitle}>Sync Key</Text>
+            <Text style={styles.sectionTitle}>Add a Device</Text>
             <Text style={styles.sectionDescription}>
-              Generate a key to sync your data across devices or share with others
+              Generate an invite to add another device or share access
             </Text>
             
             {!showGeneratedKey ? (
               <ModalButton
                 theme={theme}
                 variant="primary"
-                label="Generate Sync Key"
-                icon="vpn-key"
+                label="Add Device"
+                icon="add-circle"
                 onPress={async () => {
                   try {
                     console.log('[DataModal] Generate Sync Key button pressed');
@@ -1907,7 +1907,11 @@ const DataModal = ({
               <>
                 {/* Generated Sync Key Display */}
                 <View style={styles.syncKeyDisplay}>
-                  <Text style={styles.syncKeyLabel}>Your Sync Key (Valid 24 hours)</Text>
+                  <Text style={styles.syncKeyLabel}>Device Invite (Valid 24 hours)</Text>
+                  <Text style={styles.syncKeyHelperText}>
+                    • Use the URL to join via browser
+                    • Copy the Sync Key for mobile apps or manual entry
+                  </Text>
                   <View style={styles.syncKeyBox}>
                     <Text style={styles.syncKeyText} selectable>
                       {(() => {
@@ -2002,17 +2006,6 @@ const DataModal = ({
                     fullWidth
                   />
                   
-                  <ModalButton
-                    theme={theme}
-                    variant="ghost"
-                    label="Hide Sync Key"
-                    icon="visibility-off"
-                    onPress={() => {
-                      setShowGeneratedKey(false);
-                      setGeneratedSyncKey('');
-                    }}
-                    fullWidth
-                  />
                 </View>
               </>
             )}
