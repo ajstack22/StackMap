@@ -1378,6 +1378,12 @@ const OnboardingUserCentered = ({
     
     return (
     <View style={styles.stepContainer}>
+      {/* Add StackMap branding at the top */}
+      <View style={styles.logoSection}>
+        <Logo size={60} theme={defaultTheme} color={defaultTheme.primary} />
+        <Text style={styles.logoText}>StackMap</Text>
+      </View>
+      
       <Text style={styles.title}>
         {isAutoProcessing ? 'Joining Sync Group' : 'Join Sync'}
       </Text>
@@ -1386,72 +1392,6 @@ const OnboardingUserCentered = ({
           ? 'Processing your invitation...' 
           : 'Enter your sync code to connect'}
       </Text>
-      
-      {/* Debug info - visible in UI */}
-      {Platform.OS === 'web' && (window.syncInviteData || window.debugSyncParsing) && (
-        <View style={{ backgroundColor: '#f0f0f0', padding: 10, marginBottom: 10, borderRadius: 5 }}>
-          <Text style={{ fontSize: 12, color: '#666' }}>Debug Info:</Text>
-          {window.syncInviteData && (
-            <>
-              <Text style={{ fontSize: 11, color: '#333' }}>
-                Invite: {window.syncInviteData.inviteCode || 'none'}
-              </Text>
-              <Text style={{ fontSize: 11, color: '#333' }}>
-                Key: {window.syncInviteData.recoveryPhrase ? 
-                  `${window.syncInviteData.recoveryPhrase.substring(0, 8)}...` : 'none'}
-              </Text>
-              <Text style={{ fontSize: 11, color: '#333' }}>
-                Current value: {recoveryPhrase.substring(0, 20)}...
-              </Text>
-            </>
-          )}
-          {window.debugSyncParsing && (
-            <>
-              <Text style={{ fontSize: 11, color: '#666', marginTop: 5 }}>URL Parsing:</Text>
-              <Text style={{ fontSize: 10, color: '#333' }}>
-                URL: {window.debugSyncParsing.fullUrl ? window.debugSyncParsing.fullUrl.substring(0, 60) : 'n/a'}...
-              </Text>
-              <Text style={{ fontSize: 10, color: '#333' }}>
-                Hash found: {window.debugSyncParsing.hash || 'empty'}
-              </Text>
-              <Text style={{ fontSize: 10, color: '#333' }}>
-                Hash length: {window.debugSyncParsing.hashLength || 0}
-              </Text>
-              {window.debugSyncParsing.noHashFound && (
-                <Text style={{ fontSize: 10, color: '#ff0000' }}>
-                  ⚠️ No hash fragment detected!
-                </Text>
-              )}
-              {window.debugSyncParsing.fragmentFound && (
-                <Text style={{ fontSize: 10, color: '#333' }}>
-                  Fragment: {window.debugSyncParsing.fragmentFound.substring(0, 12)}...
-                </Text>
-              )}
-            </>
-          )}
-          {/* Show HTML-captured data */}
-          {(window.__initialHash || window.__noHashDetected || window.__earlySyncData) && (
-            <>
-              <Text style={{ fontSize: 11, color: '#666', marginTop: 5 }}>HTML Capture:</Text>
-              {window.__initialHash && (
-                <Text style={{ fontSize: 10, color: '#00aa00' }}>
-                  ✓ Hash captured in HTML: {window.__initialHash.substring(0, 20)}...
-                </Text>
-              )}
-              {window.__noHashDetected && (
-                <Text style={{ fontSize: 10, color: '#ff0000' }}>
-                  ✗ No hash detected by HTML script
-                </Text>
-              )}
-              {window.__earlySyncData && (
-                <Text style={{ fontSize: 10, color: '#00aa00' }}>
-                  ✓ Early sync data: {window.__earlySyncData.inviteCode} / {window.__earlySyncData.recoveryPhrase ? window.__earlySyncData.recoveryPhrase.substring(0, 8) + '...' : 'none'}
-                </Text>
-              )}
-            </>
-          )}
-        </View>
-      )}
       
       {/* Show input field only when NOT auto-processing */}
       {!isAutoProcessing ? (
