@@ -1087,12 +1087,15 @@ class SyncStoreIntegration {
     console.log('[SyncStore] Deleting all data from server...');
     
     try {
+      // Get sync ID using the getSyncId method
+      const syncId = this.getSyncId();
+      
       // Check if we have sync credentials
-      if (!this.minimalSync.syncId) {
+      if (!syncId) {
         throw new Error('No sync ID available');
       }
       
-      const deviceId = this.minimalSync.deviceId || 'unknown';
+      const deviceId = minimalSync.deviceId || 'unknown';
       
       // Get API URL based on environment
       const getApiUrl = () => {
@@ -1113,7 +1116,7 @@ class SyncStoreIntegration {
       const deleteUrl = `${API_URL}/delete.php`;
       
       console.log('[SyncStore] Calling delete endpoint:', deleteUrl);
-      console.log('[SyncStore] With sync_id:', this.minimalSync.syncId);
+      console.log('[SyncStore] With sync_id:', syncId);
       
       const response = await fetch(deleteUrl, {
         method: 'POST',
@@ -1121,7 +1124,7 @@ class SyncStoreIntegration {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          sync_id: this.minimalSync.syncId,
+          sync_id: syncId,
           device_id: deviceId
         })
       });
