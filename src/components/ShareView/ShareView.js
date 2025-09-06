@@ -410,7 +410,7 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
 
   const handleClose = () => {
     if (Platform.OS === 'web') {
-      window.location.href = 'https://stackmap.com';
+      window.location.href = 'https://stackmap.app';
     }
   };
 
