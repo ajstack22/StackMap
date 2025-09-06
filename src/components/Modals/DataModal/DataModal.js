@@ -118,6 +118,12 @@ const DataModal = ({
   const [showActiveShares, setShowActiveShares] = useState(true);
   const [selectedShareUser, setSelectedShareUser] = useState(null);
   const [showShareQR, setShowShareQR] = useState(false);
+  
+  // DEBUG: Temporary debug state
+  const [debugMessages, setDebugMessages] = useState([]);
+  const addDebugMessage = (msg) => {
+    setDebugMessages(prev => [...prev, `${new Date().toLocaleTimeString()}: ${msg}`].slice(-10));
+  };
 
   // Tabs configuration - filter out unnecessary tabs for onboarding
   const tabs = isOnboarding
@@ -1104,20 +1110,46 @@ const DataModal = ({
   // Handle delete server data
   const handleDeleteServerData = async () => {
     console.log('[DataModal] handleDeleteServerData called');
+    addDebugMessage('Delete handler called');
     
     // Close the modal immediately
     setShowDeleteServerDataConfirm(false);
     
     try {
       setSyncLoading(true);
+      
+      // Check current sync service state
+      addDebugMessage(`syncService type: ${typeof syncService}`);
+      addDebugMessage(`Has getSyncId: ${!!syncService.getSyncId}`);
+      addDebugMessage(`Has minimalSync: ${!!syncService.minimalSync}`);
+      
+      const currentSyncId = syncService.getSyncId ? syncService.getSyncId() : 
+                           syncService.minimalSync?.syncId || 
+                           syncService.syncId;
+      addDebugMessage(`Current sync ID: ${currentSyncId || 'NONE'}`);
+      
+      // Also check if we have the methods we need
+      addDebugMessage(`Has deleteFromServer: ${!!syncService.deleteFromServer}`);
+      addDebugMessage(`Has disable: ${!!syncService.disable}`);
+      
+      if (!currentSyncId) {
+        addDebugMessage('ERROR: No sync ID available!');
+        throw new Error('No sync ID available - sync may not be enabled');
+      }
 
       console.log('[DataModal] Calling syncService.deleteFromServer()');
+      addDebugMessage('Calling deleteFromServer...');
+      
       // Delete all server data for this sync ID
-      await syncService.deleteFromServer();
+      const deleteResult = await syncService.deleteFromServer();
+      addDebugMessage(`Delete result: ${JSON.stringify(deleteResult)}`);
 
       console.log('[DataModal] Server data deleted, disabling sync');
+      addDebugMessage('Disabling sync...');
+      
       // Disable sync after deleting server data
       await syncService.disable();
+      addDebugMessage('Sync disabled');
 
       setSyncEnabled(false);
       setSyncId(null);
@@ -1128,8 +1160,10 @@ const DataModal = ({
       }
 
       showToast({ message: 'Server data deleted and sync disabled', type: 'success' });
+      addDebugMessage('SUCCESS: Server data deleted');
     } catch (error) {
       console.error('[DataModal] Error deleting server data:', error);
+      addDebugMessage(`ERROR: ${error.message}`);
       showToast({
         message: error.message || 'Failed to delete server data',
         type: 'error',
@@ -2119,6 +2153,31 @@ const DataModal = ({
               </Text>
             </View>
           </View>
+          
+          {/* DEBUG PANEL - TEMPORARY */}
+          {debugMessages.length > 0 && (
+            <View style={{
+              backgroundColor: '#f0f0f0',
+              padding: 10,
+              marginTop: 10,
+              borderRadius: 5,
+              borderWidth: 1,
+              borderColor: '#ccc'
+            }}>
+              <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>Debug Messages:</Text>
+              {debugMessages.map((msg, i) => (
+                <Text key={i} style={{ fontSize: 12, color: '#333', marginBottom: 2 }}>
+                  {msg}
+                </Text>
+              ))}
+              <TouchableOpacity 
+                onPress={() => setDebugMessages([])}
+                style={{ marginTop: 5 }}
+              >
+                <Text style={{ color: 'blue', fontSize: 12 }}>Clear Debug</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       )}
     </ScrollView>
