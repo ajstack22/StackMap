@@ -738,26 +738,40 @@ class SyncStoreIntegration {
   }
 
   /**
-   * Generate share token for secure sharing
+   * Generate share token for secure sharing (V2 legacy format)
    */
   generateShareToken(isAutoUpdate = false) {
-    // Generate a secure random key for the share
-    const shareKeyBytes = nacl.randomBytes(32);
+    // For V3, generate both ID and key
+    const { shareId, encryptionKey } = this.generateV3ShareComponents();
     
-    // Store the raw bytes temporarily for encryption
-    this._lastShareKeyBytes = shareKeyBytes;
+    // Return just the key for backward compatibility
+    // The shareId will be used separately
+    this._lastShareId = shareId;
+    return encryptionKey;
+  }
+  
+  /**
+   * Generate V3 share ID and key components
+   */
+  generateV3ShareComponents() {
+    // Generate a short ID (8 chars hex)
+    const idBytes = nacl.randomBytes(4);
+    const shareId = Array.from(idBytes)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
     
-    // Convert to URL-safe base64 token
-    const fullToken = encodeBase64(shareKeyBytes);
+    // Generate encryption key (32 bytes)
+    const keyBytes = nacl.randomBytes(32);
+    this._lastShareKeyBytes = keyBytes;
     
-    // Make URL-safe by replacing + with - and / with _
-    // Also remove trailing = padding
-    const urlSafeToken = fullToken
+    // Convert key to URL-safe base64
+    const fullToken = encodeBase64(keyBytes);
+    const encryptionKey = fullToken
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+$/, '');
     
-    return urlSafeToken;
+    return { shareId, encryptionKey };
   }
 
   /**
@@ -947,7 +961,8 @@ class SyncStoreIntegration {
         throw new Error(result.error || 'Failed to create share link');
       }
 
-      // For V3, append the access token as a fragment (never sent to server)
+      // For V3, the share_url is /share/[id] and we append the key as fragment
+      // The access_token is the encryption key
       const secureShareUrl = result.share_url + '#' + (result.access_token || accessToken);
       
       // Store share info locally for later management

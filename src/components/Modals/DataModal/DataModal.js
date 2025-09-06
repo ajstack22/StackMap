@@ -2485,23 +2485,15 @@ const DataModal = ({
             <Text style={styles.shareSuccessTitle}>Share Link Created!</Text>
 
             <View style={styles.shareInfoBox}>
-              <Text style={styles.shareInfoLabel}>Share Key:</Text>
+              <Text style={styles.shareInfoLabel}>Share Link:</Text>
               <Text style={styles.shareInfoValue} selectable numberOfLines={1}>
-                {shareToken}
+                {shareUrl}
               </Text>
               <View style={styles.keyActionButtonRow}>
                 <ModalButton
                   theme={theme}
                   variant="secondary"
-                  label="Copy Key"
-                  icon="content-copy"
-                  onPress={() => copyToClipboard(shareToken, 'Share key copied!')}
-                  compact
-                />
-                <ModalButton
-                  theme={theme}
-                  variant="secondary"
-                  label="Copy URL"
+                  label="Copy Link"
                   icon="link"
                   onPress={handleCopyShareUrl}
                   compact
