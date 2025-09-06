@@ -1841,8 +1841,6 @@ const DataModal = ({
 
           {/* Add Device Section */}
           <View style={styles.shareSection}>
-            <Text style={styles.shareSectionTitle}>Add a Device</Text>
-            
             {!showGeneratedKey ? (
               <ModalButton
                 theme={theme}
@@ -1922,11 +1920,11 @@ const DataModal = ({
                   
                   <View style={styles.shareInstructions}>
                     <View style={styles.shareInstructionItem}>
-                      <Icon name="language" size={16} color="#666" />
+                      <Icon name="language" size={16} color="#000" />
                       <Text style={styles.shareInstructionText}>Use the URL for browser access</Text>
                     </View>
                     <View style={styles.shareInstructionItem}>
-                      <Icon name="smartphone" size={16} color="#666" />
+                      <Icon name="smartphone" size={16} color="#000" />
                       <Text style={styles.shareInstructionText}>Copy sync key for mobile apps</Text>
                     </View>
                   </View>
@@ -1973,7 +1971,7 @@ const DataModal = ({
                   {/* Additional Actions */}
                   <ModalButton
                     theme={theme}
-                    variant="ghost"
+                    variant="secondary"
                     label="Generate New Key"
                     icon="refresh"
                     onPress={async () => {
@@ -2019,9 +2017,21 @@ const DataModal = ({
           </View>
 
           <View style={styles.inPanelButtonContainer}>
+            {/* Manual Sync Button - Secondary since it should rarely be needed */}
             <ModalButton
               theme={theme}
-              variant="danger"
+              variant="secondary"
+              label="Sync Now"
+              icon="sync"
+              onPress={handleManualSync}
+              disabled={syncLoading || syncStatus === 'syncing'}
+              loading={syncStatus === 'syncing'}
+              fullWidth
+            />
+            
+            <ModalButton
+              theme={theme}
+              variant="warning"
               label="Disable Sync"
               icon="sync-disabled"
               onPress={() => {
@@ -2078,18 +2088,6 @@ const DataModal = ({
                   setShowDeleteServerDataConfirm(true);
                 }
               }}
-              fullWidth
-            />
-            
-            {/* Manual Sync Button */}
-            <ModalButton
-              theme={theme}
-              variant="primary"
-              label="Sync Now"
-              icon="sync"
-              onPress={handleManualSync}
-              disabled={syncLoading || syncStatus === 'syncing'}
-              loading={syncStatus === 'syncing'}
               fullWidth
             />
           </View>

@@ -367,7 +367,7 @@ export const styles = StyleSheet.create({
   syncStatusText: {
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#666',
+    color: '#000',
   },
   syncStatusTitle: {
     fontSize: 18,
@@ -378,7 +378,7 @@ export const styles = StyleSheet.create({
   syncStatusId: {
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#666',
+    color: '#000',
     marginTop: 2,
   },
 
@@ -657,9 +657,9 @@ export const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   shareFieldHelper: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#666',
+    color: '#000',
     marginTop: 2,
   },
   shareInstructions: {
@@ -673,9 +673,9 @@ export const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   shareInstructionText: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#666',
+    color: '#000',
   },
   shareInput: {
     backgroundColor: '#F5F5F5',
