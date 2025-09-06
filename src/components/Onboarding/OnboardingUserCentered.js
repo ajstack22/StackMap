@@ -100,12 +100,15 @@ const OnboardingUserCentered = ({
 
   // Get initial recovery phrase from sync invite data
   const getInitialRecoveryPhrase = () => {
-    if (Platform.OS === 'web' && window.syncInviteData) {
-      if (window.syncInviteData.inviteCode && window.syncInviteData.recoveryPhrase) {
-        const combined = `${window.syncInviteData.inviteCode}#${window.syncInviteData.recoveryPhrase}`;
+    // Check both immediate and regular sync invite data
+    const syncData = window.syncInviteDataImmediate || window.syncInviteData;
+    
+    if (Platform.OS === 'web' && syncData) {
+      if (syncData.inviteCode && syncData.recoveryPhrase) {
+        const combined = `${syncData.inviteCode}#${syncData.recoveryPhrase}`;
         return combined;
-      } else if (window.syncInviteData.inviteCode) {
-        return window.syncInviteData.inviteCode;
+      } else if (syncData.inviteCode) {
+        return syncData.inviteCode;
       }
     }
     if (syncSetupPhrase) {

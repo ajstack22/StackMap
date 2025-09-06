@@ -18,6 +18,39 @@ import {
   Modal,
 } from 'react-native';
 
+// Capture sync URL data immediately before React renders
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  const pathname = window.location.pathname;
+  const syncPathMatch = pathname.match(/(?:\/qual)?\/sync\/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)\/?$/i);
+  
+  if (syncPathMatch) {
+    const syncInviteCode = syncPathMatch[1].toUpperCase();
+    let recoveryPhrase = null;
+    
+    // Capture the hash immediately
+    const currentHash = window.location.hash;
+    if (currentHash && currentHash.length > 1) {
+      const fragment = currentHash.substring(1);
+      const parts = fragment.split('#');
+      recoveryPhrase = parts[0];
+    }
+    
+    // Store immediately in global scope
+    window.syncInviteDataImmediate = {
+      inviteCode: syncInviteCode,
+      recoveryPhrase: recoveryPhrase,
+      capturedAt: 'immediate',
+      hash: currentHash,
+      hashLength: currentHash.length
+    };
+    
+    // Clear the fragment to prevent it from being sent to server on any navigation
+    if (currentHash) {
+      window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
+    }
+  }
+}
+
 // Disable console logs on Android for performance
 // TEMPORARILY ENABLED FOR DEBUGGING SYNC ISSUES
 // if (Platform.OS === 'android' && __DEV__) {
@@ -359,60 +392,34 @@ const App = () => {
   useEffect(() => {
     // Check for URL params (logging disabled for cleaner startup)
     if (Platform.OS === 'web') {
-      // Check for new path-based sync invite format first
-      const pathname = window.location.pathname;
-      let syncInviteCode = null;
-      let recoveryPhrase = null;
-      
-      // Debug info stored globally for visibility
-      window.debugSyncParsing = {
-        pathname: pathname,
-        hash: window.location.hash,
-        hashLength: window.location.hash.length,
-        fullUrl: window.location.href
-      };
-      
-      console.log('[App] Checking for sync URL. Pathname:', pathname);
-      console.log('[App] Hash:', window.location.hash);
-      
-      // Check for /sync/[invite-code] or /qual/sync/[invite-code]
-      // Updated regex to properly handle /qual/sync/ paths
-      const syncPathMatch = pathname.match(/(?:\/qual)?\/sync\/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)\/?$/i);
-      console.log('[App] Sync path match result:', syncPathMatch);
-      if (syncPathMatch) {
-        syncInviteCode = syncPathMatch[1].toUpperCase();
-        
-        // Check for recovery phrase in fragment
-        if (window.location.hash && window.location.hash.length > 1) {
-          // Handle multiple hashes in the fragment (defensive fix for duplicate fragments)
-          const fragment = window.location.hash.substring(1);
-          const parts = fragment.split('#');
-          recoveryPhrase = parts[0]; // Take only the first part if duplicated
-          
-          // Store debug info about what we found
-          window.debugSyncParsing.fragmentFound = fragment;
-          window.debugSyncParsing.recoveryPhraseExtracted = recoveryPhrase;
-          
-          // Clear the fragment immediately
-          window.history.replaceState(
-            null,
-            document.title,
-            window.location.pathname + window.location.search
-          );
-        } else {
-          window.debugSyncParsing.noHashFound = true;
-        }
-        
-        console.log('[App] Sync invite detected:', {
-          inviteCode: syncInviteCode,
-          hasRecoveryPhrase: !!recoveryPhrase
-        });
-        
-        // Store for handling after initialization
+      // Use the immediately captured data if available
+      if (window.syncInviteDataImmediate) {
+        console.log('[App] Using immediately captured sync data:', window.syncInviteDataImmediate);
         window.syncInviteData = {
-          inviteCode: syncInviteCode,
-          recoveryPhrase: recoveryPhrase
+          inviteCode: window.syncInviteDataImmediate.inviteCode,
+          recoveryPhrase: window.syncInviteDataImmediate.recoveryPhrase
         };
+        
+        // Store debug info
+        window.debugSyncParsing = {
+          ...window.syncInviteDataImmediate,
+          usedImmediateData: true
+        };
+      } else {
+        // Fallback to checking in useEffect (shouldn't happen for sync URLs)
+        const pathname = window.location.pathname;
+        const syncPathMatch = pathname.match(/(?:\/qual)?\/sync\/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)\/?$/i);
+        
+        if (syncPathMatch) {
+          console.log('[App] Warning: Sync URL detected in useEffect but no immediate data captured');
+          window.debugSyncParsing = {
+            pathname: pathname,
+            hash: window.location.hash,
+            hashLength: window.location.hash.length,
+            fullUrl: window.location.href,
+            noImmediateData: true
+          };
+        }
       }
       
       // Get the raw query string to handle + characters properly
