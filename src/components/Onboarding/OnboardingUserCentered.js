@@ -1409,6 +1409,27 @@ const OnboardingUserCentered = ({
               )}
             </>
           )}
+          {/* Show HTML-captured data */}
+          {(window.__initialHash || window.__noHashDetected || window.__earlySyncData) && (
+            <>
+              <Text style={{ fontSize: 11, color: '#666', marginTop: 5 }}>HTML Capture:</Text>
+              {window.__initialHash && (
+                <Text style={{ fontSize: 10, color: '#00aa00' }}>
+                  ✓ Hash captured in HTML: {window.__initialHash.substring(0, 20)}...
+                </Text>
+              )}
+              {window.__noHashDetected && (
+                <Text style={{ fontSize: 10, color: '#ff0000' }}>
+                  ✗ No hash detected by HTML script
+                </Text>
+              )}
+              {window.__earlySyncData && (
+                <Text style={{ fontSize: 10, color: '#00aa00' }}>
+                  ✓ Early sync data: {window.__earlySyncData.inviteCode} / {window.__earlySyncData.recoveryPhrase ? window.__earlySyncData.recoveryPhrase.substring(0, 8) + '...' : 'none'}
+                </Text>
+              )}
+            </>
+          )}
         </View>
       )}
       

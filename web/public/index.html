@@ -24,6 +24,35 @@
   
   <title>StackMap</title>
   
+  <!-- Capture hash immediately -->
+  <script>
+    // Capture URL hash at the earliest possible moment
+    (function() {
+      if (window.location.hash) {
+        window.__initialHash = window.location.hash;
+        window.__hashCapturedAt = new Date().toISOString();
+        console.log('[HTML] Hash captured immediately:', window.__initialHash);
+        
+        // Also try to parse sync data right away
+        const pathname = window.location.pathname;
+        if (pathname.includes('/sync/')) {
+          const match = pathname.match(/\/sync\/([A-Z0-9]{4}-[A-Z0-9]{4})/i);
+          if (match) {
+            window.__earlySyncData = {
+              inviteCode: match[1],
+              hash: window.__initialHash,
+              recoveryPhrase: window.__initialHash.substring(1).split('#')[0]
+            };
+            console.log('[HTML] Early sync data:', window.__earlySyncData);
+          }
+        }
+      } else {
+        window.__noHashDetected = true;
+        console.log('[HTML] No hash detected at page load');
+      }
+    })();
+  </script>
+  
   <!-- Material Icons Font -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   

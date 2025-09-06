@@ -20,34 +20,48 @@ import {
 
 // Capture sync URL data immediately before React renders
 if (Platform.OS === 'web' && typeof window !== 'undefined') {
-  const pathname = window.location.pathname;
-  const syncPathMatch = pathname.match(/(?:\/qual)?\/sync\/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)\/?$/i);
-  
-  if (syncPathMatch) {
-    const syncInviteCode = syncPathMatch[1].toUpperCase();
-    let recoveryPhrase = null;
-    
-    // Capture the hash immediately
-    const currentHash = window.location.hash;
-    if (currentHash && currentHash.length > 1) {
-      const fragment = currentHash.substring(1);
-      const parts = fragment.split('#');
-      recoveryPhrase = parts[0];
-    }
-    
-    // Store immediately in global scope
+  // First check if HTML captured the hash
+  if (window.__earlySyncData) {
+    console.log('[App] Using HTML-captured sync data:', window.__earlySyncData);
     window.syncInviteDataImmediate = {
-      inviteCode: syncInviteCode,
-      recoveryPhrase: recoveryPhrase,
-      capturedAt: 'immediate',
-      hash: currentHash,
-      hashLength: currentHash.length
+      inviteCode: window.__earlySyncData.inviteCode,
+      recoveryPhrase: window.__earlySyncData.recoveryPhrase,
+      capturedAt: 'html-inline',
+      hash: window.__earlySyncData.hash,
+      hashLength: window.__earlySyncData.hash ? window.__earlySyncData.hash.length : 0
     };
+  } else {
+    // Fallback to checking here
+    const pathname = window.location.pathname;
+    const syncPathMatch = pathname.match(/(?:\/qual)?\/sync\/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)\/?$/i);
     
-    // Clear the fragment to prevent it from being sent to server on any navigation
-    if (currentHash) {
-      window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
+    if (syncPathMatch) {
+      const syncInviteCode = syncPathMatch[1].toUpperCase();
+      let recoveryPhrase = null;
+      
+      // Try window.__initialHash first (from HTML), then current hash
+      const currentHash = window.__initialHash || window.location.hash;
+      if (currentHash && currentHash.length > 1) {
+        const fragment = currentHash.substring(1);
+        const parts = fragment.split('#');
+        recoveryPhrase = parts[0];
+      }
+      
+      // Store immediately in global scope
+      window.syncInviteDataImmediate = {
+        inviteCode: syncInviteCode,
+        recoveryPhrase: recoveryPhrase,
+        capturedAt: 'immediate',
+        hash: currentHash,
+        hashLength: currentHash ? currentHash.length : 0,
+        usedInitialHash: !!window.__initialHash
+      };
     }
+  }
+  
+  // Clear the fragment to prevent it from being sent to server on any navigation
+  if (window.location.hash) {
+    window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
   }
 }
 
