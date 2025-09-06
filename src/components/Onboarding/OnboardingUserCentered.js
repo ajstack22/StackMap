@@ -102,7 +102,8 @@ const OnboardingUserCentered = ({
   const getInitialRecoveryPhrase = () => {
     if (Platform.OS === 'web' && window.syncInviteData) {
       if (window.syncInviteData.inviteCode && window.syncInviteData.recoveryPhrase) {
-        return `${window.syncInviteData.inviteCode}#${window.syncInviteData.recoveryPhrase}`;
+        const combined = `${window.syncInviteData.inviteCode}#${window.syncInviteData.recoveryPhrase}`;
+        return combined;
       } else if (window.syncInviteData.inviteCode) {
         return window.syncInviteData.inviteCode;
       }
@@ -130,6 +131,16 @@ const OnboardingUserCentered = ({
   // Quick emoji options
   const quickEmojis = [DEFAULT_USER_ICON, '😎', '🎯', '⭐', '🚀'];
   
+  // Update recovery phrase when sync invite data is available
+  useEffect(() => {
+    if (Platform.OS === 'web' && window.syncInviteData && currentStep === 'syncImport') {
+      const newPhrase = getInitialRecoveryPhrase();
+      if (newPhrase && newPhrase !== recoveryPhrase) {
+        setRecoveryPhrase(newPhrase);
+      }
+    }
+  }, [currentStep]); // Don't include recoveryPhrase to avoid infinite loop
+
   // Generate sync code when reaching the syncCreate step
   useEffect(() => {
     if (currentStep === 'syncCreate' && !generatedSyncCode) {
@@ -1352,6 +1363,23 @@ const OnboardingUserCentered = ({
       <Text style={styles.subtitle}>
         Enter your sync code to connect
       </Text>
+      
+      {/* Debug info - visible in UI */}
+      {Platform.OS === 'web' && window.syncInviteData && (
+        <View style={{ backgroundColor: '#f0f0f0', padding: 10, marginBottom: 10, borderRadius: 5 }}>
+          <Text style={{ fontSize: 12, color: '#666' }}>Debug Info:</Text>
+          <Text style={{ fontSize: 11, color: '#333' }}>
+            Invite: {window.syncInviteData.inviteCode || 'none'}
+          </Text>
+          <Text style={{ fontSize: 11, color: '#333' }}>
+            Key: {window.syncInviteData.recoveryPhrase ? 
+              `${window.syncInviteData.recoveryPhrase.substring(0, 8)}...` : 'none'}
+          </Text>
+          <Text style={{ fontSize: 11, color: '#333' }}>
+            Current value: {recoveryPhrase.substring(0, 20)}...
+          </Text>
+        </View>
+      )}
       
       <View style={styles.inputGroup}>
         <TextInput
