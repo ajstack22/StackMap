@@ -34,9 +34,14 @@ $device_id = $input['device_id'];
 try {
     $db = Database::getInstance()->getConnection();
     
-    // First verify that this sync_id exists
-    $checkStmt = $db->prepare("SELECT id FROM sync_data WHERE sync_id = ? LIMIT 1");
-    $checkStmt->execute([$sync_id]);
+    // First verify that this sync_id exists in any of the sync tables
+    $checkStmt = $db->prepare("
+        SELECT 1 FROM sync_groups WHERE sync_id = ? 
+        UNION 
+        SELECT 1 FROM sync_data WHERE sync_id = ? 
+        LIMIT 1
+    ");
+    $checkStmt->execute([$sync_id, $sync_id]);
     
     if (!$checkStmt->fetch()) {
         http_response_code(404);
@@ -44,11 +49,28 @@ try {
         exit;
     }
     
-    // Delete all shares associated with this sync_id
+    // Delete from all related tables
+    // Delete shares
     $deleteSharesStmt = $db->prepare("DELETE FROM shares WHERE sync_id = ?");
     $deleteSharesStmt->execute([$sync_id]);
     
-    // Delete all sync data
+    // Delete invites
+    $deleteInvitesStmt = $db->prepare("DELETE FROM sync_invites WHERE sync_id = ?");
+    $deleteInvitesStmt->execute([$sync_id]);
+    
+    // Delete sync records
+    $deleteRecordsStmt = $db->prepare("DELETE FROM sync_records WHERE sync_id = ?");
+    $deleteRecordsStmt->execute([$sync_id]);
+    
+    // Delete devices
+    $deleteDevicesStmt = $db->prepare("DELETE FROM sync_devices WHERE sync_id = ?");
+    $deleteDevicesStmt->execute([$sync_id]);
+    
+    // Delete from sync_groups
+    $deleteGroupsStmt = $db->prepare("DELETE FROM sync_groups WHERE sync_id = ?");
+    $deleteGroupsStmt->execute([$sync_id]);
+    
+    // Delete from sync_data (if exists)
     $deleteSyncStmt = $db->prepare("DELETE FROM sync_data WHERE sync_id = ?");
     $deleteSyncStmt->execute([$sync_id]);
     

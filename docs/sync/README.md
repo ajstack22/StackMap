@@ -33,9 +33,16 @@ Backend (PHP/MySQL - Zero Knowledge)
 ├── create_invite.php - Generate temporary invite codes
 ├── validate_invite.php - Check invite code validity
 ├── use_invite.php - Mark invite as used after join
+├── delete.php - Delete all sync data for a sync_id
 ├── create_share.php - Create time-limited share links (V3)
 ├── access_share.php - Access shared data (V3)
-└── MySQL: sync_data + sync_invites tables
+└── MySQL Tables:
+    ├── sync_groups - Main sync group registry
+    ├── sync_records - Encrypted data blobs
+    ├── sync_devices - Device tracking
+    ├── sync_invites - Temporary invite codes
+    ├── sync_data - Legacy/backup table
+    └── shares - Share links
 ```
 
 ### Data Flow
@@ -428,8 +435,370 @@ This documentation describes StackMap's actual sync implementation as of January
 4. Plan for conflict resolution early
 5. Test with real-world network conditions
 
+## LESSONS LEARNED - CRITICAL FOR MANYLLA IMPLEMENTATION
+
+### 1. Database Architecture Issues & Solutions
+
+#### Problem: Table Name Mismatches
+We discovered that different PHP scripts were looking for data in different tables:
+- `delete.php` was checking `sync_data` table
+- Actual data was stored in `sync_groups`, `sync_records`, `sync_devices`
+- This caused "Sync data not found" errors even when data existed
+
+**Solution for Manylla:**
+```sql
+-- Use consistent table naming from day 1
+CREATE TABLE sync_groups (
+  sync_id VARCHAR(32) PRIMARY KEY,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  last_updated TIMESTAMP
+);
+
+CREATE TABLE sync_records (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  sync_id VARCHAR(32) NOT NULL,
+  encrypted_blob TEXT NOT NULL,
+  timestamp BIGINT NOT NULL,
+  device_id VARCHAR(64),
+  FOREIGN KEY (sync_id) REFERENCES sync_groups(sync_id) ON DELETE CASCADE
+);
+```
+
+**Key Takeaway:** Ensure ALL PHP scripts query the SAME tables. Use foreign keys with CASCADE DELETE.
+
+#### Problem: SQLite vs MySQL Confusion
+- Development used SQLite files (`sync_local.db`)
+- Production used MySQL database
+- Config files pointed to MySQL but SQLite files existed, causing confusion
+
+**Solution for Manylla:**
+- Pick ONE database system (recommend MySQL for production)
+- Delete any unused database files to avoid confusion
+- Clear documentation about which DB is authoritative
+
+### 2. URL Hash Fragment Handling
+
+#### Problem: Hash Fragments Not Captured
+Browser security prevents hash fragments (after #) from reaching the server, but React apps need to capture them before routing strips them away.
+
+**Failed Attempts:**
+- Reading `window.location.hash` in React component - too late, already stripped
+- Using React Router hooks - hash already gone
+- URL state management - hash removed before state update
+
+**Working Solution:**
+```html
+<!-- In index.html BEFORE any JavaScript loads -->
+<script>
+  // Capture hash immediately on page load
+  if (window.location.hash) {
+    window.__initialHash = window.location.hash;
+    console.log('[HTML] Hash captured:', window.__initialHash);
+  }
+</script>
+```
+
+Then in React:
+```javascript
+useEffect(() => {
+  // Check both current hash and captured hash
+  const hash = window.location.hash || window.__initialHash;
+  if (hash) {
+    const recoveryPhrase = hash.substring(1); // Remove #
+    // Process recovery phrase
+    
+    // Clear for security
+    window.__initialHash = null;
+    window.history.replaceState(null, '', window.location.pathname);
+  }
+}, []);
+```
+
+**Key Takeaway:** Capture hash fragments IMMEDIATELY in inline HTML before any framework loads.
+
+### 3. Environment-Specific API Routing
+
+#### Problem: QUAL vs Production API Confusion
+- Different environments hitting wrong databases
+- Sync IDs created in one environment couldn't be deleted in another
+
+**Solution:**
+```javascript
+const getApiUrl = () => {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    const pathname = window.location.pathname;
+    if (pathname.includes('/qual/')) {
+      return 'https://stackmap.app/qual/api/sync';
+    }
+  }
+  return 'https://stackmap.app/api/sync';
+};
+```
+
+**Better Solution for Manylla:**
+```javascript
+// Use environment variables
+const API_BASE = process.env.REACT_APP_API_URL || 'https://api.manylla.com';
+
+// Or use a config service
+class ConfigService {
+  getApiUrl() {
+    const env = this.detectEnvironment();
+    return {
+      'development': 'http://localhost:3001/api',
+      'staging': 'https://staging.manylla.com/api',
+      'production': 'https://api.manylla.com'
+    }[env];
+  }
+}
+```
+
+### 4. Delete Operation Must Be Comprehensive
+
+#### Problem: Delete Server Data Wasn't Actually Deleting
+- Delete operation tried only current environment
+- Data could exist in multiple environments
+- Users lost trust when data wasn't truly deleted
+
+**Solution:** Try ALL possible locations:
+```javascript
+async deleteFromServer() {
+  const environments = [
+    { name: 'Staging', url: 'https://staging.api/delete' },
+    { name: 'Production', url: 'https://prod.api/delete' }
+  ];
+  
+  let deletedFromAny = false;
+  for (const env of environments) {
+    try {
+      const response = await fetch(env.url, {
+        method: 'POST',
+        body: JSON.stringify({ sync_id })
+      });
+      if (response.ok) deletedFromAny = true;
+    } catch (e) {
+      console.error(`Failed to delete from ${env.name}:`, e);
+    }
+  }
+  
+  if (!deletedFromAny) {
+    throw new Error('Could not delete from any environment');
+  }
+}
+```
+
+**Key Takeaway:** User privacy is paramount. Ensure delete operations are thorough.
+
+### 5. Database Deployment Synchronization
+
+#### Problem: Missing PHP Files in Different Environments
+- `delete.php` existed in production but not QUAL
+- Caused 404 errors that looked like data issues
+
+**Solution for Manylla:**
+```bash
+# Deployment script should sync ALL API files
+rsync -av --delete \
+  ./api/sync/*.php \
+  user@staging:/var/www/api/sync/
+  
+rsync -av --delete \
+  ./api/sync/*.php \
+  user@production:/var/www/api/sync/
+```
+
+**Better:** Use CI/CD pipeline:
+```yaml
+# .github/workflows/deploy.yml
+deploy:
+  steps:
+    - name: Deploy API to Staging
+      run: |
+        rsync -av ./api/ ${{ secrets.STAGING_SERVER }}:/var/www/api/
+    - name: Verify API Files
+      run: |
+        ssh ${{ secrets.STAGING_SERVER }} "ls -la /var/www/api/sync/*.php"
+```
+
+### 6. Debug Panels Save Hours
+
+#### Problem: Complex async operations made debugging difficult
+
+**Solution:** Temporary debug panel in UI:
+```javascript
+const [debugMessages, setDebugMessages] = useState([]);
+
+const addDebugMessage = (msg) => {
+  setDebugMessages(prev => [...prev, 
+    `${new Date().toLocaleTimeString()}: ${msg}`
+  ].slice(-10)); // Keep last 10 messages
+};
+
+// In your component
+{debugMessages.length > 0 && (
+  <View style={styles.debugPanel}>
+    <Text>Debug Messages:</Text>
+    {debugMessages.map((msg, i) => (
+      <Text key={i}>{msg}</Text>
+    ))}
+  </View>
+)}
+```
+
+### 7. Sync ID Generation Must Be Consistent
+
+#### Problem: Different code paths generating sync IDs differently
+- Some used different salts
+- Some used different iteration counts
+- Caused "sync group not found" errors
+
+**Solution:** ONE function for sync ID generation:
+```javascript
+class SyncService {
+  FIXED_SALT = 'YourAppNameSyncSalt2025';
+  ITERATIONS = 100000;
+  
+  async generateSyncId(recoveryPhrase) {
+    // ALWAYS use the same salt and iterations
+    let key = this.encode(recoveryPhrase + this.FIXED_SALT);
+    for (let i = 0; i < this.ITERATIONS; i++) {
+      key = nacl.hash(key);
+    }
+    return this.toHex(key.slice(0, 16)); // First 16 bytes as hex
+  }
+  
+  // ALL sync operations use this ONE method
+  async anySyncOperation(recoveryPhrase) {
+    const syncId = await this.generateSyncId(recoveryPhrase);
+    // ... rest of operation
+  }
+}
+```
+
+### 8. Platform-Specific Issues to Watch
+
+#### iOS Issues:
+- UTF-8 encoding: tweetnacl-util returns strings instead of Uint8Arrays
+- Solution: Manual UTF-8 implementation
+
+#### Web Issues:
+- Hash fragments stripped by routers
+- Solution: Capture in inline HTML immediately
+
+#### Mobile Issues:
+- AsyncStorage performance on iOS (20+ second freezes)
+- Solution: Debounce writes, batch operations
+
+### 9. Testing Checklist for Manylla
+
+Before launching sync:
+
+1. **Database Consistency:**
+   - [ ] All PHP scripts use same table names
+   - [ ] Foreign keys with CASCADE DELETE set up
+   - [ ] Indexes on sync_id, timestamp columns
+
+2. **URL Handling:**
+   - [ ] Hash fragments captured before React loads
+   - [ ] URLs work with and without trailing slashes
+   - [ ] Both /share/ and /sync/ paths handled
+
+3. **Delete Operations:**
+   - [ ] Deletes from ALL environments
+   - [ ] Removes from ALL related tables
+   - [ ] Returns success even if data already gone
+
+4. **Environment Separation:**
+   - [ ] Staging uses separate database from production
+   - [ ] API URLs correctly detected for each environment
+   - [ ] No hardcoded production URLs in code
+
+5. **Security:**
+   - [ ] Recovery phrases never logged to console in production
+   - [ ] Hash fragments cleared after use
+   - [ ] No sensitive data in error messages
+
+### 10. Recommended Architecture for Manylla
+
+```
+manylla.com/
+├── /api/
+│   └── /sync/
+│       ├── All PHP files (version controlled)
+│       └── config.php (environment-specific, not in git)
+├── /staging/
+│   └── Uses staging database
+└── /production/
+    └── Uses production database
+
+Database Structure:
+- manylla_sync_staging (staging environment)
+- manylla_sync_production (production environment)
+- Never mix environments in same database
+```
+
+### Quick Setup Script for Manylla
+
+```bash
+#!/bin/bash
+# setup-sync.sh - Run on server
+
+# Create database
+mysql -u root -p <<EOF
+CREATE DATABASE manylla_sync_production;
+CREATE USER 'manylla_sync'@'localhost' IDENTIFIED BY 'strong_password';
+GRANT ALL ON manylla_sync_production.* TO 'manylla_sync'@'localhost';
+
+USE manylla_sync_production;
+
+CREATE TABLE sync_groups (
+  sync_id VARCHAR(32) PRIMARY KEY,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE sync_records (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  sync_id VARCHAR(32),
+  encrypted_blob TEXT,
+  timestamp BIGINT,
+  device_id VARCHAR(64),
+  INDEX idx_sync_timestamp (sync_id, timestamp),
+  FOREIGN KEY (sync_id) REFERENCES sync_groups(sync_id) ON DELETE CASCADE
+);
+
+CREATE TABLE sync_invites (
+  invite_code VARCHAR(9) PRIMARY KEY,
+  sync_id VARCHAR(32),
+  expires_at TIMESTAMP,
+  max_uses INT DEFAULT 5,
+  use_count INT DEFAULT 0,
+  INDEX idx_sync_expires (sync_id, expires_at)
+);
+EOF
+
+# Deploy PHP files
+rsync -av ./api/sync/*.php /var/www/manylla.com/api/sync/
+
+# Set permissions
+chown -R www-data:www-data /var/www/manylla.com/api/sync/
+chmod 755 /var/www/manylla.com/api/sync/
+chmod 644 /var/www/manylla.com/api/sync/*.php
+
+echo "Sync system deployed!"
+```
+
+### Final Recommendations for Manylla
+
+1. **Start Simple:** Get basic push/pull working before adding invites
+2. **Test Early:** Set up staging environment immediately
+3. **Monitor Everything:** Log all sync operations initially
+4. **Plan for Scale:** Implement cleanup routines from day 1
+5. **Document Decisions:** Why you chose specific approaches
+6. **Security First:** Audit all endpoints before launch
+7. **User Trust:** Make delete operations thorough and verifiable
+
 ---
 
-*Last Updated: January 2025*
-*StackMap Version: Minimal Sync Implementation*
-*Note: This reflects the ACTUAL implementation, not the idealized architecture*
+*Last Updated: September 2025*
+*StackMap Version: 2025.09.06.15*
+*Note: This reflects the ACTUAL implementation with all lessons learned from production deployment*
