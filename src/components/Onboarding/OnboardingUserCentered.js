@@ -1321,6 +1321,12 @@ const OnboardingUserCentered = ({
   };
 
   const renderSyncImportStep = () => {
+    // Check if we're auto-processing from a URL
+    const isAutoProcessing = Platform.OS === 'web' && 
+      window.syncInviteData?.inviteCode && 
+      window.syncInviteData?.recoveryPhrase &&
+      recoveryPhrase.includes('#');
+    
     // Parse the input to handle both formats:
     // New format: ABCD-1234#recoveryPhrase  
     // Legacy format: just the 32-char recovery phrase
@@ -1360,11 +1366,24 @@ const OnboardingUserCentered = ({
       ? parsed.recoveryPhrase.length 
       : parsed.recoveryPhrase.length;
     
+    // Clear the sync URL path to prevent issues with bookmarking
+    useEffect(() => {
+      if (Platform.OS === 'web' && window.location.pathname.includes('/sync/')) {
+        // Replace the URL without the /sync/ part after we've captured the data
+        const newPath = window.location.pathname.replace(/\/sync\/[^\/]+\/?/, '/');
+        window.history.replaceState(null, document.title, newPath);
+      }
+    }, []); // Run once on mount
+    
     return (
     <View style={styles.stepContainer}>
-      <Text style={styles.title}>Join Sync</Text>
+      <Text style={styles.title}>
+        {isAutoProcessing ? 'Joining Sync Group' : 'Join Sync'}
+      </Text>
       <Text style={styles.subtitle}>
-        Enter your sync code to connect
+        {isAutoProcessing 
+          ? 'Processing your invitation...' 
+          : 'Enter your sync code to connect'}
       </Text>
       
       {/* Debug info - visible in UI */}
@@ -1433,26 +1452,53 @@ const OnboardingUserCentered = ({
         </View>
       )}
       
-      <View style={styles.inputGroup}>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g., ABCD-1234#recovery... or just recovery phrase"
-          value={recoveryPhrase}
-          onChangeText={setRecoveryPhrase}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        
-        {recoveryPhrase.length > 0 && (
-          <Text style={styles.charCount}>
-            {parsed.isInviteFormat && parsed.inviteCode ? (
-              <>Invite: {parsed.inviteCode} • Key: {displayCharCount}/32 chars</>
-            ) : (
-              <>{displayCharCount}/32 characters</>
-            )}
-          </Text>
-        )}
-      </View>
+      {/* Show input field only when NOT auto-processing */}
+      {!isAutoProcessing ? (
+        <View style={styles.inputGroup}>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g., ABCD-1234#recovery... or just recovery phrase"
+            value={recoveryPhrase}
+            onChangeText={setRecoveryPhrase}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          
+          {recoveryPhrase.length > 0 && (
+            <Text style={styles.charCount}>
+              {parsed.isInviteFormat && parsed.inviteCode ? (
+                <>Invite: {parsed.inviteCode} • Key: {displayCharCount}/32 chars</>
+              ) : (
+                <>{displayCharCount}/32 characters</>
+              )}
+            </Text>
+          )}
+        </View>
+      ) : (
+        /* Show processing state when auto-processing */
+        <View style={styles.processingContainer}>
+          {syncLoading ? (
+            <>
+              <ActivityIndicator size="large" color={defaultTheme.primary} />
+              <Text style={styles.processingText}>Verifying sync code...</Text>
+            </>
+          ) : syncPreviewData ? (
+            <>
+              <Icon name="check-circle" size={48} color="#4CAF50" />
+              <Text style={styles.processingText}>Sync group found!</Text>
+              <Text style={styles.processingSubtext}>
+                Importing {syncPreviewData.userCount} user{syncPreviewData.userCount !== 1 ? 's' : ''}
+                {syncPreviewData.hasLibrary && ' and activity library'}
+              </Text>
+            </>
+          ) : (
+            <>
+              <ActivityIndicator size="large" color={defaultTheme.primary} />
+              <Text style={styles.processingText}>Processing invitation...</Text>
+            </>
+          )}
+        </View>
+      )}
       
       {syncPreviewData && (
         <View style={styles.previewContainer}>
@@ -1466,43 +1512,47 @@ const OnboardingUserCentered = ({
         </View>
       )}
       
-      <View style={styles.optionsContainer}>
-        {!syncPreviewData ? (
-          <TouchableOpacity
-            style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
-            onPress={fetchSyncPreview}
-            disabled={syncLoading || (!parsed.inviteCode && parsed.recoveryPhrase.length !== 32)}
-          >
-            {syncLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Check Code</Text>
-            )}
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
-            onPress={importSyncData}
-            disabled={syncLoading}
-          >
-            {syncLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Import & Continue</Text>
-            )}
-          </TouchableOpacity>
-        )}
-        
-        {!syncSetupPhrase && (
-          <TouchableOpacity
-            style={styles.skipButton}
-            onPress={() => animateStepTransition('userType')}
-          >
-            <Text style={[styles.skipButtonText, { color: defaultTheme.textSecondary }]}>
-              Start fresh instead
-            </Text>
-          </TouchableOpacity>
-        )}
+      {/* Only show buttons when NOT auto-processing or when there's an error */}
+      {(!isAutoProcessing || syncError) && (
+        <View style={styles.optionsContainer}>
+          {!syncPreviewData ? (
+            <TouchableOpacity
+              style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
+              onPress={fetchSyncPreview}
+              disabled={syncLoading || (!parsed.inviteCode && parsed.recoveryPhrase.length !== 32)}
+            >
+              {syncLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Check Code</Text>
+              )}
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
+              onPress={importSyncData}
+              disabled={syncLoading}
+            >
+              {syncLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Import & Continue</Text>
+              )}
+            </TouchableOpacity>
+          )}
+          
+          {!syncSetupPhrase && (
+            <TouchableOpacity
+              style={styles.skipButton}
+              onPress={() => animateStepTransition('userType')}
+            >
+              <Text style={[styles.skipButtonText, { color: defaultTheme.textSecondary }]}>
+                Start fresh instead
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
       </View>
       
       {syncError && (
@@ -1812,6 +1862,26 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginTop: SPACING.xs,
+  },
+  processingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.xl,
+    minHeight: 120,
+  },
+  processingText: {
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#333',
+    marginTop: SPACING.sm,
+    textAlign: 'center',
+  },
+  processingSubtext: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
+    marginTop: SPACING.xs,
+    textAlign: 'center',
   },
   toast: {
     position: 'absolute',
