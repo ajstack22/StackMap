@@ -364,6 +364,14 @@ const App = () => {
       let syncInviteCode = null;
       let recoveryPhrase = null;
       
+      // Debug info stored globally for visibility
+      window.debugSyncParsing = {
+        pathname: pathname,
+        hash: window.location.hash,
+        hashLength: window.location.hash.length,
+        fullUrl: window.location.href
+      };
+      
       console.log('[App] Checking for sync URL. Pathname:', pathname);
       console.log('[App] Hash:', window.location.hash);
       
@@ -375,11 +383,15 @@ const App = () => {
         syncInviteCode = syncPathMatch[1].toUpperCase();
         
         // Check for recovery phrase in fragment
-        if (window.location.hash) {
+        if (window.location.hash && window.location.hash.length > 1) {
           // Handle multiple hashes in the fragment (defensive fix for duplicate fragments)
           const fragment = window.location.hash.substring(1);
           const parts = fragment.split('#');
           recoveryPhrase = parts[0]; // Take only the first part if duplicated
+          
+          // Store debug info about what we found
+          window.debugSyncParsing.fragmentFound = fragment;
+          window.debugSyncParsing.recoveryPhraseExtracted = recoveryPhrase;
           
           // Clear the fragment immediately
           window.history.replaceState(
@@ -387,6 +399,8 @@ const App = () => {
             document.title,
             window.location.pathname + window.location.search
           );
+        } else {
+          window.debugSyncParsing.noHashFound = true;
         }
         
         console.log('[App] Sync invite detected:', {
