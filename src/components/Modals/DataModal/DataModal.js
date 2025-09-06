@@ -2485,17 +2485,84 @@ const DataModal = ({
             <Text style={styles.shareSuccessTitle}>Share Link Created!</Text>
 
             <View style={styles.shareInfoBox}>
-              <Text style={styles.shareInfoLabel}>Share Link:</Text>
-              <Text style={styles.shareInfoValue} selectable numberOfLines={1}>
-                {shareUrl}
+              <View style={[styles.shareFieldGroup, { alignItems: 'center' }]}>
+                <Text style={[styles.shareFieldLabel, { textAlign: 'center', fontSize: 16 }]}>Share Key</Text>
+              </View>
+              <Text style={[styles.syncKeyText, { textAlign: 'center', marginTop: 8, marginBottom: 4, fontWeight: 'bold' }]} selectable>
+                {(() => {
+                  // Extract and format the share key similar to sync key
+                  if (shareUrl) {
+                    const urlParts = shareUrl.split('#');
+                    const encryptionKey = urlParts[1] || shareToken;
+                    const shareId = urlParts[0].split('/').pop();
+                    // Convert hex shareId to XXXX-XXXX format if it's 8 chars
+                    let displayId = shareId;
+                    if (shareId && shareId.length === 8) {
+                      displayId = shareId.substring(0, 4).toUpperCase() + '-' + shareId.substring(4).toUpperCase();
+                    }
+                    return `${displayId}#${encryptionKey}`;
+                  }
+                  return '';
+                })()}
               </Text>
-              <View style={styles.keyActionButtonRow}>
+              <Text style={[styles.shareFieldHelper, { textAlign: 'center', marginBottom: 16 }]}>
+                Expires in {expiresHours} hours • Read-only access
+              </Text>
+              
+              {/* Instructions */}
+              <View style={[styles.shareInstructions, { alignItems: 'center' }]}>
+                <View style={[styles.shareInstructionItem, { justifyContent: 'center' }]}>
+                  <Icon name="language" size={16} color="#000" />
+                  <Text style={styles.shareInstructionText}>Use the URL for browser viewing</Text>
+                </View>
+                <View style={[styles.shareInstructionItem, { justifyContent: 'center' }]}>
+                  <Icon name="key" size={16} color="#000" />
+                  <Text style={styles.shareInstructionText}>Copy share key for secure access</Text>
+                </View>
+                <View style={[styles.shareInstructionItem, { justifyContent: 'center' }]}>
+                  <Icon name="add-circle" size={16} color="#000" />
+                  <Text style={styles.shareInstructionText}>Create new share for different settings</Text>
+                </View>
+              </View>
+              
+              {/* Action Buttons */}
+              <View style={[styles.syncKeyActions, { justifyContent: 'center', flexWrap: 'wrap' }]}>
+                <ModalButton
+                  theme={theme}
+                  variant="primary"
+                  label="Copy Key"
+                  icon="content-copy"
+                  onPress={() => {
+                    // Extract and copy just the key
+                    const urlParts = shareUrl.split('#');
+                    const encryptionKey = urlParts[1] || shareToken;
+                    const shareId = urlParts[0].split('/').pop();
+                    let displayId = shareId;
+                    if (shareId && shareId.length === 8) {
+                      displayId = shareId.substring(0, 4).toUpperCase() + '-' + shareId.substring(4).toUpperCase();
+                    }
+                    const keyOnly = `${displayId}#${encryptionKey}`;
+                    copyToClipboard(keyOnly, 'Share key copied!');
+                    showToast({ 
+                      message: 'Share key copied to clipboard!', 
+                      type: 'success' 
+                    });
+                  }}
+                  compact
+                />
+                
                 <ModalButton
                   theme={theme}
                   variant="secondary"
-                  label="Copy Link"
+                  label="Copy URL"
                   icon="link"
-                  onPress={handleCopyShareUrl}
+                  onPress={() => {
+                    copyToClipboard(shareUrl, 'Share URL copied!');
+                    showToast({ 
+                      message: 'Share URL copied to clipboard!', 
+                      type: 'success' 
+                    });
+                  }}
                   compact
                 />
               </View>
@@ -2513,25 +2580,26 @@ const DataModal = ({
 
             <View style={styles.divider} />
 
-            <ModalButton
-              theme={theme}
-              variant="secondary"
-              label="Create Another Share"
-              icon="add-circle"
-              onPress={() => {
-                setShareUrl('');
-                setShareToken('');
-                setShowShareQR(false);
-                setSelectedShareUser(null);
-                setRecipientName('');
-                setShareNote('');
-                setExpiresHours('168');
-                setIncludeCompleted(true);
-                setIncludeTomorrow(true);
-                setAutoUpdate(true);
-              }}
-              style={{ marginTop: 20 }}
-            />
+            <View style={[styles.syncKeyActions, { justifyContent: 'center', marginTop: 20 }]}>
+              <ModalButton
+                theme={theme}
+                variant="secondary"
+                label="Create New Share"
+                icon="add-circle"
+                onPress={() => {
+                  setShareUrl('');
+                  setShareToken('');
+                  setShowShareQR(false);
+                  setSelectedShareUser(null);
+                  setRecipientName('');
+                  setShareNote('');
+                  setExpiresHours('168');
+                  setIncludeCompleted(true);
+                  setIncludeTomorrow(true);
+                  setAutoUpdate(true);
+                }}
+              />
+            </View>
           </View>
         </View>
       )}
