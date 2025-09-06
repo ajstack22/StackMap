@@ -33,8 +33,8 @@ $share_id = $input['share_id'];
 try {
     $db = Database::getInstance()->getConnection();
     
-    // Delete the share
-    $stmt = $db->prepare("DELETE FROM shares WHERE share_id = ?");
+    // Delete the share from share_links table
+    $stmt = $db->prepare("DELETE FROM share_links WHERE share_id = ?");
     $stmt->execute([$share_id]);
     
     if ($stmt->rowCount() > 0) {

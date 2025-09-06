@@ -19,19 +19,19 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-// Get device_id from query parameters
-$device_id = $_GET['device_id'] ?? null;
+// Get sync_id from query parameters (shares are tied to sync_id, not device_id)
+$sync_id = $_GET['sync_id'] ?? null;
 
-if (!$device_id) {
+if (!$sync_id) {
     http_response_code(400);
-    echo json_encode(['error' => 'Missing device_id']);
+    echo json_encode(['error' => 'Missing sync_id']);
     exit;
 }
 
 try {
     $db = Database::getInstance()->getConnection();
     
-    // Get all active shares for this device
+    // Get all active shares for this sync_id from share_links table
     // Remove expired shares automatically
     $stmt = $db->prepare("
         SELECT 
@@ -40,18 +40,18 @@ try {
             share_note,
             expires_at,
             created_at,
-            access_count,
+            auto_update,
             CASE 
                 WHEN expires_at < NOW() THEN 'expired'
                 ELSE 'active'
             END as status
-        FROM shares 
-        WHERE device_id = ?
+        FROM share_links 
+        WHERE sync_id = ?
         ORDER BY created_at DESC
         LIMIT 20
     ");
     
-    $stmt->execute([$device_id]);
+    $stmt->execute([$sync_id]);
     $shares = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Separate active and expired shares
@@ -68,11 +68,11 @@ try {
     
     // Clean up old expired shares (older than 30 days)
     $cleanupStmt = $db->prepare("
-        DELETE FROM shares 
-        WHERE device_id = ? 
+        DELETE FROM share_links 
+        WHERE sync_id = ? 
         AND expires_at < DATE_SUB(NOW(), INTERVAL 30 DAY)
     ");
-    $cleanupStmt->execute([$device_id]);
+    $cleanupStmt->execute([$sync_id]);
     
     echo json_encode([
         'success' => true,

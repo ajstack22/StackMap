@@ -1239,60 +1239,65 @@ class SyncStoreIntegration {
    */
   async getActiveShares(userId) {
     try {
-      // Try to fetch from server first
-      const deviceId = await this.getDeviceId();
+      // Try to fetch from server first - shares are tied to sync_id
+      const syncId = this.getSyncId();
       
-      // Get API URL based on environment
-      const getShareApiUrl = () => {
-        if (Platform.OS === 'ios' || Platform.OS === 'android') {
-          return 'https://stackmap.app/api/sync';
-        }
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          const pathname = window.location.pathname;
-          if (pathname.includes('/qual/')) {
-            return 'https://stackmap.app/qual/api/sync';
+      if (!syncId) {
+        console.log('[SyncService] No sync ID, cannot fetch shares from server');
+        // Fall through to local storage
+      } else {
+        // Get API URL based on environment
+        const getShareApiUrl = () => {
+          if (Platform.OS === 'ios' || Platform.OS === 'android') {
+            return 'https://stackmap.app/api/sync';
           }
-        }
-        return 'https://stackmap.app/api/sync';
-      };
-      
-      const SHARE_API_URL = getShareApiUrl();
-      const listUrl = `${SHARE_API_URL}/list_shares.php?device_id=${deviceId}`;
-      
-      try {
-        console.log('[SyncService] Fetching shares from:', listUrl);
-        const response = await fetch(listUrl);
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log('[SyncService] Server response:', data);
-          if (data.success) {
-            // Convert server format to local format
-            const shares = data.active_shares.map(share => ({
-              shareId: share.share_id,
-              userId: userId || 'unknown',
-              recipientName: share.recipient_name,
-              shareNote: share.share_note,
-              expiresAt: share.expires_at,
-              createdAt: share.created_at,
-              accessCount: share.access_count,
-              status: 'active'
-            }));
-            
-            console.log('[SyncService] Converted shares from server:', shares);
-            // Update local storage with server data
-            await AsyncStorage.setItem('@stackmap_shares', JSON.stringify(shares));
-            
-            if (userId) {
-              return shares.filter(share => share.userId === userId);
+          if (Platform.OS === 'web' && typeof window !== 'undefined') {
+            const pathname = window.location.pathname;
+            if (pathname.includes('/qual/')) {
+              return 'https://stackmap.app/qual/api/sync';
             }
-            return shares;
           }
-        } else {
-          console.log('[SyncService] Server returned error:', response.status);
+          return 'https://stackmap.app/api/sync';
+        };
+        
+        const SHARE_API_URL = getShareApiUrl();
+        const listUrl = `${SHARE_API_URL}/list_shares.php?sync_id=${syncId}`;
+        
+        try {
+          console.log('[SyncService] Fetching shares from:', listUrl);
+          const response = await fetch(listUrl);
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('[SyncService] Server response:', data);
+            if (data.success) {
+              // Convert server format to local format
+              const shares = data.active_shares.map(share => ({
+                shareId: share.share_id,
+                userId: userId || 'unknown',
+                recipientName: share.recipient_name,
+                shareNote: share.share_note,
+                expiresAt: share.expires_at,
+                createdAt: share.created_at,
+                accessCount: share.access_count,
+                status: 'active'
+              }));
+              
+              console.log('[SyncService] Converted shares from server:', shares);
+              // Update local storage with server data
+              await AsyncStorage.setItem('@stackmap_shares', JSON.stringify(shares));
+              
+              if (userId) {
+                return shares.filter(share => share.userId === userId);
+              }
+              return shares;
+            }
+          } else {
+            console.log('[SyncService] Server returned error:', response.status);
+          }
+        } catch (fetchError) {
+          console.log('[SyncService] Could not fetch shares from server:', fetchError.message);
         }
-      } catch (fetchError) {
-        console.log('[SyncService] Could not fetch shares from server:', fetchError.message);
       }
       
       // Fallback to local storage
