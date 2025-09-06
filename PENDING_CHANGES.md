@@ -1,6 +1,6 @@
 # Pending Changes
 
-## Title: Fix ShareView Close Button Redirect URL
+## Title: 
 
 ### Changes Made:
-- Fixed close button redirect URL from stackmap.com to stackmap.app
+
