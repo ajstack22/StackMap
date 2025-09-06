@@ -1265,13 +1265,9 @@ class MinimalSyncService {
       // Clear pending recovery phrase after use
       this.pendingRecoveryPhrase = null;
       
-      // Step 3: Initialize encryption with recovery phrase
-      const fixedSalt = 'U3RhY2tNYXBTeW5jU2FsdDIwMjQ=';
-      const { key } = await encryptionService.deriveKeyFromPhrase(recoveryPhrase, fixedSalt);
-      const syncIdBuffer = nacl.hash(key);
-      const syncId = Array.from(syncIdBuffer.slice(0, 16))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
+      // Step 3: Generate sync ID from recovery phrase using the standard method
+      const syncId = await this.generateSyncId(recoveryPhrase);
+      console.log('[MinimalSync] Generated sync ID:', syncId, 'Expected:', validateResult.sync_id);
       
       // Verify sync ID matches
       if (syncId !== validateResult.sync_id) {
