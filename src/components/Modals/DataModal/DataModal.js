@@ -1121,22 +1121,36 @@ const DataModal = ({
       // Check current sync service state
       addDebugMessage(`syncService type: ${typeof syncService}`);
       addDebugMessage(`Has getSyncId: ${!!syncService.getSyncId}`);
-      addDebugMessage(`Has minimalSync: ${!!syncService.minimalSync}`);
       
       const currentSyncId = syncService.getSyncId ? syncService.getSyncId() : 
                            syncService.minimalSync?.syncId || 
                            syncService.syncId;
       addDebugMessage(`Current sync ID: ${currentSyncId || 'NONE'}`);
+      addDebugMessage(`Sync ID length: ${currentSyncId ? currentSyncId.length : 0}`);
       
-      // Also check if we have the methods we need
-      addDebugMessage(`Has deleteFromServer: ${!!syncService.deleteFromServer}`);
-      addDebugMessage(`Has disable: ${!!syncService.disable}`);
+      // Check the URL to see if we're on QUAL or PROD
+      const currentUrl = window.location.href;
+      addDebugMessage(`Current URL: ${currentUrl}`);
+      const isQual = currentUrl.includes('/qual/');
+      addDebugMessage(`Is QUAL environment: ${isQual}`);
       
       if (!currentSyncId) {
         addDebugMessage('ERROR: No sync ID available!');
         throw new Error('No sync ID available - sync may not be enabled');
       }
 
+      // First, let's try a test pull to see if the sync ID is valid
+      addDebugMessage('Testing if sync ID is valid with server...');
+      try {
+        // Try to check if sync exists
+        const testUrl = isQual ? 
+          `https://stackmap.app/qual/api/sync/check_sync.php` : 
+          `https://stackmap.app/api/sync/check_sync.php`;
+        addDebugMessage(`Checking: ${testUrl}`);
+      } catch (e) {
+        addDebugMessage(`Check failed: ${e.message}`);
+      }
+      
       console.log('[DataModal] Calling syncService.deleteFromServer()');
       addDebugMessage('Calling deleteFromServer...');
       addDebugMessage(`Sync ID being deleted: ${currentSyncId}`);

@@ -1135,11 +1135,9 @@ class SyncStoreIntegration {
       console.log('[SyncStore] Server response:', response.status, data);
       
       if (!response.ok) {
-        // If it's a 404 (not found), that might be okay - data may already be deleted
-        if (response.status === 404) {
-          console.log('[SyncStore] Data not found on server - may already be deleted');
-          return { success: true, message: 'Data already deleted or not found' };
-        }
+        console.error('[SyncStore] Delete failed - sync ID may not match server records');
+        console.error('[SyncStore] Sync ID sent:', syncId);
+        console.error('[SyncStore] Device ID sent:', deviceId);
         throw new Error(data.error || `Delete failed with status ${response.status}`);
       }
       
