@@ -443,12 +443,13 @@ const App = () => {
       }
 
       // Log URL params only if they exist
-      if (token || syncPhrase || privacyParam || supportParam || syncInviteCode) {
+      const hasSyncInvite = window.syncInviteData?.inviteCode;
+      if (token || syncPhrase || privacyParam || supportParam || hasSyncInvite) {
         console.log('[App] URL params:', {
           search: window.location.search,
           pathname: window.location.pathname,
           syncPhrase,
-          syncInviteCode,
+          syncInviteCode: hasSyncInvite,
           decoded: syncPhrase ? decodeURIComponent(syncPhrase) : null,
           privacy: privacyParam,
           supportus: supportParam,
