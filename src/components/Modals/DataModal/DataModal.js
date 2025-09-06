@@ -2394,84 +2394,34 @@ const DataModal = ({
 
             <View style={styles.shareInfoBox}>
               <View style={[styles.shareFieldGroup, { alignItems: 'center' }]}>
-                <Text style={[styles.shareFieldLabel, { textAlign: 'center', fontSize: 16 }]}>Share Key</Text>
+                <Text style={[styles.shareFieldLabel, { textAlign: 'center', fontSize: 16 }]}>Share Link Ready</Text>
               </View>
-              <Text style={[styles.syncKeyText, { textAlign: 'center', marginTop: 8, marginBottom: 4, fontWeight: 'bold' }]} selectable>
-                {(() => {
-                  // Extract and format the share key similar to sync key
-                  if (shareUrl) {
-                    const urlParts = shareUrl.split('#');
-                    const encryptionKey = urlParts[1] || shareToken;
-                    const shareId = urlParts[0].split('/').pop();
-                    // Convert hex shareId to XXXX-XXXX format if it's 8 chars
-                    let displayId = shareId;
-                    if (shareId && shareId.length === 8) {
-                      displayId = shareId.substring(0, 4).toUpperCase() + '-' + shareId.substring(4).toUpperCase();
-                    }
-                    return `${displayId}#${encryptionKey}`;
-                  }
-                  return '';
-                })()}
-              </Text>
-              <Text style={[styles.shareFieldHelper, { textAlign: 'center', marginBottom: 16 }]}>
-                Expires in {expiresHours} hours • Read-only access
+              <Text style={[styles.shareFieldHelper, { textAlign: 'center', marginTop: 8, marginBottom: 16 }]}>
+                Expires in {expiresHours} hours • View-only access
               </Text>
               
-              {/* Instructions */}
+              {/* Simple instruction */}
               <View style={[styles.shareInstructions, { alignItems: 'center' }]}>
                 <View style={[styles.shareInstructionItem, { justifyContent: 'center' }]}>
-                  <Icon name="language" size={16} color="#000" />
-                  <Text style={styles.shareInstructionText}>Use the URL for browser viewing</Text>
-                </View>
-                <View style={[styles.shareInstructionItem, { justifyContent: 'center' }]}>
-                  <Icon name="key" size={16} color="#000" />
-                  <Text style={styles.shareInstructionText}>Copy share key for secure access</Text>
-                </View>
-                <View style={[styles.shareInstructionItem, { justifyContent: 'center' }]}>
-                  <Icon name="add-circle" size={16} color="#000" />
-                  <Text style={styles.shareInstructionText}>Create new share for different settings</Text>
+                  <Icon name="visibility" size={16} color="#000" />
+                  <Text style={styles.shareInstructionText}>Recipients can view your activities in their browser</Text>
                 </View>
               </View>
               
-              {/* Action Buttons */}
-              <View style={[styles.syncKeyActions, { justifyContent: 'center', flexWrap: 'wrap' }]}>
+              {/* Single Copy URL Button */}
+              <View style={[styles.syncKeyActions, { justifyContent: 'center', marginTop: 16 }]}>
                 <ModalButton
                   theme={theme}
                   variant="primary"
-                  label="Copy Key"
-                  icon="content-copy"
-                  onPress={() => {
-                    // Extract and copy just the key
-                    const urlParts = shareUrl.split('#');
-                    const encryptionKey = urlParts[1] || shareToken;
-                    const shareId = urlParts[0].split('/').pop();
-                    let displayId = shareId;
-                    if (shareId && shareId.length === 8) {
-                      displayId = shareId.substring(0, 4).toUpperCase() + '-' + shareId.substring(4).toUpperCase();
-                    }
-                    const keyOnly = `${displayId}#${encryptionKey}`;
-                    copyToClipboard(keyOnly, 'Share key copied!');
-                    showToast({ 
-                      message: 'Share key copied to clipboard!', 
-                      type: 'success' 
-                    });
-                  }}
-                  compact
-                />
-                
-                <ModalButton
-                  theme={theme}
-                  variant="secondary"
-                  label="Copy URL"
+                  label="Copy Share Link"
                   icon="link"
                   onPress={() => {
-                    copyToClipboard(shareUrl, 'Share URL copied!');
+                    copyToClipboard(shareUrl, 'Share link copied!');
                     showToast({ 
-                      message: 'Share URL copied to clipboard!', 
+                      message: 'Share link copied to clipboard!', 
                       type: 'success' 
                     });
                   }}
-                  compact
                 />
               </View>
             </View>
@@ -2538,7 +2488,9 @@ const DataModal = ({
       </View>
       
       {/* Active Shares - Show at bottom regardless of state */}
-      {Object.keys(activeShares).length > 0 && (
+      {console.log('[DataModal] Active shares object:', activeShares)}
+      {console.log('[DataModal] Active shares keys:', Object.keys(activeShares))}
+      {Object.keys(activeShares).length > 0 ? (
         <View style={[styles.shareSection, { marginTop: 20 }]}>
           <TouchableOpacity
             style={styles.shareSectionHeader}
@@ -2600,6 +2552,15 @@ const DataModal = ({
               ),
             )}
         </View>
+      ) : (
+        <View style={[styles.shareSection, { marginTop: 20, padding: 15 }]}>
+          <Text style={[styles.shareSectionTitle, { textAlign: 'center', color: '#666' }]}>
+            No active shares
+          </Text>
+          <Text style={[styles.shareFieldHelper, { textAlign: 'center', marginTop: 8 }]}>
+            Create a share to see it listed here
+          </Text>
+        </View>
       )}
     </ScrollView>
   );
@@ -2629,6 +2590,8 @@ const DataModal = ({
           }
           // Load active shares when switching to share tab
           if (newTab === 1) {
+            console.log('[DataModal] Switching to share tab, loading shares...');
+            addShareDebugMessage('Tab opened - loading shares...');
             loadActiveShares();
           }
           setActiveTab(newTab);
