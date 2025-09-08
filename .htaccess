@@ -30,6 +30,12 @@ RewriteCond %{REQUEST_URI} !^/api/
 RewriteCond %{REQUEST_URI} !^/qual/api/
 RewriteRule ^.*$ index.html [L]
 
+# Security Headers with CSP that allows Google Fonts
+<IfModule mod_headers.c>
+    # Content Security Policy - Allow Google Fonts and Material Icons
+    Header set Content-Security-Policy "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: blob:; connect-src 'self' https://stackmap.app;"
+</IfModule>
+
 # Ensure correct MIME types
 <IfModule mod_mime.c>
     AddType application/javascript .js

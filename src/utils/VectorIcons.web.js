@@ -92,10 +92,43 @@ const Icon = ({ name, size = 24, color = '#000', style }) => {
   // Add Material Icons font to the page if not already added
   React.useEffect(() => {
     if (!document.getElementById('material-icons-font')) {
+      // First try local font file (avoids CSP issues)
+      const style = document.createElement('style');
+      style.id = 'material-icons-font';
+      style.innerHTML = `
+        @font-face {
+          font-family: 'Material Icons';
+          font-style: normal;
+          font-weight: 400;
+          src: url('/fonts/MaterialIcons-Regular.woff2') format('woff2'),
+               url('/fonts/MaterialIcons-Regular.woff') format('woff'),
+               url('/fonts/MaterialIcons-Regular.ttf') format('truetype');
+        }
+        .material-icons {
+          font-family: 'Material Icons';
+          font-weight: normal;
+          font-style: normal;
+          font-size: 24px;
+          line-height: 1;
+          letter-spacing: normal;
+          text-transform: none;
+          display: inline-block;
+          white-space: nowrap;
+          word-wrap: normal;
+          direction: ltr;
+          -webkit-font-feature-settings: 'liga';
+          -webkit-font-smoothing: antialiased;
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // Fallback: Try Google Fonts (might be blocked by CSP)
       const link = document.createElement('link');
-      link.id = 'material-icons-font';
       link.href = 'https://fonts.googleapis.com/icon?family=Material+Icons';
       link.rel = 'stylesheet';
+      link.onerror = () => {
+        console.warn('Failed to load Material Icons from Google Fonts. Using local fallback.');
+      };
       document.head.appendChild(link);
     }
   }, []);

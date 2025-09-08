@@ -483,23 +483,30 @@ const DataModal = ({
             type: 'success',
           });
 
-          // Auto-share the file
-          setTimeout(async () => {
-            const { Share } = require('react-native');
-            try {
-              await Share.share({
-                url: `file://${filePath}`,
-                title: fileName,
-              });
-            } catch (shareError) {}
-          }, 500);
+          // Show success message
+          Alert.alert(
+            'Export Successful! ✅',
+            `Your data has been saved to:
+📁 Downloads/${fileName}
+
+To use this file:
+• Import it back into StackMap using the Import button
+• Share it via your file manager app
+• Transfer it to another device via email or cloud storage
+
+The file will remain in your Downloads folder until you delete it.`,
+            [
+              {
+                text: 'Got it!',
+                style: 'default',
+                onPress: () => {
+                  showToast({ message: '✅ Export saved to Downloads' });
+                },
+              },
+            ],
+          );
         } catch (error) {
-          // Fallback to share
-          const { Share } = require('react-native');
-          await Share.share({
-            message: jsonData,
-            title: fileName,
-          });
+          Alert.alert('Export Error', 'Failed to save file: ' + error.message);
         }
       } else if (Platform.OS === 'web') {
         const blob = new Blob([jsonData], { type: 'application/json' });

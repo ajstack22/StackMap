@@ -1,11 +1,11 @@
 # Pending Changes
 
-## Title: Improve Android Export/Import Workflow
+## Title: Fix Material Icons on Web and Remove Share Dialog from Export
 
 ### Changes Made:
-- Updated export success dialog to explain how to use exported files
-- Removed broken share functionality that used file:// URLs (not supported on modern Android)
-- Added clear instructions for accessing files in Downloads folder
-- Improved import dialog to explain how to access exported files via Files app
-- Added "Open Files App" button to help users navigate to Downloads
-- Made export/import workflow more user-friendly with better guidance
+- Fixed Android export to remove broken Share.share dialog in DataModal
+- Added proper CSP headers to allow Google Fonts and Material Icons
+- Updated VectorIcons.web.js to handle CSP restrictions with local font fallback
+- Added Content-Security-Policy headers to both root and qual .htaccess files
+- CSP now allows fonts.googleapis.com for styles and fonts.gstatic.com for fonts
+- Export on Android now shows helpful instructions instead of broken share functionality
