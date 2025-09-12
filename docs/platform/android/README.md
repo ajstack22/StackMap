@@ -1,6 +1,22 @@
 # Android Platform Guide - StackMap
 
-This guide consolidates all Android-specific development information for StackMap.
+> **Purpose:** This comprehensive guide documents Android-specific development patterns, solutions, and best practices developed for StackMap. It serves both as internal documentation and as a reference implementation for teams adapting these methodologies to other React Native projects.
+
+> **Last Updated:** January 2025 | **Platform:** React Native 0.80.1 | **Min Android:** API 23 (6.0)
+
+## 📋 Table of Contents
+
+1. [Quick Reference](#quick-reference)
+2. [Critical Build Setup](#critical-build-setup)
+3. [Common Issues & Solutions](#android-specific-issues--solutions)
+4. [Architecture Patterns](#architecture-patterns)
+5. [Performance Optimization](#performance-optimizations)
+6. [Testing Strategy](#testing-strategy)
+7. [Deployment Process](#deployment-process)
+8. [Troubleshooting Guide](#troubleshooting-guide)
+9. [Lessons Learned](#lessons-learned)
+
+---
 
 ## Quick Reference
 
@@ -18,11 +34,15 @@ cd android && ./gradlew assembleDebug  # Build debug APK
 ```
 
 ### Project Requirements
-- **React Native**: 0.80.1
-- **Android**: 6.0+ (API 23)
-- **Java**: 17 (CRITICAL - see build setup)
-- **Gradle**: 8.8
-- **Android SDK**: API 35
+
+| Component | Version | Notes |
+|-----------|---------|-------|
+| React Native | 0.80.1 | Latest stable with new architecture |
+| Min Android | API 23 (6.0) | ~98% device coverage |
+| Target Android | API 35 | Android 15 |
+| Java | 17 | ⚠️ CRITICAL - Java 24 will fail |
+| Gradle | 8.8 | With Kotlin DSL support |
+| Build Tools | 35.0.0 | Latest stable |
 
 ## Project Structure
 
@@ -81,6 +101,8 @@ java -version  # Should show version 17
 ```
 
 ## Android-Specific Issues & Solutions
+
+> **Key Insight:** Android's rendering engine differs significantly from iOS, requiring platform-specific approaches for layouts, fonts, and gestures. These solutions were discovered through extensive testing across various device configurations.
 
 ### 1. FlexWrap Card Layouts (CRITICAL)
 **Problem:** Android needs specific layout approach for multi-column grids.
@@ -253,6 +275,59 @@ cd android
 # Output: android/app/build/outputs/bundle/release/app-release.aab
 ```
 
+## Architecture Patterns
+
+### Platform Abstraction Strategy
+
+StackMap uses a three-tier approach for handling platform differences:
+
+1. **Component Level:** Platform-specific implementations (e.g., Typography component)
+2. **Utility Level:** Platform detection utilities (isTablet, isAndroid)
+3. **Style Level:** Platform.select() for conditional styling
+
+#### Example Implementation:
+```javascript
+// Platform utility (src/constants/index.js)
+export const isAndroid = Platform.OS === 'android';
+export const isTablet = () => {
+  const { width, height } = Dimensions.get('window');
+  const aspectRatio = width / height;
+  return Math.min(width, height) >= 600 && aspectRatio > 1.2;
+};
+
+// Component abstraction (Typography/index.js)
+const getFontFamily = (weight) => {
+  if (isAndroid) {
+    return weight === 'bold' ? 'ComicRelief-Bold' : 'ComicRelief-Regular';
+  }
+  return 'Comic Relief';
+};
+
+// Style abstraction
+const styles = StyleSheet.create({
+  container: {
+    ...Platform.select({
+      android: {
+        elevation: 4,
+        alignContent: 'flex-start'
+      },
+      ios: {
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1
+      }
+    })
+  }
+});
+```
+
+### State Management Considerations
+
+Android's lifecycle differs from iOS, requiring careful state management:
+
+- **Background State:** Android aggressively kills background apps
+- **Memory Pressure:** Lower memory thresholds than iOS
+- **Solution:** Persist critical state to AsyncStorage frequently
+
 ## Performance Optimizations
 
 ### Android-Specific Patterns
@@ -262,9 +337,175 @@ cd android
 - Optimize image sizes and formats
 
 ### Memory Management
-- Be careful with large images
-- Use `resizeMode: 'contain'` for images
-- Clean up event listeners in useEffect cleanup
+
+#### Image Optimization
+```javascript
+// Android-optimized image loading
+<Image
+  source={{ uri: imageUrl }}
+  resizeMode="contain"
+  defaultSource={require('./placeholder.png')} // Android fallback
+  fadeDuration={0} // Disable fade on Android for performance
+  style={{
+    width: 100,
+    height: 100,
+    resizeMethod: 'resize' // Android-specific optimization
+  }}
+/>
+```
+
+#### Memory Leak Prevention
+```javascript
+useEffect(() => {
+  let mounted = true;
+  const subscription = EventEmitter.addListener('event', (data) => {
+    if (mounted) {
+      // Handle event
+    }
+  });
+  
+  return () => {
+    mounted = false;
+    subscription.remove();
+  };
+}, []);
+```
+
+### Rendering Optimizations
+
+1. **FlatList Performance**
+   ```javascript
+   <FlatList
+     data={data}
+     removeClippedSubviews={true} // Critical for Android
+     maxToRenderPerBatch={10}
+     updateCellsBatchingPeriod={50}
+     windowSize={10}
+     initialNumToRender={10}
+     getItemLayout={(data, index) => ({
+       length: ITEM_HEIGHT,
+       offset: ITEM_HEIGHT * index,
+       index
+     })}
+   />
+   ```
+
+2. **Animation Performance**
+   - Use native driver when possible
+   - Limit to opacity and transform
+   - Avoid animating layout properties
+   - Keep animations under 300ms
+
+## Testing Strategy
+
+### Device Matrix
+
+| Device Type | Test Device | API Level | Screen Size | Priority |
+|-------------|------------|-----------|-------------|----------|
+| Phone | Pixel 8 Pro | 34 | 6.7" | High |
+| Tablet | Pixel Tablet | 34 | 10.95" | High |
+| Budget Phone | Pixel 4a | 30 | 5.8" | Medium |
+| Large Tablet | Galaxy Tab S9 | 34 | 12.4" | Medium |
+| Foldable | Galaxy Fold | 33 | 7.6" | Low |
+
+### Critical Test Scenarios
+
+1. **Orientation Changes**
+   - Activity persistence during rotation
+   - Layout recalculation
+   - Modal state preservation
+
+2. **Memory Pressure**
+   - Test with limited RAM (2GB devices)
+   - Background app restoration
+   - Large list scrolling
+
+3. **Network Conditions**
+   - Offline mode functionality
+   - Slow network (2G/3G)
+   - Network switching
+
+4. **Accessibility**
+   - TalkBack navigation
+   - Font scaling (85% - 200%)
+   - High contrast mode
+
+## Deployment Process
+
+### Production Build Pipeline
+
+```mermaid
+graph LR
+    A[Development] --> B[Local Testing]
+    B --> C[qual_deploy.sh]
+    C --> D[QA Testing]
+    D --> E[prod_deploy.sh]
+    E --> F[AAB Generation]
+    F --> G[Play Store]
+```
+
+### Build Configuration
+
+#### Release Signing (android/app/build.gradle)
+```gradle
+signingConfigs {
+    release {
+        storeFile file(MYAPP_RELEASE_STORE_FILE)
+        storePassword MYAPP_RELEASE_STORE_PASSWORD
+        keyAlias MYAPP_RELEASE_KEY_ALIAS
+        keyPassword MYAPP_RELEASE_KEY_PASSWORD
+    }
+}
+```
+
+#### ProGuard Rules (android/app/proguard-rules.pro)
+```
+# React Native
+-keep class com.facebook.react.** { *; }
+-keep class com.facebook.hermes.** { *; }
+
+# StackMap specific
+-keep class com.stackmap.** { *; }
+```
+
+### Play Store Deployment
+
+1. **Version Code Management**
+   - Format: `YYYYMMDDBB` (e.g., 2025011501)
+   - Auto-incremented by deployment scripts
+
+2. **Bundle Generation**
+   ```bash
+   ./scripts/prod_deploy.sh android
+   # Generates: android/app/build/outputs/bundle/release/app-release.aab
+   ```
+
+3. **Upload Process**
+   - Use Play Console internal testing first
+   - Gradual rollout (10% → 50% → 100%)
+   - Monitor crash reports and ANRs
+
+## Troubleshooting Guide
+
+### Build Failures
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| "Unsupported class file major version 68" | Java 24 instead of 17 | Use `./scripts/react-native/run-android.sh` |
+| "Could not find com.android.tools.build:gradle" | Gradle version mismatch | Clean gradle cache: `cd android && ./gradlew clean --refresh-dependencies` |
+| "Duplicate class kotlin.collections" | Kotlin version conflict | Update kotlin version in android/build.gradle |
+| "AAPT: error: resource not found" | Missing resources | Run `cd android && ./gradlew clean` |
+| "Metro bundler not found" | Metro connection issue | Run `adb reverse tcp:8081 tcp:8081` |
+
+### Runtime Issues
+
+| Issue | Symptoms | Fix |
+|-------|----------|-----|
+| White screen on launch | App loads but shows blank | Check Metro connection, clear cache |
+| Crash on rotation | App restarts on orientation change | Add `android:configChanges` to AndroidManifest.xml |
+| Keyboard covers input | TextInput hidden by keyboard | Use KeyboardAvoidingView with correct behavior |
+| Swipe not working | Gestures unresponsive | Lower velocity threshold to 0.3 |
+| Font rendering issues | Wrong font weight/style | Use Typography component consistently |
 
 ## Debugging Tools
 
@@ -300,13 +541,61 @@ adb install android/app/build/outputs/apk/debug/app-debug.apk
 - **Test orientations**: Portrait & landscape
 - **API compatibility**: 23+ (Android 6.0+)
 
-## Common Android Gotchas
+## Lessons Learned
+
+### What Works Well
+
+1. **Automated Deployment Scripts**
+   - Eliminates Java version issues
+   - Consistent builds across team
+   - Integrated testing and version management
+
+2. **Typography Component Abstraction**
+   - Handles platform differences transparently
+   - Consistent font rendering
+   - Easy to maintain
+
+3. **Platform-Specific Utilities**
+   - Clear separation of concerns
+   - Reusable detection logic
+   - Testable implementations
+
+### Common Pitfalls to Avoid
+
+1. **Don't Assume iOS Patterns Work**
+   - Test every feature on Android
+   - Different gesture thresholds needed
+   - Layout calculations differ
+
+2. **Avoid Complex Animations**
+   - Android performance varies widely
+   - Stick to simple opacity/transform
+   - Test on low-end devices
+
+3. **Memory Management is Critical**
+   - Android kills apps aggressively
+   - Persist state frequently
+   - Clean up resources properly
+
+### Platform-Specific Gotchas
 
 - FlatList vs DraggableFlatList behavior differences
 - Shadow/elevation differences from iOS
 - Back button handling with BackHandler
 - Keyboard avoiding view differences
 - Different animation performance characteristics
+
+### Key Implementation Differences from iOS
+
+| Feature | iOS Approach | Android Approach | Reason |
+|---------|--------------|------------------|--------|
+| Font Weight | fontWeight + fontFamily | Font variants only | Android font rendering engine |
+| Card Layout | calculateCardWidth() | Percentage widths | FlexWrap behavior differences |
+| Swipe Detection | 20% threshold | 10% threshold | Touch sensitivity variance |
+| StatusBar | Automatic | Manual height compensation | System UI differences |
+| Shadows | shadowOffset/shadowOpacity | elevation | Native shadow systems |
+| Modal Scrolling | Works immediately | Needs nestedScrollEnabled | Touch event propagation |
+| Background State | Preserves longer | Kills quickly | Memory management policies |
 
 ## Key Files Reference
 
@@ -315,9 +604,45 @@ adb install android/app/build/outputs/apk/debug/app-debug.apk
 - `src/components/Typography/index.js` - Font handling
 - Styles files with Platform.OS checks
 
+## Migration Guide for Other Projects
+
+### Adapting This Methodology
+
+If implementing these patterns in another React Native project:
+
+1. **Start with Platform Detection**
+   ```javascript
+   // Create a constants file
+   export const PLATFORM = {
+     IS_ANDROID: Platform.OS === 'android',
+     IS_IOS: Platform.OS === 'ios',
+     IS_TABLET: /* your tablet detection logic */
+   };
+   ```
+
+2. **Abstract Font Handling Early**
+   - Create a Typography component
+   - Handle platform differences there
+   - Use consistently throughout app
+
+3. **Establish Build Scripts**
+   - Force Java 17 in scripts
+   - Include automatic testing
+   - Version management automation
+
+4. **Test Device Matrix**
+   - Minimum: One phone, one tablet
+   - Include a low-end device
+   - Test orientation changes
+
+5. **Document Platform Differences**
+   - Keep a running list of gotchas
+   - Document solutions as you find them
+   - Share with team regularly
+
 ## Testing Checklist
 
-Before committing Android changes:
+### Pre-Commit Checklist
 - [ ] Test on Pixel 8 Pro emulator (phone)
 - [ ] Test on Pixel Tablet emulator (tablet)
 - [ ] Check portrait and landscape orientations
@@ -328,9 +653,28 @@ Before committing Android changes:
 - [ ] Test StatusBar appearance
 - [ ] Check card layout alignment (FlexWrap)
 
-## Update Instructions
+## Maintenance Guidelines
 
-When fixing Android issues:
+### When Updating This Document
+
+1. **Add New Issues**
+   - Include error message
+   - Document root cause
+   - Provide tested solution
+   - Add to troubleshooting table
+
+2. **Update Solutions**
+   - Test on multiple devices
+   - Verify no regressions
+   - Update code examples
+   - Note React Native version
+
+3. **Deprecate Old Information**
+   - Mark as deprecated (don't delete)
+   - Note when it changed
+   - Provide migration path
+
+### When Fixing Android Issues
 1. Test on both phone and tablet emulators
 2. Check landscape/portrait orientations
 3. Document any platform-specific code added
@@ -338,10 +682,45 @@ When fixing Android issues:
 5. Verify Java 17 is being used
 6. Test APK generation for releases
 
+## Support Resources
+
+### Internal Resources
+- **Main Documentation:** `/docs/` directory
+- **Deployment Guide:** `/docs/deployment/README.md`
+- **Platform Guides:** `/docs/platform/`
+- **Testing Guide:** `/docs/testing/simple-testing-guide.md`
+
+### External Resources
+- [React Native Docs](https://reactnative.dev/docs/platform-specific-code)
+- [Android Developer Guides](https://developer.android.com/guide)
+- [React Native Performance](https://reactnative.dev/docs/performance)
+
+### Quick Diagnostics
+
+```bash
+# System Check Script
+echo "Java Version:" && java -version 2>&1 | head -1
+echo "Node Version:" && node -v
+echo "NPM Version:" && npm -v
+echo "React Native Version:" && npx react-native --version
+echo "Android Home:" && echo $ANDROID_HOME
+echo "Devices:" && adb devices
+```
+
 ## Verification Checklist
 
+### Pre-Issue Checklist
 Before reporting Android build issues:
-- [ ] Did you use `./scripts/react-native/run-android.sh` instead of `npm run android`?
-- [ ] Does `java -version` show version 17?
-- [ ] Have you tried `./scripts/react-native/build-android.sh clean` first?
-- [ ] Is Java 17 installed at `/opt/homebrew/opt/openjdk@17`?
+- [ ] Ran `./scripts/react-native/run-android.sh` (not `npm run android`)
+- [ ] Verified Java 17 with `java -version`
+- [ ] Tried `./scripts/react-native/build-android.sh clean`
+- [ ] Checked Java 17 path: `/opt/homebrew/opt/openjdk@17`
+- [ ] Reviewed this guide's troubleshooting section
+- [ ] Tested on clean emulator
+- [ ] Checked adb connection with `adb devices`
+
+---
+
+> **Contributing:** Found a new issue or solution? Please update this guide following the maintenance guidelines above. Your discoveries help the entire team and future projects adopting this methodology.
+
+> **Questions?** Check `/docs/` first, then reach out to the team with specific error messages and steps to reproduce.
