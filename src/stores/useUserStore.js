@@ -29,10 +29,9 @@ const storage = {
   getItem: async name => {
     // CRITICAL FIX: If there's a pending write, return that instead of stale storage
     if (pendingWrite && pendingWrite.name === name) {
-
       return pendingWrite.value;
     }
-    
+
     try {
       const value = await AsyncStorage.getItem(name);
       if (!value) return null;
@@ -40,15 +39,15 @@ const storage = {
       try {
         return JSON.parse(value);
       } catch (parseError) {
-//         console.error(
-//           'Error parsing stored value, clearing corrupted data:',
-//           parseError,
-//         );
+        //         console.error(
+        //           'Error parsing stored value, clearing corrupted data:',
+        //           parseError,
+        //         );
         await AsyncStorage.removeItem(name);
         return null;
       }
     } catch (error) {
-//       console.error('Error reading from AsyncStorage:', error);
+      //       console.error('Error reading from AsyncStorage:', error);
       return null;
     }
   },
@@ -67,7 +66,7 @@ const storage = {
             JSON.stringify(pendingWrite.value),
           );
         } catch (error) {
-//           console.error('Error writing to AsyncStorage:', error);
+          //           console.error('Error writing to AsyncStorage:', error);
         }
         pendingWrite = null;
       }
@@ -77,7 +76,7 @@ const storage = {
     try {
       await AsyncStorage.removeItem(name);
     } catch (error) {
-//       console.error('Error removing from AsyncStorage:', error);
+      //       console.error('Error removing from AsyncStorage:', error);
     }
   },
 };
@@ -220,10 +219,10 @@ const useUserStore = create(
                 ) {
                   sanitizedUser.icon = sanitizedUser.emoji;
                 } else {
-//                   console.warn(
-//                     'Invalid user icon in addUser:',
-//                     sanitizedUser.icon,
-//                   );
+                  //                   console.warn(
+                  //                     'Invalid user icon in addUser:',
+                  //                     sanitizedUser.icon,
+                  //                   );
                   sanitizedUser.icon = DEFAULT_USER_ICON;
                 }
               }

@@ -4,10 +4,10 @@
  */
 
 import conflictResolverSingleton from '../conflictResolver';
-import { 
-  testUsers, 
-  testActivities, 
-  testSettings, 
+import {
+  testUsers,
+  testActivities,
+  testSettings,
   testLibrary,
   conflictingData,
 } from './fixtures/syncTestData';
@@ -17,7 +17,7 @@ import {
 
 describe('ConflictResolver', () => {
   let resolver;
-  
+
   beforeEach(() => {
     resolver = conflictResolverSingleton;
     resolver.clearLog();
@@ -76,9 +76,9 @@ describe('ConflictResolver', () => {
         activities: {},
         settings: testSettings,
         library: {},
-        metadata: { 
+        metadata: {
           deviceId: 'device1',
-          fieldTimestamps: { users: 1000, settings: 1000, library: 1000 }
+          fieldTimestamps: { users: 1000, settings: 1000, library: 1000 },
         },
       };
       const remoteState = {
@@ -86,14 +86,14 @@ describe('ConflictResolver', () => {
         activities: {},
         settings: { ...testSettings, theme: 'dark' },
         library: testLibrary,
-        metadata: { 
+        metadata: {
           deviceId: 'device2',
-          fieldTimestamps: { users: 1000, settings: 1000, library: 1000 }
+          fieldTimestamps: { users: 1000, settings: 1000, library: 1000 },
         },
       };
-      
+
       const result = resolver.mergeStates(localState, remoteState);
-      
+
       // Should have both users (merged individually when timestamps are close)
       expect(result.users.user1).toBeDefined();
       expect(result.users.user2).toBeDefined();
@@ -126,29 +126,39 @@ describe('ConflictResolver', () => {
     it('should prefer remote users when timestamp is significantly newer (>3s)', () => {
       const localMeta = { fieldTimestamps: { users: 1000000 } };
       const remoteMeta = { fieldTimestamps: { users: 1005000 } }; // 5 seconds newer
-      
+
       const localUsers = { user1: { name: 'Local User' } };
       const remoteUsers = { user1: { name: 'Remote User' } };
-      
-      const result = resolver.mergeUsers(localUsers, remoteUsers, localMeta, remoteMeta);
+
+      const result = resolver.mergeUsers(
+        localUsers,
+        remoteUsers,
+        localMeta,
+        remoteMeta,
+      );
       expect(result.user1.name).toBe('Remote User');
     });
 
     it('should prefer local users when timestamp is significantly newer (>3s)', () => {
       const localMeta = { fieldTimestamps: { users: 1005000 } }; // 5 seconds newer
       const remoteMeta = { fieldTimestamps: { users: 1000000 } };
-      
+
       const localUsers = { user1: { name: 'Local User' } };
       const remoteUsers = { user1: { name: 'Remote User' } };
-      
-      const result = resolver.mergeUsers(localUsers, remoteUsers, localMeta, remoteMeta);
+
+      const result = resolver.mergeUsers(
+        localUsers,
+        remoteUsers,
+        localMeta,
+        remoteMeta,
+      );
       expect(result.user1.name).toBe('Local User');
     });
 
     it('should merge users individually when timestamps are close', () => {
       const localMeta = { fieldTimestamps: { users: 1000000 } };
       const remoteMeta = { fieldTimestamps: { users: 1001000 } }; // Only 1 second newer
-      
+
       const localUsers = {
         user1: { name: 'Local User 1', lastModified: 1000 },
         user2: { name: 'Local User 2', lastModified: 2000 },
@@ -157,9 +167,14 @@ describe('ConflictResolver', () => {
         user1: { name: 'Remote User 1', lastModified: 2000 },
         user3: { name: 'Remote User 3', lastModified: 1500 },
       };
-      
-      const result = resolver.mergeUsers(localUsers, remoteUsers, localMeta, remoteMeta);
-      
+
+      const result = resolver.mergeUsers(
+        localUsers,
+        remoteUsers,
+        localMeta,
+        remoteMeta,
+      );
+
       // user1: remote has newer lastModified
       expect(result.user1.name).toBe('Remote User 1');
       // user2: only exists locally
@@ -181,8 +196,12 @@ describe('ConflictResolver', () => {
         icon: '💧',
         lastModified: 2000,
       };
-      
-      const result = resolver.mergeIndividualUser(localUser, remoteUser, 'user1');
+
+      const result = resolver.mergeIndividualUser(
+        localUser,
+        remoteUser,
+        'user1',
+      );
       expect(result.name).toBe('Remote Name');
       expect(result.icon).toBe('💧');
     });
@@ -198,8 +217,12 @@ describe('ConflictResolver', () => {
         icon: '💧',
         lastModified: 1000,
       };
-      
-      const result = resolver.mergeIndividualUser(localUser, remoteUser, 'user1');
+
+      const result = resolver.mergeIndividualUser(
+        localUser,
+        remoteUser,
+        'user1',
+      );
       expect(result.name).toBe('Local Name');
       expect(result.icon).toBe('🔥');
     });
@@ -221,8 +244,12 @@ describe('ConflictResolver', () => {
           },
         },
       };
-      
-      const result = resolver.mergeIndividualUser(localUser, remoteUser, 'user1');
+
+      const result = resolver.mergeIndividualUser(
+        localUser,
+        remoteUser,
+        'user1',
+      );
       expect(result.days.today).toBeDefined();
       expect(result.days.tomorrow).toBeDefined();
       expect(result.days.today.activities[0].text).toBe('Local Activity');
@@ -240,8 +267,12 @@ describe('ConflictResolver', () => {
         icon: '💧',
         deviceId: 'bbb',
       };
-      
-      const result = resolver.mergeIndividualUser(localUser, remoteUser, 'user1');
+
+      const result = resolver.mergeIndividualUser(
+        localUser,
+        remoteUser,
+        'user1',
+      );
       // 'aaa' < 'bbb' alphabetically, so local wins
       expect(result.name).toBe('Local Name');
     });
@@ -278,9 +309,9 @@ describe('ConflictResolver', () => {
         today: { activities: [{ id: '3', text: 'Remote Today' }] },
         tomorrow: { activities: [{ id: '4', text: 'Remote Tomorrow' }] },
       };
-      
+
       const result = resolver.mergeUserDays(localDays, remoteDays);
-      
+
       expect(Object.keys(result)).toHaveLength(3);
       expect(result.yesterday).toBeDefined();
       expect(result.today).toBeDefined();
@@ -298,9 +329,12 @@ describe('ConflictResolver', () => {
         { id: '2', text: 'Activity 2 Updated' },
         { id: '3', text: 'Activity 3' },
       ];
-      
-      const result = resolver.mergeActivitiesArray(localActivities, remoteActivities);
-      
+
+      const result = resolver.mergeActivitiesArray(
+        localActivities,
+        remoteActivities,
+      );
+
       expect(result).toHaveLength(3);
       expect(result.find(a => a.id === '1')).toBeDefined();
       expect(result.find(a => a.id === '2')).toBeDefined();
@@ -308,42 +342,45 @@ describe('ConflictResolver', () => {
     });
 
     it('should update activity when remote is newer', () => {
-      const localActivities = [
-        { id: '1', text: 'Old Text', modifiedAt: 1000 },
-      ];
+      const localActivities = [{ id: '1', text: 'Old Text', modifiedAt: 1000 }];
       const remoteActivities = [
         { id: '1', text: 'New Text', modifiedAt: 2000 },
       ];
-      
-      const result = resolver.mergeActivitiesArray(localActivities, remoteActivities);
-      
+
+      const result = resolver.mergeActivitiesArray(
+        localActivities,
+        remoteActivities,
+      );
+
       expect(result[0].text).toBe('New Text');
     });
 
     it('should keep local activity when remote is older', () => {
-      const localActivities = [
-        { id: '1', text: 'New Text', modifiedAt: 2000 },
-      ];
+      const localActivities = [{ id: '1', text: 'New Text', modifiedAt: 2000 }];
       const remoteActivities = [
         { id: '1', text: 'Old Text', modifiedAt: 1000 },
       ];
-      
-      const result = resolver.mergeActivitiesArray(localActivities, remoteActivities);
-      
+
+      const result = resolver.mergeActivitiesArray(
+        localActivities,
+        remoteActivities,
+      );
+
       expect(result[0].text).toBe('New Text');
     });
 
     it('should handle activities without timestamps', () => {
-      const localActivities = [
-        { id: '1', text: 'Local' },
-      ];
+      const localActivities = [{ id: '1', text: 'Local' }];
       const remoteActivities = [
         { id: '1', text: 'Remote' },
         { id: '2', text: 'New' },
       ];
-      
-      const result = resolver.mergeActivitiesArray(localActivities, remoteActivities);
-      
+
+      const result = resolver.mergeActivitiesArray(
+        localActivities,
+        remoteActivities,
+      );
+
       expect(result).toHaveLength(2);
       expect(result.find(a => a.id === '2').text).toBe('New');
     });
@@ -358,22 +395,38 @@ describe('ConflictResolver', () => {
     it('should use LWW based on fieldTimestamps', () => {
       const localSettings = { theme: 'light', sound: true };
       const remoteSettings = { theme: 'dark', sound: false };
-      
+
       const localMeta = { fieldTimestamps: { settings: 1000 } };
       const remoteMeta = { fieldTimestamps: { settings: 2000 } };
-      
-      const result = resolver.mergeSettings(localSettings, remoteSettings, localMeta, remoteMeta);
+
+      const result = resolver.mergeSettings(
+        localSettings,
+        remoteSettings,
+        localMeta,
+        remoteMeta,
+      );
       expect(result).toEqual(remoteSettings);
     });
 
     it('should use tiebreaker when timestamps are equal', () => {
       const localSettings = { theme: 'light' };
       const remoteSettings = { theme: 'dark' };
-      
-      const localMeta = { fieldTimestamps: { settings: 1000 }, deviceId: 'aaa' };
-      const remoteMeta = { fieldTimestamps: { settings: 1000 }, deviceId: 'bbb' };
-      
-      const result = resolver.mergeSettings(localSettings, remoteSettings, localMeta, remoteMeta);
+
+      const localMeta = {
+        fieldTimestamps: { settings: 1000 },
+        deviceId: 'aaa',
+      };
+      const remoteMeta = {
+        fieldTimestamps: { settings: 1000 },
+        deviceId: 'bbb',
+      };
+
+      const result = resolver.mergeSettings(
+        localSettings,
+        remoteSettings,
+        localMeta,
+        remoteMeta,
+      );
       // 'aaa' < 'bbb', so local wins
       expect(result.theme).toBe('light');
     });
@@ -387,16 +440,12 @@ describe('ConflictResolver', () => {
 
     it('should merge categories additively', () => {
       const localLibrary = {
-        categories: [
-          { id: 'cat1', name: 'Category 1' },
-        ],
+        categories: [{ id: 'cat1', name: 'Category 1' }],
       };
       const remoteLibrary = {
-        categories: [
-          { id: 'cat2', name: 'Category 2' },
-        ],
+        categories: [{ id: 'cat2', name: 'Category 2' }],
       };
-      
+
       const result = resolver.mergeLibrary(localLibrary, remoteLibrary, {}, {});
       expect(result.categories).toHaveLength(2);
     });
@@ -408,7 +457,7 @@ describe('ConflictResolver', () => {
       const remoteLibrary = {
         userAddedActivityIds: ['id2', 'id3'],
       };
-      
+
       const result = resolver.mergeLibrary(localLibrary, remoteLibrary, {}, {});
       expect(result.userAddedActivityIds).toEqual(['id1', 'id2', 'id3']);
     });
@@ -422,11 +471,16 @@ describe('ConflictResolver', () => {
         customProp: 'remote',
         categories: [],
       };
-      
+
       const localMeta = { fieldTimestamps: { library: 1000 } };
       const remoteMeta = { fieldTimestamps: { library: 2000 } };
-      
-      const result = resolver.mergeLibrary(localLibrary, remoteLibrary, localMeta, remoteMeta);
+
+      const result = resolver.mergeLibrary(
+        localLibrary,
+        remoteLibrary,
+        localMeta,
+        remoteMeta,
+      );
       expect(result.customProp).toBe('remote');
     });
   });
@@ -441,7 +495,7 @@ describe('ConflictResolver', () => {
         deviceId: 'device2',
         fieldTimestamps: { users: 1500, settings: 1500 },
       };
-      
+
       const result = resolver.mergeMetadata(localMeta, remoteMeta);
       expect(result.lastModified).toBeDefined();
       expect(result.lastMerged).toBeDefined();
@@ -455,7 +509,7 @@ describe('ConflictResolver', () => {
       resolver.enableLogging = true;
       resolver.log('Test log 1');
       resolver.log('Test log 2');
-      
+
       const result = resolver.mergeMetadata({}, {});
       expect(result.mergeLog).toBeDefined();
       expect(Array.isArray(result.mergeLog)).toBe(true);
@@ -483,7 +537,9 @@ describe('ConflictResolver', () => {
     it('should log when enableLogging is true', () => {
       resolver.enableLogging = true;
       resolver.log('Test message');
-      expect(resolver.mergeLog.some(log => log.message === 'Test message')).toBe(true);
+      expect(
+        resolver.mergeLog.some(log => log.message === 'Test message'),
+      ).toBe(true);
     });
 
     it('should not log when enableLogging is false', () => {
@@ -507,10 +563,10 @@ describe('ConflictResolver', () => {
         library: {},
         metadata: {},
       };
-      
+
       resolver.enableLogging = true;
       resolver.mergeStates(localState, remoteState);
-      
+
       expect(resolver.mergeLog.length).toBeGreaterThan(0);
     });
   });
@@ -527,7 +583,7 @@ describe('ConflictResolver', () => {
         activities: 'string',
         library: 123,
       };
-      
+
       expect(() => {
         resolver.mergeStates(malformedLocal, malformedRemote);
       }).not.toThrow();
@@ -536,14 +592,14 @@ describe('ConflictResolver', () => {
     it('should handle circular references', () => {
       const circular = {};
       circular.self = circular;
-      
+
       const localState = {
         users: { user1: circular },
       };
       const remoteState = {
         users: { user1: { name: 'Normal' } },
       };
-      
+
       expect(() => {
         resolver.mergeStates(localState, remoteState);
       }).not.toThrow();
@@ -558,7 +614,7 @@ describe('ConflictResolver', () => {
         users: {},
         activities: {},
       };
-      
+
       // Create 1000 users and activities
       for (let i = 0; i < 1000; i++) {
         largeLocal.users[`user${i}`] = { name: `Local User ${i}` };
@@ -566,11 +622,11 @@ describe('ConflictResolver', () => {
         largeLocal.activities[`act${i}`] = { text: `Local Activity ${i}` };
         largeRemote.activities[`act${i}`] = { text: `Remote Activity ${i}` };
       }
-      
+
       const startTime = Date.now();
       const result = resolver.mergeStates(largeLocal, largeRemote);
       const endTime = Date.now();
-      
+
       expect(endTime - startTime).toBeLessThan(1000); // Should complete within 1 second
       expect(Object.keys(result.users)).toHaveLength(1000);
       expect(Object.keys(result.activities)).toHaveLength(1000);
@@ -588,7 +644,12 @@ describe('ConflictResolver', () => {
             days: {
               today: {
                 activities: [
-                  { id: '1', text: 'Morning routine', completed: true, modifiedAt: 1100 },
+                  {
+                    id: '1',
+                    text: 'Morning routine',
+                    completed: true,
+                    modifiedAt: 1100,
+                  },
                 ],
               },
             },
@@ -596,7 +657,7 @@ describe('ConflictResolver', () => {
         },
         metadata: { deviceId: 'phone', fieldTimestamps: { users: 1000 } },
       };
-      
+
       const remote = {
         users: {
           user1: {
@@ -606,8 +667,18 @@ describe('ConflictResolver', () => {
             days: {
               today: {
                 activities: [
-                  { id: '1', text: 'Morning routine', completed: false, modifiedAt: 900 },
-                  { id: '2', text: 'Exercise', completed: false, modifiedAt: 1200 },
+                  {
+                    id: '1',
+                    text: 'Morning routine',
+                    completed: false,
+                    modifiedAt: 900,
+                  },
+                  {
+                    id: '2',
+                    text: 'Exercise',
+                    completed: false,
+                    modifiedAt: 1200,
+                  },
                 ],
               },
             },
@@ -615,13 +686,13 @@ describe('ConflictResolver', () => {
         },
         metadata: { deviceId: 'tablet', fieldTimestamps: { users: 1100 } },
       };
-      
+
       const result = resolver.mergeStates(local, remote);
-      
+
       // User data should use remote (newer lastModified)
       expect(result.users.user1.name).toBe('Alice Smith');
       expect(result.users.user1.icon).toBe('🌟');
-      
+
       // Activities should be merged
       const activities = result.users.user1.days.today.activities;
       expect(activities).toHaveLength(2);
@@ -639,7 +710,7 @@ describe('ConflictResolver', () => {
         },
         metadata: { fieldTimestamps: { users: 1000 } },
       };
-      
+
       const remote = {
         users: {
           user1: { name: 'User 1' },
@@ -647,19 +718,19 @@ describe('ConflictResolver', () => {
         },
         metadata: { fieldTimestamps: { users: 2000 } },
       };
-      
+
       const result = resolver.mergeStates(local, remote);
-      
+
       // When timestamps differ significantly, prefer the newer one
       // In this case, remote is 1 second newer, not enough to override
       // So we do individual merge and keep both users
       expect(result.users.user1).toBeDefined();
       expect(result.users.user2).toBeDefined();
-      
+
       // But if remote is >3 seconds newer
       remote.metadata.fieldTimestamps.users = 5000;
       const result2 = resolver.mergeStates(local, remote);
-      
+
       // Should only have user1 (remote wins entirely)
       expect(result2.users.user1).toBeDefined();
       expect(result2.users.user2).toBeUndefined();

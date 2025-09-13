@@ -32,7 +32,38 @@ declare global {
     __syncDebugInfo?: any;
     __syncJustJoined?: boolean;
     __syncJoinedAt?: number;
-    
+
+    // Sync data handling
+    __earlySyncData?: {
+      inviteCode: string;
+      recoveryPhrase: string;
+      hash: string;
+    };
+    syncInviteDataImmediate?: {
+      inviteCode: string;
+      recoveryPhrase: string;
+      hash?: string;
+      hashLength?: number;
+      timestamp?: number;
+      usedInitialHash?: boolean;
+      capturedAt?: string;
+    };
+    syncInviteData?: {
+      inviteCode: string;
+      recoveryPhrase: string;
+    };
+    syncInviteMode?: boolean;
+    debugSyncParsing?: any;
+    __initialHash?: string;
+
+    // Share data handling
+    shareDataImmediate?: {
+      data?: any;
+      timestamp?: number;
+      shareId?: string;
+      encryptionKey?: string;
+    };
+
     // Startup tracking
     __stackMapStartupLogged?: boolean;
   }

@@ -84,7 +84,8 @@ const ReorderModal = ({
                   const position = index + 1;
                   const isCurrentPosition =
                     position === reorderingActivity?.currentPosition;
-                  const isSelectedPosition = position === parseInt(newPosition, 10);
+                  const isSelectedPosition =
+                    position === parseInt(newPosition, 10);
 
                   return (
                     <TouchableOpacity

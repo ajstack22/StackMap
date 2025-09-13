@@ -26,7 +26,7 @@ export const DebugButton = ({ onPress, platform }) => (
   </TouchableOpacity>
 );
 
-// Debug button that was in renderUserTypeStep (lines 826-842) 
+// Debug button that was in renderUserTypeStep (lines 826-842)
 export const UserTypeDebugButton = ({ onPress, platform }) => (
   <TouchableOpacity
     style={{
@@ -47,9 +47,12 @@ export const UserTypeDebugButton = ({ onPress, platform }) => (
 );
 
 // Sync Debugger Modal that was at lines 1382-1394
-export const SyncDebuggerModal = ({ showSyncDebugger, setShowSyncDebugger }) => {
+export const SyncDebuggerModal = ({
+  showSyncDebugger,
+  setShowSyncDebugger,
+}) => {
   if (!showSyncDebugger) return null;
-  
+
   return (
     <Modal
       animationType="slide"

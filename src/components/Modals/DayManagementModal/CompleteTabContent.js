@@ -211,7 +211,12 @@ const CompleteTabContent = ({
     category,
   ) => {
     return (
-      <View style={[styles.completeSectionWrapper, useGridLayout && { width: '48%' }]}>
+      <View
+        style={[
+          styles.completeSectionWrapper,
+          useGridLayout && { width: '48%' },
+        ]}
+      >
         <View style={styles.completeSectionInner}>
           <View style={styles.completeSectionHeader}>
             <View
@@ -259,44 +264,42 @@ const CompleteTabContent = ({
         <View style={styles.contentSection}>
           {/* Header Panel - Using formPanel style to match Plan tab */}
           <View style={styles.formPanel}>
-              <View style={styles.standardTabContainer}>
-                <Icon name="check-circle" size={48} color={theme.primary} />
-                <Text style={styles.standardTabTitle}>Complete Day</Text>
-                <Text style={styles.standardTabDescription}>
-                  {hasTomorrowActivities
-                    ? 'Review and organize your activities'
-                    : 'Complete today and clean up your day'}
-                </Text>
-                <Text
-                  style={[
-                    styles.completeExplanationSubtext,
-                    { textAlign: 'center' },
-                  ]}
-                >
-                  Tap activities to move them between sections
-                </Text>
+            <View style={styles.standardTabContainer}>
+              <Icon name="check-circle" size={48} color={theme.primary} />
+              <Text style={styles.standardTabTitle}>Complete Day</Text>
+              <Text style={styles.standardTabDescription}>
+                {hasTomorrowActivities
+                  ? 'Review and organize your activities'
+                  : 'Complete today and clean up your day'}
+              </Text>
+              <Text
+                style={[
+                  styles.completeExplanationSubtext,
+                  { textAlign: 'center' },
+                ]}
+              >
+                Tap activities to move them between sections
+              </Text>
 
-                {/* Complete Day Button */}
-                <TouchableOpacity
-                  style={[
-                    styles.completeButton,
-                    { backgroundColor: theme.primary, marginTop: 20 },
-                  ]}
-                  onPress={handleCompleteDay}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator size="small" color="white" />
-                  ) : (
-                    <>
-                      <Icon name="check-circle" size={20} color="white" />
-                      <Text style={styles.completeButtonText}>
-                        Complete Day
-                      </Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-              </View>
+              {/* Complete Day Button */}
+              <TouchableOpacity
+                style={[
+                  styles.completeButton,
+                  { backgroundColor: theme.primary, marginTop: 20 },
+                ]}
+                onPress={handleCompleteDay}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <>
+                    <Icon name="check-circle" size={20} color="white" />
+                    <Text style={styles.completeButtonText}>Complete Day</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Activities Sections Panel - Also using formPanel for consistency */}

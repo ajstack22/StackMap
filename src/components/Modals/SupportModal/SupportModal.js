@@ -20,9 +20,9 @@ const TeamPhoto = require('../../../../image_library/StackMapTeam.jpg');
 
 // Debug log for web
 if (Platform.OS === 'web') {
-
   // If it's an object with default property (ES6 module)
-  if (TeamPhoto && typeof TeamPhoto === 'object' && TeamPhoto.default) {}
+  if (TeamPhoto && typeof TeamPhoto === 'object' && TeamPhoto.default) {
+  }
 }
 
 const SupportModal = ({ visible, onClose, insets, onSyncDiagnostic }) => {
@@ -48,7 +48,11 @@ const SupportModal = ({ visible, onClose, insets, onSyncDiagnostic }) => {
           <View style={styles.photoContainer}>
             {Platform.OS === 'web' ? (
               <img
-                src={typeof TeamPhoto === 'string' ? TeamPhoto : (TeamPhoto?.default || TeamPhoto)}
+                src={
+                  typeof TeamPhoto === 'string'
+                    ? TeamPhoto
+                    : TeamPhoto?.default || TeamPhoto
+                }
                 style={{
                   width: '100%',
                   height: 300,
@@ -56,9 +60,8 @@ const SupportModal = ({ visible, onClose, insets, onSyncDiagnostic }) => {
                   objectFit: 'cover',
                 }}
                 alt="The StackMap Team"
-                onError={(e) => {
-//                   console.error('[SupportModal] Image failed to load:', e);
-
+                onError={e => {
+                  //                   console.error('[SupportModal] Image failed to load:', e);
                 }}
                 onLoad={() => {}}
               />
@@ -139,14 +142,14 @@ const SupportModal = ({ visible, onClose, insets, onSyncDiagnostic }) => {
 
       {/* Debug Sync Button - available in qual for testing */}
       {onSyncDiagnostic && (
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={onSyncDiagnostic}
           style={{
             backgroundColor: '#FF6B6B',
             padding: 10,
             margin: 20,
             borderRadius: 8,
-            alignItems: 'center'
+            alignItems: 'center',
           }}
         >
           <Text style={{ color: 'white', fontWeight: 'bold' }}>

@@ -71,7 +71,7 @@ class EncryptionService {
     }
 
     const saltStr = encodeBase64(saltBytes);
-    
+
     // Check in-memory cache first (fastest)
     const memoryCacheKey = `${recoveryPhrase}_${saltStr}`;
     if (this.keyCache[memoryCacheKey]) {
@@ -80,7 +80,10 @@ class EncryptionService {
     }
 
     // Check AsyncStorage cache second (persistent but slower)
-    const storageCacheKey = `@derived_key_${recoveryPhrase.substring(0, 8)}_${saltStr.substring(0, 8)}`;
+    const storageCacheKey = `@derived_key_${recoveryPhrase.substring(
+      0,
+      8,
+    )}_${saltStr.substring(0, 8)}`;
     try {
       const cachedKey = await AsyncStorage.getItem(storageCacheKey);
       if (cachedKey) {
@@ -139,11 +142,11 @@ class EncryptionService {
       key: derivedKey,
       salt: saltStr,
     };
-    
+
     // Store in memory cache (instant access in same session)
     this.keyCache[memoryCacheKey] = result;
     console.log('[Encryption] Stored key in memory cache');
-    
+
     // Also store in AsyncStorage for persistence (helps on next app launch)
     try {
       await AsyncStorage.setItem(storageCacheKey, encodeBase64(derivedKey));
@@ -151,7 +154,7 @@ class EncryptionService {
     } catch (error) {
       console.log('[Encryption] Error storing key in persistent cache:', error);
     }
-    
+
     return result;
   }
 
@@ -227,8 +230,11 @@ class EncryptionService {
     console.log('[ENCRYPTION] Metadata string:', metadataStr);
     const metadataBytes = encodeUTF8(metadataStr);
     console.log('[ENCRYPTION] Metadata bytes length:', metadataBytes.length);
-    console.log('[ENCRYPTION] First 10 metadata bytes:', Array.from(metadataBytes.slice(0, 10)));
-    
+    console.log(
+      '[ENCRYPTION] First 10 metadata bytes:',
+      Array.from(metadataBytes.slice(0, 10)),
+    );
+
     // Use ArrayBuffer directly for iOS compatibility
     const metadataLengthBuffer = new ArrayBuffer(4);
     const metadataLengthView = new DataView(metadataLengthBuffer);
@@ -269,11 +275,11 @@ class EncryptionService {
         console.error('[DECRYPTION] Invalid input type:', typeof encryptedData);
         throw new Error(`Expected string but got ${typeof encryptedData}`);
       }
-      
+
       if (!encryptedData) {
         throw new Error('Empty encrypted data');
       }
-      
+
       const combined = decodeBase64(encryptedData);
 
       // Extract nonce and encrypted data
@@ -334,7 +340,9 @@ class EncryptionService {
           const decompressedStr = decodeUTF8(decompressed);
           return JSON.parse(decompressedStr);
         } catch (decompressionError) {
-          throw new Error('Failed to decrypt data - invalid format or corrupted data');
+          throw new Error(
+            'Failed to decrypt data - invalid format or corrupted data',
+          );
         }
       }
     } catch (error) {
@@ -353,24 +361,28 @@ class EncryptionService {
       const key = syncId ? `@sync_phrase_${syncId}` : '@sync_phrase';
       // Storing recovery phrase
       await AsyncStorage.setItem(key, phrase);
-      
+
       // Verify it was stored
       const verify = await AsyncStorage.getItem(key);
       // Verification complete
-      
+
       if (!verify) {
         const errorMsg = `[CRITICAL] Recovery phrase storage verification failed! Key: ${key}`;
         console.error(errorMsg);
         // In production, show a visible warning
         if (!__DEV__) {
-          console.warn('⚠️ IMPORTANT: Recovery phrase may not persist after page refresh. Please copy it immediately!');
+          console.warn(
+            '⚠️ IMPORTANT: Recovery phrase may not persist after page refresh. Please copy it immediately!',
+          );
         }
       }
     } catch (error) {
       console.error('[Encryption TS] Failed to store recovery phrase:', error);
       // In production, show a visible warning
       if (!__DEV__) {
-        console.warn('⚠️ CRITICAL ERROR: Could not save recovery phrase. Copy it now before refreshing!');
+        console.warn(
+          '⚠️ CRITICAL ERROR: Could not save recovery phrase. Copy it now before refreshing!',
+        );
       }
       throw error;
     }
@@ -414,21 +426,26 @@ class EncryptionService {
   async getDeviceId(): Promise<string> {
     try {
       let deviceId = await AsyncStorage.getItem('device_id');
-      
+
       // Check if existing device ID is in the wrong format (not 32 hex chars)
       if (deviceId && !/^[a-f0-9]{32}$/.test(deviceId)) {
-        if (__DEV__) console.log('[Encryption] Clearing invalid device_id format:', deviceId);
+        if (__DEV__)
+          console.log(
+            '[Encryption] Clearing invalid device_id format:',
+            deviceId,
+          );
         await AsyncStorage.removeItem('device_id');
         deviceId = null;
       }
-      
+
       if (!deviceId) {
         // Generate a new device ID as 32-char hex string (matching server validation)
         const randomBytes = nacl.randomBytes(16);
         deviceId = Array.from(randomBytes)
           .map(byte => byte.toString(16).padStart(2, '0'))
           .join('');
-        if (__DEV__) console.log('[Encryption] Generated new device_id:', deviceId);
+        if (__DEV__)
+          console.log('[Encryption] Generated new device_id:', deviceId);
         await AsyncStorage.setItem('device_id', deviceId);
       }
       return deviceId;

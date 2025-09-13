@@ -184,22 +184,34 @@ const LibraryTabContent = ({
                 `Added: ${activity.icon || ''} ${activity.text || ''}`,
               );
             }}
-            style={[styles.iconButton, {
-              backgroundColor: theme.primary,
-              borderRadius: 12,
-              width: 24,
-              height: 24,
-              padding: 0,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }]}
+            style={[
+              styles.iconButton,
+              {
+                backgroundColor: theme.primary,
+                borderRadius: 12,
+                width: 24,
+                height: 24,
+                padding: 0,
+                alignItems: 'center',
+                justifyContent: 'center',
+              },
+            ]}
           >
-            <Text style={{ 
-              color: 'white', 
-              fontSize: 18, 
-              fontWeight: 'bold',
-              marginTop: Platform.OS === 'ios' ? -2 : Platform.OS === 'android' ? 1 : 0,
-            }}>+</Text>
+            <Text
+              style={{
+                color: 'white',
+                fontSize: 18,
+                fontWeight: 'bold',
+                marginTop:
+                  Platform.OS === 'ios'
+                    ? -2
+                    : Platform.OS === 'android'
+                    ? 1
+                    : 0,
+              }}
+            >
+              +
+            </Text>
           </TouchableOpacity>
           {!isSystemProvided && (
             <TouchableOpacity
@@ -211,22 +223,34 @@ const LibraryTabContent = ({
                 });
                 setShowDeleteConfirm(true);
               }}
-              style={[styles.iconButton, {
-                backgroundColor: '#e53e3e',
-                borderRadius: 12,
-                width: 24,
-                height: 24,
-                padding: 0,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }]}
+              style={[
+                styles.iconButton,
+                {
+                  backgroundColor: '#e53e3e',
+                  borderRadius: 12,
+                  width: 24,
+                  height: 24,
+                  padding: 0,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                },
+              ]}
             >
-              <Text style={{ 
-                color: 'white', 
-                fontSize: 20, 
-                fontWeight: 'bold',
-                marginTop: Platform.OS === 'ios' ? -3 : Platform.OS === 'android' ? 1 : 0,
-              }}>×</Text>
+              <Text
+                style={{
+                  color: 'white',
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  marginTop:
+                    Platform.OS === 'ios'
+                      ? -3
+                      : Platform.OS === 'android'
+                      ? 1
+                      : 0,
+                }}
+              >
+                ×
+              </Text>
             </TouchableOpacity>
           )}
         </View>

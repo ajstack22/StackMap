@@ -123,7 +123,7 @@ const TurboModuleRegistry = {
     if (!module) {
       // Instead of throwing, return a mock module
       console.warn(
-        `[TurboModuleRegistry] Module ${name} not found, returning mock`
+        `[TurboModuleRegistry] Module ${name} not found, returning mock`,
       );
       return {
         getConstants: () => ({}),

@@ -15,7 +15,7 @@ const storage = {
       // Returning pending write instead of stale storage
       return pendingWrite.value;
     }
-    
+
     try {
       const value = await AsyncStorage.getItem(name);
       if (!value) return null;
@@ -88,18 +88,17 @@ const useSettingsStore = create(
         setCurrentTheme: theme => {
           // Import THEMES if needed (lazy import to avoid circular dependency)
           const { THEMES } = require('../constants');
-          
+
           // Validate the theme before setting
           if (!theme || !THEMES[theme]) {
             // Silently default to stackBlue without logging
             set({ currentTheme: 'stackBlue' }, false, 'setCurrentTheme');
             return;
           }
-          
+
           set({ currentTheme: theme }, false, 'setCurrentTheme');
         },
         setBannerPosition: position => {
-
           set({ bannerPosition: position }, false, 'setBannerPosition');
         },
         setSoundEnabled: enabled =>

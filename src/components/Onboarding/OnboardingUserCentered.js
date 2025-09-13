@@ -25,12 +25,7 @@ import minimalSync from '../../services/sync/minimalSyncService';
 import encryptionService from '../../services/sync/encryptionService';
 import { BUILD_VERSION } from '../../utils/version';
 import { useAppStore, useUserStore } from '../../stores';
-import {
-  TYPOGRAPHY,
-  SPACING,
-  RADIUS,
-  THEMES,
-} from '../../constants';
+import { TYPOGRAPHY, SPACING, RADIUS, THEMES } from '../../constants';
 // Test components removed - no longer needed
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -58,17 +53,19 @@ const OnboardingUserCentered = ({
   // Check for sync invite data to determine initial step
   const getInitialStep = () => {
     if (Platform.OS === 'web' && window.syncInviteData) {
-      return 'syncImport';  // Go directly to sync import for invite URLs
+      return 'syncImport'; // Go directly to sync import for invite URLs
     }
     if (syncSetupPhrase) {
-      return 'syncImport';  // Also for legacy sync URLs
+      return 'syncImport'; // Also for legacy sync URLs
     }
     return 'welcome';
   };
-  
+
   // Navigation state
   const [currentStep, setCurrentStep] = useState(getInitialStep());
-  const [navigationHistory, setNavigationHistory] = useState([getInitialStep()]);
+  const [navigationHistory, setNavigationHistory] = useState([
+    getInitialStep(),
+  ]);
 
   // Get initial journey type for sync invites
   const getInitialJourney = () => {
@@ -79,14 +76,14 @@ const OnboardingUserCentered = ({
       syncEnabled: false,
       pinEnabled: false,
     };
-    
+
     if ((Platform.OS === 'web' && window.syncInviteData) || syncSetupPhrase) {
-      baseJourney.journeyType = 'existing';  // Set as existing user for sync invites
+      baseJourney.journeyType = 'existing'; // Set as existing user for sync invites
     }
-    
+
     return baseJourney;
   };
-  
+
   // User choices state
   const [userJourney, setUserJourney] = useState(getInitialJourney());
 
@@ -102,7 +99,7 @@ const OnboardingUserCentered = ({
   const getInitialRecoveryPhrase = () => {
     // Check both immediate and regular sync invite data
     const syncData = window.syncInviteDataImmediate || window.syncInviteData;
-    
+
     if (Platform.OS === 'web' && syncData) {
       if (syncData.inviteCode && syncData.recoveryPhrase) {
         const combined = `${syncData.inviteCode}#${syncData.recoveryPhrase}`;
@@ -116,9 +113,11 @@ const OnboardingUserCentered = ({
     }
     return '';
   };
-  
+
   // Sync state
-  const [recoveryPhrase, setRecoveryPhrase] = useState(getInitialRecoveryPhrase());
+  const [recoveryPhrase, setRecoveryPhrase] = useState(
+    getInitialRecoveryPhrase(),
+  );
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncError, setSyncError] = useState('');
   const [syncPreviewData, setSyncPreviewData] = useState(null);
@@ -133,10 +132,14 @@ const OnboardingUserCentered = ({
 
   // Quick emoji options
   const quickEmojis = [DEFAULT_USER_ICON, '😎', '🎯', '⭐', '🚀'];
-  
+
   // Update recovery phrase when sync invite data is available
   useEffect(() => {
-    if (Platform.OS === 'web' && window.syncInviteData && currentStep === 'syncImport') {
+    if (
+      Platform.OS === 'web' &&
+      window.syncInviteData &&
+      currentStep === 'syncImport'
+    ) {
       const newPhrase = getInitialRecoveryPhrase();
       if (newPhrase && newPhrase !== recoveryPhrase) {
         setRecoveryPhrase(newPhrase);
@@ -146,9 +149,16 @@ const OnboardingUserCentered = ({
 
   // Clear the sync URL path to prevent issues with bookmarking
   useEffect(() => {
-    if (Platform.OS === 'web' && currentStep === 'syncImport' && window.location.pathname.includes('/sync/')) {
+    if (
+      Platform.OS === 'web' &&
+      currentStep === 'syncImport' &&
+      window.location.pathname.includes('/sync/')
+    ) {
       // Replace the URL without the /sync/ part after we've captured the data
-      const newPath = window.location.pathname.replace(/\/sync\/[^\/]+\/?/, '/');
+      const newPath = window.location.pathname.replace(
+        /\/sync\/[^\/]+\/?/,
+        '/',
+      );
       window.history.replaceState(null, document.title, newPath);
     }
   }, [currentStep]); // Run when entering sync import step
@@ -163,8 +173,15 @@ const OnboardingUserCentered = ({
   // Auto-trigger sync preview for invite URLs with full data
   useEffect(() => {
     // Only auto-trigger if we're on the sync import step with a complete invite
-    if (currentStep === 'syncImport' && Platform.OS === 'web' && window.syncInviteData) {
-      if (window.syncInviteData.inviteCode && window.syncInviteData.recoveryPhrase) {
+    if (
+      currentStep === 'syncImport' &&
+      Platform.OS === 'web' &&
+      window.syncInviteData
+    ) {
+      if (
+        window.syncInviteData.inviteCode &&
+        window.syncInviteData.recoveryPhrase
+      ) {
         console.log('[Onboarding] Auto-triggering sync preview for invite URL');
         // Auto-trigger the sync preview after a brief delay
         setTimeout(() => {
@@ -173,12 +190,20 @@ const OnboardingUserCentered = ({
       }
     }
   }, [currentStep]); // Only trigger on initial mount when currentStep is set
-  
+
   // Auto-import sync data when preview is fetched from invite URL
   useEffect(() => {
     // Check if we have preview data and are coming from an invite URL with full data
-    if (syncPreviewData && currentStep === 'syncImport' && Platform.OS === 'web' && window.syncInviteData) {
-      if (window.syncInviteData.inviteCode && window.syncInviteData.recoveryPhrase) {
+    if (
+      syncPreviewData &&
+      currentStep === 'syncImport' &&
+      Platform.OS === 'web' &&
+      window.syncInviteData
+    ) {
+      if (
+        window.syncInviteData.inviteCode &&
+        window.syncInviteData.recoveryPhrase
+      ) {
         console.log('[Onboarding] Auto-importing sync data from invite URL');
         // Auto-trigger the import after a brief delay for UI to update
         setTimeout(() => {
@@ -198,7 +223,7 @@ const OnboardingUserCentered = ({
   }, []);
 
   // Step transition animation - optimized for iOS performance
-  const animateStepTransition = (nextStep) => {
+  const animateStepTransition = nextStep => {
     // On iOS, minimize animation overhead
     if (Platform.OS === 'ios') {
       // Simple fade without full transparency
@@ -223,7 +248,7 @@ const OnboardingUserCentered = ({
         }),
       ]).start();
     }
-    
+
     setNavigationHistory(prev => [...prev, nextStep]);
     setCurrentStep(nextStep);
   };
@@ -280,17 +305,17 @@ const OnboardingUserCentered = ({
   const fetchSyncPreview = async () => {
     console.log('[OnboardingSync] ===== START fetchSyncPreview =====');
     console.log('[OnboardingSync] Raw input:', recoveryPhrase);
-    
+
     setSyncLoading(true);
     setSyncError('');
-    
+
     try {
       // Parse input to handle both formats
       let inviteCode = null;
       let phraseToUse = '';
-      
+
       const trimmed = recoveryPhrase.trim();
-      
+
       if (trimmed.includes('#')) {
         // New format: ABCD-1234#recoveryPhrase
         const [code, phrase] = trimmed.split('#');
@@ -299,37 +324,43 @@ const OnboardingUserCentered = ({
         console.log('[OnboardingSync] Using invite code format:', inviteCode);
       } else if (/^[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(trimmed)) {
         // Just an invite code without recovery phrase
-        throw new Error('Please enter the complete sync code including the recovery key after #');
+        throw new Error(
+          'Please enter the complete sync code including the recovery key after #',
+        );
       } else {
         // Legacy format - just the recovery phrase
         phraseToUse = trimmed.replace(/[\s-]+/g, '');
         console.log('[OnboardingSync] Using legacy format');
       }
-      
+
       console.log('[OnboardingSync] Processed phrase:', phraseToUse);
 
       if (phraseToUse.length !== 32 || !/^[a-f0-9]+$/i.test(phraseToUse)) {
-        throw new Error('Invalid recovery phrase format - must be 32 characters');
+        throw new Error(
+          'Invalid recovery phrase format - must be 32 characters',
+        );
       }
-      
+
       // If we have an invite code, validate it first
       if (inviteCode) {
         console.log('[OnboardingSync] Validating invite code:', inviteCode);
         const validateResult = await minimalSync.validateInviteCode(inviteCode);
         if (!validateResult.success) {
-          throw new Error(validateResult.error || 'Invalid or expired invite code');
+          throw new Error(
+            validateResult.error || 'Invalid or expired invite code',
+          );
         }
         console.log('[OnboardingSync] Invite code validated successfully');
       }
 
       console.log('[OnboardingSync] Initializing sync for preview...');
-      
+
       // Ensure minimalSync is ready (device ID initialized)
       if (!minimalSync.deviceId) {
         console.log('[OnboardingSync] Waiting for device ID...');
         await minimalSync.initDeviceId();
       }
-      
+
       let syncId;
       try {
         syncId = await minimalSync.generateSyncId(phraseToUse);
@@ -338,36 +369,39 @@ const OnboardingUserCentered = ({
         console.error('[OnboardingSync] Error generating sync ID:', genError);
         throw new Error(`Failed to generate sync ID: ${genError.message}`);
       }
-      
+
       // CRITICAL: Set the syncId on minimalSync BEFORE initializeEncryption (like syncService does)
       // This ensures syncId is available even if there's an issue during initialization
       minimalSync.syncId = syncId;
-      
+
       // Initialize encryption properly for onboarding preview
       await minimalSync.initializeEncryption(phraseToUse, syncId);
-      console.log('[OnboardingSync] Encryption initialized with sync ID:', syncId);
+      console.log(
+        '[OnboardingSync] Encryption initialized with sync ID:',
+        syncId,
+      );
 
       // Try pulling with retries for race conditions
       let pullResult = null;
       let attempts = 0;
       const maxAttempts = 3;
-      
+
       while (!pullResult?.data && attempts < maxAttempts) {
         attempts++;
         console.log(`[OnboardingSync] Pull attempt ${attempts}/${maxAttempts}`);
-        
+
         // Force full pull for onboarding preview (as per SYNC_SYSTEM_COMPLETE.md)
         pullResult = await minimalSync.pullData(true);
-        
+
         // The new minimalSync returns { success: boolean, data: decryptedData }
         if (!pullResult || !pullResult.success || !pullResult.data) {
           console.warn(`[OnboardingSync] Pull attempt ${attempts} returned:`, {
             hasResult: !!pullResult,
             success: pullResult?.success,
-            hasData: !!(pullResult?.data),
-            error: pullResult?.error
+            hasData: !!pullResult?.data,
+            error: pullResult?.error,
           });
-          
+
           if (attempts < maxAttempts) {
             // Wait before retry to allow other devices to complete push
             console.log('[OnboardingSync] Waiting 2 seconds before retry...');
@@ -377,15 +411,23 @@ const OnboardingUserCentered = ({
       }
 
       if (!pullResult || !pullResult.success) {
-        console.error('[OnboardingSync] Failed to get sync data after', attempts, 'attempts');
-        throw new Error(pullResult?.error || 'Failed to connect to sync group.');
+        console.error(
+          '[OnboardingSync] Failed to get sync data after',
+          attempts,
+          'attempts',
+        );
+        throw new Error(
+          pullResult?.error || 'Failed to connect to sync group.',
+        );
       }
-      
+
       if (!pullResult.data) {
         console.warn('[OnboardingSync] Sync group exists but has no data yet');
-        throw new Error('The sync group exists but contains no data yet. Please ensure the other device has completed setup and try again.');
+        throw new Error(
+          'The sync group exists but contains no data yet. Please ensure the other device has completed setup and try again.',
+        );
       }
-      
+
       // Data is already decrypted by minimalSync
       console.log('[OnboardingSync] Using decrypted sync data...');
       const decryptedData = pullResult.data;
@@ -398,46 +440,58 @@ const OnboardingUserCentered = ({
       const users = decryptedData.users || {};
       const validUsers = Object.keys(users).filter(id => !users[id].deleted);
       const userCount = validUsers.length;
-      
+
       console.log('[OnboardingSync] Decrypted data contains:', {
         userCount,
         totalUsers: Object.keys(users).length,
         deletedUsers: Object.keys(users).filter(id => users[id].deleted).length,
         hasLibrary: !!(decryptedData.library?.categories?.length > 0),
-        version: decryptedData.version
+        version: decryptedData.version,
       });
-      
+
       // Validate that we have users data
       if (userCount === 0) {
         console.error('[OnboardingSync] No valid users found - Details:', {
           totalUserIds: Object.keys(users).length,
-          deletedCount: Object.keys(users).filter(id => users[id].deleted).length,
+          deletedCount: Object.keys(users).filter(id => users[id].deleted)
+            .length,
           hasUsersObject: !!users,
-          usersIsEmpty: Object.keys(users).length === 0
+          usersIsEmpty: Object.keys(users).length === 0,
         });
         throw new Error('No active users found in sync data');
       }
-      
+
       setSyncPreviewData({
         userCount,
-        users: Object.values(users).filter(u => !u.deleted).map(u => ({
-          name: u.name,
-          icon: u.icon || u.emoji || DEFAULT_USER_ICON,
-        })),
-        hasLibrary: decryptedData.library && decryptedData.library.categories?.length > 0,
+        users: Object.values(users)
+          .filter(u => !u.deleted)
+          .map(u => ({
+            name: u.name,
+            icon: u.icon || u.emoji || DEFAULT_USER_ICON,
+          })),
+        hasLibrary:
+          decryptedData.library && decryptedData.library.categories?.length > 0,
       });
     } catch (error) {
       console.error('[OnboardingSync] Error:', error);
-      
+
       // Provide more helpful error messages
       if (error.message.includes('exists but contains no data')) {
-        setSyncError('The sync group exists but has no data yet. Please ensure the first device has finished setting up sync.');
+        setSyncError(
+          'The sync group exists but has no data yet. Please ensure the first device has finished setting up sync.',
+        );
       } else if (error.message.includes('No data found')) {
-        setSyncError('Sync group is still being set up. Please wait a moment and try again.');
+        setSyncError(
+          'Sync group is still being set up. Please wait a moment and try again.',
+        );
       } else if (error.message.includes('No active users')) {
-        setSyncError('The sync group appears to be empty. Please verify the sync code and try again.');
+        setSyncError(
+          'The sync group appears to be empty. Please verify the sync code and try again.',
+        );
       } else if (error.message.includes('Invalid sync code')) {
-        setSyncError('The sync code format is invalid. Please check and try again.');
+        setSyncError(
+          'The sync code format is invalid. Please check and try again.',
+        );
       } else {
         setSyncError(error.message || 'Failed to fetch sync data');
       }
@@ -450,14 +504,14 @@ const OnboardingUserCentered = ({
   const importSyncData = async () => {
     setSyncLoading(true);
     setSyncError('');
-    
+
     try {
       // Parse input to handle both formats
       let inviteCode = null;
       let phraseToUse = '';
-      
+
       const trimmed = recoveryPhrase.trim();
-      
+
       if (trimmed.includes('#')) {
         // New format: ABCD-1234#recoveryPhrase
         const [code, phrase] = trimmed.split('#');
@@ -469,65 +523,80 @@ const OnboardingUserCentered = ({
         phraseToUse = trimmed.replace(/[\s-]+/g, '');
         console.log('[OnboardingImport] Using legacy format');
       }
-      
+
       if (phraseToUse.length !== 32 || !/^[a-f0-9]+$/i.test(phraseToUse)) {
         throw new Error('Invalid recovery phrase format');
       }
-      
+
       // If we have an invite code, use it to join
       if (inviteCode) {
-        console.log('[OnboardingImport] Using invite code to join sync:', inviteCode);
-        const joinResult = await syncService.joinWithInviteCode(inviteCode, phraseToUse);
+        console.log(
+          '[OnboardingImport] Using invite code to join sync:',
+          inviteCode,
+        );
+        const joinResult = await syncService.joinWithInviteCode(
+          inviteCode,
+          phraseToUse,
+        );
         if (!joinResult.success) {
-          throw new Error(joinResult.error || 'Failed to join sync with invite code');
+          throw new Error(
+            joinResult.error || 'Failed to join sync with invite code',
+          );
         }
         // joinWithInviteCode handles everything including marking the invite as used
         console.log('[OnboardingImport] Successfully joined via invite code');
       }
-      
+
       // Initialize temporarily just to decrypt (don't enable sync yet)
       let syncId = await syncService.generateSyncId(phraseToUse);
-      
+
       // TEMPORARY FIX: Handle known mismatched sync
       // Recovery phrase 8b993a49ebf42aaf3d06e63ae8aee6c8 should map to 12e8a92bf426e20b1c28c7d6b3acd7bc
       // but generates bb6d11d2a3490da04511f642e6d166c9 instead
       if (phraseToUse === '8b993a49ebf42aaf3d06e63ae8aee6c8') {
-        console.log('[OnboardingImport] Using hardcoded sync ID for known mismatched sync');
+        console.log(
+          '[OnboardingImport] Using hardcoded sync ID for known mismatched sync',
+        );
         syncId = '12e8a92bf426e20b1c28c7d6b3acd7bc';
       }
-      
+
       const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
-      
+
       console.log('[OnboardingImport] Generated sync ID:', syncId);
-      console.log('[OnboardingImport] Using recovery phrase (first 8 chars):', phraseToUse.substring(0, 8));
-      
+      console.log(
+        '[OnboardingImport] Using recovery phrase (first 8 chars):',
+        phraseToUse.substring(0, 8),
+      );
+
       // Initialize encryption without enabling sync
       await encryptionService.initialize(phraseToUse, syncId, fixedSalt);
-      
+
       // Initialize sync service encryption (this now sets syncId on minimalSync)
       if (syncService.initializeEncryption) {
         await syncService.initializeEncryption(phraseToUse, syncId);
       }
-      
+
       // Pull the data with forceFullPull=true for initial sync
       // This ignores any stored timestamps and pulls everything
       const pullResult = await syncService.pullData(true);
-      
+
       console.log('[OnboardingImport] Pull result:', {
         success: pullResult?.success,
         hasData: !!pullResult?.data,
         dataKeys: pullResult?.data ? Object.keys(pullResult.data) : [],
-        error: pullResult?.error
+        error: pullResult?.error,
       });
-      
+
       if (!pullResult || !pullResult.success || !pullResult.data) {
         console.error('[OnboardingImport] Pull failed:', pullResult);
-        throw new Error('Failed to import data - no data available in sync group');
+        throw new Error(
+          'Failed to import data - no data available in sync group',
+        );
       }
-      
+
       // Data is already decrypted by minimalSync
       const decryptedData = pullResult.data;
-      
+
       if (!decryptedData) {
         throw new Error('Failed to decrypt sync data');
       }
@@ -542,22 +611,26 @@ const OnboardingUserCentered = ({
           id,
           name: u.name,
           icon: u.icon || u.emoji,
-          hasToday: !!(u.days?.today),
+          hasToday: !!u.days?.today,
           todayCount: u.days?.today?.activities?.length || 0,
-          hasTomorrow: !!(u.days?.tomorrow),
-          tomorrowCount: u.days?.tomorrow?.activities?.length || 0
-        }))
+          hasTomorrow: !!u.days?.tomorrow,
+          tomorrowCount: u.days?.tomorrow?.activities?.length || 0,
+        })),
       });
 
       // IMPORTANT: Pass the data to onComplete FIRST before enabling sync
       // This ensures the data is in the stores before sync starts
-      console.log('[OnboardingUserCentered] Passing imported data to onComplete');
-      
+      console.log(
+        '[OnboardingUserCentered] Passing imported data to onComplete',
+      );
+
       // Don't restore via syncService - let onComplete handle it
       // Don't enable sync yet - let it happen after data is restored
-      
-      console.log('[OnboardingUserCentered] Data restored to sync service, completing onboarding');
-      
+
+      console.log(
+        '[OnboardingUserCentered] Data restored to sync service, completing onboarding',
+      );
+
       onComplete({
         importedData: decryptedData,
         syncEnabled: true,
@@ -576,7 +649,7 @@ const OnboardingUserCentered = ({
   const createNewSync = async () => {
     setSyncLoading(true);
     setSyncError('');
-    
+
     try {
       // First, create users in the store before setting up sync
       if (users.length > 0) {
@@ -584,7 +657,7 @@ const OnboardingUserCentered = ({
         const randomId = Math.random().toString(36).substr(2, 9);
         const usersObj = {};
         let firstUserId = null;
-        
+
         // Create starter activities for the first user - same as in App.js
         const starterActivities = [
           {
@@ -593,15 +666,16 @@ const OnboardingUserCentered = ({
             icon: '👋',
             description: 'Tap activities to mark them complete',
             pinned: false,
-            completed: false
+            completed: false,
           },
           {
             id: `${timestamp}_2_${randomId}`,
             text: 'Try Edit Mode',
             icon: '✏️',
-            description: 'Use the edit button to add, remove, and organize activities',
+            description:
+              'Use the edit button to add, remove, and organize activities',
             pinned: false,
-            completed: false
+            completed: false,
           },
           {
             id: `${timestamp}_3_${randomId}`,
@@ -609,15 +683,16 @@ const OnboardingUserCentered = ({
             icon: '👤',
             description: 'Tap your user pill to switch users or check-in',
             pinned: false,
-            completed: false
+            completed: false,
           },
           {
             id: `${timestamp}_4_${randomId}`,
             text: 'Share with Providers',
             icon: '🔗',
-            description: 'Share your activities with caregivers via QR code or link',
+            description:
+              'Share your activities with caregivers via QR code or link',
             pinned: false,
-            completed: false
+            completed: false,
           },
           {
             id: `${timestamp}_5_${randomId}`,
@@ -625,7 +700,7 @@ const OnboardingUserCentered = ({
             icon: '🔄',
             description: 'Keep your data synced with zero-knowledge encryption',
             pinned: false,
-            completed: false
+            completed: false,
           },
           {
             id: `${timestamp}_6_${randomId}`,
@@ -633,39 +708,43 @@ const OnboardingUserCentered = ({
             icon: '📦',
             description: 'Backup your data or transfer between devices',
             pinned: false,
-            completed: false
+            completed: false,
           },
           {
             id: `${timestamp}_7_${randomId}`,
             text: 'Preferences',
             icon: '🎨',
-            description: 'Tap the palette icon to customize colors, animations, and display',
+            description:
+              'Tap the palette icon to customize colors, animations, and display',
             pinned: false,
-            completed: false
+            completed: false,
           },
           {
             id: `${timestamp}_8_${randomId}`,
             text: 'Activities',
             icon: '📋',
-            description: 'Tap the + icon to add new activities and build your library',
+            description:
+              'Tap the + icon to add new activities and build your library',
             pinned: false,
-            completed: false
+            completed: false,
           },
           {
             id: `${timestamp}_9_${randomId}`,
             text: 'Day',
             icon: '📅',
-            description: 'Use the calendar icon to plan tomorrow or review past days',
+            description:
+              'Use the calendar icon to plan tomorrow or review past days',
             pinned: false,
-            completed: false
+            completed: false,
           },
           {
             id: `${timestamp}_10_${randomId}`,
             text: 'Access',
             icon: '👥',
-            description: 'Add multiple users with the crown icon in preferences',
+            description:
+              'Add multiple users with the crown icon in preferences',
             pinned: false,
-            completed: false
+            completed: false,
           },
           {
             id: `${timestamp}_11_${randomId}`,
@@ -673,22 +752,23 @@ const OnboardingUserCentered = ({
             icon: '💾',
             description: 'Backup, restore, sync, and manage your StackMap data',
             pinned: false,
-            completed: false
+            completed: false,
           },
           {
             id: `${timestamp}_12_${randomId}`,
             text: 'Explore the Library',
             icon: '📚',
-            description: 'Check out pre-made activity templates in the StackMap Library',
+            description:
+              'Check out pre-made activity templates in the StackMap Library',
             pinned: false,
-            completed: false
-          }
+            completed: false,
+          },
         ];
-        
+
         users.forEach((user, index) => {
           const userId = `user_${index + 1}`;
           if (index === 0) firstUserId = userId;
-          
+
           usersObj[userId] = {
             id: userId,
             name: user.name,
@@ -696,31 +776,33 @@ const OnboardingUserCentered = ({
             emoji: user.icon, // Keep for backwards compatibility
             days: {
               today: { activities: index === 0 ? starterActivities : [] },
-              tomorrow: { activities: [] }
+              tomorrow: { activities: [] },
             },
-            deleted: false
+            deleted: false,
           };
         });
-        
+
         // Set users in store
         useUserStore.getState().setUsers(usersObj);
-        
+
         // Set the first user as current user
         useAppStore.getState().setCurrentUser(firstUserId);
-        
+
         // Log to verify users were set with activities
         const verifyState = useAppStore.getState();
         console.log('[Onboarding] After setting users, state check:', {
           hasUsers: !!verifyState.users,
           userCount: Object.keys(verifyState.users || {}).length,
-          firstUserActivities: verifyState.users?.[firstUserId]?.days?.today?.activities?.length || 0,
-          firstUserName: verifyState.users?.[firstUserId]?.name
+          firstUserActivities:
+            verifyState.users?.[firstUserId]?.days?.today?.activities?.length ||
+            0,
+          firstUserName: verifyState.users?.[firstUserId]?.name,
         });
-        
+
         // Wait longer for store to fully update before sync
         await new Promise(resolve => setTimeout(resolve, 500));
       }
-      
+
       // Use the already generated code, or generate a new one if needed
       let syncCode = generatedSyncCode;
       if (!syncCode) {
@@ -732,37 +814,51 @@ const OnboardingUserCentered = ({
       // IMPORTANT: Use enable() instead of initialize() for creating new sync
       // initialize() with a recovery phrase only sets up encryption, doesn't actually enable sync!
       await syncService.enable(syncCode);
-      
+
       // No need to manually save to AsyncStorage - enable() handles all of that
       // The enable() method will:
       // 1. Set up encryption
       // 2. Create sync group if new
       // 3. Save state to AsyncStorage
       // 4. Start sync timer
-      
+
       // Generate an invite code for easy sharing
       try {
         console.log('[OnboardingSync] Generating invite code for new sync...');
-        const inviteResult = await syncService.createInviteCode(24, 5, 'Initial setup');
+        const inviteResult = await syncService.createInviteCode(
+          24,
+          5,
+          'Initial setup',
+        );
         if (inviteResult && inviteResult.inviteCode) {
           setGeneratedInviteCode(inviteResult.inviteCode);
-          console.log('[OnboardingSync] Generated invite code:', inviteResult.inviteCode);
+          console.log(
+            '[OnboardingSync] Generated invite code:',
+            inviteResult.inviteCode,
+          );
         }
       } catch (inviteError) {
-        console.log('[OnboardingSync] Could not generate invite code:', inviteError.message);
+        console.log(
+          '[OnboardingSync] Could not generate invite code:',
+          inviteError.message,
+        );
         // Non-critical error - sync still works without invite code
       }
-      
+
       setUserJourney(prev => ({ ...prev, syncEnabled: true }));
       animateStepTransition('syncSuccess');
     } catch (error) {
-//       console.error('Sync creation error:', error);
+      //       console.error('Sync creation error:', error);
       // If sync already exists (409), generate a new code for retry
       if (error.message && error.message.includes('already exists')) {
         generateNewSyncCode();
-        setSyncError('This sync code is already in use. A new code has been generated. Please try again.');
+        setSyncError(
+          'This sync code is already in use. A new code has been generated. Please try again.',
+        );
       } else {
-        setSyncError(error.message || 'Failed to create sync. Please try again.');
+        setSyncError(
+          error.message || 'Failed to create sync. Please try again.',
+        );
       }
     } finally {
       setSyncLoading(false);
@@ -775,9 +871,11 @@ const OnboardingUserCentered = ({
       users,
       pin: userJourney.pinEnabled ? pin : null,
       syncEnabled: userJourney.syncEnabled,
-      recoveryPhrase: userJourney.syncEnabled ? (generatedSyncCode || recoveryPhrase) : null,
+      recoveryPhrase: userJourney.syncEnabled
+        ? generatedSyncCode || recoveryPhrase
+        : null,
     };
-    
+
     onComplete(onboardingData);
   };
 
@@ -815,67 +913,88 @@ const OnboardingUserCentered = ({
   const renderWelcomeStep = () => (
     <View style={styles.stepContainer}>
       <>
-          <View style={styles.logoSection}>
-            <Logo size={screenWidth >= 768 ? 100 : 80} theme={defaultTheme} color={defaultTheme.primary} />
-            <Text style={styles.logoText}>StackMap</Text>
-            <Text style={styles.tagline}>Better days through shared understanding</Text>
-          </View>
-          
-          <View style={styles.optionsContainer}>
-            <TouchableOpacity
-              style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
-              onPress={() => {
-                setUserJourney(prev => ({ ...prev, journeyType: 'new' }));
-                animateStepTransition('userType');
-              }}
+        <View style={styles.logoSection}>
+          <Logo
+            size={screenWidth >= 768 ? 100 : 80}
+            theme={defaultTheme}
+            color={defaultTheme.primary}
+          />
+          <Text style={styles.logoText}>StackMap</Text>
+          <Text style={styles.tagline}>
+            Better days through shared understanding
+          </Text>
+        </View>
+
+        <View style={styles.optionsContainer}>
+          <TouchableOpacity
+            style={[
+              styles.primaryButton,
+              { backgroundColor: defaultTheme.primary },
+            ]}
+            onPress={() => {
+              setUserJourney(prev => ({ ...prev, journeyType: 'new' }));
+              animateStepTransition('userType');
+            }}
+          >
+            <Text style={styles.buttonText}>I'm new to StackMap</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => {
+              setUserJourney(prev => ({ ...prev, journeyType: 'existing' }));
+              animateStepTransition('existingUser');
+            }}
+          >
+            <Text
+              style={[
+                styles.secondaryButtonText,
+                { color: defaultTheme.primary },
+              ]}
             >
-              <Text style={styles.buttonText}>I'm new to StackMap</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={() => {
-                setUserJourney(prev => ({ ...prev, journeyType: 'existing' }));
-                animateStepTransition('existingUser');
-              }}
+              I already use StackMap
+            </Text>
+          </TouchableOpacity>
+
+          {/* Test button removed - sync tests no longer available */}
+        </View>
+
+        <View style={styles.footerLinks}>
+          <TouchableOpacity
+            style={styles.footerLink}
+            onPress={() => onShowPrivacy?.()}
+          >
+            <Text
+              style={[styles.footerLinkText, { color: defaultTheme.primary }]}
             >
-              <Text style={[styles.secondaryButtonText, { color: defaultTheme.primary }]}>
-                I already use StackMap
-              </Text>
-            </TouchableOpacity>
-            
-            {/* Test button removed - sync tests no longer available */}
-          </View>
-          
-          <View style={styles.footerLinks}>
-            <TouchableOpacity
-              style={styles.footerLink}
-              onPress={() => onShowPrivacy?.()}
-            >
-              <Text style={[styles.footerLinkText, { color: defaultTheme.primary }]}>
-                Privacy Policy
-              </Text>
-            </TouchableOpacity>
-            
-            {Platform.OS === 'web' && onShowSupport && (
-              <>
-                <Text style={styles.footerSeparator}>•</Text>
-                <TouchableOpacity
-                  style={styles.footerLink}
-                  onPress={() => onShowSupport?.()}
+              Privacy Policy
+            </Text>
+          </TouchableOpacity>
+
+          {Platform.OS === 'web' && onShowSupport && (
+            <>
+              <Text style={styles.footerSeparator}>•</Text>
+              <TouchableOpacity
+                style={styles.footerLink}
+                onPress={() => onShowSupport?.()}
+              >
+                <Text
+                  style={[
+                    styles.footerLinkText,
+                    { color: defaultTheme.primary },
+                  ]}
                 >
-                  <Text style={[styles.footerLinkText, { color: defaultTheme.primary }]}>
-                    Support StackMap
-                  </Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-          
-          <View style={styles.versionContainer}>
-            <Text style={styles.versionText}>v{BUILD_VERSION}</Text>
-          </View>
-        </>
+                  Support StackMap
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+
+        <View style={styles.versionContainer}>
+          <Text style={styles.versionText}>v{BUILD_VERSION}</Text>
+        </View>
+      </>
     </View>
   );
 
@@ -885,7 +1004,7 @@ const OnboardingUserCentered = ({
       <Text style={styles.subtitle}>
         How would you like to recover your data?
       </Text>
-      
+
       <View style={styles.optionsContainer}>
         <TouchableOpacity
           style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
@@ -897,7 +1016,7 @@ const OnboardingUserCentered = ({
             Connect with your other devices using a sync code
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
           onPress={async () => {
@@ -911,7 +1030,7 @@ const OnboardingUserCentered = ({
                 });
               }
             } catch (error) {
-//               console.error('Import failed:', error);
+              //               console.error('Import failed:', error);
             }
           }}
         >
@@ -922,7 +1041,7 @@ const OnboardingUserCentered = ({
           </Text>
         </TouchableOpacity>
       </View>
-      
+
       <TouchableOpacity
         style={styles.skipButton}
         onPress={() => {
@@ -930,7 +1049,9 @@ const OnboardingUserCentered = ({
           animateStepTransition('userType');
         }}
       >
-        <Text style={[styles.skipButtonText, { color: defaultTheme.textSecondary }]}>
+        <Text
+          style={[styles.skipButtonText, { color: defaultTheme.textSecondary }]}
+        >
           Start fresh instead
         </Text>
       </TouchableOpacity>
@@ -943,7 +1064,7 @@ const OnboardingUserCentered = ({
       <Text style={styles.subtitle}>
         This helps us customize your experience
       </Text>
-      
+
       <View style={styles.optionsContainer}>
         <TouchableOpacity
           style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
@@ -958,7 +1079,7 @@ const OnboardingUserCentered = ({
             I'll use this for my own activities
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
           onPress={() => {
@@ -966,13 +1087,17 @@ const OnboardingUserCentered = ({
             animateStepTransition('deviceStrategy');
           }}
         >
-          <Icon name="supervisor-account" size={40} color={defaultTheme.primary} />
+          <Icon
+            name="supervisor-account"
+            size={40}
+            color={defaultTheme.primary}
+          />
           <Text style={styles.optionTitle}>I'm Helping Someone</Text>
           <Text style={styles.optionDescription}>
             Parent, caregiver, or teacher
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
           onPress={() => {
@@ -996,7 +1121,7 @@ const OnboardingUserCentered = ({
       <Text style={styles.subtitle}>
         Will you use StackMap on multiple devices?
       </Text>
-      
+
       <View style={styles.optionsContainer}>
         <TouchableOpacity
           style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
@@ -1011,11 +1136,15 @@ const OnboardingUserCentered = ({
             I'll only use StackMap here
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
           onPress={() => {
-            setUserJourney(prev => ({ ...prev, deviceStrategy: 'multi', syncEnabled: true }));
+            setUserJourney(prev => ({
+              ...prev,
+              deviceStrategy: 'multi',
+              syncEnabled: true,
+            }));
             animateStepTransition('userSetup');
           }}
         >
@@ -1026,12 +1155,14 @@ const OnboardingUserCentered = ({
           </Text>
         </TouchableOpacity>
       </View>
-      
+
       <TouchableOpacity
         style={styles.skipButton}
         onPress={() => animateStepTransition('userSetup')}
       >
-        <Text style={[styles.skipButtonText, { color: defaultTheme.textSecondary }]}>
+        <Text
+          style={[styles.skipButtonText, { color: defaultTheme.textSecondary }]}
+        >
           I'll decide later
         </Text>
       </TouchableOpacity>
@@ -1058,11 +1189,11 @@ const OnboardingUserCentered = ({
           {users.length === 0 ? 'Create Your First User' : 'Add Another User?'}
         </Text>
         <Text style={styles.subtitle}>
-          {userJourney.userType === 'helper' 
-            ? 'Add the person you\'re helping'
+          {userJourney.userType === 'helper'
+            ? "Add the person you're helping"
             : 'Set up your profile'}
         </Text>
-        
+
         {users.length > 0 && (
           <View style={styles.usersList}>
             {users.map(user => (
@@ -1073,7 +1204,7 @@ const OnboardingUserCentered = ({
             ))}
           </View>
         )}
-        
+
         <View style={styles.inputGroup}>
           <TextInput
             style={styles.input}
@@ -1082,14 +1213,16 @@ const OnboardingUserCentered = ({
             onChangeText={setUserName}
             autoCapitalize="words"
           />
-          
+
           <View style={styles.emojiSelector}>
             {quickEmojis.map(emoji => (
               <TouchableOpacity
                 key={emoji}
                 style={[
                   styles.emojiOption,
-                  selectedEmoji === emoji && { backgroundColor: defaultTheme.light },
+                  selectedEmoji === emoji && {
+                    backgroundColor: defaultTheme.light,
+                  },
                 ]}
                 onPress={() => setSelectedEmoji(emoji)}
               >
@@ -1098,10 +1231,13 @@ const OnboardingUserCentered = ({
             ))}
           </View>
         </View>
-        
+
         <View style={styles.optionsContainer}>
           <TouchableOpacity
-            style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
+            style={[
+              styles.primaryButton,
+              { backgroundColor: defaultTheme.primary },
+            ]}
             onPress={addUser}
             disabled={!userName.trim()}
           >
@@ -1109,12 +1245,15 @@ const OnboardingUserCentered = ({
               {users.length === 0 ? 'Add User' : 'Add Another'}
             </Text>
           </TouchableOpacity>
-          
+
           {users.length > 0 && (
             <TouchableOpacity
               style={styles.secondaryButton}
               onPress={() => {
-                if (userJourney.userType === 'group' || userJourney.userType === 'helper') {
+                if (
+                  userJourney.userType === 'group' ||
+                  userJourney.userType === 'helper'
+                ) {
                   animateStepTransition('pinSetup');
                 } else if (userJourney.deviceStrategy === 'multi') {
                   animateStepTransition('syncCreate');
@@ -1123,7 +1262,12 @@ const OnboardingUserCentered = ({
                 }
               }}
             >
-              <Text style={[styles.secondaryButtonText, { color: defaultTheme.primary }]}>
+              <Text
+                style={[
+                  styles.secondaryButtonText,
+                  { color: defaultTheme.primary },
+                ]}
+              >
                 Continue
               </Text>
             </TouchableOpacity>
@@ -1139,7 +1283,7 @@ const OnboardingUserCentered = ({
       <Text style={styles.subtitle}>
         Keep your StackMap secure with a 4-digit PIN
       </Text>
-      
+
       <View style={styles.inputGroup}>
         <TextInput
           style={styles.input}
@@ -1154,7 +1298,7 @@ const OnboardingUserCentered = ({
           autoCapitalize="none"
           spellCheck={false}
         />
-        
+
         {pin.length === 4 && (
           <TextInput
             style={styles.input}
@@ -1170,15 +1314,16 @@ const OnboardingUserCentered = ({
             spellCheck={false}
           />
         )}
-        
-        {pinError && (
-          <Text style={styles.errorText}>{pinError}</Text>
-        )}
+
+        {pinError && <Text style={styles.errorText}>{pinError}</Text>}
       </View>
-      
+
       <View style={styles.optionsContainer}>
         <TouchableOpacity
-          style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
+          style={[
+            styles.primaryButton,
+            { backgroundColor: defaultTheme.primary },
+          ]}
           onPress={() => {
             if (pin !== confirmPin) {
               setPinError('PINs do not match');
@@ -1195,7 +1340,7 @@ const OnboardingUserCentered = ({
         >
           <Text style={styles.buttonText}>Set PIN</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={styles.skipButton}
           onPress={() => {
@@ -1206,7 +1351,12 @@ const OnboardingUserCentered = ({
             }
           }}
         >
-          <Text style={[styles.skipButtonText, { color: defaultTheme.textSecondary }]}>
+          <Text
+            style={[
+              styles.skipButtonText,
+              { color: defaultTheme.textSecondary },
+            ]}
+          >
             Skip for now
           </Text>
         </TouchableOpacity>
@@ -1220,7 +1370,7 @@ const OnboardingUserCentered = ({
       <Text style={styles.subtitle}>
         Access your StackMap on multiple devices
       </Text>
-      
+
       <View style={styles.optionsContainer}>
         <TouchableOpacity
           style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
@@ -1232,7 +1382,7 @@ const OnboardingUserCentered = ({
             Start syncing across devices
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
           onPress={() => animateStepTransition('syncImport')}
@@ -1244,12 +1394,14 @@ const OnboardingUserCentered = ({
           </Text>
         </TouchableOpacity>
       </View>
-      
+
       <TouchableOpacity
         style={styles.skipButton}
         onPress={() => animateStepTransition('complete')}
       >
-        <Text style={[styles.skipButtonText, { color: defaultTheme.textSecondary }]}>
+        <Text
+          style={[styles.skipButtonText, { color: defaultTheme.textSecondary }]}
+        >
           Skip for now
         </Text>
       </TouchableOpacity>
@@ -1258,21 +1410,24 @@ const OnboardingUserCentered = ({
 
   const renderSyncCreateStep = () => {
     // Show the combined format if we have an invite code
-    const displayCode = generatedInviteCode 
+    const displayCode = generatedInviteCode
       ? `${generatedInviteCode}#${generatedSyncCode}`
       : generatedSyncCode;
-    
+
     return (
       <View style={styles.stepContainer}>
         <Text style={styles.title}>Your Sync Code</Text>
         <Text style={styles.subtitle}>
           Save this code to share with other devices
         </Text>
-        
+
         <View style={styles.syncCodeContainer}>
           <Text style={styles.syncCode}>{displayCode}</Text>
           <TouchableOpacity
-            style={[styles.copyButton, { backgroundColor: defaultTheme.primary }]}
+            style={[
+              styles.copyButton,
+              { backgroundColor: defaultTheme.primary },
+            ]}
             onPress={() => {
               copyToClipboard(displayCode, 'Sync code copied!');
             }}
@@ -1281,26 +1436,29 @@ const OnboardingUserCentered = ({
             <Text style={styles.copyButtonText}>Copy</Text>
           </TouchableOpacity>
         </View>
-        
+
         {generatedInviteCode && (
           <Text style={styles.syncCodeHint}>
             Invite code expires in 24 hours • Up to 5 uses
           </Text>
         )}
-        
+
         {showCopiedToast && (
           <View style={styles.toast}>
             <Text style={styles.toastText}>Copied to clipboard!</Text>
           </View>
         )}
-        
+
         <Text style={styles.warningText}>
           ⚠️ Save this code securely. You'll need it to sync other devices.
         </Text>
-        
+
         <View style={styles.optionsContainer}>
           <TouchableOpacity
-            style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
+            style={[
+              styles.primaryButton,
+              { backgroundColor: defaultTheme.primary },
+            ]}
             onPress={createNewSync}
             disabled={syncLoading}
           >
@@ -1310,196 +1468,217 @@ const OnboardingUserCentered = ({
               <Text style={styles.buttonText}>Enable Sync</Text>
             )}
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={styles.skipButton}
             onPress={() => animateStepTransition('complete')}
             disabled={syncLoading}
           >
-            <Text style={[styles.skipButtonText, { color: defaultTheme.secondary }]}>
+            <Text
+              style={[styles.skipButtonText, { color: defaultTheme.secondary }]}
+            >
               Skip for now
             </Text>
           </TouchableOpacity>
         </View>
-        
-        {syncError && (
-          <Text style={styles.errorText}>{syncError}</Text>
-        )}
+
+        {syncError && <Text style={styles.errorText}>{syncError}</Text>}
       </View>
     );
   };
 
   const renderSyncImportStep = () => {
     // Check if we're auto-processing from a URL
-    const isAutoProcessing = Platform.OS === 'web' && 
-      window.syncInviteData?.inviteCode && 
+    const isAutoProcessing =
+      Platform.OS === 'web' &&
+      window.syncInviteData?.inviteCode &&
       window.syncInviteData?.recoveryPhrase &&
       recoveryPhrase.includes('#');
-    
+
     // Parse the input to handle both formats:
-    // New format: ABCD-1234#recoveryPhrase  
+    // New format: ABCD-1234#recoveryPhrase
     // Legacy format: just the 32-char recovery phrase
-    const parseInput = (input) => {
+    const parseInput = input => {
       const trimmed = input.trim();
-      
+
       // Check for new format with invite code
       if (trimmed.includes('#')) {
         const [inviteCode, phrase] = trimmed.split('#');
         return {
           inviteCode: inviteCode.toUpperCase(),
           recoveryPhrase: phrase || '',
-          isInviteFormat: true
+          isInviteFormat: true,
         };
       }
-      
+
       // Check if it looks like an invite code (XXXX-XXXX)
       if (/^[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(trimmed)) {
         return {
           inviteCode: trimmed.toUpperCase(),
           recoveryPhrase: '',
           isInviteFormat: true,
-          needsRecoveryPhrase: true
+          needsRecoveryPhrase: true,
         };
       }
-      
+
       // Legacy format - just the recovery phrase
       return {
         inviteCode: null,
         recoveryPhrase: trimmed.replace(/[\s-]+/g, ''),
-        isInviteFormat: false
+        isInviteFormat: false,
       };
     };
-    
+
     const parsed = parseInput(recoveryPhrase);
-    const displayCharCount = parsed.isInviteFormat 
-      ? parsed.recoveryPhrase.length 
+    const displayCharCount = parsed.isInviteFormat
+      ? parsed.recoveryPhrase.length
       : parsed.recoveryPhrase.length;
-    
-    
+
     return (
-    <View style={styles.stepContainer}>
-      {/* Add StackMap branding at the top */}
-      <View style={styles.logoSection}>
-        <Logo size={60} theme={defaultTheme} color={defaultTheme.primary} />
-        <Text style={styles.logoText}>StackMap</Text>
-      </View>
-      
-      <Text style={styles.title}>
-        {isAutoProcessing ? 'Joining Sync Group' : 'Join Sync'}
-      </Text>
-      <Text style={styles.subtitle}>
-        {isAutoProcessing 
-          ? 'Processing your invitation...' 
-          : 'Enter your sync code to connect'}
-      </Text>
-      
-      {/* Show input field only when NOT auto-processing */}
-      {!isAutoProcessing ? (
-        <View style={styles.inputGroup}>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g., ABCD-1234#recovery... or just recovery phrase"
-            value={recoveryPhrase}
-            onChangeText={setRecoveryPhrase}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          
-          {recoveryPhrase.length > 0 && (
-            <Text style={styles.charCount}>
-              {parsed.isInviteFormat && parsed.inviteCode ? (
-                <>Invite: {parsed.inviteCode} • Key: {displayCharCount}/32 chars</>
-              ) : (
-                <>{displayCharCount}/32 characters</>
-              )}
+      <View style={styles.stepContainer}>
+        {/* Add StackMap branding at the top */}
+        <View style={styles.logoSection}>
+          <Logo size={60} theme={defaultTheme} color={defaultTheme.primary} />
+          <Text style={styles.logoText}>StackMap</Text>
+        </View>
+
+        <Text style={styles.title}>
+          {isAutoProcessing ? 'Joining Sync Group' : 'Join Sync'}
+        </Text>
+        <Text style={styles.subtitle}>
+          {isAutoProcessing
+            ? 'Processing your invitation...'
+            : 'Enter your sync code to connect'}
+        </Text>
+
+        {/* Show input field only when NOT auto-processing */}
+        {!isAutoProcessing ? (
+          <View style={styles.inputGroup}>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g., ABCD-1234#recovery... or just recovery phrase"
+              value={recoveryPhrase}
+              onChangeText={setRecoveryPhrase}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            {recoveryPhrase.length > 0 && (
+              <Text style={styles.charCount}>
+                {parsed.isInviteFormat && parsed.inviteCode ? (
+                  <>
+                    Invite: {parsed.inviteCode} • Key: {displayCharCount}/32
+                    chars
+                  </>
+                ) : (
+                  <>{displayCharCount}/32 characters</>
+                )}
+              </Text>
+            )}
+          </View>
+        ) : (
+          /* Show processing state when auto-processing */
+          <View style={styles.processingContainer}>
+            {syncLoading ? (
+              <>
+                <ActivityIndicator size="large" color={defaultTheme.primary} />
+                <Text style={styles.processingText}>
+                  Verifying sync code...
+                </Text>
+              </>
+            ) : syncPreviewData ? (
+              <>
+                <Icon name="check-circle" size={48} color="#4CAF50" />
+                <Text style={styles.processingText}>Sync group found!</Text>
+                <Text style={styles.processingSubtext}>
+                  Importing {syncPreviewData.userCount} user
+                  {syncPreviewData.userCount !== 1 ? 's' : ''}
+                  {syncPreviewData.hasLibrary && ' and activity library'}
+                </Text>
+              </>
+            ) : (
+              <>
+                <ActivityIndicator size="large" color={defaultTheme.primary} />
+                <Text style={styles.processingText}>
+                  Processing invitation...
+                </Text>
+              </>
+            )}
+          </View>
+        )}
+
+        {syncPreviewData && (
+          <View style={styles.previewContainer}>
+            <Text style={styles.previewTitle}>Found StackMap with:</Text>
+            <Text style={styles.previewText}>
+              • {syncPreviewData.userCount} user
+              {syncPreviewData.userCount !== 1 ? 's' : ''}
             </Text>
-          )}
-        </View>
-      ) : (
-        /* Show processing state when auto-processing */
-        <View style={styles.processingContainer}>
-          {syncLoading ? (
-            <>
-              <ActivityIndicator size="large" color={defaultTheme.primary} />
-              <Text style={styles.processingText}>Verifying sync code...</Text>
-            </>
-          ) : syncPreviewData ? (
-            <>
-              <Icon name="check-circle" size={48} color="#4CAF50" />
-              <Text style={styles.processingText}>Sync group found!</Text>
-              <Text style={styles.processingSubtext}>
-                Importing {syncPreviewData.userCount} user{syncPreviewData.userCount !== 1 ? 's' : ''}
-                {syncPreviewData.hasLibrary && ' and activity library'}
-              </Text>
-            </>
-          ) : (
-            <>
-              <ActivityIndicator size="large" color={defaultTheme.primary} />
-              <Text style={styles.processingText}>Processing invitation...</Text>
-            </>
-          )}
-        </View>
-      )}
-      
-      {syncPreviewData && (
-        <View style={styles.previewContainer}>
-          <Text style={styles.previewTitle}>Found StackMap with:</Text>
-          <Text style={styles.previewText}>
-            • {syncPreviewData.userCount} user{syncPreviewData.userCount !== 1 ? 's' : ''}
-          </Text>
-          {syncPreviewData.hasLibrary && (
-            <Text style={styles.previewText}>• Activity library</Text>
-          )}
-        </View>
-      )}
-      
-      {/* Only show buttons when NOT auto-processing or when there's an error */}
-      {(!isAutoProcessing || syncError) && (
-        <View style={styles.optionsContainer}>
-          {!syncPreviewData ? (
-            <TouchableOpacity
-              style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
-              onPress={fetchSyncPreview}
-              disabled={syncLoading || (!parsed.inviteCode && parsed.recoveryPhrase.length !== 32)}
-            >
-              {syncLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Check Code</Text>
-              )}
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
-              onPress={importSyncData}
-              disabled={syncLoading}
-            >
-              {syncLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Import & Continue</Text>
-              )}
-            </TouchableOpacity>
-          )}
-          
-          {!syncSetupPhrase && (
-            <TouchableOpacity
-              style={styles.skipButton}
-              onPress={() => animateStepTransition('userType')}
-            >
-              <Text style={[styles.skipButtonText, { color: defaultTheme.textSecondary }]}>
-                Start fresh instead
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
-      
-      {syncError && (
-        <Text style={styles.errorText}>{syncError}</Text>
-      )}
-    </View>
-  );
+            {syncPreviewData.hasLibrary && (
+              <Text style={styles.previewText}>• Activity library</Text>
+            )}
+          </View>
+        )}
+
+        {/* Only show buttons when NOT auto-processing or when there's an error */}
+        {(!isAutoProcessing || syncError) && (
+          <View style={styles.optionsContainer}>
+            {!syncPreviewData ? (
+              <TouchableOpacity
+                style={[
+                  styles.primaryButton,
+                  { backgroundColor: defaultTheme.primary },
+                ]}
+                onPress={fetchSyncPreview}
+                disabled={
+                  syncLoading ||
+                  (!parsed.inviteCode && parsed.recoveryPhrase.length !== 32)
+                }
+              >
+                {syncLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>Check Code</Text>
+                )}
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[
+                  styles.primaryButton,
+                  { backgroundColor: defaultTheme.primary },
+                ]}
+                onPress={importSyncData}
+                disabled={syncLoading}
+              >
+                {syncLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>Import & Continue</Text>
+                )}
+              </TouchableOpacity>
+            )}
+
+            {!syncSetupPhrase && (
+              <TouchableOpacity
+                style={styles.skipButton}
+                onPress={() => animateStepTransition('userType')}
+              >
+                <Text
+                  style={[
+                    styles.skipButtonText,
+                    { color: defaultTheme.textSecondary },
+                  ]}
+                >
+                  Start fresh instead
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {syncError && <Text style={styles.errorText}>{syncError}</Text>}
+      </View>
+    );
   };
 
   const renderSyncSuccessStep = () => (
@@ -1509,15 +1688,18 @@ const OnboardingUserCentered = ({
       <Text style={styles.subtitle}>
         Your StackMap will sync across all your devices
       </Text>
-      
+
       <View style={styles.successInfo}>
         <Text style={styles.infoText}>
           Your sync code has been saved securely
         </Text>
       </View>
-      
+
       <TouchableOpacity
-        style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
+        style={[
+          styles.primaryButton,
+          { backgroundColor: defaultTheme.primary },
+        ]}
         onPress={() => animateStepTransition('complete')}
       >
         <Text style={styles.buttonText}>Continue</Text>
@@ -1529,10 +1711,8 @@ const OnboardingUserCentered = ({
     <View style={styles.stepContainer}>
       <Icon name="celebration" size={80} color={defaultTheme.primary} />
       <Text style={styles.title}>All Set!</Text>
-      <Text style={styles.subtitle}>
-        Your StackMap is ready to use
-      </Text>
-      
+      <Text style={styles.subtitle}>Your StackMap is ready to use</Text>
+
       <View style={styles.summaryContainer}>
         <Text style={styles.summaryTitle}>Your Setup:</Text>
         <Text style={styles.summaryText}>
@@ -1545,9 +1725,12 @@ const OnboardingUserCentered = ({
           <Text style={styles.summaryText}>• Sync enabled</Text>
         )}
       </View>
-      
+
       <TouchableOpacity
-        style={[styles.primaryButton, { backgroundColor: defaultTheme.primary }]}
+        style={[
+          styles.primaryButton,
+          { backgroundColor: defaultTheme.primary },
+        ]}
         onPress={completeOnboarding}
       >
         <Text style={styles.buttonText}>Start Using StackMap</Text>
@@ -1561,27 +1744,21 @@ const OnboardingUserCentered = ({
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <SafeAreaView style={styles.safeArea}>
           {currentStep !== 'welcome' && navigationHistory.length > 1 && (
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={goBack}
-            >
+            <TouchableOpacity style={styles.backButton} onPress={goBack}>
               <Icon name="arrow-back" size={24} color={defaultTheme.primary} />
             </TouchableOpacity>
           )}
-          
+
           <Animated.View
             key={currentStep}
-            style={[
-              styles.contentContainer,
-              { opacity: fadeAnim },
-            ]}
+            style={[styles.contentContainer, { opacity: fadeAnim }]}
           >
             {renderStepContent()}
           </Animated.View>
@@ -1594,7 +1771,9 @@ const OnboardingUserCentered = ({
 const SafeAreaView = ({ children, style }) => {
   const insets = useSafeAreaInsets();
   return (
-    <View style={[{ paddingTop: insets.top, paddingBottom: insets.bottom }, style]}>
+    <View
+      style={[{ paddingTop: insets.top, paddingBottom: insets.bottom }, style]}
+    >
       {children}
     </View>
   );

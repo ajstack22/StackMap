@@ -1,0 +1,167 @@
+
+> StackMap@2025.09.12.2 typecheck
+> tsc --noEmit
+
+App.js(24,14): error TS2339: Property '__earlySyncData' does not exist on type 'Window & typeof globalThis'.
+App.js(25,64): error TS2339: Property '__earlySyncData' does not exist on type 'Window & typeof globalThis'.
+App.js(26,12): error TS2339: Property 'syncInviteDataImmediate' does not exist on type 'Window & typeof globalThis'.
+App.js(27,26): error TS2339: Property '__earlySyncData' does not exist on type 'Window & typeof globalThis'.
+App.js(28,30): error TS2339: Property '__earlySyncData' does not exist on type 'Window & typeof globalThis'.
+App.js(30,20): error TS2339: Property '__earlySyncData' does not exist on type 'Window & typeof globalThis'.
+App.js(31,26): error TS2339: Property '__earlySyncData' does not exist on type 'Window & typeof globalThis'.
+App.js(31,56): error TS2339: Property '__earlySyncData' does not exist on type 'Window & typeof globalThis'.
+App.js(43,34): error TS2339: Property '__initialHash' does not exist on type 'Window & typeof globalThis'.
+App.js(51,14): error TS2339: Property 'syncInviteDataImmediate' does not exist on type 'Window & typeof globalThis'.
+App.js(57,35): error TS2339: Property '__initialHash' does not exist on type 'Window & typeof globalThis'.
+App.js(104,62): error TS2339: Property 'default' does not exist on type 'typeof import("react-native-document-picker")'.
+App.js(412,18): error TS2339: Property 'syncInviteDataImmediate' does not exist on type 'Window & typeof globalThis'.
+App.js(413,75): error TS2339: Property 'syncInviteDataImmediate' does not exist on type 'Window & typeof globalThis'.
+App.js(414,16): error TS2339: Property 'syncInviteData' does not exist on type 'Window & typeof globalThis'.
+App.js(415,30): error TS2339: Property 'syncInviteDataImmediate' does not exist on type 'Window & typeof globalThis'.
+App.js(416,34): error TS2339: Property 'syncInviteDataImmediate' does not exist on type 'Window & typeof globalThis'.
+App.js(420,16): error TS2339: Property 'debugSyncParsing' does not exist on type 'Window & typeof globalThis'.
+App.js(421,21): error TS2339: Property 'syncInviteDataImmediate' does not exist on type 'Window & typeof globalThis'.
+App.js(431,18): error TS2339: Property 'debugSyncParsing' does not exist on type 'Window & typeof globalThis'.
+App.js(442,18): error TS2551: Property 'shareDataImmediate' does not exist on type 'Window & typeof globalThis'. Did you mean 'setImmediate'?
+App.js(443,76): error TS2551: Property 'shareDataImmediate' does not exist on type 'Window & typeof globalThis'. Did you mean 'setImmediate'?
+App.js(444,27): error TS2551: Property 'shareDataImmediate' does not exist on type 'Window & typeof globalThis'. Did you mean 'setImmediate'?
+App.js(445,28): error TS2551: Property 'shareDataImmediate' does not exist on type 'Window & typeof globalThis'. Did you mean 'setImmediate'?
+App.js(482,36): error TS2339: Property 'syncInviteData' does not exist on type 'Window & typeof globalThis'.
+App.js(765,45): error TS2339: Property 'syncInviteData' does not exist on type 'Window & typeof globalThis'.
+App.js(768,18): error TS2339: Property 'syncInviteMode' does not exist on type 'Window & typeof globalThis'.
+App.js(1199,39): error TS2345: Argument of type 'Location' is not assignable to parameter of type 'string | URL'.
+  Type 'Location' is missing the following properties from type 'URL': password, searchParams, username, toJSON
+App.js(2012,36): error TS2339: Property 'timeout' does not exist on type '(userId: any) => Promise<void>'.
+App.js(2013,47): error TS2339: Property 'timeout' does not exist on type '(userId: any) => Promise<void>'.
+App.js(2015,32): error TS2339: Property 'timeout' does not exist on type '(userId: any) => Promise<void>'.
+App.js(2422,31): error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'.
+App.js(2495,48): error TS2802: Type 'Set<any>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+App.js(2891,35): error TS2339: Property 'files' does not exist on type 'EventTarget'.
+App.js(3004,15): error TS2345: Argument of type '{ text: string; style: string; onPress: () => void; }' is not assignable to parameter of type '{ text: any; onPress: () => void; }'.
+  Object literal may only specify known properties, and 'style' does not exist in type '{ text: any; onPress: () => void; }'.
+App.js(3254,44): error TS2345: Argument of type '{ text: string; style: string; }' is not assignable to parameter of type '{ text: any; onPress: () => Promise<void>; }'.
+  Object literal may only specify known properties, and 'style' does not exist in type '{ text: any; onPress: () => Promise<void>; }'.
+App.js(4499,14): error TS2741: Property 'color' is missing in type '{ size: number; theme: any; }' but required in type '{ size?: number; theme: any; color: any; }'.
+App.js(4647,11): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type 'void' is not assignable to type 'ReactNode'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type 'void' is not assignable to type 'ReactNode'.
+App.js(4647,12): error TS1345: An expression of type 'void' cannot be tested for truthiness.
+App.js(4817,33): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type '{ margin: number; flex: string; width: "100%" | `calc(${number}% - ${number}px)`; maxWidth: number; }' is not assignable to type 'ViewStyle | Falsy | RegisteredStyle<ViewStyle> | RecursiveArray<ViewStyle | Falsy | RegisteredStyle<ViewStyle>> | readonly (ViewStyle | ... 1 more ... | RegisteredStyle<...>)[]'.
+      Types of property 'flex' are incompatible.
+        Type 'string' is not assignable to type 'number'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type '{ margin: number; flex: string; width: "100%" | `calc(${number}% - ${number}px)`; maxWidth: number; }' is not assignable to type 'ViewStyle | Falsy | RegisteredStyle<ViewStyle> | RecursiveArray<ViewStyle | Falsy | RegisteredStyle<ViewStyle>> | readonly (ViewStyle | ... 1 more ... | RegisteredStyle<...>)[]'.
+      Types of property 'flex' are incompatible.
+        Type 'string' is not assignable to type 'number'.
+App.js(4876,47): error TS2345: Argument of type '{ item: any; index: any; drag: null; isActive: boolean; }' is not assignable to parameter of type '{ item: any; index: any; drag: any; isActive: any; customWidth: any; }'.
+  Property 'customWidth' is missing in type '{ item: any; index: any; drag: null; isActive: boolean; }' but required in type '{ item: any; index: any; drag: any; isActive: any; customWidth: any; }'.
+App.js(4913,17): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: FlatListProps<any>): FlatList<any>', gave the following error.
+    Type '({ item, index, drag, isActive, customWidth }: { item: any; index: any; drag: any; isActive: any; customWidth: any; }) => Element' is not assignable to type 'ListRenderItem<any>'.
+      Types of parameters '__0' and 'info' are incompatible.
+        Type 'ListRenderItemInfo<any>' is missing the following properties from type '{ item: any; index: any; drag: any; isActive: any; customWidth: any; }': drag, isActive, customWidth
+  Overload 2 of 2, '(props: FlatListProps<any>, context: any): FlatList<any>', gave the following error.
+    Type '({ item, index, drag, isActive, customWidth }: { item: any; index: any; drag: any; isActive: any; customWidth: any; }) => Element' is not assignable to type 'ListRenderItem<any>'.
+App.js(5162,10): error TS2741: Property 'style' is missing in type '{ icon: string; onPress: () => void; onLongPress: () => void; position: { bottom: number; top: number; left: number; zIndex: number; elevation: number; }; theme: any; }' but required in type '{ [x: string]: any; onPress: any; icon: any; position?: {}; theme: any; style: any; }'.
+App.js(5239,9): error TS2322: Type '{ visible: boolean; onClose: () => void; theme: any; insets: EdgeInsets; currentTheme: any; setCurrentTheme: any; bannerPosition: any; setBannerPosition: any; displayMode: any; setDisplayMode: any; ... 12 more ...; getAndroidModalBottomHeight: (insets: any) => number; }' is not assignable to type 'IntrinsicAttributes & { visible: any; onClose: any; theme: any; insets: any; currentTheme: any; setCurrentTheme: any; preferencesScrollKey: any; setPreferencesScrollKey: any; onSaveTheme: any; onPrivacyPress: any; onSupportPress: any; getAndroidModalBottomHeight: any; }'.
+  Property 'bannerPosition' does not exist on type 'IntrinsicAttributes & { visible: any; onClose: any; theme: any; insets: any; currentTheme: any; setCurrentTheme: any; preferencesScrollKey: any; setPreferencesScrollKey: any; onSaveTheme: any; onPrivacyPress: any; onSupportPress: any; getAndroidModalBottomHeight: any; }'.
+App.js(5294,8): error TS2739: Type '{ visible: boolean; onClose: () => void; showToast: (config: any) => void; categories: any; onSaveCategories: any; onSelectActivity: (activity: any) => Promise<void>; onSelectMultipleActivities: (activitiesToAdd: any) => Promise<...>; theme: any; }' is missing the following properties from type '{ visible: any; onClose: any; onSelectActivity: any; onSelectMultipleActivities: any; theme: any; categories: any; onSaveCategories: any; stackMapLibrary: any; myLibrary: any; onCopyGroupToMyLibrary: any; showToast: any; }': stackMapLibrary, myLibrary, onCopyGroupToMyLibrary
+App.js(5391,9): error TS2322: Type '{ visible: boolean; onClose: () => void; insets: EdgeInsets; getAndroidModalBottomHeight: (insets: any) => number; styles: { container: { flex: number; }; contentArea: { overflow: "hidden"; height: "100%"; flex: number; position: "relative"; }; ... 160 more ...; reorderModalButtonText: { ...; }; }; onShowSupport: ()...' is not assignable to type 'IntrinsicAttributes & { visible: any; onClose: any; insets: any; onShowSupport: any; }'.
+  Property 'getAndroidModalBottomHeight' does not exist on type 'IntrinsicAttributes & { visible: any; onClose: any; insets: any; onShowSupport: any; }'.
+App.js(5413,9): error TS2322: Type '{ visible: boolean; onClose: () => void; theme: any; reorderingActivity: any; activities: any; newPosition: string; setNewPosition: Dispatch<SetStateAction<string>>; onReorder: () => void; styles: { ...; }; }' is not assignable to type 'IntrinsicAttributes & { visible: any; onClose: any; theme: any; reorderingActivity: any; activities: any; newPosition: any; setNewPosition: any; onReorder: any; }'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & { visible: any; onClose: any; theme: any; reorderingActivity: any; activities: any; newPosition: any; setNewPosition: any; onReorder: any; }'.
+App.js(5421,9): error TS2322: Type '{ visible: boolean; onClose: () => void; insets: EdgeInsets; getAndroidModalBottomHeight: (insets: any) => number; styles: { container: { flex: number; }; contentArea: { overflow: "hidden"; height: "100%"; flex: number; position: "relative"; }; ... 160 more ...; reorderModalButtonText: { ...; }; }; }' is not assignable to type 'IntrinsicAttributes & { visible: any; onClose: any; insets: any; onSyncDiagnostic: any; }'.
+  Property 'getAndroidModalBottomHeight' does not exist on type 'IntrinsicAttributes & { visible: any; onClose: any; insets: any; onSyncDiagnostic: any; }'.
+App.js(5494,9): error TS2322: Type '{ visible: boolean; onClose: () => void; theme: any; users: any; currentUser: any; currentDay: any; templates: any; libraryCategories: any; currentTheme: any; bannerPosition: any; hasSecurePin: boolean; ... 7 more ...; initialTab: number; }' is not assignable to type 'IntrinsicAttributes & { visible: any; onClose: any; theme: any; users: any; currentUser: any; currentDay: any; libraryCategories: any; currentTheme: any; bannerPosition: any; ... 8 more ...; initialTab?: number; }'.
+  Property 'templates' does not exist on type 'IntrinsicAttributes & { visible: any; onClose: any; theme: any; users: any; currentUser: any; currentDay: any; libraryCategories: any; currentTheme: any; bannerPosition: any; ... 8 more ...; initialTab?: number; }'.
+App.js(5572,9): error TS2322: Type '{ visible: boolean; onClose: () => void; theme: any; users: any; currentUser: any; onAddUser: (userName: any, userEmoji: any) => void; onUpdateUser: (userId: any, userName: any, userEmoji: any) => void; ... 16 more ...; handleUpdateUser: (userId: any, userName: any, userEmoji: any) => void; }' is not assignable to type 'IntrinsicAttributes & { visible: any; onClose: any; theme: any; users: any; currentUser: any; onAddUser: any; onUpdateUser: any; onSelectUser: any; onDeleteUser: any; hasSecurePin: any; ... 6 more ...; getAndroidModalBottomHeight: any; }'.
+  Property 'setNewUserEmoji' does not exist on type 'IntrinsicAttributes & { visible: any; onClose: any; theme: any; users: any; currentUser: any; onAddUser: any; onUpdateUser: any; onSelectUser: any; onDeleteUser: any; hasSecurePin: any; ... 6 more ...; getAndroidModalBottomHeight: any; }'.
+App.js(5640,9): error TS2322: Type '{ visible: boolean; onClose: () => void; theme: any; activities: any; completedCount: any; totalCount: any; onCompleteDay: (organizedActivities: any) => void; onPlanTomorrow: () => void; showToast: (config: any) => void; ... 8 more ...; onSelectUserDay: (userId: any, day: any) => void; }' is not assignable to type 'IntrinsicAttributes & { visible: any; onClose: any; theme: any; activities?: any[]; completedCount?: number; totalCount?: number; onCompleteDay: any; showToast: any; users?: {}; ... 4 more ...; onSelectUserDay: any; }'.
+  Property 'onPlanTomorrow' does not exist on type 'IntrinsicAttributes & { visible: any; onClose: any; theme: any; activities?: any[]; completedCount?: number; totalCount?: number; onCompleteDay: any; showToast: any; users?: {}; ... 4 more ...; onSelectUserDay: any; }'.
+App.js(5704,8): error TS2739: Type '{ visible: boolean; onClose: () => void; theme: any; categories: any; showToast: (config: any) => void; onSaveCategories: any; stackMapLibrary: { version: string; lastUpdated: string; activityGroups: { ...; }[]; }; onAddActivity: (activity: any) => Promise<...>; onSelectActivity: (activity: any) => Promise<...>; onS...' is missing the following properties from type '{ visible: any; onClose: any; theme: any; showToast: any; categories: any; onSaveCategories: any; onSelectActivity: any; onSelectMultipleActivities: any; onAddActivity: any; initialTab?: number; ... 4 more ...; onSaveToMyLibrary: any; }': myLibrary, onSaveToMyLibrary
+App.js(5795,10): error TS2741: Property 'onPinComplete' is missing in type '{ visible: true; onClose: () => void; theme: any; pinInput: string; pinLength: number; setPinInput: Dispatch<SetStateAction<string>>; isSettingPin: boolean; confirmPin: string; }' but required in type '{ visible: any; onClose: any; theme: any; pinInput: any; pinLength: any; setPinInput: any; isSettingPin: any; confirmPin: any; onPinComplete: any; }'.
+App.js(5847,7): error TS2322: Type '{ shareToken: any; shareId: any; shareKey: any; theme: any; }' is not assignable to type 'IntrinsicAttributes & { shareToken: any; shareId: any; shareKey: any; }'.
+  Property 'theme' does not exist on type 'IntrinsicAttributes & { shareToken: any; shareId: any; shareKey: any; }'.
+App.js(5867,11): error TS2322: Type '{ onComplete: (onboardingData: any) => Promise<void>; onImport: () => Promise<any>; onShowPrivacy: () => void; onShowSupport: () => void; isAbbreviated: boolean; syncSetupPhrase: any; }' is not assignable to type 'IntrinsicAttributes & { onComplete: any; onImport: any; syncSetupPhrase?: any; onShowPrivacy: any; onShowSupport: any; }'.
+  Property 'isAbbreviated' does not exist on type 'IntrinsicAttributes & { onComplete: any; onImport: any; syncSetupPhrase?: any; onShowPrivacy: any; onShowSupport: any; }'.
+App.js(5876,11): error TS2322: Type '{ visible: boolean; onClose: () => void; insets: EdgeInsets; getAndroidModalBottomHeight: (insets: any) => number; styles: { container: { flex: number; }; contentArea: { overflow: "hidden"; height: "100%"; flex: number; position: "relative"; }; ... 160 more ...; reorderModalButtonText: { ...; }; }; onShowSupport: ()...' is not assignable to type 'IntrinsicAttributes & { visible: any; onClose: any; insets: any; onShowSupport: any; }'.
+  Property 'getAndroidModalBottomHeight' does not exist on type 'IntrinsicAttributes & { visible: any; onClose: any; insets: any; onShowSupport: any; }'.
+App.js(5888,11): error TS2322: Type '{ visible: boolean; onClose: () => void; showToast: (config: any) => void; theme: any; }' is not assignable to type 'IntrinsicAttributes & { visible: any; onClose: any; insets: any; onSyncDiagnostic: any; }'.
+  Property 'showToast' does not exist on type 'IntrinsicAttributes & { visible: any; onClose: any; insets: any; onSyncDiagnostic: any; }'.
+App.js(5914,11): error TS2322: Type '{ visible: boolean; onClose: () => void; theme: any; users: any; currentUser: any; currentDay: any; templates: any; libraryCategories: any; currentTheme: any; bannerPosition: any; hasSecurePin: boolean; ... 7 more ...; initialTab: number; }' is not assignable to type 'IntrinsicAttributes & { visible: any; onClose: any; theme: any; users: any; currentUser: any; currentDay: any; libraryCategories: any; currentTheme: any; bannerPosition: any; ... 8 more ...; initialTab?: number; }'.
+  Property 'templates' does not exist on type 'IntrinsicAttributes & { visible: any; onClose: any; theme: any; users: any; currentUser: any; currentDay: any; libraryCategories: any; currentTheme: any; bannerPosition: any; ... 8 more ...; initialTab?: number; }'.
+src/components/EditModeList/EditModeListItem.js(10,5): error TS2339: Property 'item' does not exist on type '{}'.
+src/components/EditModeList/EditModeListItem.js(11,5): error TS2339: Property 'index' does not exist on type '{}'.
+src/components/EditModeList/EditModeListItem.js(12,5): error TS2339: Property 'totalCount' does not exist on type '{}'.
+src/components/EditModeList/EditModeListItem.js(13,5): error TS2339: Property 'onEdit' does not exist on type '{}'.
+src/components/EditModeList/EditModeListItem.js(14,5): error TS2339: Property 'onDelete' does not exist on type '{}'.
+src/components/EditModeList/EditModeListItem.js(15,5): error TS2339: Property 'onToggle' does not exist on type '{}'.
+src/components/EditModeList/EditModeListItem.js(16,5): error TS2339: Property 'onLibrary' does not exist on type '{}'.
+src/components/EditModeList/EditModeListItem.js(17,5): error TS2339: Property 'onMoveUp' does not exist on type '{}'.
+src/components/EditModeList/EditModeListItem.js(18,5): error TS2339: Property 'onMoveDown' does not exist on type '{}'.
+src/components/EditModeList/EditModeListItem.js(19,5): error TS2339: Property 'theme' does not exist on type '{}'.
+src/components/EditModeList/EditModeListItem.js(20,5): error TS2339: Property 'isTablet' does not exist on type '{}'.
+src/components/EditModeList/EditModeListItem.js(21,5): error TS2339: Property 'displayMode' does not exist on type '{}'.
+src/components/EditModeList/EditModeListItem.js(221,17): error TS2339: Property 'item' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(221,39): error TS2339: Property 'item' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(222,17): error TS2339: Property 'item' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(222,41): error TS2339: Property 'item' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(223,17): error TS2339: Property 'item' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(223,48): error TS2339: Property 'item' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(224,17): error TS2339: Property 'item' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(224,41): error TS2339: Property 'item' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(225,17): error TS2339: Property 'item' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(225,46): error TS2339: Property 'item' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(226,17): error TS2339: Property 'item' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(226,51): error TS2339: Property 'item' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(227,17): error TS2339: Property 'item' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(227,41): error TS2339: Property 'item' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(228,17): error TS2339: Property 'index' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(228,37): error TS2339: Property 'index' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(229,17): error TS2339: Property 'totalCount' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(229,42): error TS2339: Property 'totalCount' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(230,17): error TS2339: Property 'theme' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(230,45): error TS2339: Property 'theme' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(231,17): error TS2339: Property 'isTablet' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(231,40): error TS2339: Property 'isTablet' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(232,17): error TS2339: Property 'displayMode' does not exist on type 'object'.
+src/components/EditModeList/EditModeListItem.js(232,43): error TS2339: Property 'displayMode' does not exist on type 'object'.
+src/components/EditModeList/index.js(33,7): error TS2322: Type '{ item: any; index: any; totalCount: any; onEdit: () => any; onDelete: () => any; onToggle: () => any; onLibrary: () => any; onMoveUp: (index: any) => void; onMoveDown: (index: any) => void; theme: any; isTablet: boolean; displayMode: any; }' is not assignable to type 'IntrinsicAttributes & object'.
+  Property 'item' does not exist on type 'IntrinsicAttributes & object'.
+src/components/Modals/DataModal/DataModal.js(42,66): error TS2339: Property 'default' does not exist on type 'typeof import("react-native-document-picker")'.
+src/components/Modals/DataModal/DataModal.js(330,23): error TS2345: Argument of type '{}' is not assignable to parameter of type 'SetStateAction<any[]>'.
+src/components/Modals/DataModal/DataModal.js(1059,26): error TS2339: Property 'syncId' does not exist on type 'true | { isNewSync: boolean; syncId: any; recoveryPhrase: any; }'.
+  Property 'syncId' does not exist on type 'true'.
+src/components/Modals/DataModal/DataModal.js(1069,32): error TS2339: Property 'isNewSync' does not exist on type 'true | { isNewSync: boolean; syncId: any; recoveryPhrase: any; }'.
+  Property 'isNewSync' does not exist on type 'true'.
+src/components/Modals/DataModal/DataModal.js(1149,40): error TS2339: Property 'minimalSync' does not exist on type 'SyncStoreIntegration'.
+src/components/Modals/DataModal/DataModal.js(2391,36): error TS2551: Property 'shareFieldGroup' does not exist on type '{ scrollContainer: { paddingHorizontal: number; paddingTop: number; paddingBottom: number; }; section: { maxWidth: number; alignSelf: "center"; width: "100%"; shadowColor: string; shadowOffset: { ...; }; ... 8 more ...; borderRadius: number; } | { ...; } | { ...; }; ... 160 more ...; debugRefreshButtonText: { ...; }...'. Did you mean 'shareField'?
+src/components/Modals/DataModal/DataModal.js(2506,47): error TS2551: Property 'activeShareNote' does not exist on type '{ scrollContainer: { paddingHorizontal: number; paddingTop: number; paddingBottom: number; }; section: { maxWidth: number; alignSelf: "center"; width: "100%"; shadowColor: string; shadowOffset: { ...; }; ... 8 more ...; borderRadius: number; } | { ...; } | { ...; }; ... 160 more ...; debugRefreshButtonText: { ...; }...'. Did you mean 'activeShareInfo'?
+src/components/Modals/DataModal/DataModal.js(2538,8): error TS2741: Property 'headerRight' is missing in type '{ children: Element | Element[]; visible: any; onClose: any; theme: any; title: string; icon: string; tabs: { key: string; label: string; icon: string; }[]; activeTab: number; onTabChange: (newTab: any) => void; }' but required in type '{ visible: any; onClose: any; theme: any; title: any; icon: any; tabs: any; defaultTab?: number; activeTab: any; onTabChange: any; children: any; headerRight: any; }'.
+src/components/Modals/DataModal/DataModal.js(2568,12): error TS2741: Property 'onScrollStateChange' is missing in type '{ children: Element; isActive: boolean; modalVisible: any; }' but required in type '{ children: any; isActive: any; modalVisible: any; onScrollStateChange: any; }'.
+src/components/Modals/DataModal/DataModal.js(2574,14): error TS2741: Property 'onScrollStateChange' is missing in type '{ children: Element; key: string; isActive: boolean; modalVisible: any; }' but required in type '{ children: any; isActive: any; modalVisible: any; onScrollStateChange: any; }'.
+src/components/Modals/DataModal/DataModal.js(2581,14): error TS2741: Property 'onScrollStateChange' is missing in type '{ children: Element; key: string; isActive: boolean; modalVisible: any; }' but required in type '{ children: any; isActive: any; modalVisible: any; onScrollStateChange: any; }'.
+src/components/Modals/DataModal/DataModal.js(2588,14): error TS2741: Property 'onScrollStateChange' is missing in type '{ children: Element; key: string; isActive: boolean; modalVisible: any; }' but required in type '{ children: any; isActive: any; modalVisible: any; onScrollStateChange: any; }'.
+src/components/Modals/DataModal/DataModal.js(2595,14): error TS2741: Property 'onScrollStateChange' is missing in type '{ children: Element; key: string; isActive: boolean; modalVisible: any; }' but required in type '{ children: any; isActive: any; modalVisible: any; onScrollStateChange: any; }'.
+src/components/Modals/DataModal/DataModal.js(2602,14): error TS2741: Property 'onScrollStateChange' is missing in type '{ children: Element; key: string; isActive: boolean; modalVisible: any; }' but required in type '{ children: any; isActive: any; modalVisible: any; onScrollStateChange: any; }'.
+src/components/Onboarding/OnboardingUserCentered.js(60,41): error TS2339: Property 'syncInviteData' does not exist on type 'Window & typeof globalThis'.
+src/components/Onboarding/OnboardingUserCentered.js(83,42): error TS2339: Property 'syncInviteData' does not exist on type 'Window & typeof globalThis'.
+src/components/Onboarding/OnboardingUserCentered.js(104,29): error TS2339: Property 'syncInviteDataImmediate' does not exist on type 'Window & typeof globalThis'.
+src/components/Onboarding/OnboardingUserCentered.js(104,63): error TS2339: Property 'syncInviteData' does not exist on type 'Window & typeof globalThis'.
+src/components/Onboarding/OnboardingUserCentered.js(139,41): error TS2339: Property 'syncInviteData' does not exist on type 'Window & typeof globalThis'.
+src/components/Onboarding/OnboardingUserCentered.js(166,73): error TS2339: Property 'syncInviteData' does not exist on type 'Window & typeof globalThis'.
+src/components/Onboarding/OnboardingUserCentered.js(167,18): error TS2339: Property 'syncInviteData' does not exist on type 'Window & typeof globalThis'.
+src/components/Onboarding/OnboardingUserCentered.js(167,54): error TS2339: Property 'syncInviteData' does not exist on type 'Window & typeof globalThis'.
+src/components/Onboarding/OnboardingUserCentered.js(180,92): error TS2339: Property 'syncInviteData' does not exist on type 'Window & typeof globalThis'.
+src/components/Onboarding/OnboardingUserCentered.js(181,18): error TS2339: Property 'syncInviteData' does not exist on type 'Window & typeof globalThis'.
+src/components/Onboarding/OnboardingUserCentered.js(181,54): error TS2339: Property 'syncInviteData' does not exist on type 'Window & typeof globalThis'.
+src/components/Onboarding/OnboardingUserCentered.js(716,52): error TS2538: Type 'null' cannot be used as an index type.
+src/components/Onboarding/OnboardingUserCentered.js(717,46): error TS2538: Type 'null' cannot be used as an index type.
+src/components/Onboarding/OnboardingUserCentered.js(1335,14): error TS2339: Property 'syncInviteData' does not exist on type 'Window & typeof globalThis'.
+src/components/Onboarding/OnboardingUserCentered.js(1336,14): error TS2339: Property 'syncInviteData' does not exist on type 'Window & typeof globalThis'.
+src/services/sync/encryptionServiceSimple.ts(175,30): error TS2349: This expression is not callable.
+  Type 'typeof secretbox' has no call signatures.

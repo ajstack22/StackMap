@@ -8,11 +8,11 @@
  * Normalize activity fields to use standard naming
  * Activities should use 'text' and 'icon' (not 'name', 'title', or 'emoji')
  */
-export const normalizeActivity = (activity) => {
+export const normalizeActivity = activity => {
   if (!activity) return activity;
-  
+
   const normalized = { ...activity };
-  
+
   // Normalize text field (prefer text > name > title)
   if (!normalized.text && normalized.text !== '') {
     if (normalized.name !== undefined) {
@@ -23,7 +23,7 @@ export const normalizeActivity = (activity) => {
       delete normalized.title;
     }
   }
-  
+
   // Normalize icon field (prefer icon > emoji)
   if (!normalized.icon && normalized.icon !== '') {
     if (normalized.emoji !== undefined) {
@@ -34,7 +34,7 @@ export const normalizeActivity = (activity) => {
     // Remove redundant emoji field if icon exists
     delete normalized.emoji;
   }
-  
+
   return normalized;
 };
 
@@ -42,17 +42,20 @@ export const normalizeActivity = (activity) => {
  * Normalize user fields to use standard naming
  * Users should use 'name' (string) and 'icon' (not 'emoji')
  */
-export const normalizeUser = (user) => {
+export const normalizeUser = user => {
   if (!user) return user;
-  
+
   const normalized = { ...user };
-  
+
   // Ensure name is a string
   if (normalized.name && typeof normalized.name === 'object') {
     // Try to extract string from object
     if (normalized.name.name && typeof normalized.name.name === 'string') {
       normalized.name = normalized.name.name;
-    } else if (normalized.name.text && typeof normalized.name.text === 'string') {
+    } else if (
+      normalized.name.text &&
+      typeof normalized.name.text === 'string'
+    ) {
       normalized.name = normalized.name.text;
     } else {
       normalized.name = 'User';
@@ -60,7 +63,7 @@ export const normalizeUser = (user) => {
   } else if (!normalized.name || typeof normalized.name !== 'string') {
     normalized.name = 'User';
   }
-  
+
   // Normalize icon field (prefer icon > emoji)
   if (!normalized.icon) {
     if (normalized.emoji) {
@@ -73,7 +76,7 @@ export const normalizeUser = (user) => {
     // Remove redundant emoji field if icon exists
     delete normalized.emoji;
   }
-  
+
   // Normalize days if present
   if (normalized.days) {
     Object.keys(normalized.days).forEach(dayKey => {
@@ -83,18 +86,18 @@ export const normalizeUser = (user) => {
       }
     });
   }
-  
+
   return normalized;
 };
 
 /**
  * Normalize entire sync data structure
  */
-export const normalizeSyncData = (data) => {
+export const normalizeSyncData = data => {
   if (!data) return data;
-  
+
   const normalized = { ...data };
-  
+
   // Normalize users
   if (normalized.users && typeof normalized.users === 'object') {
     normalized.users = { ...normalized.users };
@@ -102,7 +105,7 @@ export const normalizeSyncData = (data) => {
       normalized.users[userId] = normalizeUser(normalized.users[userId]);
     });
   }
-  
+
   // Normalize library activities
   if (normalized.library && normalized.library.categories) {
     // Handle both array and object formats
@@ -116,37 +119,50 @@ export const normalizeSyncData = (data) => {
       // Categories is an object, normalize values
       Object.keys(normalized.library.categories).forEach(categoryId => {
         const category = normalized.library.categories[categoryId];
-        if (category && category.activities && Array.isArray(category.activities)) {
+        if (
+          category &&
+          category.activities &&
+          Array.isArray(category.activities)
+        ) {
           category.activities = category.activities.map(normalizeActivity);
         }
       });
     }
   }
-  
+
   // Also normalize library.activities if it exists (different structure)
-  if (normalized.library && normalized.library.activities && Array.isArray(normalized.library.activities)) {
-    normalized.library.activities = normalized.library.activities.map(normalizeActivity);
+  if (
+    normalized.library &&
+    normalized.library.activities &&
+    Array.isArray(normalized.library.activities)
+  ) {
+    normalized.library.activities =
+      normalized.library.activities.map(normalizeActivity);
   }
-  
+
   // Normalize library templates
-  if (normalized.libraryTemplates && Array.isArray(normalized.libraryTemplates)) {
-    normalized.libraryTemplates = normalized.libraryTemplates.map(normalizeActivity);
+  if (
+    normalized.libraryTemplates &&
+    Array.isArray(normalized.libraryTemplates)
+  ) {
+    normalized.libraryTemplates =
+      normalized.libraryTemplates.map(normalizeActivity);
   }
-  
+
   // Normalize current activities array (legacy)
   if (normalized.activities && Array.isArray(normalized.activities)) {
     normalized.activities = normalized.activities.map(normalizeActivity);
   }
-  
+
   return normalized;
 };
 
 /**
  * Check if data needs normalization
  */
-export const needsNormalization = (data) => {
+export const needsNormalization = data => {
   if (!data) return false;
-  
+
   // Check users for old field names
   if (data.users) {
     for (const userId in data.users) {
@@ -155,7 +171,7 @@ export const needsNormalization = (data) => {
       if (user.emoji || (user.name && typeof user.name === 'object')) {
         return true;
       }
-      
+
       // Check user activities
       if (user.days) {
         for (const dayKey in user.days) {
@@ -172,7 +188,7 @@ export const needsNormalization = (data) => {
       }
     }
   }
-  
+
   // Check library activities
   if (data.library && data.library.categories) {
     // Handle both array and object formats
@@ -190,7 +206,11 @@ export const needsNormalization = (data) => {
       // Categories is an object
       for (const categoryId in data.library.categories) {
         const category = data.library.categories[categoryId];
-        if (category && category.activities && Array.isArray(category.activities)) {
+        if (
+          category &&
+          category.activities &&
+          Array.isArray(category.activities)
+        ) {
           for (const activity of category.activities) {
             if (activity.name || activity.title || activity.emoji) {
               return true;
@@ -200,15 +220,19 @@ export const needsNormalization = (data) => {
       }
     }
   }
-  
+
   // Also check library.activities if it exists
-  if (data.library && data.library.activities && Array.isArray(data.library.activities)) {
+  if (
+    data.library &&
+    data.library.activities &&
+    Array.isArray(data.library.activities)
+  ) {
     for (const activity of data.library.activities) {
       if (activity.name || activity.title || activity.emoji) {
         return true;
       }
     }
   }
-  
+
   return false;
 };

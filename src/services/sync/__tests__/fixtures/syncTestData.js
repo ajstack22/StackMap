@@ -64,15 +64,15 @@ export const testSettings = {
 };
 
 export const testLibrary = {
-  'Morning': [
+  Morning: [
     { id: 'lib1', text: 'Brush teeth', icon: '🦷' },
     { id: 'lib5', text: 'Shower', icon: '🚿' },
   ],
-  'Wellness': [
+  Wellness: [
     { id: 'lib2', text: 'Meditation', icon: '🧘' },
     { id: 'lib6', text: 'Yoga', icon: '🧘‍♀️' },
   ],
-  'Exercise': [
+  Exercise: [
     { id: 'lib4', text: 'Walk dog', icon: '🐕' },
     { id: 'lib7', text: 'Running', icon: '🏃' },
   ],
@@ -101,7 +101,12 @@ export const conflictingData = {
         days: {
           today: {
             activities: [
-              { id: 'act1', text: 'Local activity', icon: '📝', completed: true },
+              {
+                id: 'act1',
+                text: 'Local activity',
+                icon: '📝',
+                completed: true,
+              },
             ],
           },
         },
@@ -121,8 +126,18 @@ export const conflictingData = {
         days: {
           today: {
             activities: [
-              { id: 'act1', text: 'Remote activity', icon: '📄', completed: false },
-              { id: 'act5', text: 'New remote activity', icon: '🆕', completed: false },
+              {
+                id: 'act1',
+                text: 'Remote activity',
+                icon: '📄',
+                completed: false,
+              },
+              {
+                id: 'act5',
+                text: 'New remote activity',
+                icon: '🆕',
+                completed: false,
+              },
             ],
           },
         },
@@ -139,7 +154,7 @@ export const conflictingData = {
 export const generateLargeDataset = (size = 1000) => {
   const activities = [];
   const library = {};
-  
+
   for (let i = 0; i < size; i++) {
     const activity = {
       id: `activity-${i}`,
@@ -149,7 +164,7 @@ export const generateLargeDataset = (size = 1000) => {
       completed: Math.random() > 0.5,
     };
     activities.push(activity);
-    
+
     const categoryName = `Category-${Math.floor(i / 10)}`;
     if (!library[categoryName]) {
       library[categoryName] = [];
@@ -160,7 +175,7 @@ export const generateLargeDataset = (size = 1000) => {
       icon: activity.icon,
     });
   }
-  
+
   return { activities, library };
 };
 

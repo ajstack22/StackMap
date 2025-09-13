@@ -96,7 +96,13 @@ const ActivityRow = ({ activity, onEdit, onDelete, onQuickAdd, theme }) => {
         {isMobile ? (
           <>
             <TouchableOpacity
-              style={[styles.addIconButton, { marginRight: SPACING.xs, backgroundColor: justAdded ? '#4CAF50' : theme.primary }]}
+              style={[
+                styles.addIconButton,
+                {
+                  marginRight: SPACING.xs,
+                  backgroundColor: justAdded ? '#4CAF50' : theme.primary,
+                },
+              ]}
               onPress={() => {
                 onQuickAdd(activity);
                 setJustAdded(true);
@@ -262,7 +268,10 @@ const ActivityRow = ({ activity, onEdit, onDelete, onQuickAdd, theme }) => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.addIconButton, { backgroundColor: justAdded ? '#4CAF50' : theme.primary }]}
+              style={[
+                styles.addIconButton,
+                { backgroundColor: justAdded ? '#4CAF50' : theme.primary },
+              ]}
               onPress={() => {
                 onQuickAdd(activity);
                 setJustAdded(true);
@@ -689,11 +698,7 @@ const CategorySection = ({
                                 disabled={justAddedAll}
                               >
                                 <Icon
-                                  name={
-                                    justAddedAll
-                                      ? 'done-all'
-                                      : 'add'
-                                  }
+                                  name={justAddedAll ? 'done-all' : 'add'}
                                   size={20}
                                   color={justAddedAll ? 'white' : theme.primary}
                                 />
@@ -816,11 +821,7 @@ const CategorySection = ({
                                   disabled={justAddedAll}
                                 >
                                   <Icon
-                                    name={
-                                      justAddedAll
-                                        ? 'done-all'
-                                        : 'add'
-                                    }
+                                    name={justAddedAll ? 'done-all' : 'add'}
                                     size={24}
                                     color={
                                       justAddedAll ? 'white' : theme.primary
@@ -1191,7 +1192,8 @@ const ActivityLibrary = ({
     setCategories(newCategories);
     if (onSaveCategories) {
       onSaveCategories(newCategories);
-    } else {}
+    } else {
+    }
   };
 
   const handleAddCategory = () => {

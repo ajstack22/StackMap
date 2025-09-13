@@ -1,7 +1,10 @@
 import { Platform, Vibration, LayoutAnimation, UIManager } from 'react-native';
 
 // Enable LayoutAnimation on Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
@@ -13,14 +16,14 @@ export const reorderArray = (array, fromIndex, toIndex) => {
   const result = [...array];
   const [removed] = result.splice(fromIndex, 1);
   result.splice(toIndex, 0, removed);
-  
+
   // Mark the entire array as having its order changed
   // This ensures the sort order syncs properly
   const orderTimestamp = Date.now();
   return result.map((item, index) => ({
     ...item,
     orderChangedAt: orderTimestamp,
-    sortIndex: index
+    sortIndex: index,
   }));
 };
 
@@ -97,7 +100,7 @@ export const configureReorderAnimation = () => {
       duration: 200,
     },
   };
-  
+
   // Use platform-appropriate animation
   if (Platform.OS === 'ios') {
     // iOS: Use preset for best performance

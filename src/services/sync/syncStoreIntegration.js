@@ -1,9 +1,9 @@
 /**
  * PHASE 2: STORE INTEGRATION LAYER
- * 
+ *
  * Connects minimal sync service to Zustand stores
  * Handles data normalization and proper store updates
- * 
+ *
  * PHASE 4 UPDATE: Added field-level timestamp tracking for conflict resolution
  */
 
@@ -16,7 +16,12 @@ import encryptionService from './encryptionServiceFixed';
 import { useUserStore, useSettingsStore, useLibraryStore } from '../../stores';
 import { normalizeSyncData } from '../../utils/dataNormalizer';
 import nacl from 'tweetnacl';
-import { encodeBase64, decodeBase64, encodeUTF8, decodeUTF8 } from 'tweetnacl-util';
+import {
+  encodeBase64,
+  decodeBase64,
+  encodeUTF8,
+  decodeUTF8,
+} from 'tweetnacl-util';
 
 class SyncStoreIntegration {
   constructor() {
@@ -26,18 +31,18 @@ class SyncStoreIntegration {
     this.lastPushTime = 0;
     this.changeDebounceTimer = null;
     this.changeDebounceDelay = 5000; // 5 seconds after changes
-    
+
     // Track field-level timestamps for conflict resolution
     this.fieldTimestamps = {
       users: 0,
       activities: 0,
       settings: 0,
-      library: 0
+      library: 0,
     };
-    
+
     // Status listeners for UI updates
     this.statusListeners = new Set();
-    
+
     // Bind methods
     this.handleDataReceived = this.handleDataReceived.bind(this);
     this.handleStoreChange = this.handleStoreChange.bind(this);
@@ -53,29 +58,32 @@ class SyncStoreIntegration {
     }
 
     console.log('[SyncStore] 🚀 Initializing sync integration');
-    
+
     // Load existing sync ID into minimalSync first
     await minimalSync.loadExistingSyncId();
-    
+
     // Check if we have an existing sync
     const syncId = await AsyncStorage.getItem('@minimal_sync_id');
     console.log('[SyncStore] After loadExistingSyncId - minimalSync state:', {
       syncId: minimalSync.syncId,
       isEnabled: minimalSync.isEnabled,
       encryptionReady: minimalSync.encryptionReady,
-      recoveryPhrase: !!minimalSync.recoveryPhrase
+      recoveryPhrase: !!minimalSync.recoveryPhrase,
     });
-    
+
     if (syncId && minimalSync.encryptionReady) {
       console.log('[SyncStore] Found existing sync:', syncId);
-      
+
       // Enable periodic sync with our callback
       minimalSync.enableSync(this.handleDataReceived);
-      console.log('[SyncStore] After enableSync - minimalSync.isEnabled:', minimalSync.isEnabled);
-      
+      console.log(
+        '[SyncStore] After enableSync - minimalSync.isEnabled:',
+        minimalSync.isEnabled,
+      );
+
       // Subscribe to store changes
       this.subscribeToStores();
-      
+
       // Do an initial pull to get latest data
       console.log('[SyncStore] 🔄 Performing initial sync on app load');
       try {
@@ -87,12 +95,12 @@ class SyncStoreIntegration {
       } catch (error) {
         console.error('[SyncStore] Initial sync failed:', error);
       }
-      
+
       console.log('[SyncStore] ✅ Sync enabled for existing sync:', syncId);
     } else {
       console.log('[SyncStore] No existing sync found or encryption not ready');
     }
-    
+
     this.isInitialized = true;
   }
 
@@ -101,23 +109,23 @@ class SyncStoreIntegration {
    */
   subscribeToStores() {
     console.log('[SyncStore] 📡 Subscribing to store changes');
-    
+
     // Subscribe to all stores with field tracking
     const unsubUser = useUserStore.subscribe(() => {
       this.fieldTimestamps.users = Date.now();
       this.handleStoreChange('users');
     });
-    
+
     const unsubSettings = useSettingsStore.subscribe(() => {
       this.fieldTimestamps.settings = Date.now();
       this.handleStoreChange('settings');
     });
-    
+
     const unsubLibrary = useLibraryStore.subscribe(() => {
       this.fieldTimestamps.library = Date.now();
       this.handleStoreChange('library');
     });
-    
+
     // Store unsubscribe functions
     this.unsubscribers = [unsubUser, unsubSettings, unsubLibrary];
   }
@@ -135,7 +143,7 @@ class SyncStoreIntegration {
     if (field) {
       console.log(`[SyncStore] 📝 ${field} changed - pushing immediately`);
     }
-    
+
     // Push immediately to reduce conflicts
     this.pushCurrentState();
 
@@ -161,57 +169,66 @@ class SyncStoreIntegration {
     const userState = useUserStore.getState();
     const libraryState = useLibraryStore.getState();
     const settingsState = useSettingsStore.getState();
-    
+
     const state = {
       // Users is an object, not array
       users: userState.users || {},
       currentUser: userState.currentUser,
       currentDay: userState.currentDay,
       userContextData: userState.userContextData || {},
-      
+
       // Library data - match actual store structure
       library: libraryState.library || {
         activities: [],
         categories: [],
         templates: [],
-        userAddedActivityIds: []
+        userAddedActivityIds: [],
       },
-      
+
       // Settings
       settings: settingsState || {},
-      
+
       // Include metadata for conflict resolution
       metadata: {
         lastModified: Date.now(),
         deviceId: minimalSync.deviceId,
         fieldTimestamps: { ...this.fieldTimestamps },
-        version: 2 // Store integration version
-      }
+        version: 2, // Store integration version
+      },
     };
 
     // Normalize the data to ensure field consistency
     const normalized = normalizeSyncData(state);
-    
+
     // Preserve metadata after normalization
     if (!normalized.metadata) {
       normalized.metadata = state.metadata;
     }
-    
+
     console.log('[SyncStore] 📊 Current state details:');
-    console.log('[SyncStore]   - Users count:', Object.keys(state.users || {}).length);
+    console.log(
+      '[SyncStore]   - Users count:',
+      Object.keys(state.users || {}).length,
+    );
     console.log('[SyncStore]   - User IDs:', Object.keys(state.users || {}));
-    console.log('[SyncStore]   - Library activities:', state.library?.activities?.length || 0);
-    console.log('[SyncStore]   - Library categories:', state.library?.categories?.length || 0);
+    console.log(
+      '[SyncStore]   - Library activities:',
+      state.library?.activities?.length || 0,
+    );
+    console.log(
+      '[SyncStore]   - Library categories:',
+      state.library?.categories?.length || 0,
+    );
     console.log('[SyncStore]   - Has settings:', !!state.settings);
     console.log('[SyncStore]   - Current user:', state.currentUser);
-    
+
     console.log('[SyncStore] 📊 Current state:', {
       userCount: Object.keys(normalized.users || {}).length,
       libraryActivities: normalized.library?.activities?.length || 0,
       hasSettings: !!normalized.settings,
-      fieldTimestamps: state.metadata.fieldTimestamps
+      fieldTimestamps: state.metadata.fieldTimestamps,
     });
-    
+
     return normalized;
   }
 
@@ -220,21 +237,23 @@ class SyncStoreIntegration {
    */
   async applyState(syncedData) {
     console.log('[SyncStore] 📥 Applying synced state');
-    
+
     // Set flag to prevent change detection during update
     this.isSyncing = true;
-    
+
     try {
       // Normalize incoming data
       const normalized = normalizeSyncData(syncedData);
-      
+
       // Update stores using proper methods
       // Users is an object, not array
       if (normalized.users && typeof normalized.users === 'object') {
-        console.log(`[SyncStore] Setting ${Object.keys(normalized.users).length} users`);
+        console.log(
+          `[SyncStore] Setting ${Object.keys(normalized.users).length} users`,
+        );
         useUserStore.getState().setUsers(normalized.users);
       }
-      
+
       // Set other user store properties
       if (normalized.currentUser) {
         useUserStore.getState().setCurrentUser(normalized.currentUser);
@@ -245,37 +264,42 @@ class SyncStoreIntegration {
       if (normalized.userContextData) {
         useUserStore.getState().setUserContextData(normalized.userContextData);
       }
-      
+
       // Update library store - handle both object and array formats
       if (normalized.library) {
-        if (typeof normalized.library === 'object' && !Array.isArray(normalized.library)) {
+        if (
+          typeof normalized.library === 'object' &&
+          !Array.isArray(normalized.library)
+        ) {
           // Library is an object with activities, categories, etc.
           console.log(`[SyncStore] Setting library object`);
           useLibraryStore.getState().setLibrary(normalized.library);
         } else if (Array.isArray(normalized.library)) {
           // Legacy format - library is just an array of activities
-          console.log(`[SyncStore] Setting ${normalized.library.length} library items (legacy format)`);
+          console.log(
+            `[SyncStore] Setting ${normalized.library.length} library items (legacy format)`,
+          );
           useLibraryStore.getState().setLibrary({
             activities: normalized.library,
             categories: [],
             templates: [],
-            userAddedActivityIds: []
+            userAddedActivityIds: [],
           });
         }
       }
-      
+
       // Update settings
       if (normalized.settings) {
         console.log('[SyncStore] Updating settings');
         useSettingsStore.getState().updateSettings(normalized.settings);
       }
-      
+
       // Force immediate persistence
       await this.flushStores();
-      
+
       // Create backup as failsafe
       await this.createBackup(normalized);
-      
+
       console.log('[SyncStore] ✅ State applied and persisted');
     } catch (error) {
       console.error('[SyncStore] ❌ Error applying state:', error);
@@ -293,22 +317,31 @@ class SyncStoreIntegration {
    */
   async flushStores() {
     console.log('[SyncStore] 💾 Flushing stores to storage');
-    
+
     // Flush each store's persist middleware
     const flushPromises = [];
-    
-    if (useUserStore.persist && typeof useUserStore.persist.flush === 'function') {
+
+    if (
+      useUserStore.persist &&
+      typeof useUserStore.persist.flush === 'function'
+    ) {
       flushPromises.push(useUserStore.persist.flush());
     }
-    
-    if (useSettingsStore.persist && typeof useSettingsStore.persist.flush === 'function') {
+
+    if (
+      useSettingsStore.persist &&
+      typeof useSettingsStore.persist.flush === 'function'
+    ) {
       flushPromises.push(useSettingsStore.persist.flush());
     }
-    
-    if (useLibraryStore.persist && typeof useLibraryStore.persist.flush === 'function') {
+
+    if (
+      useLibraryStore.persist &&
+      typeof useLibraryStore.persist.flush === 'function'
+    ) {
       flushPromises.push(useLibraryStore.persist.flush());
     }
-    
+
     await Promise.all(flushPromises);
     console.log('[SyncStore] ✅ All stores flushed');
   }
@@ -318,10 +351,13 @@ class SyncStoreIntegration {
    */
   async createBackup(data) {
     try {
-      await AsyncStorage.setItem('@sync_state_backup', JSON.stringify({
-        data,
-        timestamp: Date.now()
-      }));
+      await AsyncStorage.setItem(
+        '@sync_state_backup',
+        JSON.stringify({
+          data,
+          timestamp: Date.now(),
+        }),
+      );
       console.log('[SyncStore] 💾 Backup created');
     } catch (error) {
       console.error('[SyncStore] Error creating backup:', error);
@@ -336,13 +372,20 @@ class SyncStoreIntegration {
       const backup = await AsyncStorage.getItem('@sync_state_backup');
       if (backup) {
         const { data, timestamp } = JSON.parse(backup);
-        console.log('[SyncStore] 📦 Found backup from', new Date(timestamp).toLocaleString());
-        
+        console.log(
+          '[SyncStore] 📦 Found backup from',
+          new Date(timestamp).toLocaleString(),
+        );
+
         // Check if stores are empty
         const currentState = this.getCurrentState();
-        const isEmpty = (!currentState.users || Object.keys(currentState.users).length === 0) &&
-                       (!currentState.library || !currentState.library.activities || currentState.library.activities.length === 0);
-        
+        const isEmpty =
+          (!currentState.users ||
+            Object.keys(currentState.users).length === 0) &&
+          (!currentState.library ||
+            !currentState.library.activities ||
+            currentState.library.activities.length === 0);
+
         if (isEmpty && data) {
           console.log('[SyncStore] 🔄 Restoring from backup');
           await this.applyState(data);
@@ -360,14 +403,14 @@ class SyncStoreIntegration {
    */
   async handleDataReceived(syncedData) {
     console.log('[SyncStore] 📨 Received sync data');
-    
+
     // Get current state for conflict resolution
     const currentState = this.getCurrentState();
-    
+
     // Perform conflict resolution
     console.log('[SyncStore] 🔀 Resolving conflicts...');
     const mergedData = conflictResolver.mergeStates(currentState, syncedData);
-    
+
     // Check if there were conflicts
     const mergeLog = conflictResolver.getMergeLog();
     if (mergeLog.length > 0) {
@@ -376,10 +419,10 @@ class SyncStoreIntegration {
         console.log(`  - ${entry.message}`);
       });
     }
-    
+
     // Apply the merged state
     await this.applyState(mergedData);
-    
+
     // Update our field timestamps from merged data
     if (mergedData.metadata?.fieldTimestamps) {
       this.fieldTimestamps = { ...mergedData.metadata.fieldTimestamps };
@@ -401,18 +444,18 @@ class SyncStoreIntegration {
     this.lastPushTime = now;
     this.isSyncing = true;
     this.notifyStatusListeners('syncing');
-    
+
     try {
       const currentState = this.getCurrentState();
       const result = await minimalSync.pushDataWithRetry(currentState);
-      
+
       if (result.success) {
         console.log('[SyncStore] ✅ State pushed successfully');
         this.notifyStatusListeners('idle');
       } else {
         console.error('[SyncStore] ❌ Push failed:', result.error);
         this.notifyStatusListeners('error');
-        
+
         // If it was a rate limit error, schedule a retry
         if (result.rateLimited) {
           console.log('[SyncStore] 🔄 Scheduling retry due to rate limit');
@@ -435,31 +478,38 @@ class SyncStoreIntegration {
    */
   async createSync() {
     console.log('[SyncStore] 🆕 Creating new sync');
-    
+
     const currentState = this.getCurrentState();
     const result = await minimalSync.createSync(currentState);
-    
+
     if (result.success) {
       console.log('[SyncStore] ✅ Sync created:', result.syncId);
       console.log('[SyncStore] 📝 Result contains:', result);
-      console.log('[SyncStore] 🔑 Recovery phrase from result:', result.recoveryPhrase);
-      console.log('[SyncStore] 🔑 Recovery phrase from minimalSync:', minimalSync.recoveryPhrase);
-      
+      console.log(
+        '[SyncStore] 🔑 Recovery phrase from result:',
+        result.recoveryPhrase,
+      );
+      console.log(
+        '[SyncStore] 🔑 Recovery phrase from minimalSync:',
+        minimalSync.recoveryPhrase,
+      );
+
       // Enable periodic sync
       minimalSync.enableSync(this.handleDataReceived);
       console.log('[SyncStore] ✅ Periodic sync enabled');
-      
+
       // Subscribe to store changes if not already subscribed
       if (!this.unsubscribers) {
         this.subscribeToStores();
       }
-      
+
       this.isInitialized = true;
-      
+
       // Return both sync ID and recovery phrase for display
-      return { 
-        syncId: result.syncId, 
-        recoveryPhrase: result.recoveryPhrase || minimalSync.recoveryPhrase || 'NOT_FOUND'
+      return {
+        syncId: result.syncId,
+        recoveryPhrase:
+          result.recoveryPhrase || minimalSync.recoveryPhrase || 'NOT_FOUND',
       };
     } else {
       console.error('[SyncStore] ❌ Create sync failed:', result.error);
@@ -479,51 +529,55 @@ class SyncStoreIntegration {
    */
   async joinSync(recoveryPhrase) {
     console.log('[SyncStore] 🔗 Joining sync with recovery phrase');
-    
+
     const result = await minimalSync.joinSync(recoveryPhrase);
-    
+
     if (result.success) {
       console.log('[SyncStore] ✅ Joined sync successfully');
-      
+
       // IMPORTANT: When joining a sync, we completely replace local data
       // with remote data - no merging. This is intentional to ensure
       // the device fully adopts the sync group's state.
       if (result.data) {
-        console.log('[SyncStore] 📥 Replacing local data with sync group data (no merge)');
+        console.log(
+          '[SyncStore] 📥 Replacing local data with sync group data (no merge)',
+        );
         await this.applyState(result.data);
       }
-      
+
       // Enable periodic sync
       minimalSync.enableSync(this.handleDataReceived);
-      console.log('[SyncStore] ✅ Periodic sync enabled - can push immediately');
-      
+      console.log(
+        '[SyncStore] ✅ Periodic sync enabled - can push immediately',
+      );
+
       // Subscribe to store changes if not already subscribed
       if (!this.unsubscribers) {
         this.subscribeToStores();
       }
-      
+
       this.isInitialized = true;
-      
+
       return true;
     } else {
       // Check if the error is because sync doesn't exist (404)
-      const is404 = result.error && (
-        result.error.includes('404') || 
-        result.error.includes('not found') || 
-        result.error.includes('Sync group not found') || 
-        result.error.includes('does not exist')
-      );
-      
+      const is404 =
+        result.error &&
+        (result.error.includes('404') ||
+          result.error.includes('not found') ||
+          result.error.includes('Sync group not found') ||
+          result.error.includes('does not exist'));
+
       if (is404) {
         // Sync group doesn't exist, create it with the recovery phrase
         // This will use the same sync ID derived from the recovery phrase
         const createResult = await this.createSync();
-        
+
         if (createResult) {
           return { ...createResult, isNewSync: true };
         }
       }
-      
+
       // Only throw error if it's not a 404 or if create failed
       throw new Error(result.error);
     }
@@ -534,22 +588,22 @@ class SyncStoreIntegration {
    */
   disableSync() {
     console.log('[SyncStore] 🛑 Disabling sync');
-    
+
     // Disable minimal sync
     minimalSync.disableSync();
-    
+
     // Unsubscribe from stores
     if (this.unsubscribers) {
       this.unsubscribers.forEach(unsub => unsub());
       this.unsubscribers = null;
     }
-    
+
     // Clear timers
     if (this.changeDebounceTimer) {
       clearTimeout(this.changeDebounceTimer);
       this.changeDebounceTimer = null;
     }
-    
+
     this.isInitialized = false;
   }
 
@@ -558,11 +612,11 @@ class SyncStoreIntegration {
    */
   async clearAll() {
     console.log('[SyncStore] 🗑️ Clearing all sync data');
-    
+
     this.disableSync();
     await minimalSync.clearAll();
     await AsyncStorage.removeItem('@sync_state_backup');
-    
+
     this.lastPushTime = 0;
   }
 
@@ -574,7 +628,7 @@ class SyncStoreIntegration {
       isEnabled: minimalSync.isEnabled,
       syncId: minimalSync.syncId,
       recoveryPhrase: minimalSync.recoveryPhrase,
-      canPushImmediately: true // No more protection period!
+      canPushImmediately: true, // No more protection period!
     };
   }
 
@@ -591,7 +645,7 @@ class SyncStoreIntegration {
     console.log('[SyncStore] isEnabled check:', {
       minimalSync_isEnabled: minimalSync.isEnabled,
       minimalSync_syncId: minimalSync.syncId,
-      returning: result
+      returning: result,
     });
     return result;
   }
@@ -603,11 +657,13 @@ class SyncStoreIntegration {
   async enable(recoveryPhrase = null) {
     if (recoveryPhrase) {
       // Joining existing sync with the provided recovery phrase
-      console.log('[SyncStore] 🔗 Joining sync from enable() with recovery phrase');
+      console.log(
+        '[SyncStore] 🔗 Joining sync from enable() with recovery phrase',
+      );
       const result = await this.joinSync(recoveryPhrase);
       return result;
     }
-    
+
     if (!minimalSync.syncId) {
       throw new Error('No sync ID - create or join a sync first');
     }
@@ -628,14 +684,14 @@ class SyncStoreIntegration {
    */
   async initializeForImport(recoveryPhrase) {
     console.log('[SyncStore] Initializing for import with recovery phrase');
-    
+
     // Join the sync with the recovery phrase
     const result = await this.joinSync(recoveryPhrase);
-    
+
     if (!result) {
       throw new Error('Failed to join sync');
     }
-    
+
     return true;
   }
 
@@ -651,23 +707,23 @@ class SyncStoreIntegration {
    */
   async pullWithoutEnabling(syncId) {
     console.log('[SyncStore] Pulling data for preview');
-    
+
     // Temporarily set sync ID for the pull
     const originalSyncId = minimalSync.syncId;
     minimalSync.syncId = syncId;
-    
+
     try {
       const result = await minimalSync.pullData();
-      
+
       // Restore original sync ID
       minimalSync.syncId = originalSyncId;
-      
+
       if (result.success && result.data) {
         return {
-          encrypted_blob: result.data.encrypted_blob || result.data
+          encrypted_blob: result.data.encrypted_blob || result.data,
         };
       }
-      
+
       return null;
     } catch (error) {
       // Restore original sync ID
@@ -681,19 +737,19 @@ class SyncStoreIntegration {
    */
   async pullLatestData() {
     console.log('[SyncStore] Pulling latest data');
-    
+
     if (!minimalSync.syncId) {
       throw new Error('No sync ID set');
     }
-    
+
     const result = await minimalSync.pullData();
-    
+
     if (result.success && result.data) {
       // Handle the received data
       await this.handleDataReceived(result.data);
       return result;
     }
-    
+
     return result;
   }
 
@@ -701,26 +757,34 @@ class SyncStoreIntegration {
    * Initialize encryption (for onboarding)
    */
   async initializeEncryption(recoveryPhrase, syncId) {
-    console.log('[SyncStore] Initializing encryption for onboarding', { syncId });
+    console.log('[SyncStore] Initializing encryption for onboarding', {
+      syncId,
+    });
     // CRITICAL: Set the syncId on minimalSync so pullData works
     minimalSync.syncId = syncId;
     await minimalSync.initializeEncryption(recoveryPhrase, syncId);
   }
-  
+
   /**
    * Pull data directly (for onboarding preview)
    * @param {boolean} forceFullPull - If true, pulls all data ignoring timestamps (for initial sync)
    */
   async pullData(forceFullPull = false) {
-    console.log('[SyncStore] Direct pullData called, forceFullPull:', forceFullPull);
+    console.log(
+      '[SyncStore] Direct pullData called, forceFullPull:',
+      forceFullPull,
+    );
     console.log('[SyncStore] minimalSync.syncId:', minimalSync.syncId);
-    console.log('[SyncStore] minimalSync.encryptionReady:', minimalSync.encryptionReady);
-    
+    console.log(
+      '[SyncStore] minimalSync.encryptionReady:',
+      minimalSync.encryptionReady,
+    );
+
     // Direct pass-through to minimalSync for onboarding preview
     // This doesn't update stores, just returns the raw data
     return await minimalSync.pullData(forceFullPull);
   }
-  
+
   /**
    * Check for auto-update shares (stub for compatibility)
    */
@@ -743,13 +807,13 @@ class SyncStoreIntegration {
   generateShareToken(isAutoUpdate = false) {
     // For V3, generate both ID and key
     const { shareId, encryptionKey } = this.generateV3ShareComponents();
-    
+
     // Return just the key for backward compatibility
     // The shareId will be used separately
     this._lastShareId = shareId;
     return encryptionKey;
   }
-  
+
   /**
    * Generate V3 share ID and key components
    */
@@ -759,18 +823,18 @@ class SyncStoreIntegration {
     const shareId = Array.from(idBytes)
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
-    
+
     // Generate encryption key (32 bytes)
     const keyBytes = nacl.randomBytes(32);
     this._lastShareKeyBytes = keyBytes;
-    
+
     // Convert key to URL-safe base64
     const fullToken = encodeBase64(keyBytes);
     const encryptionKey = fullToken
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+$/, '');
-    
+
     return { shareId, encryptionKey };
   }
 
@@ -802,22 +866,33 @@ class SyncStoreIntegration {
       const userStore = useUserStore.getState();
       const settingsStore = useSettingsStore.getState();
       const user = userStore.users[userId];
-      
+
       if (!user) {
         throw new Error('User not found');
       }
 
       // For local development, return a mock response
-      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      if (
+        Platform.OS === 'web' &&
+        typeof window !== 'undefined' &&
+        window.location
+      ) {
+        if (
+          window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1'
+        ) {
           if (__DEV__) {
-            console.warn('Share links require deployment to stackmap.app. Returning mock data for local testing.');
+            console.warn(
+              'Share links require deployment to stackmap.app. Returning mock data for local testing.',
+            );
           }
           const mockUrl = `https://stackmap.app?share=${accessToken}`;
           return {
             share_id: 'mock-' + Date.now(),
             access_token: accessToken,
-            expires_at: new Date(Date.now() + expiresHours * 60 * 60 * 1000).toISOString(),
+            expires_at: new Date(
+              Date.now() + expiresHours * 60 * 60 * 1000,
+            ).toISOString(),
             share_url: mockUrl,
           };
         }
@@ -838,9 +913,9 @@ class SyncStoreIntegration {
       if (userData.days) {
         Object.keys(userData.days).forEach(day => {
           if (userData.days[day]?.activities) {
-            userData.days[day].activities = userData.days[day].activities.filter(
-              activity => !activity.deleted
-            );
+            userData.days[day].activities = userData.days[
+              day
+            ].activities.filter(activity => !activity.deleted);
           }
         });
       }
@@ -854,9 +929,9 @@ class SyncStoreIntegration {
         if (filteredUserData.days) {
           Object.keys(filteredUserData.days).forEach(day => {
             if (filteredUserData.days[day]?.activities) {
-              filteredUserData.days[day].activities = filteredUserData.days[day].activities.filter(
-                activity => !activity.completed
-              );
+              filteredUserData.days[day].activities = filteredUserData.days[
+                day
+              ].activities.filter(activity => !activity.completed);
             }
           });
         }
@@ -870,7 +945,9 @@ class SyncStoreIntegration {
       const shareData = {
         user: filteredUserData,
         shared_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + expiresHours * 60 * 60 * 1000).toISOString(),
+        expires_at: new Date(
+          Date.now() + expiresHours * 60 * 60 * 1000,
+        ).toISOString(),
         recipient_name: recipientName,
         share_note: shareNote,
         read_only: true,
@@ -911,7 +988,11 @@ class SyncStoreIntegration {
           // Note: Debug/release detection happens in minimalSyncService.js
           return 'https://stackmap.app/api/sync';
         }
-        if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
+        if (
+          Platform.OS === 'web' &&
+          typeof window !== 'undefined' &&
+          window.location
+        ) {
           const pathname = window.location.pathname;
           if (pathname.includes('/qual/')) {
             return 'https://stackmap.app/qual/api/sync';
@@ -933,7 +1014,7 @@ class SyncStoreIntegration {
         include_tomorrow: includeTomorrow,
         auto_update: autoUpdate,
         device_name: deviceName,
-        share_version: Platform.OS === 'web' ? 3 : 2,  // V3 for web, V2 for mobile (server compatibility)
+        share_version: Platform.OS === 'web' ? 3 : 2, // V3 for web, V2 for mobile (server compatibility)
       };
 
       const shareUrl = `${SHARE_API_URL}/create_share.php`;
@@ -950,7 +1031,10 @@ class SyncStoreIntegration {
         // Try to parse as JSON first
         try {
           const errorData = JSON.parse(responseText);
-          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+          throw new Error(
+            errorData.error ||
+              `HTTP ${response.status}: ${response.statusText}`,
+          );
         } catch (e) {
           throw new Error(`Failed to create share: ${responseText}`);
         }
@@ -965,12 +1049,13 @@ class SyncStoreIntegration {
       let secureShareUrl;
       if (Platform.OS === 'web' && requestBody.share_version === 3) {
         // V3: the share_url is /share/[id] and we append the key as fragment
-        secureShareUrl = result.share_url + '#' + (result.access_token || accessToken);
+        secureShareUrl =
+          result.share_url + '#' + (result.access_token || accessToken);
       } else {
         // V2: Use the URL as-is (includes token in query parameter)
         secureShareUrl = result.share_url;
       }
-      
+
       // Store share info locally for later management
       const shareInfo = {
         shareId: result.share_id,
@@ -978,12 +1063,11 @@ class SyncStoreIntegration {
         recipientName,
         shareNote,
         expiresAt: result.expires_at,
-        shareUrl: secureShareUrl,  // Use secure URL with fragment
+        shareUrl: secureShareUrl, // Use secure URL with fragment
         accessToken: result.access_token || accessToken,
         createdAt: new Date().toISOString(),
         autoUpdate,
       };
-      
 
       // Get existing shares and add new one
       const stored = await AsyncStorage.getItem('@stackmap_shares');
@@ -995,7 +1079,7 @@ class SyncStoreIntegration {
         share_id: result.share_id,
         access_token: result.access_token || accessToken,
         expires_at: result.expires_at,
-        share_url: secureShareUrl,  // Return secure URL with fragment
+        share_url: secureShareUrl, // Return secure URL with fragment
       };
     } catch (error) {
       console.error('[SyncStore] Failed to create share link:', error);
@@ -1015,18 +1099,18 @@ class SyncStoreIntegration {
    */
   addStatusListener(listener) {
     this.statusListeners.add(listener);
-    
+
     // Immediately send current status
     const currentStatus = {
       status: minimalSync.isEnabled ? 'idle' : 'disabled',
       syncEnabled: minimalSync.isEnabled,
       syncId: minimalSync.syncId,
       lastSuccess: this.lastPushTime,
-      isSyncing: this.isSyncing
+      isSyncing: this.isSyncing,
     };
-    
+
     listener(currentStatus);
-    
+
     // Return unsubscribe function
     return () => {
       this.statusListeners.delete(listener);
@@ -1049,9 +1133,9 @@ class SyncStoreIntegration {
       syncEnabled: minimalSync.isEnabled,
       syncId: minimalSync.syncId,
       lastSuccess: this.lastPushTime,
-      isSyncing: this.isSyncing
+      isSyncing: this.isSyncing,
     };
-    
+
     this.statusListeners.forEach(listener => {
       try {
         listener(statusUpdate);
@@ -1067,7 +1151,7 @@ class SyncStoreIntegration {
    */
   async requestSync(options = {}) {
     console.log('[SyncStore] Sync requested (auto-sync already active)');
-    
+
     // If we have a sync ID and are enabled, trigger a push
     if (minimalSync.syncId && minimalSync.isEnabled) {
       // Use the delay if specified
@@ -1079,7 +1163,7 @@ class SyncStoreIntegration {
         await this.pushCurrentState();
       }
     }
-    
+
     return true;
   }
 
@@ -1107,77 +1191,96 @@ class SyncStoreIntegration {
    */
   async deleteFromServer() {
     console.log('[SyncStore] Deleting all data from server...');
-    
+
     try {
       // Get sync ID using the getSyncId method
       const syncId = this.getSyncId();
-      
+
       // Check if we have sync credentials
       if (!syncId) {
         throw new Error('No sync ID available');
       }
-      
+
       const deviceId = minimalSync.deviceId || 'unknown';
-      
+
       const requestBody = {
         sync_id: syncId,
-        device_id: deviceId
+        device_id: deviceId,
       };
-      
+
       // Try to delete from BOTH environments to ensure data is truly gone
       const environments = [
         { name: 'QUAL', url: 'https://stackmap.app/qual/api/sync/delete.php' },
-        { name: 'Production', url: 'https://stackmap.app/api/sync/delete.php' }
+        { name: 'Production', url: 'https://stackmap.app/api/sync/delete.php' },
       ];
-      
+
       let deletedFromAny = false;
       let errors = [];
-      
+
       for (const env of environments) {
-        console.log(`[SyncStore] Attempting delete from ${env.name}: ${env.url}`);
-        
+        console.log(
+          `[SyncStore] Attempting delete from ${env.name}: ${env.url}`,
+        );
+
         try {
           const response = await fetch(env.url, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify(requestBody),
           });
-          
+
           const data = await response.json();
-          console.log(`[SyncStore] ${env.name} response:`, response.status, data);
-          
+          console.log(
+            `[SyncStore] ${env.name} response:`,
+            response.status,
+            data,
+          );
+
           if (response.ok) {
             console.log(`[SyncStore] Successfully deleted from ${env.name}`);
             deletedFromAny = true;
           } else if (response.status === 404) {
-            console.log(`[SyncStore] No data found in ${env.name} (already deleted or never existed)`);
+            console.log(
+              `[SyncStore] No data found in ${env.name} (already deleted or never existed)`,
+            );
             // Not an error - data doesn't exist
           } else {
             errors.push(`${env.name}: ${data.error || response.status}`);
           }
         } catch (fetchError) {
-          console.error(`[SyncStore] Failed to contact ${env.name}:`, fetchError);
+          console.error(
+            `[SyncStore] Failed to contact ${env.name}:`,
+            fetchError,
+          );
           errors.push(`${env.name}: ${fetchError.message}`);
         }
       }
-      
+
       // If we deleted from at least one environment, that's a success
       if (deletedFromAny) {
-        console.log('[SyncStore] Server data deleted successfully from at least one environment');
+        console.log(
+          '[SyncStore] Server data deleted successfully from at least one environment',
+        );
         return { success: true, message: 'Server data deleted successfully' };
       }
-      
+
       // If all attempts resulted in 404 (not found), that's okay - data is gone
       if (errors.length === 0) {
-        console.log('[SyncStore] No data found in any environment - already deleted');
-        return { success: true, message: 'Data already deleted or never existed on server' };
+        console.log(
+          '[SyncStore] No data found in any environment - already deleted',
+        );
+        return {
+          success: true,
+          message: 'Data already deleted or never existed on server',
+        };
       }
-      
+
       // If we have errors from both environments, report them
-      throw new Error(`Failed to delete from all environments: ${errors.join('; ')}`);
-      
+      throw new Error(
+        `Failed to delete from all environments: ${errors.join('; ')}`,
+      );
     } catch (error) {
       console.error('[SyncStore] Error deleting server data:', error);
       throw error;
@@ -1196,7 +1299,11 @@ class SyncStoreIntegration {
           // Note: Debug/release detection happens in minimalSyncService.js
           return 'https://stackmap.app/api/sync';
         }
-        if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
+        if (
+          Platform.OS === 'web' &&
+          typeof window !== 'undefined' &&
+          window.location
+        ) {
           const pathname = window.location.pathname;
           if (pathname.includes('/qual/')) {
             return 'https://stackmap.app/qual/api/sync';
@@ -1207,7 +1314,7 @@ class SyncStoreIntegration {
 
       const SHARE_API_URL = getShareApiUrl();
       const deleteUrl = `${SHARE_API_URL}/delete_share.php`;
-      
+
       const response = await fetch(deleteUrl, {
         method: 'POST',
         headers: {
@@ -1246,7 +1353,7 @@ class SyncStoreIntegration {
     try {
       // Try to fetch from server first - shares are tied to sync_id
       const syncId = this.getSyncId();
-      
+
       if (!syncId) {
         // Fall through to local storage if no sync ID
       } else {
@@ -1263,13 +1370,13 @@ class SyncStoreIntegration {
           }
           return 'https://stackmap.app/api/sync';
         };
-        
+
         const SHARE_API_URL = getShareApiUrl();
         const listUrl = `${SHARE_API_URL}/list_shares.php?sync_id=${syncId}`;
-        
+
         try {
           const response = await fetch(listUrl);
-          
+
           if (response.ok) {
             const data = await response.json();
             if (data.success) {
@@ -1282,12 +1389,15 @@ class SyncStoreIntegration {
                 expiresAt: share.expires_at,
                 createdAt: share.created_at,
                 accessCount: share.access_count,
-                status: 'active'
+                status: 'active',
               }));
-              
+
               // Update local storage with server data
-              await AsyncStorage.setItem('@stackmap_shares', JSON.stringify(shares));
-              
+              await AsyncStorage.setItem(
+                '@stackmap_shares',
+                JSON.stringify(shares),
+              );
+
               if (userId) {
                 return shares.filter(share => share.userId === userId);
               }
@@ -1298,21 +1408,23 @@ class SyncStoreIntegration {
           // Silent fallback to local storage
         }
       }
-      
+
       // Fallback to local storage
       const stored = await AsyncStorage.getItem('@stackmap_shares');
       if (!stored) {
         return [];
       }
-      
+
       const shares = JSON.parse(stored);
       const now = new Date();
-      
+
       // Process shares to mark as idle if expired but within grace period
       const processedShares = shares.map(share => {
         const expiryDate = new Date(share.expiresAt);
-        const gracePeriodEnd = new Date(expiryDate.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days grace
-        
+        const gracePeriodEnd = new Date(
+          expiryDate.getTime() + 30 * 24 * 60 * 60 * 1000,
+        ); // 30 days grace
+
         if (expiryDate < now && gracePeriodEnd > now) {
           // Mark as idle if expired but within grace period
           return { ...share, status: 'idle' };
@@ -1323,14 +1435,14 @@ class SyncStoreIntegration {
         // Return null for shares past grace period
         return null;
       });
-      
+
       // Filter out null entries (shares past grace period) and filter by userId if provided
       const validShares = processedShares.filter(share => share !== null);
-      
+
       if (userId) {
         return validShares.filter(share => share.userId === userId);
       }
-      
+
       return validShares;
     } catch (error) {
       if (__DEV__) {
@@ -1347,7 +1459,11 @@ class SyncStoreIntegration {
     // This method is deprecated - API URL is determined dynamically based on environment
     // Mobile: Uses minimalSyncService.js which detects debug/release
     // Web: Uses window.location to detect qual vs prod
-    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
+    if (
+      Platform.OS === 'web' &&
+      typeof window !== 'undefined' &&
+      window.location
+    ) {
       const pathname = window.location.pathname;
       if (pathname.includes('/qual/')) {
         return 'https://stackmap.app/qual/api/sync/';
@@ -1369,7 +1485,7 @@ class SyncStoreIntegration {
   getSyncId() {
     return minimalSync.syncId || '';
   }
-  
+
   /**
    * Set sync ID (for onboarding preview)
    */
@@ -1377,7 +1493,7 @@ class SyncStoreIntegration {
     console.log('[SyncStore] Setting syncId:', value);
     minimalSync.syncId = value;
   }
-  
+
   /**
    * Get sync ID (property getter)
    */
@@ -1470,16 +1586,16 @@ class SyncStoreIntegration {
    */
   async triggerSync() {
     console.log('[SyncStore] Manual sync triggered');
-    
+
     if (!minimalSync.isEnabled || !minimalSync.syncId) {
       console.log('[SyncStore] Sync not enabled or no sync ID');
       return { success: false, error: 'Sync not enabled' };
     }
-    
+
     try {
       // First push any local changes
       await this.pushCurrentState();
-      
+
       // Then pull latest changes
       const pullResult = await minimalSync.pullData();
       if (pullResult.success && pullResult.data) {
@@ -1487,14 +1603,14 @@ class SyncStoreIntegration {
         console.log('[SyncStore] ✅ Manual sync complete');
         return { success: true };
       }
-      
+
       return pullResult;
     } catch (error) {
       console.error('[SyncStore] Manual sync failed:', error);
       return { success: false, error: error.message };
     }
   }
-  
+
   /**
    * Create an invite code for others to join sync
    * @param {number} expiresHours - Hours until expiration (1-168)

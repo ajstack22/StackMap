@@ -13,10 +13,7 @@ import {
   testRecoveryPhrases,
   networkResponses,
 } from './fixtures/syncTestData';
-import {
-  createFetchMock,
-  createTimerUtils,
-} from './mocks/syncMocks';
+import { createFetchMock, createTimerUtils } from './mocks/syncMocks';
 
 // Create mocks before importing the service
 const mockAsyncStorage = {
@@ -48,20 +45,24 @@ describe('MinimalSyncService', () => {
     // Set up mocks
     fetchMock = createFetchMock();
     timerUtils = createTimerUtils();
-    
+
     global.fetch = fetchMock;
     global.console.log = jest.fn();
     global.console.error = jest.fn();
-    
+
     // Reset AsyncStorage mock
     mockAsyncStorage.getItem.mockResolvedValue(null);
     mockAsyncStorage.setItem.mockResolvedValue(undefined);
     mockAsyncStorage.removeItem.mockResolvedValue(undefined);
-    
+
     // Mock encryption service
     encryptionService.initialize = jest.fn().mockResolvedValue(true);
-    encryptionService.generateRecoveryPhrase = jest.fn().mockReturnValue(testRecoveryPhrases.valid);
-    encryptionService.encryptData = jest.fn(data => `encrypted:${JSON.stringify(data)}`);
+    encryptionService.generateRecoveryPhrase = jest
+      .fn()
+      .mockReturnValue(testRecoveryPhrases.valid);
+    encryptionService.encryptData = jest.fn(
+      data => `encrypted:${JSON.stringify(data)}`,
+    );
     encryptionService.decryptData = jest.fn(data => {
       if (data.startsWith('encrypted:')) {
         return JSON.parse(data.replace('encrypted:', ''));
@@ -72,14 +73,14 @@ describe('MinimalSyncService', () => {
       key: 'test-key',
       salt: 'test-salt',
     });
-    
+
     // Mock conflict resolver
     conflictResolver.mergeStates = jest.fn((local, remote) => ({
       ...local,
       ...remote,
       metadata: { lastMerged: Date.now() },
     }));
-    
+
     // Create sync service instance
     syncService = new MinimalSyncService();
   });
@@ -102,24 +103,26 @@ describe('MinimalSyncService', () => {
     it('should load existing sync ID on initialization', async () => {
       const existingSyncId = 'existing-sync-id';
       mockAsyncStorage.getItem.mockResolvedValueOnce(existingSyncId);
-      
+
       // Wait for delayed initialization
       jest.advanceTimersByTime(1000);
       await Promise.resolve();
-      
+
       expect(mockAsyncStorage.getItem).toHaveBeenCalledWith('syncId');
     });
 
     it('should handle error loading existing sync ID', async () => {
-      mockAsyncStorage.getItem.mockRejectedValueOnce(new Error('Storage error'));
-      
+      mockAsyncStorage.getItem.mockRejectedValueOnce(
+        new Error('Storage error'),
+      );
+
       // Wait for delayed initialization
       jest.advanceTimersByTime(1000);
       await Promise.resolve();
-      
+
       expect(console.log).toHaveBeenCalledWith(
         expect.stringContaining('Error loading existing sync ID'),
-        expect.any(Error)
+        expect.any(Error),
       );
     });
   });
@@ -136,16 +139,19 @@ describe('MinimalSyncService', () => {
     it('should enable sync with valid recovery phrase', async () => {
       const phrase = testRecoveryPhrases.valid;
       const result = await syncService.enable(phrase);
-      
+
       expect(result.success).toBe(true);
       expect(result.syncId).toBeDefined();
       expect(syncService.isEnabled).toBe(true);
-      expect(encryptionService.initialize).toHaveBeenCalledWith(phrase, expect.any(String));
+      expect(encryptionService.initialize).toHaveBeenCalledWith(
+        phrase,
+        expect.any(String),
+      );
     });
 
     it('should reject invalid recovery phrase', async () => {
       const result = await syncService.enable(testRecoveryPhrases.invalid);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Invalid recovery phrase');
       expect(syncService.isEnabled).toBe(false);
@@ -153,23 +159,23 @@ describe('MinimalSyncService', () => {
 
     it('should handle spaces in recovery phrase', async () => {
       const result = await syncService.enable(testRecoveryPhrases.withSpaces);
-      
+
       expect(result.success).toBe(true);
       // Should remove spaces before processing
       expect(encryptionService.deriveKeyFromPhrase).toHaveBeenCalledWith(
-        testRecoveryPhrases.withSpaces.replace(/\s/g, '')
+        testRecoveryPhrases.withSpaces.replace(/\s/g, ''),
       );
     });
 
     it('should start auto sync when enabled', async () => {
       const phrase = testRecoveryPhrases.valid;
       await syncService.enable(phrase);
-      
+
       expect(syncService.pullInterval).toBeDefined();
-      
+
       // Advance timers to trigger pull
       jest.advanceTimersByTime(30000);
-      
+
       // Auto sync should have triggered
       expect(fetch).toHaveBeenCalled();
     });
@@ -182,7 +188,7 @@ describe('MinimalSyncService', () => {
 
     it('should disable sync and clear data', async () => {
       await syncService.disable();
-      
+
       expect(syncService.isEnabled).toBe(false);
       expect(syncService.syncId).toBeNull();
       expect(syncService.pullInterval).toBeNull();
@@ -192,7 +198,7 @@ describe('MinimalSyncService', () => {
     it('should stop auto sync when disabled', async () => {
       const intervalId = syncService.pullInterval;
       await syncService.disable();
-      
+
       expect(syncService.pullInterval).toBeNull();
       expect(clearInterval).toHaveBeenCalledWith(intervalId);
     });
@@ -208,9 +214,9 @@ describe('MinimalSyncService', () => {
         status: 200,
         data: { success: true },
       });
-      
+
       const result = await syncService.push(testSyncData);
-      
+
       expect(result.success).toBe(true);
       expect(fetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/sync/'),
@@ -220,7 +226,7 @@ describe('MinimalSyncService', () => {
             'Content-Type': 'application/json',
           }),
           body: expect.stringContaining('encrypted:'),
-        })
+        }),
       );
     });
 
@@ -229,9 +235,9 @@ describe('MinimalSyncService', () => {
         status: 200,
         data: { success: true },
       });
-      
+
       await syncService.push(testSyncData);
-      
+
       expect(encryptionService.encryptData).toHaveBeenCalledWith(testSyncData);
     });
 
@@ -244,9 +250,9 @@ describe('MinimalSyncService', () => {
           data: 'encrypted:' + JSON.stringify(conflictingData.remote),
         },
       });
-      
+
       const result = await syncService.push(testSyncData);
-      
+
       expect(result.success).toBe(true);
       expect(conflictResolver.mergeStates).toHaveBeenCalled();
     });
@@ -268,36 +274,36 @@ describe('MinimalSyncService', () => {
           json: () => Promise.resolve({ success: true }),
         });
       });
-      
+
       const pushPromise = syncService.push(testSyncData);
-      
+
       // First attempt fails with 429
       await Promise.resolve();
-      
+
       // Advance timer for retry delay
       jest.advanceTimersByTime(2000);
       await Promise.resolve();
-      
+
       const result = await pushPromise;
-      
+
       expect(result.success).toBe(true);
       expect(attemptCount).toBe(2);
     });
 
     it('should handle network errors', async () => {
       fetchMock.mockRejectedValueOnce(new Error('Network error'));
-      
+
       const result = await syncService.push(testSyncData);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Network error');
     });
 
     it('should not push when sync is disabled', async () => {
       await syncService.disable();
-      
+
       const result = await syncService.push(testSyncData);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Sync is not enabled');
       expect(fetch).not.toHaveBeenCalled();
@@ -318,9 +324,9 @@ describe('MinimalSyncService', () => {
           data: encryptedData,
         },
       });
-      
+
       const result = await syncService.pull();
-      
+
       expect(result.success).toBe(true);
       expect(result.data).toEqual(testSyncData);
       expect(encryptionService.decryptData).toHaveBeenCalledWith(encryptedData);
@@ -331,9 +337,9 @@ describe('MinimalSyncService', () => {
         status: 404,
         data: { success: false, error: 'Not found' },
       });
-      
+
       const result = await syncService.pull();
-      
+
       expect(result.success).toBe(true);
       expect(result.data).toBeNull();
     });
@@ -346,22 +352,22 @@ describe('MinimalSyncService', () => {
           data: 'corrupted-data',
         },
       });
-      
+
       encryptionService.decryptData.mockImplementationOnce(() => {
         throw new Error('Decryption failed');
       });
-      
+
       const result = await syncService.pull();
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Decryption failed');
     });
 
     it('should not pull when sync is disabled', async () => {
       await syncService.disable();
-      
+
       const result = await syncService.pull();
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Sync is not enabled');
       expect(fetch).not.toHaveBeenCalled();
@@ -372,21 +378,21 @@ describe('MinimalSyncService', () => {
         status: 200,
         data: { success: true, data: 'encrypted:{}' },
       });
-      
+
       // Make multiple pull requests quickly
       const results = await Promise.all([
         syncService.pull(),
         syncService.pull(),
         syncService.pull(),
       ]);
-      
+
       // Only first should succeed, others should be throttled
       expect(results[0].success).toBe(true);
       expect(results[1].success).toBe(false);
       expect(results[1].error).toContain('Pull already in progress');
       expect(results[2].success).toBe(false);
       expect(results[2].error).toContain('Pull already in progress');
-      
+
       // Only one fetch call should be made
       expect(fetch).toHaveBeenCalledTimes(1);
     });
@@ -400,7 +406,7 @@ describe('MinimalSyncService', () => {
     it('should perform bidirectional sync successfully', async () => {
       const localData = testSyncData;
       const remoteData = conflictingData.remote;
-      
+
       // Set up pull to return remote data
       fetchMock.setResponse('GET', expect.stringContaining('/api/sync/'), {
         status: 200,
@@ -409,37 +415,40 @@ describe('MinimalSyncService', () => {
           data: 'encrypted:' + JSON.stringify(remoteData),
         },
       });
-      
+
       // Set up push to succeed
       fetchMock.setResponse('POST', expect.stringContaining('/api/sync/'), {
         status: 200,
         data: { success: true },
       });
-      
+
       const result = await syncService.sync(localData);
-      
+
       expect(result.success).toBe(true);
       expect(result.merged).toBeDefined();
-      expect(conflictResolver.mergeStates).toHaveBeenCalledWith(localData, remoteData);
+      expect(conflictResolver.mergeStates).toHaveBeenCalledWith(
+        localData,
+        remoteData,
+      );
     });
 
     it('should handle sync when no remote data exists', async () => {
       const localData = testSyncData;
-      
+
       // Pull returns 404
       fetchMock.setResponse('GET', expect.stringContaining('/api/sync/'), {
         status: 404,
         data: { success: false, error: 'Not found' },
       });
-      
+
       // Push should succeed
       fetchMock.setResponse('POST', expect.stringContaining('/api/sync/'), {
         status: 200,
         data: { success: true },
       });
-      
+
       const result = await syncService.sync(localData);
-      
+
       expect(result.success).toBe(true);
       expect(result.merged).toEqual(localData);
     });
@@ -447,7 +456,7 @@ describe('MinimalSyncService', () => {
     it('should handle sync conflicts', async () => {
       const localData = conflictingData.local;
       const remoteData = conflictingData.remote;
-      
+
       // Pull returns remote data
       fetchMock.setResponse('GET', expect.stringContaining('/api/sync/'), {
         status: 200,
@@ -456,15 +465,15 @@ describe('MinimalSyncService', () => {
           data: 'encrypted:' + JSON.stringify(remoteData),
         },
       });
-      
+
       // Push succeeds after conflict resolution
       fetchMock.setResponse('POST', expect.stringContaining('/api/sync/'), {
         status: 200,
         data: { success: true },
       });
-      
+
       const result = await syncService.sync(localData);
-      
+
       expect(result.success).toBe(true);
       expect(conflictResolver.mergeStates).toHaveBeenCalled();
     });
@@ -483,7 +492,7 @@ describe('MinimalSyncService', () => {
     it('should stop auto sync when disabled', async () => {
       const intervalId = syncService.pullInterval;
       await syncService.disable();
-      
+
       expect(clearInterval).toHaveBeenCalledWith(intervalId);
       expect(syncService.pullInterval).toBeNull();
     });
@@ -493,29 +502,29 @@ describe('MinimalSyncService', () => {
         status: 200,
         data: { success: true, data: 'encrypted:{}' },
       });
-      
+
       // Register callback
       const callback = jest.fn();
       syncService.onDataReceived = callback;
-      
+
       // Advance timer to trigger auto pull
       jest.advanceTimersByTime(30000);
       await Promise.resolve();
-      
+
       // Wait for async operations
       await new Promise(resolve => setTimeout(resolve, 0));
       jest.runAllTimers();
-      
+
       expect(fetch).toHaveBeenCalled();
     });
 
     it('should handle auto sync errors gracefully', async () => {
       fetchMock.mockRejectedValueOnce(new Error('Network error'));
-      
+
       // Advance timer to trigger auto pull
       jest.advanceTimersByTime(30000);
       await Promise.resolve();
-      
+
       // Should not throw or stop the interval
       expect(syncService.pullInterval).toBeDefined();
     });
@@ -524,46 +533,50 @@ describe('MinimalSyncService', () => {
   describe('performance', () => {
     it('should handle large datasets efficiently', async () => {
       await syncService.enable(testRecoveryPhrases.valid);
-      
+
       const largeData = generateLargeDataset(1000);
-      
+
       fetchMock.setResponse('POST', expect.stringContaining('/api/sync/'), {
         status: 200,
         data: { success: true },
       });
-      
+
       const startTime = Date.now();
-      const result = await syncService.push({ activities: largeData.activities });
+      const result = await syncService.push({
+        activities: largeData.activities,
+      });
       const endTime = Date.now();
-      
+
       expect(result.success).toBe(true);
       expect(endTime - startTime).toBeLessThan(5000); // Should complete within 5 seconds
     });
 
     it('should handle rapid sync requests', async () => {
       await syncService.enable(testRecoveryPhrases.valid);
-      
+
       fetchMock.setResponse('GET', expect.stringContaining('/api/sync/'), {
         status: 200,
         data: { success: true, data: 'encrypted:{}' },
       });
-      
+
       fetchMock.setResponse('POST', expect.stringContaining('/api/sync/'), {
         status: 200,
         data: { success: true },
       });
-      
+
       // Make 10 rapid sync requests
       const promises = [];
       for (let i = 0; i < 10; i++) {
         promises.push(syncService.sync({ test: `data${i}` }));
       }
-      
+
       const results = await Promise.all(promises);
-      
+
       // All should complete without errors
       results.forEach(result => {
-        expect(result.success || result.error?.includes('in progress')).toBe(true);
+        expect(result.success || result.error?.includes('in progress')).toBe(
+          true,
+        );
       });
     });
   });
@@ -586,10 +599,10 @@ describe('MinimalSyncService', () => {
           json: () => Promise.resolve({ success: true }),
         });
       });
-      
+
       // This should retry and eventually succeed
       const result = await syncService.push(testSyncData);
-      
+
       expect(attemptCount).toBeGreaterThan(1);
       expect(result.success).toBe(true);
     });
@@ -599,9 +612,9 @@ describe('MinimalSyncService', () => {
         status: 500,
         data: { error: 'Internal server error' },
       });
-      
+
       const result = await syncService.push(testSyncData);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('server error');
     });
@@ -612,9 +625,9 @@ describe('MinimalSyncService', () => {
         status: 200,
         json: () => Promise.reject(new Error('Invalid JSON')),
       });
-      
+
       const result = await syncService.pull();
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
     });
@@ -628,7 +641,7 @@ describe('MinimalSyncService', () => {
     it('should return sync ID when enabled', async () => {
       await syncService.enable(testRecoveryPhrases.valid);
       const syncId = syncService.getSyncId();
-      
+
       expect(syncId).toBeDefined();
       expect(typeof syncId).toBe('string');
     });
@@ -655,24 +668,24 @@ describe('MinimalSyncService', () => {
     it('should clean up intervals on disable', async () => {
       await syncService.enable(testRecoveryPhrases.valid);
       const intervalId = syncService.pullInterval;
-      
+
       await syncService.disable();
-      
+
       expect(clearInterval).toHaveBeenCalledWith(intervalId);
       expect(syncService.pullInterval).toBeNull();
     });
 
     it('should clean up event listeners', async () => {
       await syncService.enable(testRecoveryPhrases.valid);
-      
+
       // Create multiple callbacks
       const callbacks = [jest.fn(), jest.fn(), jest.fn()];
       callbacks.forEach(cb => {
         syncService.onDataReceived = cb;
       });
-      
+
       await syncService.disable();
-      
+
       // Callbacks should be cleared
       expect(syncService.onDataReceived).toBeNull();
     });

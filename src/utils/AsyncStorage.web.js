@@ -29,25 +29,25 @@ const memoryStorage = {};
 const AsyncStorage = {
   getItem: key => {
     // getItem called
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       // Use setTimeout to ensure async behavior
       setTimeout(() => {
         try {
           // Try localStorage first
           let value = localStorage.getItem(key);
-          
+
           // Fallback to sessionStorage if localStorage fails
           if (value === null && typeof sessionStorage !== 'undefined') {
             value = sessionStorage.getItem(key);
             // Found in sessionStorage
           }
-          
+
           // Fallback to memory storage for critical keys
           if (value === null && key.includes('sync_phrase')) {
             value = memoryStorage[key];
             // Found in memory
           }
-          
+
           // getItem complete
           resolve(value);
         } catch (error) {
@@ -64,25 +64,30 @@ const AsyncStorage = {
     return new Promise((resolve, reject) => {
       try {
         // setItem called
-        
+
         let storageSuccess = false;
-        
+
         // Try localStorage first
         try {
           localStorage.setItem(key, value);
-          
+
           // Verify it was actually stored
           const verification = localStorage.getItem(key);
           if (verification === value) {
             storageSuccess = true;
             // Successfully stored in localStorage
           } else {
-            console.error(`[AsyncStorage.web] ❌ localStorage verification failed for ${key}!`);
+            console.error(
+              `[AsyncStorage.web] ❌ localStorage verification failed for ${key}!`,
+            );
           }
         } catch (e) {
-          console.error(`[AsyncStorage.web] ❌ localStorage.setItem failed for ${key}:`, e);
+          console.error(
+            `[AsyncStorage.web] ❌ localStorage.setItem failed for ${key}:`,
+            e,
+          );
         }
-        
+
         // Always store critical keys in sessionStorage as backup
         if (key.includes('sync_phrase')) {
           try {
@@ -93,12 +98,12 @@ const AsyncStorage = {
           } catch (e) {
             console.warn(`[AsyncStorage.web] sessionStorage backup failed:`, e);
           }
-          
+
           // Always store in memory as final fallback
           memoryStorage[key] = value;
           // Backed up to memory
         }
-        
+
         // If localStorage completely failed, try sessionStorage
         if (!storageSuccess && typeof sessionStorage !== 'undefined') {
           try {
@@ -109,13 +114,13 @@ const AsyncStorage = {
             console.error(`[AsyncStorage.web] sessionStorage also failed:`, e);
           }
         }
-        
+
         // Final fallback to memory
         if (!storageSuccess) {
           memoryStorage[key] = value;
           // Final fallback to memory storage
         }
-        
+
         resolve();
       } catch (error) {
         console.error('[AsyncStorage.web] setItem error:', error);
@@ -133,17 +138,20 @@ const AsyncStorage = {
         } catch (e) {
           console.warn('[AsyncStorage.web] localStorage.removeItem failed:', e);
         }
-        
+
         if (typeof sessionStorage !== 'undefined') {
           try {
             sessionStorage.removeItem(key);
           } catch (e) {
-            console.warn('[AsyncStorage.web] sessionStorage.removeItem failed:', e);
+            console.warn(
+              '[AsyncStorage.web] sessionStorage.removeItem failed:',
+              e,
+            );
           }
         }
-        
+
         delete memoryStorage[key];
-        
+
         resolve();
       } catch (error) {
         reject(error);
@@ -163,7 +171,7 @@ const AsyncStorage = {
   },
 
   getAllKeys: () => {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       try {
         resolve(Object.keys(localStorage));
       } catch (error) {
@@ -199,15 +207,15 @@ const AsyncStorage = {
       throw error;
     }
   },
-  
+
   // Add a unique property to verify this is our custom implementation
   __isCustomWebImplementation: true,
-  
+
   // Debug function to check what's in all storage locations
   debugStorage: () => {
     console.warn('=== AsyncStorage Debug ===');
     console.warn('localStorage available:', isLocalStorageAvailable);
-    
+
     // Check localStorage
     console.warn('Total items in localStorage:', localStorage.length);
     const localSyncItems = [];
@@ -215,11 +223,15 @@ const AsyncStorage = {
       const key = localStorage.key(i);
       if (key && key.includes('sync')) {
         const value = localStorage.getItem(key);
-        localSyncItems.push({ key, value: value?.substring(0, 100), storage: 'localStorage' });
+        localSyncItems.push({
+          key,
+          value: value?.substring(0, 100),
+          storage: 'localStorage',
+        });
       }
     }
     console.warn('localStorage sync items:', localSyncItems);
-    
+
     // Check sessionStorage
     if (typeof sessionStorage !== 'undefined') {
       const sessionSyncItems = [];
@@ -227,28 +239,41 @@ const AsyncStorage = {
         const key = sessionStorage.key(i);
         if (key && key.includes('sync')) {
           const value = sessionStorage.getItem(key);
-          sessionSyncItems.push({ key, value: value?.substring(0, 100), storage: 'sessionStorage' });
+          sessionSyncItems.push({
+            key,
+            value: value?.substring(0, 100),
+            storage: 'sessionStorage',
+          });
         }
       }
       console.warn('sessionStorage sync items:', sessionSyncItems);
     }
-    
+
     // Check memory storage
     const memoryItems = Object.keys(memoryStorage)
       .filter(key => key.includes('sync'))
-      .map(key => ({ key, value: memoryStorage[key]?.substring(0, 100), storage: 'memory' }));
+      .map(key => ({
+        key,
+        value: memoryStorage[key]?.substring(0, 100),
+        storage: 'memory',
+      }));
     console.warn('Memory sync items:', memoryItems);
-    
+
     return { localSyncItems, memoryStorage: memoryItems };
-  }
+  },
 };
 
-console.warn('[AsyncStorage.web] Exporting AsyncStorage with custom flag:', AsyncStorage.__isCustomWebImplementation);
+console.warn(
+  '[AsyncStorage.web] Exporting AsyncStorage with custom flag:',
+  AsyncStorage.__isCustomWebImplementation,
+);
 
 // Make debug function globally available in browser console
 if (typeof window !== 'undefined') {
   window.debugAsyncStorage = AsyncStorage.debugStorage;
-  console.warn('💡 Type "debugAsyncStorage()" in console to see stored sync data');
+  console.warn(
+    '💡 Type "debugAsyncStorage()" in console to see stored sync data',
+  );
 }
 
 export default AsyncStorage;

@@ -5,7 +5,26 @@ import { Text } from '../Typography';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles, getTabletStyles } from './styles';
 
+/**
+ * @typedef {Object} EditModeListItemProps
+ * @property {any} item
+ * @property {number} index
+ * @property {number} totalCount
+ * @property {() => void} onEdit
+ * @property {() => void} onDelete
+ * @property {() => void} onToggle
+ * @property {() => void} onLibrary
+ * @property {(index: number) => void} onMoveUp
+ * @property {(index: number) => void} onMoveDown
+ * @property {any} theme
+ * @property {boolean} isTablet
+ * @property {string} displayMode
+ */
+
 export const EditModeListItem = React.memo(
+  /**
+   * @param {EditModeListItemProps} props
+   */
   ({
     item,
     index,
@@ -64,7 +83,12 @@ export const EditModeListItem = React.memo(
             accessibilityRole="button"
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
-            <View style={[itemStyles.editButtonCircle, { backgroundColor: theme.primary }]}>
+            <View
+              style={[
+                itemStyles.editButtonCircle,
+                { backgroundColor: theme.primary },
+              ]}
+            >
               <Icon name="edit" size={isTablet ? 26 : 22} color="#fff" />
             </View>
           </TouchableOpacity>
@@ -143,7 +167,7 @@ export const EditModeListItem = React.memo(
                 </View>
               </View>
             )}
-            
+
             <TouchableOpacity
               onPress={onToggle}
               style={itemStyles.actionButton}
@@ -231,5 +255,5 @@ export const EditModeListItem = React.memo(
       prevProps.isTablet === nextProps.isTablet &&
       prevProps.displayMode === nextProps.displayMode
     );
-  }
+  },
 );

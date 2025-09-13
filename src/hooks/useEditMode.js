@@ -11,7 +11,7 @@ import {
 export const useEditMode = (initialActivities, onUpdate) => {
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [undoStack, setUndoStack] = useState([]);
-  
+
   // Use ref to always have current activities
   const activitiesRef = useRef(initialActivities);
   activitiesRef.current = initialActivities;
@@ -57,7 +57,11 @@ export const useEditMode = (initialActivities, onUpdate) => {
     (fromIndex, toIndex) => {
       triggerHaptic('selection');
       configureReorderAnimation(); // Smooth animation
-      const newActivities = reorderArray(activitiesRef.current, fromIndex, toIndex);
+      const newActivities = reorderArray(
+        activitiesRef.current,
+        fromIndex,
+        toIndex,
+      );
       updateActivities(newActivities);
     },
     [updateActivities],

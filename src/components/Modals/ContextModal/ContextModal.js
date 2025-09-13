@@ -450,7 +450,7 @@ const ContextModal = ({
       mood: moods[selectedMood].icon,
     };
     onSave(contextData);
-    
+
     // Ensure the current user is properly set when closing
     if (selectedUser !== currentUser && onUserChange) {
       onUserChange(selectedUser);

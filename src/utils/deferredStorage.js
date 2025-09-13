@@ -16,8 +16,8 @@ class DeferredStorage {
 
   /**
    * Set an item in storage (deferred on iOS)
-   * @param {string} key 
-   * @param {string} value 
+   * @param {string} key
+   * @param {string} value
    * @returns {Promise<void>}
    */
   async setItem(key, value) {
@@ -28,14 +28,14 @@ class DeferredStorage {
 
     // Queue the write for iOS
     this.pendingWrites.set(key, value);
-    
+
     // Clear any existing timer
     if (this.writeTimer) {
       clearTimeout(this.writeTimer);
     }
 
     // Schedule batch write on next tick
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.writeTimer = setTimeout(async () => {
         await this.flushWrites();
         resolve();
@@ -45,7 +45,7 @@ class DeferredStorage {
 
   /**
    * Set multiple items at once (more efficient)
-   * @param {Array<[string, string]>} keyValuePairs 
+   * @param {Array<[string, string]>} keyValuePairs
    * @returns {Promise<void>}
    */
   async multiSet(keyValuePairs) {
@@ -64,7 +64,7 @@ class DeferredStorage {
     }
 
     // Schedule batch write
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.writeTimer = setTimeout(async () => {
         await this.flushWrites();
         resolve();
@@ -89,7 +89,7 @@ class DeferredStorage {
       // Use multiSet for efficiency
       await AsyncStorage.multiSet(writes);
     } catch (error) {
-//       console.error('[DeferredStorage] Failed to flush writes:', error);
+      //       console.error('[DeferredStorage] Failed to flush writes:', error);
       // Re-add failed writes to queue
       writes.forEach(([key, value]) => {
         this.pendingWrites.set(key, value);
@@ -100,7 +100,7 @@ class DeferredStorage {
 
   /**
    * Get an item from storage (always direct)
-   * @param {string} key 
+   * @param {string} key
    * @returns {Promise<string | null>}
    */
   async getItem(key) {
@@ -110,7 +110,7 @@ class DeferredStorage {
 
   /**
    * Remove an item from storage
-   * @param {string} key 
+   * @param {string} key
    * @returns {Promise<void>}
    */
   async removeItem(key) {

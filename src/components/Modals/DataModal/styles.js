@@ -1011,7 +1011,7 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#666',
   },
-  
+
   // Invite code styles
   inviteSection: {
     backgroundColor: '#f8f9fa',
@@ -1094,7 +1094,7 @@ export const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
     fontStyle: 'italic',
   },
-  
+
   // Debug panel styles
   debugPanel: {
     marginTop: 20,

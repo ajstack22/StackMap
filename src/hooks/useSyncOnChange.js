@@ -1,5 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { useAppStore, useUserStore, useSettingsStore, useLibraryStore } from '../stores';
+import {
+  useAppStore,
+  useUserStore,
+  useSettingsStore,
+  useLibraryStore,
+} from '../stores';
 import syncService from '../services/sync';
 
 /**
@@ -15,7 +20,7 @@ export const useSyncOnChange = () => {
       const settingsStore = useSettingsStore.getState();
       const libraryStore = useLibraryStore.getState();
       const appStore = useAppStore.getState();
-      
+
       return {
         // User store data
         users: userStore.users,
@@ -38,29 +43,35 @@ export const useSyncOnChange = () => {
 
     // Subscribe to all stores
     const unsubscribes = [];
-    
+
     // Common sync trigger function
     const triggerSyncIfNeeded = () => {
       // Skip if sync is not enabled (check both property names for compatibility)
       if (!syncService.enabled && !syncService.syncEnabled) {
         return;
       }
-      
+
       // CRITICAL: Skip if we just joined a sync to prevent race conditions
       if (syncService._justJoinedSync) {
-        console.log('[useSyncOnChange] Skipping sync trigger - just joined sync group');
+        console.log(
+          '[useSyncOnChange] Skipping sync trigger - just joined sync group',
+        );
         return;
       }
-      
+
       // CRITICAL: Skip if we're applying remote state to prevent feedback loop
       if (syncService._applyingRemoteState) {
-        console.log('[useSyncOnChange] Skipping sync trigger - applying remote state');
+        console.log(
+          '[useSyncOnChange] Skipping sync trigger - applying remote state',
+        );
         return;
       }
-      
+
       // Skip if sync is already in progress to prevent race conditions
       if (syncService.syncInProgress) {
-        console.log('[useSyncOnChange] Skipping sync trigger - sync already in progress');
+        console.log(
+          '[useSyncOnChange] Skipping sync trigger - sync already in progress',
+        );
         return;
       }
 
@@ -90,7 +101,7 @@ export const useSyncOnChange = () => {
             delay: 5000, // Wait 5 seconds to ensure AsyncStorage has written
           })
           .catch(error => {
-//             console.error('[useSyncOnChange] Sync request failed:', error);
+            //             console.error('[useSyncOnChange] Sync request failed:', error);
           });
       }
 

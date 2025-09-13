@@ -14,7 +14,11 @@ import { format } from 'date-fns';
 import nacl from 'tweetnacl';
 import util from 'tweetnacl-util';
 import createStyles from './styles';
-import { CUSTOM_IMAGE_SOURCES, getCustomImageSource, THEMES } from '../../constants';
+import {
+  CUSTOM_IMAGE_SOURCES,
+  getCustomImageSource,
+  THEMES,
+} from '../../constants';
 import PreferencesModal from '../Modals/PreferencesModal';
 import { BUILD_VERSION } from '../../utils/version';
 
@@ -27,7 +31,7 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
   );
   const [showPreferencesModal, setShowPreferencesModal] = useState(false);
   const [currentTheme, setCurrentTheme] = useState('stackBlue');
-  
+
   // Get theme from state
   const theme = THEMES[currentTheme] || THEMES.stackBlue;
   const styles = createStyles(theme.primary);
@@ -45,7 +49,10 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
   useEffect(() => {
     // If we have shareId and shareKey from props (best case - captured immediately)
     if (shareId && shareKey) {
-      console.log('[ShareView] Using share data from props:', { shareId, keyLength: shareKey?.length });
+      console.log('[ShareView] Using share data from props:', {
+        shareId,
+        keyLength: shareKey?.length,
+      });
       loadShareDataV3(shareId, shareKey);
     }
     // Legacy V2 format: ?share=[token]
@@ -56,12 +63,12 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
     // Fallback: try to detect from URL (shouldn't happen with proper capture)
     else if (Platform.OS === 'web') {
       const path = window.location.pathname;
-      
+
       if (path.includes('/share/')) {
         const match = path.match(/\/share\/([A-Za-z0-9\-_]+)/);
         const id = match?.[1];
         const key = window.location.hash.substring(1);
-        
+
         if (id && key) {
           console.log('[ShareView] Fallback: detected share from URL');
           loadShareDataV3(id, key);
@@ -261,7 +268,9 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
         }
       } else {
         // Handle V2 data if accessed via ID (backward compat)
-        setError('This share uses an older format. Please ask for a new share link.');
+        setError(
+          'This share uses an older format. Please ask for a new share link.',
+        );
       }
 
       setLoading(false);
@@ -414,7 +423,7 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
     }
   };
 
-  const handleSaveTheme = (newTheme) => {
+  const handleSaveTheme = newTheme => {
     setCurrentTheme(newTheme);
   };
 
@@ -431,7 +440,9 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.primary }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.primary }]}
+    >
       {/* Header */}
       <View style={styles.header}>
         {/* Left FAB - Preferences */}
@@ -452,20 +463,13 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
             <Text style={styles.logoText}>StackMap</Text>
           </View>
           <TouchableOpacity style={styles.userPill} activeOpacity={0.8}>
-            <Text style={styles.userEmoji}>
-              {user?.icon || '👤'}
-            </Text>
-            <Text style={styles.userNamePill}>
-              {user?.name || 'User'}
-            </Text>
+            <Text style={styles.userEmoji}>{user?.icon || '👤'}</Text>
+            <Text style={styles.userNamePill}>{user?.name || 'User'}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Right FAB - Close */}
-        <TouchableOpacity
-          style={styles.fab}
-          onPress={handleClose}
-        >
+        <TouchableOpacity style={styles.fab} onPress={handleClose}>
           <Icon name="close" size={24} color={theme.primary} />
         </TouchableOpacity>
       </View>
@@ -478,7 +482,6 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
         </View>
       )}
 
-
       {/* Activities */}
       <ScrollView
         style={styles.activitiesContainer}
@@ -489,9 +492,7 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
         ) : (
           <View style={styles.emptyState}>
             <Icon name="event" size={48} color="#ccc" />
-            <Text style={styles.emptyStateText}>
-              No activities to display
-            </Text>
+            <Text style={styles.emptyStateText}>No activities to display</Text>
           </View>
         )}
 

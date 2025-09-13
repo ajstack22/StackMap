@@ -39,7 +39,7 @@ const loadFileSystemModules = () => {
     } else {
       // Use native modules - wrap in try/catch for missing modules
       try {
-        DocumentPicker = require('react-native-document-picker').default;
+        DocumentPicker = require('react-native-document-picker');
       } catch (e) {
         DocumentPicker = null;
       }
@@ -118,7 +118,6 @@ const DataModal = ({
   const [showActiveShares, setShowActiveShares] = useState(true);
   const [selectedShareUser, setSelectedShareUser] = useState(null);
   const [showShareQR, setShowShareQR] = useState(false);
-  
 
   // Tabs configuration - filter out unnecessary tabs for onboarding
   const tabs = isOnboarding
@@ -205,32 +204,32 @@ const DataModal = ({
       if (enabled) {
         // If sync is enabled locally, trust that state
         setSyncEnabled(true);
-        
+
         const id = await syncService.getSyncId();
         // Got sync ID from service
-        
+
         // Also check what's in AsyncStorage directly
         const storedId = await AsyncStorage.getItem('@sync_id');
-        
+
         if (id !== storedId) {
           // MISMATCH: Service sync ID !== stored sync ID
         }
-        
+
         let phrase = await syncService.getRecoveryPhrase();
         // Got recovery phrase from service
-        
+
         // If no phrase from service, try direct AsyncStorage as fallback
         if (!phrase && id) {
           // No phrase from service, trying direct AsyncStorage lookup
-          
+
           // Try multiple possible storage keys
           const possibleKeys = [
             `@sync_phrase_${id}`,
             `@sync_phrase`,
             `recovery_phrase_${id}`,
-            '@sync_recovery_phrase'
+            '@sync_recovery_phrase',
           ];
-          
+
           for (const key of possibleKeys) {
             try {
               const directPhrase = await AsyncStorage.getItem(key);
@@ -244,7 +243,7 @@ const DataModal = ({
             }
           }
         }
-        
+
         // If phrase is null and we have a syncId, it means we have an orphaned sync
         // Show a clear message to the user about what's wrong
         if (!phrase && id) {
@@ -253,18 +252,28 @@ const DataModal = ({
             `@sync_phrase_${id}`,
             `@sync_phrase`,
             `recovery_phrase_${id}`,
-            '@sync_recovery_phrase'
+            '@sync_recovery_phrase',
           ];
           const debugInfo = {
             syncId: id,
             checkedKeys: checkedKeys,
-            localStorage: typeof window !== 'undefined' ? Object.keys(window.localStorage).filter(k => k.includes('sync')).join(', ') : 'N/A'
+            localStorage:
+              typeof window !== 'undefined'
+                ? Object.keys(window.localStorage)
+                    .filter(k => k.includes('sync'))
+                    .join(', ')
+                : 'N/A',
           };
-          
+
           setSyncId(id);
-          setSyncRecoveryPhrase(`ERROR: Recovery phrase not found. Sync ID: ${id.substring(0, 8)}... Please disable and recreate sync.`);
+          setSyncRecoveryPhrase(
+            `ERROR: Recovery phrase not found. Sync ID: ${id.substring(
+              0,
+              8,
+            )}... Please disable and recreate sync.`,
+          );
           setSyncEnabled(false);
-          
+
           // Also store the debug info in a global variable for inspection
           if (typeof window !== 'undefined') {
             window.__syncDebugInfo = debugInfo;
@@ -273,14 +282,13 @@ const DataModal = ({
           setSyncId(id);
           setSyncRecoveryPhrase(phrase || '');
         }
-        
+
         // Optionally verify it exists on server in the background
         // but don't disable the UI if it fails (might just be creating)
         syncService.verifySyncExists().then(exists => {
           if (!exists && enabled) {
             // Sync is enabled but doesn't exist on server yet
             // This can happen when first creating a sync
-
           }
         });
       } else {
@@ -303,8 +311,10 @@ const DataModal = ({
       // Group shares by user
       if (shares && shares.length > 0) {
         // If shares don't have proper userId, group them under a generic "All Shares" category
-        const hasUserIds = shares.some(share => share.userId && share.userId !== 'unknown');
-        
+        const hasUserIds = shares.some(
+          share => share.userId && share.userId !== 'unknown',
+        );
+
         if (hasUserIds && users) {
           // Group by actual users
           Object.entries(users).forEach(([userId, user]) => {
@@ -569,7 +579,7 @@ The file will remain in your Downloads folder until you delete it.`,
         }
       }
     } catch (error) {
-//       console.error('Export error:', error);
+      //       console.error('Export error:', error);
       if (Platform.OS === 'web') {
         showToast({
           message: `Failed to export: ${error.message}`,
@@ -631,17 +641,19 @@ The file will remain in your Downloads folder until you delete it.`,
             'How to Import Your Data 📱',
             'Your exported StackMap files are saved in the Downloads folder.\n\nTo access them:\n\n1. Open your phone\'s Files app\n2. Navigate to Downloads\n3. Look for files starting with "stackmap-export"\n4. You can open them with StackMap from there\n\nOr use the Export button first to create a backup file.',
             [
-              { 
+              {
                 text: 'Open Files App',
                 onPress: () => {
                   // Try to open the file manager
                   if (Platform.OS === 'android') {
                     const { Linking } = require('react-native');
-                    Linking.openURL('content://com.android.documentsui.documents/root/downloads');
+                    Linking.openURL(
+                      'content://com.android.documentsui.documents/root/downloads',
+                    );
                   }
-                }
+                },
               },
-              { text: 'OK', style: 'cancel' }
+              { text: 'OK', style: 'cancel' },
             ],
           );
           setLoading(false);
@@ -863,9 +875,9 @@ The file will remain in your Downloads folder until you delete it.`,
                 // Legacy support - migrate emoji to icon
                 validatedUser.icon = validatedUser.emoji;
               } else {
-//                 console.warn(
-//                   `Import: User ${userId} has no valid icon, using default`,
-//                 );
+                //                 console.warn(
+                //                   `Import: User ${userId} has no valid icon, using default`,
+                //                 );
                 validatedUser.icon = '👤';
               }
             }
@@ -979,7 +991,10 @@ The file will remain in your Downloads folder until you delete it.`,
       showToast({ message: successMessage });
     } catch (error) {
       console.error('Clipboard copy failed:', error);
-      showToast({ message: 'Failed to copy. Please select and copy manually.', type: 'error' });
+      showToast({
+        message: 'Failed to copy. Please select and copy manually.',
+        type: 'error',
+      });
     }
   };
 
@@ -995,18 +1010,16 @@ The file will remain in your Downloads folder until you delete it.`,
         // CRITICAL: Use create() for "Create New Sync" button
         // This ensures we get the right sync ID and recovery phrase
         const result = await syncService.create();
-        
+
         // Immediately capture the frozen values to prevent any modification
         const finalSyncId = result.syncId;
         const finalRecoveryPhrase = result.recoveryPhrase;
-        
 
         // Set state with captured values from the frozen result
         // CRITICAL: Make sure we're not swapping these!
         setSyncEnabled(true);
-        setSyncId(finalSyncId);  // This sets the sync ID state
-        setSyncRecoveryPhrase(finalRecoveryPhrase);  // This sets what gets DISPLAYED
-        
+        setSyncId(finalSyncId); // This sets the sync ID state
+        setSyncRecoveryPhrase(finalRecoveryPhrase); // This sets what gets DISPLAYED
 
         if (onSyncStatusChange) {
           onSyncStatusChange(true);
@@ -1018,7 +1031,7 @@ The file will remain in your Downloads folder until you delete it.`,
         } else {
           showToast({ message: 'Sync restored - displaying recovery phrase' });
         }
-        
+
         // DON'T call checkSyncStatus here - it will overwrite the correct recovery phrase!
         // The result from create() is the source of truth
       } catch (error) {
@@ -1083,30 +1096,30 @@ The file will remain in your Downloads folder until you delete it.`,
     try {
       setSyncStatus('syncing');
       setSyncError('');
-      
+
       const result = await syncService.performManualSync();
-      
+
       if (result.success) {
         setLastSyncTime(Date.now());
         setSyncStatus('idle');
-        showToast({ 
+        showToast({
           message: 'Sync completed successfully',
-          type: 'success'
+          type: 'success',
         });
       } else {
         setSyncStatus('idle');
         setSyncError(result.message || 'Sync failed');
-        showToast({ 
+        showToast({
           message: result.message || 'Sync failed',
-          type: 'error'
+          type: 'error',
         });
       }
     } catch (error) {
       setSyncStatus('idle');
       setSyncError(error.message);
-      showToast({ 
+      showToast({
         message: `Sync failed: ${error.message}`,
-        type: 'error'
+        type: 'error',
       });
     }
   };
@@ -1138,32 +1151,32 @@ The file will remain in your Downloads folder until you delete it.`,
   // Handle delete server data
   const handleDeleteServerData = async () => {
     console.log('[DataModal] handleDeleteServerData called');
-    
+
     // Close the modal immediately
     setShowDeleteServerDataConfirm(false);
-    
+
     try {
       setSyncLoading(true);
-      
-      const currentSyncId = syncService.getSyncId ? syncService.getSyncId() : 
-                           syncService.minimalSync?.syncId || 
-                           syncService.syncId;
-      
+
+      const currentSyncId = syncService.getSyncId
+        ? syncService.getSyncId()
+        : syncService.minimalSync?.syncId || syncService.syncId;
+
       if (!currentSyncId) {
         throw new Error('No sync ID available - sync may not be enabled');
       }
-      
+
       console.log('[DataModal] Calling syncService.deleteFromServer()');
-      
+
       // Delete all server data for this sync ID - checks both environments
       const deleteResult = await syncService.deleteFromServer();
-      
+
       if (deleteResult && deleteResult.success) {
         console.log('[DataModal] SUCCESS: Data deleted from server(s)');
       }
 
       console.log('[DataModal] Server data deleted, disabling sync');
-      
+
       // Disable sync after deleting server data
       await syncService.disable();
       console.log('[DataModal] Sync disabled');
@@ -1176,15 +1189,19 @@ The file will remain in your Downloads folder until you delete it.`,
         onSyncStatusChange(false);
       }
 
-      showToast({ message: 'Server data deleted and sync disabled', type: 'success' });
+      showToast({
+        message: 'Server data deleted and sync disabled',
+        type: 'success',
+      });
     } catch (error) {
       console.error('[DataModal] Error deleting server data:', error);
-      
+
       showToast({
-        message: 'Unable to delete server data. Please contact support if this persists.',
+        message:
+          'Unable to delete server data. Please contact support if this persists.',
         type: 'error',
       });
-      
+
       // Re-check sync status in case of error
       checkSyncStatus();
     } finally {
@@ -1201,13 +1218,13 @@ The file will remain in your Downloads folder until you delete it.`,
       if (onReset) {
         await onReset();
       } else {
-//         console.error('[DataModal] No onReset function provided!');
+        //         console.error('[DataModal] No onReset function provided!');
       }
 
       setShowResetConfirm(false);
       onClose();
     } catch (error) {
-//       console.error('[DataModal] Reset error:', error);
+      //       console.error('[DataModal] Reset error:', error);
       showToast({
         message: error.message || 'Failed to reset app',
         type: 'error',
@@ -1912,43 +1929,65 @@ The file will remain in your Downloads folder until you delete it.`,
                     console.log('[DataModal] Generate Sync Key button pressed');
                     setSyncLoading(true);
                     setSyncError('');
-                    
+
                     // Try to get recovery phrase from multiple sources
                     let currentPhrase = syncRecoveryPhrase;
-                    console.log('[DataModal] Recovery phrase from state:', !!currentPhrase);
-                    
+                    console.log(
+                      '[DataModal] Recovery phrase from state:',
+                      !!currentPhrase,
+                    );
+
                     if (!currentPhrase) {
-                      console.log('[DataModal] Trying syncService.getRecoveryPhrase()...');
+                      console.log(
+                        '[DataModal] Trying syncService.getRecoveryPhrase()...',
+                      );
                       currentPhrase = syncService.getRecoveryPhrase();
-                      console.log('[DataModal] Recovery phrase from service:', !!currentPhrase);
+                      console.log(
+                        '[DataModal] Recovery phrase from service:',
+                        !!currentPhrase,
+                      );
                     }
-                    
+
                     if (!currentPhrase) {
-                      throw new Error('Recovery phrase not available. Please disable and re-enable sync.');
+                      throw new Error(
+                        'Recovery phrase not available. Please disable and re-enable sync.',
+                      );
                     }
-                    
-                    console.log('[DataModal] Creating invite code with recovery phrase...');
-                    const result = await syncService.createInviteCode(24, 5, 'Manual invite');
+
+                    console.log(
+                      '[DataModal] Creating invite code with recovery phrase...',
+                    );
+                    const result = await syncService.createInviteCode(
+                      24,
+                      5,
+                      'Manual invite',
+                    );
                     console.log('[DataModal] Invite code result:', result);
-                    
+
                     if (result && result.inviteCode) {
                       // The inviteUrl already includes the recovery phrase as a fragment
                       const fullSyncKey = result.inviteUrl;
-                      console.log('[DataModal] Generated full sync key with URL:', fullSyncKey);
+                      console.log(
+                        '[DataModal] Generated full sync key with URL:',
+                        fullSyncKey,
+                      );
                       setGeneratedSyncKey(fullSyncKey);
                       setShowGeneratedKey(true);
-                      showToast({ 
-                        message: 'Sync key generated! Valid for 24 hours.', 
-                        type: 'success' 
+                      showToast({
+                        message: 'Sync key generated! Valid for 24 hours.',
+                        type: 'success',
                       });
                     } else {
                       throw new Error('Failed to generate invite code');
                     }
                   } catch (error) {
-                    console.error('[DataModal] Error generating sync key:', error);
-                    showToast({ 
-                      message: error.message || 'Failed to generate sync key', 
-                      type: 'error' 
+                    console.error(
+                      '[DataModal] Error generating sync key:',
+                      error,
+                    );
+                    showToast({
+                      message: error.message || 'Failed to generate sync key',
+                      type: 'error',
                     });
                   } finally {
                     setSyncLoading(false);
@@ -1963,9 +2002,27 @@ The file will remain in your Downloads folder until you delete it.`,
                 {/* Generated Sync Key Display */}
                 <View style={styles.syncKeyDisplay}>
                   <View style={[styles.shareField, { alignItems: 'center' }]}>
-                    <Text style={[styles.shareFieldLabel, { textAlign: 'center', fontSize: 16 }]}>Device Invite</Text>
+                    <Text
+                      style={[
+                        styles.shareFieldLabel,
+                        { textAlign: 'center', fontSize: 16 },
+                      ]}
+                    >
+                      Device Invite
+                    </Text>
                   </View>
-                  <Text style={[styles.syncKeyText, { textAlign: 'center', marginTop: 8, marginBottom: 4, fontWeight: 'bold' }]} selectable>
+                  <Text
+                    style={[
+                      styles.syncKeyText,
+                      {
+                        textAlign: 'center',
+                        marginTop: 8,
+                        marginBottom: 4,
+                        fontWeight: 'bold',
+                      },
+                    ]}
+                    selectable
+                  >
                     {(() => {
                       // Display just the key part (not the full URL)
                       const urlParts = generatedSyncKey.split('#');
@@ -1974,26 +2031,61 @@ The file will remain in your Downloads folder until you delete it.`,
                       return `${inviteCode}#${recoveryPhrase}`;
                     })()}
                   </Text>
-                  <Text style={[styles.shareFieldHelper, { textAlign: 'center', marginBottom: 16 }]}>Valid for 24 hours • Max 5 uses</Text>
-                  
+                  <Text
+                    style={[
+                      styles.shareFieldHelper,
+                      { textAlign: 'center', marginBottom: 16 },
+                    ]}
+                  >
+                    Valid for 24 hours • Max 5 uses
+                  </Text>
+
                   {/* All Instructions Grouped Together */}
-                  <View style={[styles.shareInstructions, { alignItems: 'center' }]}>
-                    <View style={[styles.shareInstructionItem, { justifyContent: 'center' }]}>
+                  <View
+                    style={[styles.shareInstructions, { alignItems: 'center' }]}
+                  >
+                    <View
+                      style={[
+                        styles.shareInstructionItem,
+                        { justifyContent: 'center' },
+                      ]}
+                    >
                       <Icon name="language" size={16} color="#000" />
-                      <Text style={styles.shareInstructionText}>Use the URL for browser access</Text>
+                      <Text style={styles.shareInstructionText}>
+                        Use the URL for browser access
+                      </Text>
                     </View>
-                    <View style={[styles.shareInstructionItem, { justifyContent: 'center' }]}>
+                    <View
+                      style={[
+                        styles.shareInstructionItem,
+                        { justifyContent: 'center' },
+                      ]}
+                    >
                       <Icon name="smartphone" size={16} color="#000" />
-                      <Text style={styles.shareInstructionText}>Copy sync key for mobile apps</Text>
+                      <Text style={styles.shareInstructionText}>
+                        Copy sync key for mobile apps
+                      </Text>
                     </View>
-                    <View style={[styles.shareInstructionItem, { justifyContent: 'center' }]}>
+                    <View
+                      style={[
+                        styles.shareInstructionItem,
+                        { justifyContent: 'center' },
+                      ]}
+                    >
                       <Icon name="refresh" size={16} color="#000" />
-                      <Text style={styles.shareInstructionText}>Regenerate key if key above has expired</Text>
+                      <Text style={styles.shareInstructionText}>
+                        Regenerate key if key above has expired
+                      </Text>
                     </View>
                   </View>
-                  
+
                   {/* Action Buttons - Centered with wrapping */}
-                  <View style={[styles.syncKeyActions, { justifyContent: 'center', flexWrap: 'wrap' }]}>
+                  <View
+                    style={[
+                      styles.syncKeyActions,
+                      { justifyContent: 'center', flexWrap: 'wrap' },
+                    ]}
+                  >
                     <ModalButton
                       theme={theme}
                       variant="primary"
@@ -2006,14 +2098,14 @@ The file will remain in your Downloads folder until you delete it.`,
                         const inviteCode = urlParts[0].split('/').pop();
                         const keyOnly = `${inviteCode}#${recoveryPhrase}`;
                         copyToClipboard(keyOnly, 'Sync key copied!');
-                        showToast({ 
-                          message: 'Sync key copied to clipboard!', 
-                          type: 'success' 
+                        showToast({
+                          message: 'Sync key copied to clipboard!',
+                          type: 'success',
                         });
                       }}
                       compact
                     />
-                    
+
                     <ModalButton
                       theme={theme}
                       variant="secondary"
@@ -2022,14 +2114,14 @@ The file will remain in your Downloads folder until you delete it.`,
                       onPress={() => {
                         // generatedSyncKey already contains the full URL with fragment
                         copyToClipboard(generatedSyncKey, 'Sync URL copied!');
-                        showToast({ 
-                          message: 'Sync URL copied to clipboard!', 
-                          type: 'success' 
+                        showToast({
+                          message: 'Sync URL copied to clipboard!',
+                          type: 'success',
                         });
                       }}
                       compact
                     />
-                    
+
                     <ModalButton
                       theme={theme}
                       variant="secondary"
@@ -2038,30 +2130,36 @@ The file will remain in your Downloads folder until you delete it.`,
                       onPress={async () => {
                         try {
                           setSyncLoading(true);
-                          
+
                           // Get recovery phrase - extract from current key if needed
-                          let currentPhrase = syncRecoveryPhrase || syncService.getRecoveryPhrase();
+                          let currentPhrase =
+                            syncRecoveryPhrase ||
+                            syncService.getRecoveryPhrase();
                           if (!currentPhrase && generatedSyncKey) {
                             // Extract recovery phrase from the URL format
                             const parts = generatedSyncKey.split('#');
                             currentPhrase = parts[1]; // Recovery phrase is after the #
                           }
-                          
-                          const result = await syncService.createInviteCode(24, 5, 'Manual invite');
-                          
+
+                          const result = await syncService.createInviteCode(
+                            24,
+                            5,
+                            'Manual invite',
+                          );
+
                           if (result && result.inviteCode) {
                             // The inviteUrl already includes the recovery phrase as a fragment
                             const fullSyncKey = result.inviteUrl;
                             setGeneratedSyncKey(fullSyncKey);
-                            showToast({ 
-                              message: 'New sync key generated!', 
-                              type: 'success' 
+                            showToast({
+                              message: 'New sync key generated!',
+                              type: 'success',
                             });
                           }
                         } catch (error) {
-                          showToast({ 
-                            message: 'Failed to generate new key', 
-                            type: 'error' 
+                          showToast({
+                            message: 'Failed to generate new key',
+                            type: 'error',
                           });
                         } finally {
                           setSyncLoading(false);
@@ -2071,7 +2169,6 @@ The file will remain in your Downloads folder until you delete it.`,
                       loading={syncLoading}
                     />
                   </View>
-                  
                 </View>
               </>
             )}
@@ -2089,7 +2186,7 @@ The file will remain in your Downloads folder until you delete it.`,
               loading={syncStatus === 'syncing'}
               fullWidth
             />
-            
+
             <ModalButton
               theme={theme}
               variant="danger"
@@ -2389,22 +2486,48 @@ The file will remain in your Downloads folder until you delete it.`,
 
             <View style={styles.shareInfoBox}>
               <View style={[styles.shareFieldGroup, { alignItems: 'center' }]}>
-                <Text style={[styles.shareFieldLabel, { textAlign: 'center', fontSize: 16 }]}>Share Link Ready</Text>
+                <Text
+                  style={[
+                    styles.shareFieldLabel,
+                    { textAlign: 'center', fontSize: 16 },
+                  ]}
+                >
+                  Share Link Ready
+                </Text>
               </View>
-              <Text style={[styles.shareFieldHelper, { textAlign: 'center', marginTop: 8, marginBottom: 16 }]}>
+              <Text
+                style={[
+                  styles.shareFieldHelper,
+                  { textAlign: 'center', marginTop: 8, marginBottom: 16 },
+                ]}
+              >
                 Expires in {expiresHours} hours • View-only access
               </Text>
-              
+
               {/* Simple instruction */}
-              <View style={[styles.shareInstructions, { alignItems: 'center' }]}>
-                <View style={[styles.shareInstructionItem, { justifyContent: 'center' }]}>
+              <View
+                style={[styles.shareInstructions, { alignItems: 'center' }]}
+              >
+                <View
+                  style={[
+                    styles.shareInstructionItem,
+                    { justifyContent: 'center' },
+                  ]}
+                >
                   <Icon name="visibility" size={16} color="#000" />
-                  <Text style={styles.shareInstructionText}>Recipients can view your activities in their browser</Text>
+                  <Text style={styles.shareInstructionText}>
+                    Recipients can view your activities in their browser
+                  </Text>
                 </View>
               </View>
-              
+
               {/* Single Copy URL Button */}
-              <View style={[styles.syncKeyActions, { justifyContent: 'center', marginTop: 16 }]}>
+              <View
+                style={[
+                  styles.syncKeyActions,
+                  { justifyContent: 'center', marginTop: 16 },
+                ]}
+              >
                 <ModalButton
                   theme={theme}
                   variant="primary"
@@ -2412,9 +2535,9 @@ The file will remain in your Downloads folder until you delete it.`,
                   icon="link"
                   onPress={() => {
                     copyToClipboard(shareUrl, 'Share link copied!');
-                    showToast({ 
-                      message: 'Share link copied to clipboard!', 
-                      type: 'success' 
+                    showToast({
+                      message: 'Share link copied to clipboard!',
+                      type: 'success',
                     });
                   }}
                 />
@@ -2433,7 +2556,12 @@ The file will remain in your Downloads folder until you delete it.`,
 
             <View style={styles.divider} />
 
-            <View style={[styles.syncKeyActions, { justifyContent: 'center', marginTop: 20 }]}>
+            <View
+              style={[
+                styles.syncKeyActions,
+                { justifyContent: 'center', marginTop: 20 },
+              ]}
+            >
               <ModalButton
                 theme={theme}
                 variant="secondary"
@@ -2456,7 +2584,7 @@ The file will remain in your Downloads folder until you delete it.`,
           </View>
         </View>
       )}
-      
+
       {/* Active Shares - Show at bottom regardless of state */}
       {Object.keys(activeShares).length > 0 ? (
         <View style={[styles.shareSection, { marginTop: 20 }]}>
@@ -2473,59 +2601,64 @@ The file will remain in your Downloads folder until you delete it.`,
           </TouchableOpacity>
 
           {showActiveShares &&
-            Object.entries(activeShares).map(
-              ([userId, { user, shares }]) => (
-                <View key={userId} style={styles.userSharesContainer}>
-                  <View style={styles.userSharesHeader}>
-                    <Text style={styles.userSharesEmoji}>
-                      {user.icon || '😀'}
-                    </Text>
-                    <Text style={styles.userSharesName}>{user.name}</Text>
-                    <Text style={styles.userSharesCount}>
-                      {shares.length} active
-                    </Text>
-                  </View>
-                  {shares.map(share => (
-                    <View
-                      key={share.shareId}
-                      style={styles.activeShareCard}
-                    >
-                      <View style={styles.activeShareInfo}>
-                        {share.recipientName && (
-                          <Text style={styles.activeShareRecipient}>
-                            To: {share.recipientName}
-                          </Text>
-                        )}
-                        <Text style={styles.activeShareDate}>
-                          Expires:{' '}
-                          {share.expiresAt
-                            ? new Date(share.expiresAt).toLocaleDateString()
-                            : 'N/A'}
-                        </Text>
-                        {share.shareNote && (
-                          <Text style={styles.activeShareNote} numberOfLines={1}>
-                            {share.shareNote}
-                          </Text>
-                        )}
-                      </View>
-                      <TouchableOpacity
-                        onPress={() => handleDeleteShare(share.shareId)}
-                        style={styles.activeShareDelete}
-                      >
-                        <Icon name="delete" size={20} color="#d32f2f" />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
+            Object.entries(activeShares).map(([userId, { user, shares }]) => (
+              <View key={userId} style={styles.userSharesContainer}>
+                <View style={styles.userSharesHeader}>
+                  <Text style={styles.userSharesEmoji}>
+                    {user.icon || '😀'}
+                  </Text>
+                  <Text style={styles.userSharesName}>{user.name}</Text>
+                  <Text style={styles.userSharesCount}>
+                    {shares.length} active
+                  </Text>
                 </View>
-              ),
-            )}
+                {shares.map(share => (
+                  <View key={share.shareId} style={styles.activeShareCard}>
+                    <View style={styles.activeShareInfo}>
+                      {share.recipientName && (
+                        <Text style={styles.activeShareRecipient}>
+                          To: {share.recipientName}
+                        </Text>
+                      )}
+                      <Text style={styles.activeShareDate}>
+                        Expires:{' '}
+                        {share.expiresAt
+                          ? new Date(share.expiresAt).toLocaleDateString()
+                          : 'N/A'}
+                      </Text>
+                      {share.shareNote && (
+                        <Text style={styles.activeShareNote} numberOfLines={1}>
+                          {share.shareNote}
+                        </Text>
+                      )}
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => handleDeleteShare(share.shareId)}
+                      style={styles.activeShareDelete}
+                    >
+                      <Icon name="delete" size={20} color="#d32f2f" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            ))}
         </View>
       ) : (
         <View style={[styles.shareSection, { marginTop: 20, padding: 15 }]}>
-          <Text style={[styles.shareSectionTitle, { textAlign: 'center', color: '#666' }]}>
+          <Text
+            style={[
+              styles.shareSectionTitle,
+              { textAlign: 'center', color: '#666' },
+            ]}
+          >
             No active shares
           </Text>
-          <Text style={[styles.shareFieldHelper, { textAlign: 'center', marginTop: 8 }]}>
+          <Text
+            style={[
+              styles.shareFieldHelper,
+              { textAlign: 'center', marginTop: 8 },
+            ]}
+          >
             Create a share to see it listed here
           </Text>
         </View>

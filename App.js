@@ -15,7 +15,6 @@ import {
   Animated,
   ActivityIndicator,
   AppState,
-  Modal,
 } from 'react-native';
 
 // Capture sync URL data immediately before React renders
@@ -28,17 +27,21 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
       recoveryPhrase: window.__earlySyncData.recoveryPhrase,
       capturedAt: 'html-inline',
       hash: window.__earlySyncData.hash,
-      hashLength: window.__earlySyncData.hash ? window.__earlySyncData.hash.length : 0
+      hashLength: window.__earlySyncData.hash
+        ? window.__earlySyncData.hash.length
+        : 0,
     };
   } else {
     // Fallback to checking here
     const pathname = window.location.pathname;
-    const syncPathMatch = pathname.match(/(?:\/qual)?\/sync\/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)\/?$/i);
-    
+    const syncPathMatch = pathname.match(
+      /(?:\/qual)?\/sync\/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)\/?$/i,
+    );
+
     if (syncPathMatch) {
       const syncInviteCode = syncPathMatch[1].toUpperCase();
       let recoveryPhrase = null;
-      
+
       // Try window.__initialHash first (from HTML), then current hash
       const currentHash = window.__initialHash || window.location.hash;
       if (currentHash && currentHash.length > 1) {
@@ -46,7 +49,7 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
         const parts = fragment.split('#');
         recoveryPhrase = parts[0];
       }
-      
+
       // Store immediately in global scope
       window.syncInviteDataImmediate = {
         inviteCode: syncInviteCode,
@@ -54,14 +57,18 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
         capturedAt: 'immediate',
         hash: currentHash,
         hashLength: currentHash ? currentHash.length : 0,
-        usedInitialHash: !!window.__initialHash
+        usedInitialHash: !!window.__initialHash,
       };
     }
   }
-  
+
   // Clear the fragment to prevent it from being sent to server on any navigation
   if (window.location.hash) {
-    window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
+    window.history.replaceState(
+      null,
+      document.title,
+      window.location.pathname + window.location.search,
+    );
   }
 }
 
@@ -101,7 +108,7 @@ if (Platform.OS === 'web') {
 } else {
   // Use native modules for both iOS and Android
   try {
-    DocumentPicker = require('react-native-document-picker').default;
+    DocumentPicker = require('react-native-document-picker');
   } catch (e) {
     if (__DEV__) {
       console.warn('DocumentPicker not available:', e);
@@ -192,9 +199,7 @@ import {
 import { debugPINStatus } from './tools/DEBUG_PIN';
 
 // Get initial screen dimensions
-const { height: initialScreenHeight } =
-  Dimensions.get('window');
-
+const { height: initialScreenHeight } = Dimensions.get('window');
 
 // Helper function for Android modal bottom safety zones
 const getAndroidModalBottomHeight = insets => {
@@ -204,16 +209,17 @@ const getAndroidModalBottomHeight = insets => {
     : Math.max(insets.bottom, 10); // Reduced by 40% (was 16, now 10)
 };
 
-
-
 const App = () => {
   console.log('BUILD v22 - Global protection flags');
   if (typeof window !== 'undefined') {
-    console.log('Global sync flags:', window.__syncJustJoined, window.__syncJoinedAt);
+    console.log(
+      'Global sync flags:',
+      window.__syncJustJoined,
+      window.__syncJoinedAt,
+    );
   }
   // Reduced startup logging - only show once
   if (Platform.OS === 'web' && !window.__stackMapStartupLogged) {
-
     window.__stackMapStartupLogged = true;
   }
   const insets = useSafeAreaInsets();
@@ -348,15 +354,16 @@ const App = () => {
     if (__DEV__) {
       if (__DEV__) {
         console.warn(
-      `Android tablet dimensions - width: ${screenDimensions.width}, columns: ${numColumns}`,
-    );
+          `Android tablet dimensions - width: ${screenDimensions.width}, columns: ${numColumns}`,
+        );
       }
     }
   }
   const cardWidth = calculateCardWidth(screenDimensions.width);
 
   // Debug logging for Android tablet issue
-  if (Platform.OS === 'android') {}
+  if (Platform.OS === 'android') {
+  }
 
   // DEBUG for Android tablet
   if (Platform.OS === 'android') {
@@ -401,7 +408,7 @@ const App = () => {
   const [shareKey, setShareKey] = useState(null);
   const [syncSetupPhrase, setSyncSetupPhrase] = useState(null);
   const [isInitializing, setIsInitializing] = useState(false); // Prevent race conditions
-  
+
   // Cache device ID to avoid async delays in activity operations
   const [cachedDeviceId, setCachedDeviceId] = useState(null);
 
@@ -410,46 +417,60 @@ const App = () => {
     if (Platform.OS === 'web') {
       // Use the immediately captured data if available
       if (window.syncInviteDataImmediate) {
-        console.log('[App] Using immediately captured sync data:', window.syncInviteDataImmediate);
+        console.log(
+          '[App] Using immediately captured sync data:',
+          window.syncInviteDataImmediate,
+        );
         window.syncInviteData = {
           inviteCode: window.syncInviteDataImmediate.inviteCode,
-          recoveryPhrase: window.syncInviteDataImmediate.recoveryPhrase
+          recoveryPhrase: window.syncInviteDataImmediate.recoveryPhrase,
         };
-        
+
         // Store debug info
         window.debugSyncParsing = {
           ...window.syncInviteDataImmediate,
-          usedImmediateData: true
+          usedImmediateData: true,
         };
       } else {
         // Fallback to checking in useEffect (shouldn't happen for sync URLs)
         const pathname = window.location.pathname;
-        const syncPathMatch = pathname.match(/(?:\/qual)?\/sync\/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)\/?$/i);
-        
+        const syncPathMatch = pathname.match(
+          /(?:\/qual)?\/sync\/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)\/?$/i,
+        );
+
         if (syncPathMatch) {
-          console.log('[App] Warning: Sync URL detected in useEffect but no immediate data captured');
+          console.log(
+            '[App] Warning: Sync URL detected in useEffect but no immediate data captured',
+          );
           window.debugSyncParsing = {
             pathname: pathname,
             hash: window.location.hash,
             hashLength: window.location.hash.length,
             fullUrl: window.location.href,
-            noImmediateData: true
+            noImmediateData: true,
           };
         }
       }
-      
+
       // Check for share data captured immediately
       if (window.shareDataImmediate) {
-        console.log('[App] Using immediately captured share data:', window.shareDataImmediate);
+        console.log(
+          '[App] Using immediately captured share data:',
+          window.shareDataImmediate,
+        );
         setShareId(window.shareDataImmediate.shareId);
         setShareKey(window.shareDataImmediate.encryptionKey);
       } else {
         // Fallback to checking in useEffect (shouldn't happen for share URLs with hash)
         const pathname = window.location.pathname;
-        const sharePathMatch = pathname.match(/(?:\/qual)?\/share\/([A-Za-z0-9\-_]+)\/?$/);
-        
+        const sharePathMatch = pathname.match(
+          /(?:\/qual)?\/share\/([A-Za-z0-9\-_]+)\/?$/,
+        );
+
         if (sharePathMatch) {
-          console.log('[App] Warning: Share URL detected in useEffect but no immediate data captured');
+          console.log(
+            '[App] Warning: Share URL detected in useEffect but no immediate data captured',
+          );
           setShareId(sharePathMatch[1]);
           // Try to get hash if still available
           if (window.location.hash) {
@@ -457,7 +478,7 @@ const App = () => {
           }
         }
       }
-      
+
       // Get the raw query string to handle + characters properly
       const search = window.location.search;
       // Initial URL check
@@ -480,7 +501,13 @@ const App = () => {
 
       // Log URL params only if they exist
       const hasSyncInvite = window.syncInviteData?.inviteCode;
-      if (token || syncPhrase || privacyParam || supportParam || hasSyncInvite) {
+      if (
+        token ||
+        syncPhrase ||
+        privacyParam ||
+        supportParam ||
+        hasSyncInvite
+      ) {
         console.log('[App] URL params:', {
           search: window.location.search,
           pathname: window.location.pathname,
@@ -514,18 +541,22 @@ const App = () => {
   useEffect(() => {
     // On iOS, defer device ID generation to prevent blocking startup
     const delay = Platform.OS === 'ios' ? 2000 : 0;
-    
-    setTimeout(() => {
-      encryptionService.getDeviceId().then(id => {
-        setCachedDeviceId(id);
 
-      }).catch(err => {
-        if (__DEV__) {
-          console.error('[App] Failed to cache device ID:', err);
-        }
-        // Generate a fallback ID if needed
-        setCachedDeviceId(`fallback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
-      });
+    setTimeout(() => {
+      encryptionService
+        .getDeviceId()
+        .then(id => {
+          setCachedDeviceId(id);
+        })
+        .catch(err => {
+          if (__DEV__) {
+            console.error('[App] Failed to cache device ID:', err);
+          }
+          // Generate a fallback ID if needed
+          setCachedDeviceId(
+            `fallback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          );
+        });
     }, delay);
   }, []);
 
@@ -576,12 +607,10 @@ const App = () => {
       // Use a longer delay to ensure everything is mounted
       setTimeout(() => {
         if (window.urlOpenPrivacy) {
-
           setShowPrivacyModal(true);
           window.urlOpenPrivacy = false;
         }
         if (window.urlOpenSupport) {
-
           setShowSupportModal(true);
           window.urlOpenSupport = false;
         }
@@ -602,7 +631,7 @@ const App = () => {
         console.log('[App] Initializing sync service...');
         await syncService.initialize();
       }
-      
+
       const enabled = await syncService.isEnabled();
       useSyncStore.getState().setSyncEnabled(enabled);
     };
@@ -615,18 +644,18 @@ const App = () => {
     // Only on mobile platforms
     if (Platform.OS === 'web') return;
     if (!isHydrated) return;
-    
+
     let appStateSubscription;
-    
-    const handleAppStateChange = async (nextAppState) => {
+
+    const handleAppStateChange = async nextAppState => {
       if (nextAppState === 'active') {
         console.log('[App] App became active - checking sync');
-        
+
         // Check if sync is enabled
         const isSyncEnabled = await syncService.isEnabled();
         if (isSyncEnabled) {
           console.log('[App] Sync enabled - triggering manual sync');
-          
+
           // Trigger immediate sync using the new method
           try {
             const result = await syncService.triggerSync();
@@ -641,10 +670,13 @@ const App = () => {
         }
       }
     };
-    
+
     // Subscribe to app state changes
-    appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
-    
+    appStateSubscription = AppState.addEventListener(
+      'change',
+      handleAppStateChange,
+    );
+
     return () => {
       // Cleanup
       if (appStateSubscription && appStateSubscription.remove) {
@@ -720,23 +752,24 @@ const App = () => {
       if (Object.keys(users).length > 0) {
         let cleanupNeeded = false;
         const cleanedUsers = {};
-        
+
         Object.entries(users).forEach(([userId, user]) => {
           const cleanedUser = { ...user };
-          
+
           if (user.days) {
             const cleanedDays = {};
             Object.entries(user.days).forEach(([day, dayData]) => {
               if (dayData?.activities) {
                 // Remove any activities marked as deleted
-                const cleanedActivities = dayData.activities.filter(a => !a.deleted);
+                const cleanedActivities = dayData.activities.filter(
+                  a => !a.deleted,
+                );
                 if (cleanedActivities.length < dayData.activities.length) {
                   cleanupNeeded = true;
-
                 }
                 cleanedDays[day] = {
                   ...dayData,
-                  activities: cleanedActivities
+                  activities: cleanedActivities,
                 };
               } else {
                 cleanedDays[day] = dayData;
@@ -744,12 +777,11 @@ const App = () => {
             });
             cleanedUser.days = cleanedDays;
           }
-          
+
           cleanedUsers[userId] = cleanedUser;
         });
-        
-        if (cleanupNeeded) {
 
+        if (cleanupNeeded) {
           setUsers(cleanedUsers);
         }
       }
@@ -763,11 +795,13 @@ const App = () => {
       ) {
         // Check if this is a sync invite URL - if so, show abbreviated join flow
         if (Platform.OS === 'web' && window.syncInviteData) {
-          console.log('[App] Sync invite detected - showing join flow instead of full onboarding');
+          console.log(
+            '[App] Sync invite detected - showing join flow instead of full onboarding',
+          );
           // Pass sync invite data to onboarding for abbreviated flow
           window.syncInviteMode = true;
         }
-        
+
         // Showing onboarding - no users and not completed
         setShowOnboarding(true);
         setIsInitializing(false);
@@ -786,16 +820,15 @@ const App = () => {
       ) {
         // Check if sync is enabled - if so, wait for sync to provide users
         // On iOS, skip this check to prevent freeze and rely on sync service state
-        const isSyncEnabled = Platform.OS === 'ios' 
-          ? useSyncStore.getState().syncEnabled 
-          : await AsyncStorage.getItem('@sync_enabled');
+        const isSyncEnabled =
+          Platform.OS === 'ios'
+            ? useSyncStore.getState().syncEnabled
+            : await AsyncStorage.getItem('@sync_enabled');
         if (isSyncEnabled === 'true' || isSyncEnabled === true) {
-
           // Give sync more time to load users
           setTimeout(() => {
             const currentUsers = useAppStore.getState().users;
             if (Object.keys(currentUsers).length === 0) {
-
               // Create a minimal default user to prevent issues
               const defaultUser = {
                 id: Date.now().toString(),
@@ -804,9 +837,9 @@ const App = () => {
                 days: {
                   today: { activities: [] },
                   tomorrow: { activities: [] },
-                  yesterday: { activities: [] }
+                  yesterday: { activities: [] },
                 },
-                settings: {}
+                settings: {},
               };
               setUsers({ [defaultUser.id]: defaultUser });
               setCurrentUser(defaultUser.id);
@@ -903,7 +936,7 @@ const App = () => {
       // Entering edit mode with simpler animation for better performance
       setShowEditModeList(true);
       setShowEditToolbar(true);
-      
+
       // Simple parallel animation without staggered list items for iOS performance
       Animated.parallel([
         // Fade out regular content
@@ -931,7 +964,6 @@ const App = () => {
           useNativeDriver: true,
         }),
       ]).start();
-      
     } else {
       // Exiting edit mode with simpler animation
       Animated.parallel([
@@ -971,13 +1003,11 @@ const App = () => {
   // Handle PIN input
   useEffect(() => {
     if (pinInput.length === PIN_LENGTH && !isSettingPin) {
-
       // Run debug when PIN verification happens
       debugPINStatus().then(() => {});
 
       // Verify PIN
       verifyPin(pinInput).then(async isValid => {
-
         if (isValid) {
           // PIN for main edit mode
 
@@ -996,7 +1026,6 @@ const App = () => {
             setShowPinModal(false);
             setPinInput('');
           } else {
-
             Alert.alert('Incorrect PIN', 'Please try again');
             setPinInput('');
           }
@@ -1009,18 +1038,14 @@ const App = () => {
   useEffect(() => {
     if (isSettingPin) {
       if (!confirmPin && pinInput.length === PIN_LENGTH) {
-
         // Move to confirm step
         setConfirmPin(pinInput);
         setPinInput('');
         showToast({ message: 'Now re-enter PIN to confirm' });
       } else if (confirmPin && pinInput.length === PIN_LENGTH) {
-
         // Verify confirmation
         if (pinInput === confirmPin) {
-
           setSecurePin(pinInput).then(success => {
-
             if (success) {
               setShowPinModal(false);
               setPinInput('');
@@ -1098,11 +1123,10 @@ const App = () => {
 
   const handleOnboardingComplete = async onboardingData => {
     try {
-
       console.log('[handleOnboardingComplete] Current state:', {
         hasCompletedOnboarding,
         showOnboarding,
-        users: Object.keys(users).length
+        users: Object.keys(users).length,
       });
 
       // Check if we have imported data passed directly from onboarding (new sync import flow)
@@ -1111,31 +1135,37 @@ const App = () => {
         console.log('[handleOnboardingComplete] Processing sync import:', {
           hasImportedData: !!onboardingData?.importedData,
           syncCompleted: !!onboardingData?.syncCompleted,
-          userCount: onboardingData?.importedData ? Object.keys(onboardingData.importedData.users || {}).length : 0
+          userCount: onboardingData?.importedData
+            ? Object.keys(onboardingData.importedData.users || {}).length
+            : 0,
         });
 
         // If we have imported data, restore it NOW before marking onboarding complete
         if (onboardingData?.importedData) {
           const importedData = onboardingData.importedData;
-          
+
           // Log what we're about to restore
           console.log('[handleOnboardingComplete] Restoring imported data:', {
             userCount: Object.keys(importedData.users || {}).length,
             currentUser: importedData.currentUser,
-            version: importedData.version
+            version: importedData.version,
           });
-          
+
           // Restore users and settings immediately using proper store methods
-          if (importedData.users && Object.keys(importedData.users).length > 0) {
+          if (
+            importedData.users &&
+            Object.keys(importedData.users).length > 0
+          ) {
             // First set the users
             setUsers(importedData.users);
-            
+
             // Set current user from imported data
-            const currentUserId = importedData.currentUser || Object.keys(importedData.users)[0];
+            const currentUserId =
+              importedData.currentUser || Object.keys(importedData.users)[0];
             if (currentUserId && importedData.users[currentUserId]) {
               setCurrentUser(currentUserId);
               setCurrentDay(importedData.currentDay || 'today');
-              
+
               // Force a state update to ensure activities are visible
               // This helps React re-render with the new data
               setTimeout(() => {
@@ -1143,63 +1173,84 @@ const App = () => {
                 // Trigger a minimal state update to force re-render
                 state.setCurrentDay(state.currentDay);
               }, 100);
-              
+
               // Restore theme and other settings
               if (importedData.globalSettings) {
                 if (importedData.globalSettings.currentTheme) {
-                  const validTheme = validateTheme(importedData.globalSettings.currentTheme);
+                  const validTheme = validateTheme(
+                    importedData.globalSettings.currentTheme,
+                  );
                   setCurrentTheme(validTheme);
                 }
                 if (importedData.globalSettings.soundEnabled !== undefined) {
                   setSoundEnabled(importedData.globalSettings.soundEnabled);
                 }
                 if (importedData.globalSettings.taskCelebration) {
-                  setTaskCelebration(importedData.globalSettings.taskCelebration);
+                  setTaskCelebration(
+                    importedData.globalSettings.taskCelebration,
+                  );
                 }
                 if (importedData.globalSettings.routineCelebration) {
-                  setRoutineCelebration(importedData.globalSettings.routineCelebration);
+                  setRoutineCelebration(
+                    importedData.globalSettings.routineCelebration,
+                  );
                 }
               }
-              
+
               // Restore library if present
               if (importedData.library) {
                 setLibrary(importedData.library);
                 updateLibraryCategories(importedData.library.categories || []);
               }
-              
+
               // Restore library templates if present
               if (importedData.libraryTemplates) {
                 setLibraryTemplates(importedData.libraryTemplates);
               }
-              
-              console.log('[handleOnboardingComplete] Data restored successfully');
-              
+
+              console.log(
+                '[handleOnboardingComplete] Data restored successfully',
+              );
+
               // NOW enable sync after data is restored
               if (onboardingData?.recoveryPhrase) {
-                console.log('[handleOnboardingComplete] Enabling sync with imported data');
+                console.log(
+                  '[handleOnboardingComplete] Enabling sync with imported data',
+                );
                 // Use initializeForImport to avoid pulling and overwriting
                 // IMPORTANT: We need to await this to ensure the initial push happens
                 // before any other operations
                 try {
-                  await syncService.initializeForImport(onboardingData.recoveryPhrase);
-                  console.log('[handleOnboardingComplete] Sync initialized successfully with imported data');
+                  await syncService.initializeForImport(
+                    onboardingData.recoveryPhrase,
+                  );
+                  console.log(
+                    '[handleOnboardingComplete] Sync initialized successfully with imported data',
+                  );
                 } catch (error) {
-                  console.error('[handleOnboardingComplete] Failed to enable sync:', error);
+                  console.error(
+                    '[handleOnboardingComplete] Failed to enable sync:',
+                    error,
+                  );
                   // Continue even if sync fails - data is already imported
                 }
               }
-              
+
               // CRITICAL: Clear syncSetupPhrase to prevent duplicate modal
               if (syncSetupPhrase) {
-                console.log('[handleOnboardingComplete] Clearing sync setup phrase to prevent duplicate modal');
+                console.log(
+                  '[handleOnboardingComplete] Clearing sync setup phrase to prevent duplicate modal',
+                );
                 setSyncSetupPhrase(null);
-                
+
                 // Also clean the URL to remove the sync parameter
                 if (Platform.OS === 'web' && window.history) {
                   const url = new URL(window.location);
                   url.searchParams.delete('sync');
                   window.history.replaceState({}, '', url.toString());
-                  console.log('[handleOnboardingComplete] Cleaned sync parameter from URL');
+                  console.log(
+                    '[handleOnboardingComplete] Cleaned sync parameter from URL',
+                  );
                 }
               }
             }
@@ -1211,20 +1262,24 @@ const App = () => {
         setTimeout(() => {
           // Get the current state from the store
           const currentUsers = useAppStore.getState().users;
-          console.log('[handleOnboardingComplete] Delayed completion - users:', Object.keys(currentUsers).length);
-          
+          console.log(
+            '[handleOnboardingComplete] Delayed completion - users:',
+            Object.keys(currentUsers).length,
+          );
+
           // Double-check we have users before completing
           if (Object.keys(currentUsers).length === 0) {
-            console.error('[handleOnboardingComplete] WARNING: No users after import!');
+            console.error(
+              '[handleOnboardingComplete] WARNING: No users after import!',
+            );
           }
-          
+
           // Now mark onboarding as complete
           setHasCompletedOnboarding(true);
           setShowOnboarding(false);
           showToast({ message: 'Data synced successfully' });
-
         }, 500); // This delay ensures React has time to re-render with new users
-        
+
         return; // Return here to prevent creating duplicate users below
       }
 
@@ -1233,7 +1288,6 @@ const App = () => {
         '@stackmap_import_temp',
       );
       if (importedDataStr) {
-
         const importedData = JSON.parse(importedDataStr);
 
         // Apply all the imported data NOW that onboarding is complete
@@ -1272,7 +1326,9 @@ const App = () => {
         // Restore global settings
         if (importedData.globalSettings) {
           if (importedData.globalSettings.currentTheme) {
-            const validTheme = validateTheme(importedData.globalSettings.currentTheme);
+            const validTheme = validateTheme(
+              importedData.globalSettings.currentTheme,
+            );
             setCurrentTheme(validTheme);
           }
           if (importedData.globalSettings.displayMode)
@@ -1307,14 +1363,12 @@ const App = () => {
 
       // Handle abbreviated onboarding (sync URL flow)
       if (onboardingData?.isAbbreviated && onboardingData?.syncSetupPhrase) {
-
         // Clear the sync setup phrase to prevent duplicate modal
         setSyncSetupPhrase(null);
 
         // Ensure theme is set before showing main app
         const storeState = useAppStore.getState();
         if (!storeState.currentTheme) {
-
           setCurrentTheme('stackBlue');
         }
 
@@ -1332,8 +1386,8 @@ const App = () => {
         if (__DEV__) {
           if (__DEV__) {
             console.warn(
-          'No users provided from onboarding, creating default user',
-        );
+              'No users provided from onboarding, creating default user',
+            );
           }
         }
         const randomId = Math.random().toString(36).substr(2, 9);
@@ -1483,7 +1537,6 @@ const App = () => {
       // SAFETY CHECK: Only create users if we didn't import any
       const currentUsers = useAppStore.getState().users;
       if (currentUsers && Object.keys(currentUsers).length > 0) {
-
         setShowOnboarding(false);
         return;
       }
@@ -1555,7 +1608,6 @@ const App = () => {
 
   const handleOnboardingImportComplete = async selectedData => {
     try {
-
       // Save to temporary storage for onboarding to retrieve
 
       await AsyncStorage.setItem(
@@ -1831,7 +1883,8 @@ const App = () => {
           text: 'Try Edit Mode',
           title: 'Try Edit Mode',
           icon: '✏️',
-          description: 'Use the edit button to add, remove, and organize activities',
+          description:
+            'Use the edit button to add, remove, and organize activities',
           pinned: false,
         },
         {
@@ -1847,7 +1900,8 @@ const App = () => {
           text: 'Complete Day',
           title: 'Complete Day',
           icon: '✅',
-          description: 'Mark all activities done at once when you finish your day',
+          description:
+            'Mark all activities done at once when you finish your day',
           pinned: false,
         },
         {
@@ -1947,24 +2001,26 @@ const App = () => {
   };
 
   // Helper function to validate theme
-  const validateTheme = (themeValue) => {
+  const validateTheme = themeValue => {
     // Check if it's a valid theme key
     if (themeValue && THEMES[themeValue]) {
       return themeValue;
     }
-    
+
     // Check if it's a color code that matches a theme
     if (themeValue && themeValue.startsWith('#')) {
       // Find a theme that matches this color code
       for (const [key, theme] of Object.entries(THEMES)) {
-        if (theme.primary === themeValue || 
-            theme.dark === themeValue || 
-            theme.light === themeValue) {
+        if (
+          theme.primary === themeValue ||
+          theme.dark === themeValue ||
+          theme.light === themeValue
+        ) {
           return key;
         }
       }
     }
-    
+
     // Default to stackBlue if invalid
     return 'stackBlue';
   };
@@ -2014,7 +2070,6 @@ const App = () => {
         }
         updateAutoUpdateShares.timeout = setTimeout(async () => {
           await syncService.updateActiveShares(userId);
-
         }, 1000); // 1 second delay to batch updates
       }
     } catch (error) {}
@@ -2023,7 +2078,8 @@ const App = () => {
   const toggleActivity = id => {
     // Get fresh state directly from Zustand store, not from props
     const freshUsers = useAppStore.getState().users;
-    const currentState = freshUsers[currentUser]?.days?.[currentDay]?.activities || [];
+    const currentState =
+      freshUsers[currentUser]?.days?.[currentDay]?.activities || [];
     const activity = currentState.find(a => a.id === id);
     const wasCompleted = activity?.completed;
 
@@ -2034,12 +2090,16 @@ const App = () => {
       if (activity.id === id) {
         // Toggle operation
         if (__DEV__) {
-          console.log('[Activity]', !activity.completed ? 'COMPLETE' : 'UNCOMPLETE', {
-            activityId: id,
-            wasCompleted: !!activity.completed,
-            hadCompletedAt: !!activity.completedAt,
-            hadUncompletedAt: !!activity.uncompletedAt
-          });
+          console.log(
+            '[Activity]',
+            !activity.completed ? 'COMPLETE' : 'UNCOMPLETE',
+            {
+              activityId: id,
+              wasCompleted: !!activity.completed,
+              hadCompletedAt: !!activity.completedAt,
+              hadUncompletedAt: !!activity.uncompletedAt,
+            },
+          );
         }
         // console.log(`[TOGGLE] Activity ${id} - Previous: completed=${activity.completed}, completedAt=${activity.completedAt}, uncompletedAt=${activity.uncompletedAt}`);
 
@@ -2116,7 +2176,8 @@ const App = () => {
   const moveActivity = (index, direction) => {
     // Get fresh state directly from Zustand store, not from props
     const freshUsers = useAppStore.getState().users;
-    const currentState = freshUsers[currentUser]?.days?.[currentDay]?.activities || [];
+    const currentState =
+      freshUsers[currentUser]?.days?.[currentDay]?.activities || [];
     const newActivities = [...currentState];
     const newIndex = direction === 'up' ? index - 1 : index + 1;
 
@@ -2150,7 +2211,7 @@ const App = () => {
   const togglePin = async id => {
     const activity = activities.find(a => a.id === id);
     if (!activity) return;
-    
+
     // Get fresh state for consistency
     const freshUsers = useAppStore.getState().users;
 
@@ -2158,7 +2219,9 @@ const App = () => {
 
     // Update current day's activity
     const updatedActivities = activities.map(a =>
-      a.id === id ? { ...a, pinned: newPinnedState, modifiedAt: Date.now() } : a,
+      a.id === id
+        ? { ...a, pinned: newPinnedState, modifiedAt: Date.now() }
+        : a,
     );
     updateUserActivities(currentUser, currentDay, updatedActivities);
 
@@ -2224,7 +2287,8 @@ const App = () => {
 
     // Get fresh state directly from Zustand store, not from props
     const freshUsers = useAppStore.getState().users;
-    const currentState = freshUsers[currentUser]?.days?.[currentDay]?.activities || [];
+    const currentState =
+      freshUsers[currentUser]?.days?.[currentDay]?.activities || [];
 
     const newActivity = {
       id: `${deviceId}_${Date.now()}_${Math.random()
@@ -2299,7 +2363,8 @@ const App = () => {
   const deleteActivity = id => {
     // Get fresh state directly from Zustand store, not from props
     const freshUsers = useAppStore.getState().users;
-    const currentState = freshUsers[currentUser]?.days?.[currentDay]?.activities || [];
+    const currentState =
+      freshUsers[currentUser]?.days?.[currentDay]?.activities || [];
     const deletedActivity = currentState.find(a => a.id === id);
     const deletedIndex = currentState.findIndex(a => a.id === id);
 
@@ -2338,7 +2403,7 @@ const App = () => {
         label: 'Undo',
         onPress: () => {
           wasUndone = true;
-          
+
           // Restore the activity by removing the deleted flag
           const restoredActivities = activities.map(a =>
             a.id === id ? { ...a, deleted: false, deletedAt: undefined } : a,
@@ -2372,12 +2437,15 @@ const App = () => {
       if (!wasUndone) {
         // Hard delete - actually remove from array
         const currentUserData = users[currentUser];
-        const currentActivities = currentUserData?.days?.[currentDay]?.activities || [];
-        const hardDeletedActivities = currentActivities.filter(a => a.id !== id);
-        
+        const currentActivities =
+          currentUserData?.days?.[currentDay]?.activities || [];
+        const hardDeletedActivities = currentActivities.filter(
+          a => a.id !== id,
+        );
+
         // Update with hard deleted array
         updateUserActivities(currentUser, currentDay, hardDeletedActivities);
-        
+
         // Also update users state
         if (currentUser && users[currentUser]) {
           const updatedUsers = {
@@ -2420,7 +2488,7 @@ const App = () => {
 
   const handleReorder = () => {
     if (newPosition && !isNaN(newPosition)) {
-      const newIndex = parseInt(newPosition) - 1;
+      const newIndex = parseInt(newPosition, 10) - 1;
       const currentIndex = activities.findIndex(
         a => a.id === reorderingActivity.activity.id,
       );
@@ -2446,7 +2514,6 @@ const App = () => {
 
     // If library?.categories was null or empty array, set it to default
     if (!library?.categories || library?.categories.length === 0) {
-
       categories = EMPTY_CATEGORIES;
       updateLibraryCategories(EMPTY_CATEGORIES);
     }
@@ -2461,7 +2528,6 @@ const App = () => {
 
     // If My Templates doesn't exist, create it
     if (myTemplatesIndex === -1) {
-
       updatedCategories.push({
         id: 'my-templates',
         name: 'My Templates',
@@ -2504,7 +2570,6 @@ const App = () => {
       }, 10000);
 
       showToast({ message: 'Added to My Templates' });
-
     } else {
       showToast({ message: 'Could not find My Templates category' });
       if (__DEV__) {
@@ -2515,7 +2580,6 @@ const App = () => {
 
   // Handle adding user from AddUserModal
   const handleAddUser = (userName, userEmoji) => {
-
     const randomId = Math.random().toString(36).substr(2, 9);
     const userId = `user_${Date.now()}_${randomId}`;
     const newUser = {
@@ -2550,7 +2614,6 @@ const App = () => {
 
   // Handle updating user from AddUserModal
   const handleUpdateUser = (userId, userName, userEmoji) => {
-
     // Use the store's updateUser method to properly update the user
     updateUser(userId, {
       name: userName,
@@ -2613,7 +2676,6 @@ const App = () => {
 
   const handlePinSet = async pin => {
     try {
-
       // Use secure storage to save PIN
       const success = await setSecurePin(pin);
 
@@ -2628,7 +2690,6 @@ const App = () => {
         showToast({ message: 'Failed to set PIN', type: 'error' });
       }
     } catch (error) {
-
       showToast({ message: 'Failed to set PIN', type: 'error' });
     }
   };
@@ -2870,7 +2931,6 @@ The file will remain in your Downloads folder until you delete it.`,
 
   // Import data function for onboarding (doesn't hide onboarding)
   const importDataForOnboarding = async () => {
-
     console.log('[IMPORT] Current state:', {
       hasCompletedOnboarding,
       showOnboarding,
@@ -2888,7 +2948,8 @@ The file will remain in your Downloads folder until you delete it.`,
           input.type = 'file';
           input.accept = '.json';
           input.onchange = async e => {
-            const file = e.target.files[0];
+            const target = e.target;
+            const file = target.files?.[0];
             if (file) {
               const reader = new FileReader();
               reader.onload = e => resolve(e.target.result);
@@ -2916,7 +2977,6 @@ The file will remain in your Downloads folder until you delete it.`,
             // First check if the directory exists
             const exists = await RNFS.exists(path);
             if (!exists) {
-
               continue;
             }
 
@@ -2927,10 +2987,8 @@ The file will remain in your Downloads folder until you delete it.`,
                 f.name.toLowerCase().includes('stackmap'),
             );
             jsonFiles = jsonFiles.concat(foundFiles);
-
           } catch (e) {
             // Skip paths we can't access
-
           }
         }
 
@@ -3001,7 +3059,6 @@ To use an older backup, delete some recent exports first.`,
 
             buttons.push({
               text: 'Cancel',
-              style: 'cancel',
               onPress: () => resolve(null),
             });
 
@@ -3021,13 +3078,11 @@ To use an older backup, delete some recent exports first.`,
           });
 
           if (!selectedFile) {
-
             return false;
           }
 
           try {
             fileContent = await RNFS.readFile(selectedFile.path, 'utf8');
-
           } catch (readError) {
             if (__DEV__) {
               console.error(`[Import] Failed to read file:`, readError);
@@ -3044,7 +3099,6 @@ To use an older backup, delete some recent exports first.`,
 
           try {
             fileContent = await RNFS.readFile(mostRecentFile.path, 'utf8');
-
           } catch (readError) {
             if (__DEV__) {
               console.error(`[Import] Failed to read file:`, readError);
@@ -3082,7 +3136,6 @@ To use an older backup, delete some recent exports first.`,
       let importedData;
       try {
         importedData = JSON.parse(fileContent);
-
       } catch (parseError) {
         if (__DEV__) {
           console.error(`[Import] Failed to parse JSON:`, parseError);
@@ -3159,7 +3212,6 @@ To use an older backup, delete some recent exports first.`,
             // First check if the directory exists
             const exists = await RNFS.exists(path);
             if (!exists) {
-
               continue;
             }
 
@@ -3170,10 +3222,8 @@ To use an older backup, delete some recent exports first.`,
                 f.name.toLowerCase().includes('stackmap'),
             );
             jsonFiles = jsonFiles.concat(foundFiles);
-
           } catch (e) {
             // Skip paths we can't access
-
           }
         }
 
@@ -3251,7 +3301,7 @@ To use an older backup, delete some recent exports first.`,
             }
 
             // Always add cancel at the end
-            buttons.push({ text: 'Cancel', style: 'cancel' });
+            buttons.push({ text: 'Cancel' });
 
             // Ensure we don't exceed 4 buttons (Android limit)
             while (buttons.length > 4) {
@@ -3312,7 +3362,6 @@ This will replace all your current data.`,
 
     // iOS uses DocumentPicker
     try {
-
       const result = await DocumentPicker.pick({
         type:
           Platform.OS === 'web'
@@ -3325,7 +3374,6 @@ This will replace all your current data.`,
 
       // Web implementation includes content directly
       if (Platform.OS === 'web' && result[0]?.content) {
-
         fileContent = result[0].content;
       } else if (result[0]?.fileCopyUri) {
         // Native implementation needs to read the file
@@ -3344,9 +3392,7 @@ This will replace all your current data.`,
       // Parse and validate the data
       let importedData;
       try {
-
         importedData = JSON.parse(fileContent);
-
       } catch (e) {
         if (__DEV__) {
           console.error('JSON parse error:', e);
@@ -3365,10 +3411,8 @@ This will replace all your current data.`,
       // Confirm import
 
       const confirmImport = async () => {
-
         // Disable sync before importing to prevent conflicts
         if (await syncService.isEnabled()) {
-
           await syncService.disable();
         }
 
@@ -3447,7 +3491,6 @@ This will replace all your current data.`,
         DocumentPicker.isCancel(error)
       ) {
         // User cancelled the picker
-
       } else {
         if (__DEV__) {
           console.error('Import error details:', error.message, error.stack);
@@ -3460,7 +3503,6 @@ This will replace all your current data.`,
   // Handle import from DataModal
   const handleImportComplete = async importData => {
     try {
-
       console.log(
         'Import users:',
         importData.users ? Object.keys(importData.users) : 'none',
@@ -3468,12 +3510,10 @@ This will replace all your current data.`,
 
       // Disable sync before importing to prevent conflicts
       if (await syncService.isEnabled()) {
-
         await syncService.disable();
       }
 
       if (importData.mode === 'fresh') {
-
         // Fresh import - clear everything and replace with selected items only
 
         // Clear ALL existing data comprehensively
@@ -3491,7 +3531,7 @@ This will replace all your current data.`,
 
         // Use imported data directly (migration no longer needed)
         const migratedData = importData;
-        
+
         // Restore selected users
         if (migratedData.users && Object.keys(migratedData.users).length > 0) {
           console.log(
@@ -3521,7 +3561,6 @@ This will replace all your current data.`,
                   : DEFAULT_USER_ICON,
             };
             validatedUsers[userId] = validatedUser;
-
           });
 
           console.log(
@@ -3547,7 +3586,9 @@ This will replace all your current data.`,
           setCurrentUser(userIds[0]);
 
           const userData = validatedUsers[userIds[0]];
-          setCurrentDay(migratedData.currentDay || userData.currentDay || 'today');
+          setCurrentDay(
+            migratedData.currentDay || userData.currentDay || 'today',
+          );
 
           const userActivities =
             userData.days?.[userData.currentDay || 'today']?.activities || [];
@@ -3559,7 +3600,6 @@ This will replace all your current data.`,
             if (theme) setCurrentTheme(theme);
           }
         } else {
-
           // No users imported, create a default one
           const defaultUserId = Date.now().toString();
           const defaultUser = {
@@ -3603,7 +3643,6 @@ This will replace all your current data.`,
 
         // Merge users
         if (importData.users && Object.keys(importData.users).length > 0) {
-
           const mergedUsers = { ...users };
 
           // Add imported users, creating unique names if duplicates exist
@@ -3859,7 +3898,6 @@ Users: ${userNames} (${userCount} total)
             onPress: async () => {
               // Disable sync before importing to prevent conflicts
               if (await syncService.isEnabled()) {
-
                 await syncService.disable();
               }
 
@@ -3917,11 +3955,9 @@ Users: ${userNames} (${userCount} total)
   };
 
   const resetApp = async () => {
-
     // User confirmed reset, performing reset
     try {
       await performReset();
-
     } catch (error) {
       if (__DEV__) {
         console.error('[Reset] Reset failed:', error);
@@ -4112,7 +4148,8 @@ Users: ${userNames} (${userCount} total)
     const filteredActivities = activities.filter(a => !a.deleted);
 
     // Debug log to verify this function is being called
-    if (Platform.OS === 'ios') {}
+    if (Platform.OS === 'ios') {
+    }
 
     // Use the provided index if available, otherwise calculate from filtered array
     let actualIndex;
@@ -4128,11 +4165,11 @@ Users: ${userNames} (${userCount} total)
         if (__DEV__) {
           if (__DEV__) {
             console.warn(
-          'Had to calculate index for:',
-          item.text,
-          'Found:',
-          actualIndex,
-        );
+              'Had to calculate index for:',
+              item.text,
+              'Found:',
+              actualIndex,
+            );
           }
         }
       }
@@ -4190,12 +4227,9 @@ Users: ${userNames} (${userCount} total)
           {/* Card Content */}
           <View style={styles.cardContent}>
             {/* Emoji or Custom Image */}
-            {item.icon &&
-            item.icon.startsWith('image:') ? (
+            {item.icon && item.icon.startsWith('image:') ? (
               <Image
-                source={
-                  CUSTOM_IMAGE_SOURCES[item.icon.substring(6)]
-                }
+                source={CUSTOM_IMAGE_SOURCES[item.icon.substring(6)]}
                 style={styles.activityImage}
                 resizeMode="contain"
               />
@@ -4696,14 +4730,18 @@ Users: ${userNames} (${userCount} total)
                   // When reordering, the newActivities array IS the source of truth
                   // Don't try to merge with "fresh" data as that causes order to be lost
                   const freshUsers = useAppStore.getState().users;
-                  
+
                   // Filter out deleted items before saving
                   const activeActivities = newActivities.filter(
                     a => !a.deleted,
                   );
-                  
-                  updateUserActivities(currentUser, currentDay, activeActivities);
-                  
+
+                  updateUserActivities(
+                    currentUser,
+                    currentDay,
+                    activeActivities,
+                  );
+
                   // Update the users state to persist the change
                   if (currentUser && freshUsers[currentUser]) {
                     const updatedUsers = { ...freshUsers };
@@ -4724,9 +4762,7 @@ Users: ${userNames} (${userCount} total)
                   setEditingActivity(item);
                   setActivityTitle(item.text || item.name || item.title || '');
                   setActivityDescription(item.description || '');
-                  setActivityEmoji(
-                    item.icon || DEFAULT_ACTIVITY_EMOJI,
-                  );
+                  setActivityEmoji(item.icon || DEFAULT_ACTIVITY_EMOJI);
                   setActivityTime(item.time || '');
                   setShowActivityModal(true);
                 }}
@@ -4979,60 +5015,60 @@ Users: ${userNames} (${userCount} total)
           >
             <Animated.View
               style={{
-                transform: [{
-                  translateY: editModeToolbarTranslate.interpolate({
-                    inputRange: [0, 100],
-                    outputRange: [0, -100], // Negative to slide UP off screen when at top
-                  })
-                }],
+                transform: [
+                  {
+                    translateY: editModeToolbarTranslate.interpolate({
+                      inputRange: [0, 100],
+                      outputRange: [0, -100], // Negative to slide UP off screen when at top
+                    }),
+                  },
+                ],
               }}
               pointerEvents="auto" // Capture touches for the toolbar itself
             >
-            <EditModeToolbar
-              visible={isEditMode}
-              onExit={() => {
-                setIsEditMode(false);
-                // Switch to today when exiting edit mode
-                if (currentDay !== 'today') {
-                  setCurrentDay('today');
-                }
-              }}
-              onData={() => setShowDataModal(true)}
-              onUsers={() => {
-                setAccessModalActiveTab(0);
-                setShowAccessModal(true);
-              }}
-              onCustomize={() => setShowSettingsModal(true)}
-              onSupport={() => setShowSupportModal(true)}
-              toolbarOrder={toolbarOrder}
-              moreButtonPosition={moreButtonPosition}
-              onDayManagement={tab => {
-                setDayManagementActiveTab(tab === 'plan' ? 0 : 1);
-                // Use setTimeout to ensure state update happens first
-                setTimeout(() => {
-                  setShowDayManagementModal(true);
-                }, 0);
-              }}
-              onActivityManagement={tab => {
+              <EditModeToolbar
+                visible={isEditMode}
+                onExit={() => {
+                  setIsEditMode(false);
+                  // Switch to today when exiting edit mode
+                  if (currentDay !== 'today') {
+                    setCurrentDay('today');
+                  }
+                }}
+                onData={() => setShowDataModal(true)}
+                onUsers={() => {
+                  setAccessModalActiveTab(0);
+                  setShowAccessModal(true);
+                }}
+                onCustomize={() => setShowSettingsModal(true)}
+                onSupport={() => setShowSupportModal(true)}
+                toolbarOrder={toolbarOrder}
+                moreButtonPosition={moreButtonPosition}
+                onDayManagement={tab => {
+                  setDayManagementActiveTab(tab === 'plan' ? 0 : 1);
+                  // Use setTimeout to ensure state update happens first
+                  setTimeout(() => {
+                    setShowDayManagementModal(true);
+                  }, 0);
+                }}
+                onActivityManagement={tab => {
+                  const tabIndex = tab === 'add' ? 0 : 1;
 
-                const tabIndex = tab === 'add' ? 0 : 1;
-
-                setActivityManagementActiveTab(tabIndex);
-                // Use setTimeout to ensure state update happens first
-                setTimeout(() => {
-
-                  setShowActivityManagementModal(true);
-              }, 0);
-            }}
-            theme={theme}
-            position={'top'}
-            onAnimationComplete={() => {
-              if (!isEditMode) {
-                setShowEditToolbar(false);
-              }
-            }}
-            onMoreToggle={expanded => setEditToolbarMoreExpanded(expanded)}
-            />
+                  setActivityManagementActiveTab(tabIndex);
+                  // Use setTimeout to ensure state update happens first
+                  setTimeout(() => {
+                    setShowActivityManagementModal(true);
+                  }, 0);
+                }}
+                theme={theme}
+                position={'top'}
+                onAnimationComplete={() => {
+                  if (!isEditMode) {
+                    setShowEditToolbar(false);
+                  }
+                }}
+                onMoreToggle={expanded => setEditToolbarMoreExpanded(expanded)}
+              />
             </Animated.View>
           </View>
         )}
@@ -5100,60 +5136,60 @@ Users: ${userNames} (${userCount} total)
           >
             <Animated.View
               style={{
-                transform: [{
-                  translateY: editModeToolbarTranslate.interpolate({
-                    inputRange: [0, 100],
-                    outputRange: [0, 100],
-                  })
-                }],
+                transform: [
+                  {
+                    translateY: editModeToolbarTranslate.interpolate({
+                      inputRange: [0, 100],
+                      outputRange: [0, 100],
+                    }),
+                  },
+                ],
               }}
               pointerEvents="auto" // Capture touches for the toolbar itself
             >
-            <EditModeToolbar
-              visible={isEditMode}
-              onExit={() => {
-                setIsEditMode(false);
-                // Switch to today when exiting edit mode
-                if (currentDay !== 'today') {
-                  setCurrentDay('today');
-                }
-              }}
-              onData={() => setShowDataModal(true)}
-              onUsers={() => {
-                setAccessModalActiveTab(0);
-                setShowAccessModal(true);
-              }}
-              onCustomize={() => setShowSettingsModal(true)}
-              onSupport={() => setShowSupportModal(true)}
-              toolbarOrder={toolbarOrder}
-              moreButtonPosition={moreButtonPosition}
-              onDayManagement={tab => {
-                setDayManagementActiveTab(tab === 'plan' ? 0 : 1);
-                // Use setTimeout to ensure state update happens first
-                setTimeout(() => {
-                  setShowDayManagementModal(true);
-                }, 0);
-              }}
-              onActivityManagement={tab => {
+              <EditModeToolbar
+                visible={isEditMode}
+                onExit={() => {
+                  setIsEditMode(false);
+                  // Switch to today when exiting edit mode
+                  if (currentDay !== 'today') {
+                    setCurrentDay('today');
+                  }
+                }}
+                onData={() => setShowDataModal(true)}
+                onUsers={() => {
+                  setAccessModalActiveTab(0);
+                  setShowAccessModal(true);
+                }}
+                onCustomize={() => setShowSettingsModal(true)}
+                onSupport={() => setShowSupportModal(true)}
+                toolbarOrder={toolbarOrder}
+                moreButtonPosition={moreButtonPosition}
+                onDayManagement={tab => {
+                  setDayManagementActiveTab(tab === 'plan' ? 0 : 1);
+                  // Use setTimeout to ensure state update happens first
+                  setTimeout(() => {
+                    setShowDayManagementModal(true);
+                  }, 0);
+                }}
+                onActivityManagement={tab => {
+                  const tabIndex = tab === 'add' ? 0 : 1;
 
-                const tabIndex = tab === 'add' ? 0 : 1;
-
-                setActivityManagementActiveTab(tabIndex);
-                // Use setTimeout to ensure state update happens first
-                setTimeout(() => {
-
-                  setShowActivityManagementModal(true);
-              }, 0);
-            }}
-            theme={theme}
-            position={'bottom'}
-            onAnimationComplete={() => {
-              if (!isEditMode) {
-                setShowEditToolbar(false);
-              }
-            }}
-            onMoreToggle={expanded => setEditToolbarMoreExpanded(expanded)}
-            />
+                  setActivityManagementActiveTab(tabIndex);
+                  // Use setTimeout to ensure state update happens first
+                  setTimeout(() => {
+                    setShowActivityManagementModal(true);
+                  }, 0);
+                }}
+                theme={theme}
+                position={'bottom'}
+                onAnimationComplete={() => {
+                  if (!isEditMode) {
+                    setShowEditToolbar(false);
+                  }
+                }}
+                onMoreToggle={expanded => setEditToolbarMoreExpanded(expanded)}
+              />
             </Animated.View>
           </View>
         )}
@@ -5167,14 +5203,19 @@ Users: ${userNames} (${userCount} total)
           onLongPress={() => {
             setShowUserModal(true);
           }}
-          position={{ bottom: fabBottom, top: fabTop, left: 20, zIndex: 10000, elevation: 200 }}
+          position={{
+            bottom: fabBottom,
+            top: fabTop,
+            left: 20,
+            zIndex: 10000,
+            elevation: 200,
+          }}
           theme={theme}
         />
 
         <FAB
           icon={isEditMode ? 'edit-off' : 'edit'}
           onPress={() => {
-
             if (isEditMode) {
               setIsEditMode(false);
               // Switch to today when exiting edit mode
@@ -5194,7 +5235,13 @@ Users: ${userNames} (${userCount} total)
               }
             }
           }}
-          position={{ bottom: fabBottom, top: fabTop, right: 20, zIndex: 10000, elevation: 200 }}
+          position={{
+            bottom: fabBottom,
+            top: fabTop,
+            right: 20,
+            zIndex: 10000,
+            elevation: 200,
+          }}
           theme={isEditMode ? { primary: 'white' } : theme}
           style={isEditMode ? { backgroundColor: '#f56565' } : {}}
         />
@@ -5422,7 +5469,7 @@ Users: ${userNames} (${userCount} total)
         styles={styles}
         // onSyncDiagnostic prop removed - test component no longer needed
       />
-      
+
       {/* Sync Diagnostic Modal removed - test component no longer needed */}
 
       {/* Toast Notification */}
@@ -5502,7 +5549,9 @@ Users: ${userNames} (${userCount} total)
             ? handleOnboardingImportComplete
             : handleImportComplete
         }
-        onSyncStatusChange={enabled => useSyncStore.getState().setSyncEnabled(enabled)}
+        onSyncStatusChange={enabled =>
+          useSyncStore.getState().setSyncEnabled(enabled)
+        }
         onShowSupport={() => {
           setShowDataModal(false);
           setTimeout(() => setShowSupportModal(true), 300);
@@ -5698,8 +5747,6 @@ Users: ${userNames} (${userCount} total)
         }}
       />
 
-
-
       {/* Activity Management Modal */}
       <ActivityManagementModal
         visible={showActivityManagementModal}
@@ -5840,12 +5887,14 @@ Users: ${userNames} (${userCount} total)
 
   // Show share view if share token or share ID is present
   if (shareToken || shareId) {
-    return <ShareView 
-      shareToken={shareToken} 
-      shareId={shareId}
-      shareKey={shareKey}
-      theme={theme} 
-    />;
+    return (
+      <ShareView
+        shareToken={shareToken}
+        shareId={shareId}
+        shareKey={shareKey}
+        theme={theme}
+      />
+    );
   }
 
   // Show onboarding if needed
@@ -5918,7 +5967,9 @@ Users: ${userNames} (${userCount} total)
           hasSecurePin={hasPinProtection}
           showToast={showToast}
           onImportComplete={handleOnboardingImportComplete}
-          onSyncStatusChange={enabled => useSyncStore.getState().setSyncEnabled(enabled)}
+          onSyncStatusChange={enabled =>
+            useSyncStore.getState().setSyncEnabled(enabled)
+          }
           onShowSupport={() => {
             setShowDataModal(false);
             setTimeout(() => setShowSupportModal(true), 300);

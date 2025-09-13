@@ -50,7 +50,7 @@ const Dimensions = {
 
   set() {
     // Not used on web
-//     console.warn('Dimensions.set is not supported on web');
+    //     console.warn('Dimensions.set is not supported on web');
   },
 };
 

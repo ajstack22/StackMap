@@ -33,16 +33,17 @@ const PreferencesModal = ({
   getAndroidModalBottomHeight,
 }) => {
   const preferencesScrollRef = useRef(null);
-  
+
   // Safety check: ensure theme is valid
-  const safeTheme = theme && theme.primary && theme.dark && theme.light 
-    ? theme 
-    : THEMES.stackBlue;
+  const safeTheme =
+    theme && theme.primary && theme.dark && theme.light
+      ? theme
+      : THEMES.stackBlue;
 
   const handleThemeChange = color => {
     // Safety check: ensure the theme exists
     if (!THEMES[color]) {
-//       console.error(`Cannot set invalid theme: "${color}"`);
+      //       console.error(`Cannot set invalid theme: "${color}"`);
       return;
     }
     setCurrentTheme(color);
@@ -74,38 +75,42 @@ const PreferencesModal = ({
             ];
 
             // Only show first 20 themes (4x5 grid)
-            return reorderedThemes.slice(0, 20).map(color => {
-              // Safety check: ensure the theme exists before rendering
-              if (!color || !THEMES[color]) {
-//                 console.warn(`Theme "${color}" not found in THEMES`);
-                return null;
-              }
-              
-              // Validate currentTheme to prevent comparison issues
-              const isSelected = currentTheme && THEMES[currentTheme] 
-                ? currentTheme === color 
-                : false;
-              
-              return (
-                <View
-                  key={color}
-                  style={{ width: '20%', padding: 5, alignItems: 'center' }}
-                >
-                  <TouchableOpacity
-                    style={[
-                      styles.colorOption,
-                      { backgroundColor: THEMES[color].primary },
-                      isSelected && styles.colorSelected,
-                    ]}
-                    onPress={() => handleThemeChange(color)}
+            return reorderedThemes
+              .slice(0, 20)
+              .map(color => {
+                // Safety check: ensure the theme exists before rendering
+                if (!color || !THEMES[color]) {
+                  //                 console.warn(`Theme "${color}" not found in THEMES`);
+                  return null;
+                }
+
+                // Validate currentTheme to prevent comparison issues
+                const isSelected =
+                  currentTheme && THEMES[currentTheme]
+                    ? currentTheme === color
+                    : false;
+
+                return (
+                  <View
+                    key={color}
+                    style={{ width: '20%', padding: 5, alignItems: 'center' }}
                   >
-                    {isSelected && (
-                      <Icon name="check" size={20} color="white" />
-                    )}
-                  </TouchableOpacity>
-                </View>
-              );
-            }).filter(Boolean);
+                    <TouchableOpacity
+                      style={[
+                        styles.colorOption,
+                        { backgroundColor: THEMES[color].primary },
+                        isSelected && styles.colorSelected,
+                      ]}
+                      onPress={() => handleThemeChange(color)}
+                    >
+                      {isSelected && (
+                        <Icon name="check" size={20} color="white" />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                );
+              })
+              .filter(Boolean);
           })()}
         </View>
       </View>
@@ -150,7 +155,9 @@ const PreferencesModal = ({
           translucent={false}
         />
       )}
-      <View style={[styles.modalContainer, { backgroundColor: safeTheme.light }]}>
+      <View
+        style={[styles.modalContainer, { backgroundColor: safeTheme.light }]}
+      >
         {Platform.OS === 'android' && (
           <View
             style={{

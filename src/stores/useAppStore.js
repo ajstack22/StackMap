@@ -39,7 +39,7 @@ const useAppStore = create(
       syncId: useSyncStore.getState().syncId,
       lastSync: useSyncStore.getState().lastSync,
       syncError: useSyncStore.getState().syncError,
-      
+
       // Global timestamp for last-write-wins sync
       lastModified: Date.now(),
 
@@ -233,7 +233,7 @@ const useAppStore = create(
 
         // Log unhandled properties
         if (Object.keys(rest).length > 0) {
-//           console.warn('Unhandled state properties in setState:', rest);
+          //           console.warn('Unhandled state properties in setState:', rest);
         }
       },
 

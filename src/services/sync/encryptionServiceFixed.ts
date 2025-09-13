@@ -17,8 +17,11 @@ let encodeUTF8: (str: string) => Uint8Array;
 let decodeUTF8: (arr: Uint8Array) => string;
 
 // ALWAYS use manual implementation - tweetnacl-util is unreliable
-console.log('[EncryptionFixed] Using manual UTF-8 implementation for all platforms');
-if (true) {  // Always true, keeping structure for clarity
+console.log(
+  '[EncryptionFixed] Using manual UTF-8 implementation for all platforms',
+);
+if (true) {
+  // Always true, keeping structure for clarity
   // Manual UTF-8 encoding that works reliably on all platforms
   encodeUTF8 = (str: string) => {
     const bytes: number[] = [];
@@ -46,12 +49,12 @@ if (true) {  // Always true, keeping structure for clarity
     }
     return new Uint8Array(bytes);
   };
-  
+
   decodeUTF8 = (arr: Uint8Array) => {
     const bytes = Array.from(arr);
     let result = '';
     let i = 0;
-    
+
     while (i < bytes.length) {
       const byte1 = bytes[i++];
       if (byte1 < 0x80) {
@@ -63,7 +66,7 @@ if (true) {  // Always true, keeping structure for clarity
         const byte2 = bytes[i++];
         const byte3 = bytes[i++];
         result += String.fromCharCode(
-          ((byte1 & 0x0f) << 12) | ((byte2 & 0x3f) << 6) | (byte3 & 0x3f)
+          ((byte1 & 0x0f) << 12) | ((byte2 & 0x3f) << 6) | (byte3 & 0x3f),
         );
       } else if ((byte1 & 0xf8) === 0xf0) {
         const byte2 = bytes[i++];
@@ -131,7 +134,7 @@ class FixedEncryptionService {
     }
 
     const saltStr = encodeBase64(saltBytes);
-    
+
     // Check cache
     const memoryCacheKey = `${recoveryPhrase}_${saltStr}`;
     if (this.keyCache[memoryCacheKey]) {
@@ -140,7 +143,7 @@ class FixedEncryptionService {
     }
 
     console.log('[Encryption] Deriving key...');
-    
+
     // Simple key derivation
     const phraseBytes = encodeUTF8(recoveryPhrase);
     const combined = new Uint8Array(phraseBytes.length + saltBytes.length);
@@ -161,7 +164,7 @@ class FixedEncryptionService {
       key: derivedKey,
       salt: saltStr,
     };
-    
+
     this.keyCache[memoryCacheKey] = result;
     return result;
   }
@@ -221,17 +224,19 @@ class FixedEncryptionService {
     // Encode metadata
     const metadataStr = JSON.stringify(metadata);
     const metadataBytes = encodeUTF8(metadataStr);
-    
+
     // Create length prefix using manual byte packing (iOS-compatible)
     const length = metadataBytes.length;
     const lengthBytes = new Uint8Array(4);
-    lengthBytes[0] = (length >> 24) & 0xFF;
-    lengthBytes[1] = (length >> 16) & 0xFF;
-    lengthBytes[2] = (length >> 8) & 0xFF;
-    lengthBytes[3] = length & 0xFF;
+    lengthBytes[0] = (length >> 24) & 0xff;
+    lengthBytes[1] = (length >> 16) & 0xff;
+    lengthBytes[2] = (length >> 8) & 0xff;
+    lengthBytes[3] = length & 0xff;
 
     // Combine metadata and data
-    const combined = new Uint8Array(4 + metadataBytes.length + dataBytes.length);
+    const combined = new Uint8Array(
+      4 + metadataBytes.length + dataBytes.length,
+    );
     combined.set(lengthBytes, 0);
     combined.set(metadataBytes, 4);
     combined.set(dataBytes, 4 + metadataBytes.length);
@@ -258,16 +263,16 @@ class FixedEncryptionService {
 
     try {
       console.log('[EncryptionFixed] Starting decryption...');
-      
+
       // Validate input
       if (typeof encryptedData !== 'string') {
         throw new Error(`Expected string but got ${typeof encryptedData}`);
       }
-      
+
       if (!encryptedData) {
         throw new Error('Empty encrypted data');
       }
-      
+
       console.log('[EncryptionFixed] Input length:', encryptedData.length);
       const combined = decodeBase64(encryptedData);
       console.log('[EncryptionFixed] Decoded bytes:', combined.length);
@@ -285,19 +290,25 @@ class FixedEncryptionService {
       // Check for metadata (version 2+)
       if (decrypted.length > 4) {
         // Read metadata length using manual byte unpacking
-        const metadataLength = 
-          (decrypted[0] << 24) | 
-          (decrypted[1] << 16) | 
-          (decrypted[2] << 8) | 
+        const metadataLength =
+          (decrypted[0] << 24) |
+          (decrypted[1] << 16) |
+          (decrypted[2] << 8) |
           decrypted[3];
-        
+
         console.log('[EncryptionFixed] Metadata length:', metadataLength);
-        console.log('[EncryptionFixed] First 10 bytes:', Array.from(decrypted.slice(0, 10)));
-        
+        console.log(
+          '[EncryptionFixed] First 10 bytes:',
+          Array.from(decrypted.slice(0, 10)),
+        );
+
         if (metadataLength > 0 && metadataLength < decrypted.length - 4) {
           try {
             const metadataBytes = decrypted.slice(4, 4 + metadataLength);
-            console.log('[EncryptionFixed] Metadata bytes:', Array.from(metadataBytes.slice(0, 20)));
+            console.log(
+              '[EncryptionFixed] Metadata bytes:',
+              Array.from(metadataBytes.slice(0, 20)),
+            );
             const metadataStr = decodeUTF8(metadataBytes);
             console.log('[EncryptionFixed] Metadata string:', metadataStr);
             const metadata: EncryptionMetadata = JSON.parse(metadataStr);
@@ -317,7 +328,9 @@ class FixedEncryptionService {
             return JSON.parse(dataStr);
           } catch (metadataError) {
             // Try legacy format
-            console.log('[Decryption] Metadata parse failed, trying legacy format');
+            console.log(
+              '[Decryption] Metadata parse failed, trying legacy format',
+            );
           }
         }
       }
@@ -388,12 +401,12 @@ class FixedEncryptionService {
   async getDeviceId(): Promise<string> {
     try {
       let deviceId = await AsyncStorage.getItem('device_id');
-      
+
       if (deviceId && !/^[a-f0-9]{32}$/.test(deviceId)) {
         await AsyncStorage.removeItem('device_id');
         deviceId = null;
       }
-      
+
       if (!deviceId) {
         const randomBytes = nacl.randomBytes(16);
         deviceId = Array.from(randomBytes)

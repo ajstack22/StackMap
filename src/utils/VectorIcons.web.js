@@ -121,13 +121,15 @@ const Icon = ({ name, size = 24, color = '#000', style }) => {
         }
       `;
       document.head.appendChild(style);
-      
+
       // Fallback: Try Google Fonts (might be blocked by CSP)
       const link = document.createElement('link');
       link.href = 'https://fonts.googleapis.com/icon?family=Material+Icons';
       link.rel = 'stylesheet';
       link.onerror = () => {
-        console.warn('Failed to load Material Icons from Google Fonts. Using local fallback.');
+        console.warn(
+          'Failed to load Material Icons from Google Fonts. Using local fallback.',
+        );
       };
       document.head.appendChild(link);
     }
@@ -167,7 +169,7 @@ const Icon = ({ name, size = 24, color = '#000', style }) => {
   // CRITICAL: Must use Text from react-native-web, not span!
   // Using span causes React error 130 when used inside React Native components
   const Text = require('react-native').Text;
-  
+
   return <Text style={iconStyle}>{iconContent}</Text>;
 };
 
