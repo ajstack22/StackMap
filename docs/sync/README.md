@@ -26,16 +26,17 @@ Frontend (React Native/Web)
 └── debugSync.js - Debug utilities
 
 Backend (PHP/MySQL - Zero Knowledge)
-├── create_timestamp.php - Initialize sync group
-├── push_timestamp.php - Store encrypted blob with timestamps
-├── pull_timestamp.php - Retrieve encrypted blob since timestamp
-├── join_timestamp.php - Join existing sync group
-├── create_invite.php - Generate temporary invite codes
-├── validate_invite.php - Check invite code validity
-├── use_invite.php - Mark invite as used after join
-├── delete.php - Delete all sync data for a sync_id
-├── create_share.php - Create time-limited share links (V3)
-├── access_share.php - Access shared data (V3)
+├── API Endpoints (Auto-detect QUAL vs Production)
+│   ├── create_timestamp.php - Initialize sync group
+│   ├── push_timestamp.php - Store encrypted blob with timestamps
+│   ├── pull_timestamp.php - Retrieve encrypted blob since timestamp
+│   ├── join_timestamp.php - Join existing sync group
+│   ├── create_invite.php - Generate temporary invite codes
+│   ├── validate_invite.php - Check invite code validity
+│   ├── use_invite.php - Mark invite as used after join
+│   ├── delete.php - Delete all sync data for a sync_id
+│   ├── create_share.php - Create time-limited share links (V3)
+│   └── access_share.php - Access shared data (V3)
 └── MySQL Tables:
     ├── sync_groups - Main sync group registry
     ├── sync_records - Encrypted data blobs
@@ -77,6 +78,11 @@ Backend (PHP/MySQL - Zero Knowledge)
 ```javascript
 // Initialize sync with recovery phrase
 import minimalSyncService from './services/sync/minimalSyncService';
+
+// API URL is automatically determined based on environment:
+// - Mobile Debug/Dev: QUAL API (via __DEV__ flag)  
+// - Mobile Release: Production API
+// - Web: Based on URL path (/qual/ vs production)
 
 // Generate or use existing recovery phrase
 const recoveryPhrase = generateRecoveryPhrase(); // 32 hex chars

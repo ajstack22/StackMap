@@ -14,23 +14,23 @@ export const normalizeActivity = (activity) => {
   const normalized = { ...activity };
   
   // Normalize text field (prefer text > name > title)
-  if (!normalized.text) {
-    if (normalized.name) {
+  if (!normalized.text && normalized.text !== '') {
+    if (normalized.name !== undefined) {
       normalized.text = normalized.name;
       delete normalized.name;
-    } else if (normalized.title) {
+    } else if (normalized.title !== undefined) {
       normalized.text = normalized.title;
       delete normalized.title;
     }
   }
   
   // Normalize icon field (prefer icon > emoji)
-  if (!normalized.icon) {
-    if (normalized.emoji) {
+  if (!normalized.icon && normalized.icon !== '') {
+    if (normalized.emoji !== undefined) {
       normalized.icon = normalized.emoji;
       delete normalized.emoji;
     }
-  } else if (normalized.emoji) {
+  } else if (normalized.emoji !== undefined) {
     // Remove redundant emoji field if icon exists
     delete normalized.emoji;
   }
@@ -97,6 +97,7 @@ export const normalizeSyncData = (data) => {
   
   // Normalize users
   if (normalized.users && typeof normalized.users === 'object') {
+    normalized.users = { ...normalized.users };
     Object.keys(normalized.users).forEach(userId => {
       normalized.users[userId] = normalizeUser(normalized.users[userId]);
     });
@@ -150,6 +151,7 @@ export const needsNormalization = (data) => {
   if (data.users) {
     for (const userId in data.users) {
       const user = data.users[userId];
+      if (!user) continue; // Skip null/undefined users
       if (user.emoji || (user.name && typeof user.name === 'object')) {
         return true;
       }
@@ -158,6 +160,7 @@ export const needsNormalization = (data) => {
       if (user.days) {
         for (const dayKey in user.days) {
           const day = user.days[dayKey];
+          if (!day) continue; // Skip null/undefined days
           if (day.activities && Array.isArray(day.activities)) {
             for (const activity of day.activities) {
               if (activity.name || activity.title || activity.emoji) {

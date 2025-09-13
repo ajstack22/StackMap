@@ -1,10 +1,20 @@
 # StackMap API Reference - Quick Lookup
 
 ## Base URLs
-```
-Production: https://stackmap.app/api/sync/
-Qual/Stage: https://stackmap.app/qual/api/sync/
-```
+
+### Environment Detection
+- **Production**: `https://stackmap.app/api/sync/`
+- **QUAL/Staging**: `https://stackmap.app/qual/api/sync/`
+
+### Mobile Apps (iOS/Android)
+- **Debug/Dev builds**: Automatically use QUAL API (`__DEV__ === true`)
+- **Release builds**: Automatically use Production API (`__DEV__ === false`)
+- Detection via `__DEV__` global variable in React Native
+
+### Web
+- **Local development**: Uses webpack proxy to `/api/sync`
+- **QUAL deployment**: Detects `/qual/` in URL path
+- **Production**: Default to production API
 
 ## Sync Endpoints (Actual Implementation)
 
