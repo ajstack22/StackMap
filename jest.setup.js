@@ -1,3 +1,4 @@
+/* eslint-env jest */
 // Jest setup file for sync system tests
 
 // Enable fake timers for testing debouncing and intervals
