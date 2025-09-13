@@ -1245,7 +1245,7 @@ const App = () => {
 
                 // Also clean the URL to remove the sync parameter
                 if (Platform.OS === 'web' && window.history) {
-                  const url = new URL(window.location);
+                  const url = new URL(window.location.href);
                   url.searchParams.delete('sync');
                   window.history.replaceState({}, '', url.toString());
                   console.log(
@@ -2488,7 +2488,7 @@ const App = () => {
 
   const handleReorder = () => {
     if (newPosition && !isNaN(newPosition)) {
-      const newIndex = parseInt(newPosition, 10) - 1;
+      const newIndex = Number(newPosition) - 1;
       const currentIndex = activities.findIndex(
         a => a.id === reorderingActivity.activity.id,
       );
