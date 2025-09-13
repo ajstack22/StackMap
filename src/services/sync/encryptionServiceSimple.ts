@@ -1,7 +1,7 @@
 // Simplified encryption service for iOS debugging
 // Starting from absolute basics that work on web/Android
 
-import nacl from 'tweetnacl';
+const nacl = require('tweetnacl');
 import { Platform } from 'react-native';
 
 // Use minimal type casting for tweetnacl-util

@@ -794,9 +794,11 @@ const OnboardingUserCentered = ({
           hasUsers: !!verifyState.users,
           userCount: Object.keys(verifyState.users || {}).length,
           firstUserActivities:
-            verifyState.users?.[firstUserId]?.days?.today?.activities?.length ||
+            (firstUserId &&
+              verifyState.users?.[firstUserId]?.days?.today?.activities
+                ?.length) ||
             0,
-          firstUserName: verifyState.users?.[firstUserId]?.name,
+          firstUserName: firstUserId && verifyState.users?.[firstUserId]?.name,
         });
 
         // Wait longer for store to fully update before sync
