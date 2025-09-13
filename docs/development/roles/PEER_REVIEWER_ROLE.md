@@ -51,8 +51,15 @@ git checkout [developer-branch]
 
 # Verify environment
 npm ci
-npm run lint  # Must pass
-npm run typecheck  # Must pass
+
+# Run automated validation suite (MUST PASS)
+npm run lint  # Must have 0 errors
+npm run typecheck  # Critical errors = 0
+npm audit  # Must have 0 vulnerabilities
+
+# Check for basic issues
+grep -r "console\.log" src/ --include="*.js" --include="*.ts" | wc -l  # Warn if > 100
+grep -r "TODO\|FIXME\|XXX\|HACK" src/ | wc -l  # Warn if > 10
 
 # Read the story requirements
 cat docs/development/backlog/S-XXX-*.md
@@ -176,6 +183,7 @@ const text = activity.text || activity.name || activity.title;
 # Web bundle size
 ls -lh web/build/static/js/*.js
 # Should not increase > 1%
+# FAIL if > 5MB total
 
 # Load time
 # Use Lighthouse
@@ -188,9 +196,25 @@ ls -lh web/build/static/js/*.js
 # Memory usage
 # Use Chrome DevTools Memory profiler
 # Should not leak memory
+
+# TypeScript check
+npx tsc --noEmit 2>&1 | grep -E "(Cannot find name|is not a function|does not exist on type.*services)"
+# FAIL if critical errors found
+
+# Prettier check  
+npx prettier --check "src/**/*.{js,ts,tsx}" "App.js"
+# WARN if files need formatting
 ```
 
 ## Review Checklist
+
+### Automated Validation (MUST PASS)
+- [ ] `npm audit` - 0 vulnerabilities
+- [ ] `npm run lint` - 0 errors (warnings OK)
+- [ ] `npm run typecheck` - No critical errors
+- [ ] Console statements < 100
+- [ ] TODO/FIXME comments < 10
+- [ ] Bundle size < 5MB (web only)
 
 ### Requirement Validation
 - [ ] EVERY requirement has been tested
@@ -208,14 +232,15 @@ ls -lh web/build/static/js/*.js
 - [ ] Real devices if available
 
 ### Code Quality
-- [ ] No console.log/warn/info statements
+- [ ] No NEW console.log statements added
 - [ ] Follows existing patterns
 - [ ] No commented-out code
 - [ ] Proper error handling
 - [ ] No obvious security issues
+- [ ] Prettier formatting applied
 
 ### Performance
-- [ ] Bundle size acceptable
+- [ ] Bundle size acceptable (< 5MB)
 - [ ] Load time maintained
 - [ ] No memory leaks
 - [ ] Smooth scrolling (60 FPS)
@@ -329,10 +354,15 @@ Ready for deployment.
 
 ### Essential Commands
 ```bash
-# Code quality
-npm run lint
-npm run typecheck
-grep -r "console\." src/  # Find console statements
+# MANDATORY VALIDATION SUITE (Run First!)
+npm audit  # MUST show 0 vulnerabilities
+npm run lint 2>&1 | grep -E "^\s+[0-9]+:[0-9]+\s+error\s"  # MUST show no errors
+npx tsc --noEmit 2>&1 | grep -E "(Cannot find name|is not a function)"  # MUST be empty
+
+# Code quality checks
+grep -r "console\." src/ --include="*.js" --include="*.ts" | wc -l  # Should be < 100
+grep -r "TODO\|FIXME\|XXX\|HACK" src/ | wc -l  # Should be < 10
+npx prettier --check "src/**/*.{js,ts,tsx}" "App.js"  # Should pass
 
 # Performance
 npm run build:web && ls -lh web/build/static/js/
