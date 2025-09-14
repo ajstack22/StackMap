@@ -15,7 +15,7 @@
 ./scripts/qual_deploy.sh --android --ios  # Android + iOS only to qual
 ./scripts/qual_deploy.sh --web           # Web to qual staging
 ./scripts/qual_deploy.sh --ios-device    # iOS physical device
-./scripts/qual_deploy.sh --skip-tests   # Skip tests for emergency deploy
+# Note: --skip-tests has been REMOVED - tests are mandatory
 
 # Production options
 ./scripts/prod_deploy.sh web      # Deploy web only
@@ -78,6 +78,22 @@ cd android && ./gradlew bundleRelease
 **Manual SSH Access:**
 ```bash
 ssh stackmap-cpanel  # Requires SSH key setup
+```
+
+## 🧪 Automated Testing Requirements (Sep 2025)
+**IMPORTANT:** All deployments now enforce mandatory Jest testing. Tests cannot be skipped.
+
+### Testing Pipeline
+1. **Release Notes** - Prompted for uncommitted changes
+2. **Jest Tests** - ALL tests must pass (no exceptions)
+3. **Coverage Check** - Minimum 50% coverage required
+4. **Deployment** - Only proceeds if tests pass
+
+### Test Commands
+```bash
+npm test           # Run all tests (automatic in deployment)
+npm test:watch     # Development mode
+npm test:coverage  # Generate coverage report
 ```
 
 ## 🔄 Version Management

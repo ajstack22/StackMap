@@ -39,18 +39,43 @@ StackMap follows a "test what actually breaks" philosophy:
 
 ## Automated Testing
 
+### Jest Testing Infrastructure (Added Sep 2025)
+StackMap now includes comprehensive Jest and React Testing Library infrastructure for automated component and integration testing.
+
 ### Running Tests
 ```bash
-# All tests
+# All tests (MANDATORY in deployment pipeline)
 npm test
 
-# Specific test suites
-npm test -- --testNamePattern="sync"
-npm test -- --testNamePattern="import"
+# Watch mode for development
+npm test:watch
 
-# With coverage
-npm test -- --coverage
+# Generate coverage report
+npm test:coverage
+
+# Run specific test files
+npm test -- --testPathPattern=FAB.test.js
+
+# Run tests for changed files (pre-commit)
+npm test:pre-commit
 ```
+
+### Test Structure
+```
+src/
+├── components/
+│   └── FAB/
+│       └── __tests__/
+│           └── FAB.test.js    # Component tests
+└── stores/
+    └── __tests__/
+        └── integration.test.js # Store integration tests
+```
+
+### Test Coverage Requirements
+- **Minimum**: 50% coverage for all metrics
+- **Target**: 80% for critical components
+- **Enforced**: Tests must pass for deployment
 
 ### Test Scripts
 ```bash
@@ -99,15 +124,23 @@ npm test -- --coverage
 
 ## Deployment Testing
 
-All deployments automatically run:
+All deployments **MUST** pass automated tests:
 ```bash
-./scripts/deploy-all.sh  # Includes automated tests
+./scripts/qual_deploy.sh   # Runs Jest tests automatically
+./scripts/prod_deploy.sh   # Runs Jest tests automatically
 ```
 
-To skip tests in emergency:
-```bash
-./scripts/deploy-all.sh --skip-tests
-```
+**IMPORTANT**: Tests cannot be skipped. The `--skip-tests` flag has been removed to ensure quality.
+
+### Deployment Pipeline Order
+1. **Release Notes Prompt** - Required for uncommitted changes
+2. **Version Increment** - Automatic versioning
+3. **Security Audit** - npm audit check
+4. **Lint Check** - No errors allowed (warnings OK)
+5. **TypeScript Check** - Critical errors block deployment
+6. **Jest Tests** - ALL tests must pass (no exceptions)
+7. **Manual Checks** - Structure validation
+8. **Build & Deploy** - Only if all checks pass
 
 ## Performance Testing
 
