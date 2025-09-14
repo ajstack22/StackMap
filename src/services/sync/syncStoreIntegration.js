@@ -904,23 +904,8 @@ class SyncStoreIntegration {
       combined.set(encrypted, nonce.length);
       const encryptedData = encodeBase64(combined);
 
-      // Get API URL based on environment
-      const getShareApiUrl = () => {
-        // Mobile builds use production API (release builds will hit production)
-        if (Platform.OS === 'ios' || Platform.OS === 'android') {
-          // Note: Debug/release detection happens in minimalSyncService.js
-          return 'https://stackmap.app/api/sync';
-        }
-        if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
-          const pathname = window.location.pathname;
-          if (pathname.includes('/qual/')) {
-            return 'https://stackmap.app/qual/api/sync';
-          }
-        }
-        return 'https://stackmap.app/api/sync';
-      };
-
-      const SHARE_API_URL = getShareApiUrl();
+      // Use the same API URL as minimalSync for consistency
+      const SHARE_API_URL = minimalSync.API_BASE || 'https://stackmap.app/api/sync';
       const requestBody = {
         sync_id: minimalSync.syncId,
         user_id: userId,
@@ -1189,23 +1174,8 @@ class SyncStoreIntegration {
    */
   async deleteShare(shareId) {
     try {
-      // Get API URL based on environment
-      const getShareApiUrl = () => {
-        // Mobile builds use production API (release builds will hit production)
-        if (Platform.OS === 'ios' || Platform.OS === 'android') {
-          // Note: Debug/release detection happens in minimalSyncService.js
-          return 'https://stackmap.app/api/sync';
-        }
-        if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
-          const pathname = window.location.pathname;
-          if (pathname.includes('/qual/')) {
-            return 'https://stackmap.app/qual/api/sync';
-          }
-        }
-        return 'https://stackmap.app/api/sync';
-      };
-
-      const SHARE_API_URL = getShareApiUrl();
+      // Use the same API URL as minimalSync for consistency
+      const SHARE_API_URL = minimalSync.API_BASE || 'https://stackmap.app/api/sync';
       const deleteUrl = `${SHARE_API_URL}/delete_share.php`;
       
       const response = await fetch(deleteUrl, {
@@ -1250,21 +1220,8 @@ class SyncStoreIntegration {
       if (!syncId) {
         // Fall through to local storage if no sync ID
       } else {
-        // Get API URL based on environment
-        const getShareApiUrl = () => {
-          if (Platform.OS === 'ios' || Platform.OS === 'android') {
-            return 'https://stackmap.app/api/sync';
-          }
-          if (Platform.OS === 'web' && typeof window !== 'undefined') {
-            const pathname = window.location.pathname;
-            if (pathname.includes('/qual/')) {
-              return 'https://stackmap.app/qual/api/sync';
-            }
-          }
-          return 'https://stackmap.app/api/sync';
-        };
-        
-        const SHARE_API_URL = getShareApiUrl();
+        // Use the same API URL as minimalSync for consistency
+        const SHARE_API_URL = minimalSync.API_BASE || 'https://stackmap.app/api/sync';
         const listUrl = `${SHARE_API_URL}/list_shares.php?sync_id=${syncId}`;
         
         try {
