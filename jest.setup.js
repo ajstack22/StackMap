@@ -1,3 +1,4 @@
+/* eslint-env jest */
 // Jest setup file for React Native Web testing
 import '@testing-library/jest-native/extend-expect';
 
