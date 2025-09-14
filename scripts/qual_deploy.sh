@@ -26,7 +26,6 @@ DEPLOY_IOS_DEVICE=false
 DEPLOY_WEB=false
 DEPLOY_PROD=false
 DEPLOY_ALL=false
-SKIP_TESTS=false
 
 if [ $# -eq 0 ]; then
     DEPLOY_ALL=true
@@ -52,12 +51,9 @@ for arg in "$@"; do
         --all)
             DEPLOY_ALL=true
             ;;
-        --skip-tests)
-            SKIP_TESTS=true
-            ;;
         *)
             echo "Unknown option: $arg"
-            echo "Usage: $0 [--android] [--ios] [--ios-device] [--web] [--prod] [--all] [--skip-tests]"
+            echo "Usage: $0 [--android] [--ios] [--ios-device] [--web] [--prod] [--all]"
             exit 1
             ;;
     esac
@@ -70,45 +66,43 @@ if [ "$DEPLOY_ALL" = true ]; then
     DEPLOY_WEB=true
 fi
 
-# Check for uncommitted changes and auto-commit them
+# Check for uncommitted changes and get release notes
 if [[ -n $(git status --porcelain) ]]; then
-    echo "📝 Found uncommitted changes. Auto-committing before deployment..."
-    
-    # Check if PENDING_CHANGES.md exists and use it for commit message
-    if [ -f "PENDING_CHANGES.md" ]; then
-        # Extract the title (first line starting with "## Title:")
-        COMMIT_TITLE=$(grep "^## Title:" PENDING_CHANGES.md | sed 's/## Title: //')
-        
-        # Extract the full content for the commit body
-        COMMIT_BODY=$(cat PENDING_CHANGES.md)
-        
-        if [ -n "$COMMIT_TITLE" ]; then
-            echo "📋 Using descriptive commit message from PENDING_CHANGES.md"
-            git add -A
-            # Use the title as the commit message and the full content as the body
-            git commit -m "$COMMIT_TITLE" -m "$COMMIT_BODY"
-            
-            # Clear the pending changes file after successful commit
-            echo "# Pending Changes" > PENDING_CHANGES.md
-            echo "" >> PENDING_CHANGES.md
-            echo "## Title: " >> PENDING_CHANGES.md
-            echo "" >> PENDING_CHANGES.md
-            echo "### Changes Made:" >> PENDING_CHANGES.md
-            echo "" >> PENDING_CHANGES.md
-            git add PENDING_CHANGES.md
-            echo "✅ Changes committed with descriptive message"
-        else
-            # Fallback to timestamp if no title found
-            git add -A
-            git commit -m "Auto-commit: Pre-deployment changes $(date +%Y-%m-%d_%H:%M:%S)"
-            echo "✅ Changes committed successfully"
-        fi
-    else
-        # Fallback to timestamp if no PENDING_CHANGES.md
-        git add -A
-        git commit -m "Auto-commit: Pre-deployment changes $(date +%Y-%m-%d_%H:%M:%S)"
-        echo "✅ Changes committed successfully"
-    fi
+    echo "📝 Found uncommitted changes."
+    echo ""
+
+    # Prompt for release notes
+    echo "Please enter release notes for this deployment:"
+    echo "(Brief description of what changed - press Enter when done)"
+    read -r RELEASE_NOTES
+
+    # If no release notes provided, prompt again
+    while [ -z "$RELEASE_NOTES" ]; do
+        echo ""
+        echo "⚠️  Release notes are required for deployment!"
+        echo "Please describe what changed in this release:"
+        read -r RELEASE_NOTES
+    done
+
+    echo ""
+    echo "📝 Committing changes with release notes..."
+
+    # Add all changes
+    git add -A
+
+    # Commit with the release notes
+    git commit -m "$RELEASE_NOTES"
+
+    echo "✅ Changes committed: $RELEASE_NOTES"
+
+    # Update PENDING_CHANGES.md with the release notes for version bump commit
+    echo "## Title: $RELEASE_NOTES" > PENDING_CHANGES.md
+    echo "" >> PENDING_CHANGES.md
+    echo "### Changes Made:" >> PENDING_CHANGES.md
+    echo "$RELEASE_NOTES" >> PENDING_CHANGES.md
+    echo "" >> PENDING_CHANGES.md
+    echo "### Deployment Date: $(date +%Y-%m-%d_%H:%M:%S)" >> PENDING_CHANGES.md
+    git add PENDING_CHANGES.md
 fi
 
 # Source and run version increment once
@@ -275,70 +269,89 @@ else
     echo "⚠️  Method check skipped (check script not found)"
 fi
 
-# Run essential tests (unless skipped)
-if [ "$SKIP_TESTS" = false ]; then
+# Run Jest tests (MANDATORY - NO SKIPPING)
+echo ""
+echo "🧪 Running automated tests..."
+
+# Run Jest test suite
+echo "- Running Jest tests..."
+npm test 2>&1 | tee /tmp/jest-output.txt
+JEST_EXIT_CODE=${PIPESTATUS[0]}
+
+if [ "$JEST_EXIT_CODE" -ne 0 ]; then
     echo ""
-    echo "🧪 Running essential tests..."
-    
-    # Test 1: Check if App.js exists and has basic structure
-    echo "- Testing app structure..."
-    if [ ! -f "App.js" ]; then
-        echo "❌ App.js not found!"
-        exit 1
-    fi
-    if ! grep -q "import React" App.js; then
-        echo "❌ App.js missing React import"
-        exit 1
-    fi
-    if ! grep -q "export default" App.js; then
-        echo "❌ App.js missing default export"
-        exit 1
-    fi
-    echo "✅ App.js structure OK"
-    
-    # Test 2: Check critical services exist
-    echo "- Checking critical services..."
-    # Check for modern sync system files
-    if [ ! -f "src/services/sync/syncStoreIntegration.js" ] || [ ! -f "src/services/sync/minimalSyncService.js" ]; then
-        echo "❌ Missing critical sync service files"
-        exit 1
-    fi
-    if [ ! -f "src/stores/useAppStore.js" ]; then
-        echo "❌ Missing critical service: useAppStore.js"
-        exit 1
-    fi
-    echo "✅ Critical services present"
-    
-    # Test 3: Check for common issues (just warnings)
-    echo "- Checking for common issues..."
-    CONSOLE_COUNT=$(grep -r "console\.log" src/ --include="*.js" --include="*.ts" 2>/dev/null | wc -l | tr -d ' ')
-    if [ "$CONSOLE_COUNT" -gt "100" ]; then
-        echo "⚠️  Warning: $CONSOLE_COUNT console.log statements found"
-    fi
-    
-    # Test 4: Data structure validation
-    echo "- Validating data structure version..."
-    if grep -q "version: 3" App.js 2>/dev/null; then
-        echo "❌ Found version 3 references - must use version 4!"
-        exit 1
-    fi
-    if grep -q "version: 4" App.js 2>/dev/null; then
-        echo "✅ Data structure using version 4"
-    fi
-    
-    # Test 5: Check for duplicate package.json entries (common after merges)
-    echo "- Checking for duplicate dependencies..."
-    DUPLICATE_COUNT=$(cat package.json | grep -o '"[^"]*":' | sort | uniq -d | wc -l | tr -d ' ')
-    if [ "$DUPLICATE_COUNT" -gt "0" ]; then
-        echo "⚠️  Warning: Found duplicate entries in package.json"
-        echo "Run 'npm dedupe' to clean up"
-    fi
-    
-    echo "✅ All essential tests passed!"
+    echo "❌ Jest tests failed!"
+    echo "Please fix failing tests before deploying."
+    echo "Run 'npm test' to see the issues again."
+    exit 1
 else
-    echo ""
-    echo "⚠️  Tests skipped (--skip-tests flag used)"
+    # Extract test summary
+    TEST_SUMMARY=$(grep -E "Tests:.*passed" /tmp/jest-output.txt | tail -1)
+    if [ -n "$TEST_SUMMARY" ]; then
+        echo "✅ Jest tests passed! ($TEST_SUMMARY)"
+    else
+        echo "✅ Jest tests passed!"
+    fi
 fi
+
+echo ""
+echo "🧪 Running essential manual checks..."
+
+# Test 1: Check if App.js exists and has basic structure
+echo "- Testing app structure..."
+if [ ! -f "App.js" ]; then
+    echo "❌ App.js not found!"
+    exit 1
+fi
+if ! grep -q "import React" App.js; then
+    echo "❌ App.js missing React import"
+    exit 1
+fi
+if ! grep -q "export default" App.js; then
+    echo "❌ App.js missing default export"
+    exit 1
+fi
+echo "✅ App.js structure OK"
+
+# Test 2: Check critical services exist
+echo "- Checking critical services..."
+# Check for modern sync system files
+if [ ! -f "src/services/sync/syncStoreIntegration.js" ] || [ ! -f "src/services/sync/minimalSyncService.js" ]; then
+    echo "❌ Missing critical sync service files"
+    exit 1
+fi
+if [ ! -f "src/stores/useAppStore.js" ]; then
+    echo "❌ Missing critical service: useAppStore.js"
+    exit 1
+fi
+echo "✅ Critical services present"
+
+# Test 3: Check for common issues (just warnings)
+echo "- Checking for common issues..."
+CONSOLE_COUNT=$(grep -r "console\.log" src/ --include="*.js" --include="*.ts" 2>/dev/null | wc -l | tr -d ' ')
+if [ "$CONSOLE_COUNT" -gt "100" ]; then
+    echo "⚠️  Warning: $CONSOLE_COUNT console.log statements found"
+fi
+
+# Test 4: Data structure validation
+echo "- Validating data structure version..."
+if grep -q "version: 3" App.js 2>/dev/null; then
+    echo "❌ Found version 3 references - must use version 4!"
+    exit 1
+fi
+if grep -q "version: 4" App.js 2>/dev/null; then
+    echo "✅ Data structure using version 4"
+fi
+
+# Test 5: Check for duplicate package.json entries (common after merges)
+echo "- Checking for duplicate dependencies..."
+DUPLICATE_COUNT=$(cat package.json | grep -o '"[^"]*":' | sort | uniq -d | wc -l | tr -d ' ')
+if [ "$DUPLICATE_COUNT" -gt "0" ]; then
+    echo "⚠️  Warning: Found duplicate entries in package.json"
+    echo "Run 'npm dedupe' to clean up"
+fi
+
+echo "✅ All tests passed!"
 echo ""
 
 # Track deployment status
