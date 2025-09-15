@@ -1592,7 +1592,7 @@ const EmojiPicker = ({
       )}
 
       {/* Detected Emoji Result */}
-      {detectedEmoji && searchQuery && (
+      {!!detectedEmoji && !!searchQuery && (
         <View style={styles.detectedEmojiContainer}>
           <Text style={styles.detectedEmojiLabel}>Tap to use your emoji:</Text>
           <TouchableOpacity

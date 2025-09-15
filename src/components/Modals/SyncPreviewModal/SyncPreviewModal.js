@@ -243,7 +243,7 @@ const SyncPreviewModal = ({
             </View>
 
             {/* Error Message */}
-            {error && (
+            {!!error && (
               <View style={styles.errorContainer}>
                 <Icon name="error-outline" size={20} color="#ef4444" />
                 <Text style={styles.errorText}>{error}</Text>
@@ -251,7 +251,7 @@ const SyncPreviewModal = ({
             )}
 
             {/* Data Preview */}
-            {syncData && connectionStatus === 'connected' && (
+            {!!syncData && connectionStatus === 'connected' && (
               <View style={styles.previewSection}>
                 <Text
                   style={[
@@ -377,7 +377,7 @@ const SyncPreviewModal = ({
             )}
 
             {/* Loading State */}
-            {loading && !syncData && (
+            {!!loading && !syncData && (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator
                   size="large"
@@ -394,7 +394,7 @@ const SyncPreviewModal = ({
               </View>
             )}
             {/* Action Panel */}
-            {connectionStatus === 'connected' && syncData && (
+            {connectionStatus === 'connected' && !!syncData && (
               <View style={styles.actionPanel}>
                 <TouchableOpacity
                   style={[

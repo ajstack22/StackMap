@@ -776,7 +776,7 @@ const OnboardingUserCentered = ({
               </Text>
             </TouchableOpacity>
             
-            {Platform.OS === 'web' && onShowSupport && (
+            {Platform.OS === 'web' && !!onShowSupport && (
               <>
                 <Text style={styles.footerSeparator}>•</Text>
                 <TouchableOpacity
@@ -1092,7 +1092,7 @@ const OnboardingUserCentered = ({
           />
         )}
         
-        {pinError && (
+        {!!pinError && (
           <Text style={styles.errorText}>{pinError}</Text>
         )}
       </View>
@@ -1221,13 +1221,13 @@ const OnboardingUserCentered = ({
           </TouchableOpacity>
         </View>
         
-        {generatedInviteCode && (
+        {!!generatedInviteCode && (
           <Text style={styles.syncCodeHint}>
             Invite code expires in 24 hours • Up to 5 uses
           </Text>
         )}
         
-        {showCopiedToast && (
+        {!!showCopiedToast && (
           <View style={styles.toast}>
             <Text style={styles.toastText}>Copied to clipboard!</Text>
           </View>
@@ -1261,7 +1261,7 @@ const OnboardingUserCentered = ({
           </TouchableOpacity>
         </View>
         
-        {syncError && (
+        {!!syncError && (
           <Text style={styles.errorText}>{syncError}</Text>
         )}
       </View>
@@ -1380,20 +1380,20 @@ const OnboardingUserCentered = ({
         </View>
       )}
       
-      {syncPreviewData && (
+      {!!syncPreviewData && (
         <View style={styles.previewContainer}>
           <Text style={styles.previewTitle}>Found StackMap with:</Text>
           <Text style={styles.previewText}>
             • {syncPreviewData.userCount} user{syncPreviewData.userCount !== 1 ? 's' : ''}
           </Text>
-          {syncPreviewData.hasLibrary && (
+          {!!syncPreviewData.hasLibrary && (
             <Text style={styles.previewText}>• Activity library</Text>
           )}
         </View>
       )}
       
       {/* Only show buttons when NOT auto-processing or when there's an error */}
-      {(!isAutoProcessing || syncError) && (
+      {(!isAutoProcessing || !!syncError) && (
         <View style={styles.optionsContainer}>
           {!syncPreviewData ? (
             <TouchableOpacity
@@ -1434,7 +1434,7 @@ const OnboardingUserCentered = ({
         </View>
       )}
       
-      {syncError && (
+      {!!syncError && (
         <Text style={styles.errorText}>{syncError}</Text>
       )}
     </View>
@@ -1477,10 +1477,10 @@ const OnboardingUserCentered = ({
         <Text style={styles.summaryText}>
           • {users.length} user{users.length !== 1 ? 's' : ''} created
         </Text>
-        {userJourney.pinEnabled && (
+        {!!userJourney.pinEnabled && (
           <Text style={styles.summaryText}>• PIN protection enabled</Text>
         )}
-        {userJourney.syncEnabled && (
+        {!!userJourney.syncEnabled && (
           <Text style={styles.summaryText}>• Sync enabled</Text>
         )}
       </View>

@@ -1381,7 +1381,7 @@ The file will remain in your Downloads folder until you delete it.`,
             <View style={styles.importSelectionsContainer}>
               <Text style={styles.sectionTitle}>Select Items to Import</Text>
 
-              {importData.users && Object.keys(importData.users).length > 0 && (
+              {!!importData.users && Object.keys(importData.users).length > 0 && (
                 <View style={styles.importCategory}>
                   <Text style={styles.importCategoryTitle}>Users</Text>
                   {Object.entries(importData.users).map(([userId, user]) => (
@@ -1492,7 +1492,7 @@ The file will remain in your Downloads folder until you delete it.`,
                 )}
             </View>
 
-            {importData && (
+            {!!importData && (
               <View style={styles.inPanelButtonContainer}>
                 <ModalButton
                   theme={theme}
@@ -1795,14 +1795,14 @@ The file will remain in your Downloads folder until you delete it.`,
               </View>
             </View>
 
-            {syncError && (
+            {!!syncError && (
               <View style={styles.errorContainer}>
                 <Icon name="error-outline" size={16} color="#d32f2f" />
                 <Text style={styles.errorText}>{syncError}</Text>
               </View>
             )}
 
-            {showRecoveryInput && (
+            {!!showRecoveryInput && (
               <>
                 <View style={styles.recoveryInputContainer}>
                   <Text style={styles.inputLabel}>Enter your sync key:</Text>
@@ -2233,7 +2233,7 @@ The file will remain in your Downloads folder until you delete it.`,
             </View>
           </View>
 
-          {selectedShareUser && (
+          {!!selectedShareUser && (
             <>
               {/* Share Settings */}
               <View style={styles.shareSection}>
@@ -2469,7 +2469,7 @@ The file will remain in your Downloads folder until you delete it.`,
                       style={styles.activeShareCard}
                     >
                       <View style={styles.activeShareInfo}>
-                        {share.recipientName && (
+                        {!!share.recipientName && (
                           <Text style={styles.activeShareRecipient}>
                             To: {share.recipientName}
                           </Text>
@@ -2480,7 +2480,7 @@ The file will remain in your Downloads folder until you delete it.`,
                             ? new Date(share.expiresAt).toLocaleDateString()
                             : 'N/A'}
                         </Text>
-                        {share.shareNote && (
+                        {!!share.shareNote && (
                           <Text style={styles.activeShareInfo} numberOfLines={1}>
                             {share.shareNote}
                           </Text>
