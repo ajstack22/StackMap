@@ -72,7 +72,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@babel/plugin-transform-flow-strip-types": "^7.27.1",
-    "@babel/preset-env": "^7.25.3",
+    "@babel/preset-env": "^7.28.3",
     "@babel/preset-react": "^7.27.1",
     "@babel/runtime": "^7.25.0",
     "@react-native-community/cli": "19.0.0",
