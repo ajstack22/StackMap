@@ -18,7 +18,8 @@ const PinModal = ({
   // No need to clear PIN on unmount - handled by parent
   const handleNumberPress = num => {
     if (isSettingPin && confirmPin) {
-      // During confirmation, we still use pinInput
+      // During PIN confirmation phase - requires both isSettingPin AND confirmPin flags
+      // This ensures we're in the specific confirmation state, not initial setup
       if (pinInput.length < 4) {
         const newPin = pinInput + num;
         setPinInput(newPin);
@@ -29,7 +30,8 @@ const PinModal = ({
         }
       }
     } else {
-      // Initial PIN entry
+      // Initial PIN entry phase (either setting new PIN or entering existing PIN)
+      // This covers: new PIN setup (isSettingPin=true, confirmPin=false) and PIN verification (isSettingPin=false)
       if (pinInput.length < 4) {
         const newPin = pinInput + num;
         setPinInput(newPin);
