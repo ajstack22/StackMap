@@ -38,7 +38,6 @@ class SimpleEncryptionService {
       const match = testData.every((val, idx) => val === decoded[idx]);
       return match;
     } catch (error) {
-      console.error('[SimpleEncryption] Base64 test failed:', error);
       return false;
     }
   }
@@ -60,7 +59,6 @@ class SimpleEncryptionService {
       const match = testString === decoded;
       return match;
     } catch (error) {
-      console.error('[SimpleEncryption] UTF-8 test failed:', error);
       return false;
     }
   }
@@ -104,7 +102,6 @@ class SimpleEncryptionService {
       const match = JSON.stringify(metadata) === JSON.stringify(readMetadata);
       return match;
     } catch (error) {
-      console.error('[SimpleEncryption] Metadata test failed:', error);
       return false;
     }
   }
@@ -163,7 +160,6 @@ class SimpleEncryptionService {
       
       return encoded;
     } catch (error) {
-      console.error('[SimpleEncryption] Encryption error:', error);
       throw error;
     }
   }
@@ -219,7 +215,6 @@ class SimpleEncryptionService {
         return JSON.parse(dataStr);
       }
     } catch (error) {
-      console.error('[SimpleEncryption] Decryption error:', error);
       throw error;
     }
   }
@@ -257,7 +252,7 @@ class SimpleEncryptionService {
       // Test passes if no exception thrown
       
     } catch (error) {
-      console.error('[SimpleEncryption] Full test failed:', error);
+      // Test failed silently
     }
   }
 }

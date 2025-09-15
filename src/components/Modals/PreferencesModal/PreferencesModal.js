@@ -42,7 +42,6 @@ const PreferencesModal = ({
   const handleThemeChange = color => {
     // Safety check: ensure the theme exists
     if (!THEMES[color]) {
-//       console.error(`Cannot set invalid theme: "${color}"`);
       return;
     }
     setCurrentTheme(color);

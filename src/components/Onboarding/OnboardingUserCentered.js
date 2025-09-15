@@ -322,7 +322,6 @@ const OnboardingUserCentered = ({
       try {
         syncId = await minimalSync.generateSyncId(phraseToUse);
       } catch (genError) {
-        console.error('[OnboardingSync] Error generating sync ID:', genError);
         throw new Error(`Failed to generate sync ID: ${genError.message}`);
       }
       
@@ -346,12 +345,6 @@ const OnboardingUserCentered = ({
         
         // The new minimalSync returns { success: boolean, data: decryptedData }
         if (!pullResult || !pullResult.success || !pullResult.data) {
-          console.warn(`[OnboardingSync] Pull attempt ${attempts} returned:`, {
-            hasResult: !!pullResult,
-            success: pullResult?.success,
-            hasData: !!(pullResult?.data),
-            error: pullResult?.error
-          });
           
           if (attempts < maxAttempts) {
             // Wait before retry to allow other devices to complete push
@@ -361,7 +354,6 @@ const OnboardingUserCentered = ({
       }
 
       if (!pullResult || !pullResult.success) {
-        console.error('[OnboardingSync] Failed to get sync data after', attempts, 'attempts');
         throw new Error(pullResult?.error || 'Failed to connect to sync group.');
       }
       
@@ -374,7 +366,6 @@ const OnboardingUserCentered = ({
       const decryptedData = pullResult.data;
 
       if (!decryptedData) {
-        console.error('[OnboardingSync] Decryption failed');
         throw new Error('Failed to decrypt sync data');
       }
 
@@ -384,12 +375,6 @@ const OnboardingUserCentered = ({
       
       // Validate that we have users data
       if (userCount === 0) {
-        console.error('[OnboardingSync] No valid users found - Details:', {
-          totalUserIds: Object.keys(users).length,
-          deletedCount: Object.keys(users).filter(id => users[id].deleted).length,
-          hasUsersObject: !!users,
-          usersIsEmpty: Object.keys(users).length === 0
-        });
         throw new Error('No active users found in sync data');
       }
       
@@ -402,7 +387,6 @@ const OnboardingUserCentered = ({
         hasLibrary: decryptedData.library && decryptedData.library.categories?.length > 0,
       });
     } catch (error) {
-      console.error('[OnboardingSync] Error:', error);
       
       // Provide more helpful error messages
       if (error.message.includes('exists but contains no data')) {
@@ -483,7 +467,6 @@ const OnboardingUserCentered = ({
       
       
       if (!pullResult || !pullResult.success || !pullResult.data) {
-        console.error('[OnboardingImport] Pull failed:', pullResult);
         throw new Error('Failed to import data - no data available in sync group');
       }
       
@@ -510,7 +493,6 @@ const OnboardingUserCentered = ({
         recoveryPhrase: phraseToUse,
       });
     } catch (error) {
-      console.error('[OnboardingUserCentered] Sync import error:', error);
       setSyncError(error.message || 'Failed to import data');
     } finally {
       setSyncLoading(false);
@@ -692,7 +674,6 @@ const OnboardingUserCentered = ({
       setUserJourney(prev => ({ ...prev, syncEnabled: true }));
       animateStepTransition('syncSuccess');
     } catch (error) {
-//       console.error('Sync creation error:', error);
       // If sync already exists (409), generate a new code for retry
       if (error.message && error.message.includes('already exists')) {
         generateNewSyncCode();
@@ -850,7 +831,6 @@ const OnboardingUserCentered = ({
                 });
               }
             } catch (error) {
-//               console.error('Import failed:', error);
             }
           }}
         >

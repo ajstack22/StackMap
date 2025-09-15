@@ -329,7 +329,6 @@ const DataModal = ({
 
       setActiveShares(userShares || {});
     } catch (error) {
-      console.error('[DataModal] Error loading shares:', error);
     }
   };
 
@@ -569,7 +568,6 @@ The file will remain in your Downloads folder until you delete it.`,
         }
       }
     } catch (error) {
-//       console.error('Export error:', error);
       if (Platform.OS === 'web') {
         showToast({
           message: `Failed to export: ${error.message}`,
@@ -863,7 +861,6 @@ The file will remain in your Downloads folder until you delete it.`,
                 // Legacy support - migrate emoji to icon
                 validatedUser.icon = validatedUser.emoji;
               } else {
-//                 console.warn(
 //                   `Import: User ${userId} has no valid icon, using default`,
 //                 );
                 validatedUser.icon = '👤';
@@ -978,7 +975,6 @@ The file will remain in your Downloads folder until you delete it.`,
       }
       showToast({ message: successMessage });
     } catch (error) {
-      console.error('Clipboard copy failed:', error);
       showToast({ message: 'Failed to copy. Please select and copy manually.', type: 'error' });
     }
   };
@@ -1022,7 +1018,6 @@ The file will remain in your Downloads folder until you delete it.`,
         // DON'T call checkSyncStatus here - it will overwrite the correct recovery phrase!
         // The result from create() is the source of truth
       } catch (error) {
-        console.error('[DataModal] Failed to enable sync:', error);
         setSyncError(error.message || 'Failed to enable sync');
         // CRITICAL: Clear all sync state if there's an error
         setSyncEnabled(false);
@@ -1172,7 +1167,6 @@ The file will remain in your Downloads folder until you delete it.`,
 
       showToast({ message: 'Server data deleted and sync disabled', type: 'success' });
     } catch (error) {
-      console.error('[DataModal] Error deleting server data:', error);
       
       showToast({
         message: 'Unable to delete server data. Please contact support if this persists.',
@@ -1195,13 +1189,11 @@ The file will remain in your Downloads folder until you delete it.`,
       if (onReset) {
         await onReset();
       } else {
-//         console.error('[DataModal] No onReset function provided!');
       }
 
       setShowResetConfirm(false);
       onClose();
     } catch (error) {
-//       console.error('[DataModal] Reset error:', error);
       showToast({
         message: error.message || 'Failed to reset app',
         type: 'error',
@@ -1932,7 +1924,6 @@ The file will remain in your Downloads folder until you delete it.`,
                       throw new Error('Failed to generate invite code');
                     }
                   } catch (error) {
-                    console.error('[DataModal] Error generating sync key:', error);
                     showToast({ 
                       message: error.message || 'Failed to generate sync key', 
                       type: 'error' 

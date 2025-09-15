@@ -57,7 +57,6 @@ const SupportModal = ({ visible, onClose, insets, onSyncDiagnostic }) => {
                 }}
                 alt="The StackMap Team"
                 onError={(e) => {
-//                   console.error('[SupportModal] Image failed to load:', e);
 
                 }}
                 onLoad={() => {}}

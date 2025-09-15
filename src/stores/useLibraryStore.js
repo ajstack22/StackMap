@@ -23,7 +23,6 @@ const storage = {
       try {
         return JSON.parse(value);
       } catch (parseError) {
-//         console.error(
 //           'Error parsing stored value, clearing corrupted data:',
 //           parseError,
 //         );
@@ -31,7 +30,6 @@ const storage = {
         return null;
       }
     } catch (error) {
-//       console.error('Error reading from AsyncStorage:', error);
       return null;
     }
   },
@@ -50,7 +48,6 @@ const storage = {
             JSON.stringify(pendingWrite.value),
           );
         } catch (error) {
-//           console.error('Error writing to AsyncStorage:', error);
         }
         pendingWrite = null;
       }
@@ -60,7 +57,6 @@ const storage = {
     try {
       await AsyncStorage.removeItem(name);
     } catch (error) {
-//       console.error('Error removing from AsyncStorage:', error);
     }
   },
 };

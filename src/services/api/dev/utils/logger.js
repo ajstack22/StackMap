@@ -71,13 +71,11 @@ class Logger {
 
             // Handle stream errors
             this.logFileStream.on('error', (error) => {
-                console.error('Log file stream error:', error);
                 this.config.enableFile = false;
             });
 
             this.rotateLogsIfNeeded();
         } catch (error) {
-            console.error('Failed to initialize file logging:', error);
             this.config.enableFile = false;
         }
     }
@@ -105,7 +103,7 @@ class Logger {
                 this.cleanupOldLogFiles();
             }
         } catch (error) {
-            console.error('Error rotating log files:', error);
+            // Error rotating log files
         }
     }
 
@@ -131,7 +129,7 @@ class Logger {
                 });
             }
         } catch (error) {
-            console.error('Error cleaning up old log files:', error);
+            // Error cleaning up old log files
         }
     }
 

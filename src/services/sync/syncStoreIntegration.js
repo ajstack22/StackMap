@@ -72,7 +72,6 @@ class SyncStoreIntegration {
           await this.handleDataReceived(pullResult.data);
         }
       } catch (error) {
-        console.error('[SyncStore] Initial sync failed:', error);
       }
       
     } else {
@@ -239,7 +238,6 @@ class SyncStoreIntegration {
       await this.createBackup(normalized);
       
     } catch (error) {
-      console.error('[SyncStore] ❌ Error applying state:', error);
       throw error;
     } finally {
       // Re-enable change detection after a delay
@@ -282,7 +280,6 @@ class SyncStoreIntegration {
         timestamp: Date.now()
       }));
     } catch (error) {
-      console.error('[SyncStore] Error creating backup:', error);
     }
   }
 
@@ -306,7 +303,6 @@ class SyncStoreIntegration {
         }
       }
     } catch (error) {
-      console.error('[SyncStore] Error restoring backup:', error);
     }
     return false;
   }
@@ -359,7 +355,6 @@ class SyncStoreIntegration {
       if (result.success) {
         this.notifyStatusListeners('idle');
       } else {
-        console.error('[SyncStore] ❌ Push failed:', result.error);
         this.notifyStatusListeners('error');
         
         // If it was a rate limit error, schedule a retry
@@ -370,7 +365,6 @@ class SyncStoreIntegration {
         }
       }
     } catch (error) {
-      console.error('[SyncStore] ❌ Push error:', error);
       this.notifyStatusListeners('error');
     } finally {
       this.isSyncing = false;
@@ -403,7 +397,6 @@ class SyncStoreIntegration {
         recoveryPhrase: result.recoveryPhrase || minimalSync.recoveryPhrase || 'NOT_FOUND'
       };
     } else {
-      console.error('[SyncStore] ❌ Create sync failed:', result.error);
       throw new Error(result.error);
     }
   }
@@ -905,7 +898,6 @@ class SyncStoreIntegration {
         share_url: secureShareUrl,  // Return secure URL with fragment
       };
     } catch (error) {
-      console.error('[SyncStore] Failed to create share link:', error);
       throw error;
     }
   }
@@ -963,7 +955,6 @@ class SyncStoreIntegration {
       try {
         listener(statusUpdate);
       } catch (error) {
-        console.error('[SyncStore] Error notifying status listener:', error);
       }
     });
   }
@@ -1059,7 +1050,6 @@ class SyncStoreIntegration {
             errors.push(`${env.name}: ${data.error || response.status}`);
           }
         } catch (fetchError) {
-          console.error(`[SyncStore] Failed to contact ${env.name}:`, fetchError);
           errors.push(`${env.name}: ${fetchError.message}`);
         }
       }
@@ -1078,7 +1068,6 @@ class SyncStoreIntegration {
       throw new Error(`Failed to delete from all environments: ${errors.join('; ')}`);
       
     } catch (error) {
-      console.error('[SyncStore] Error deleting server data:', error);
       throw error;
     }
   }
@@ -1104,7 +1093,6 @@ class SyncStoreIntegration {
 
       const result = await response.json();
       if (!response.ok) {
-        console.error('Server error deleting share:', result);
         // Continue to remove from local storage even if server fails
       }
 
@@ -1117,7 +1105,6 @@ class SyncStoreIntegration {
       return true;
     } catch (error) {
       if (__DEV__) {
-        console.error('Failed to delete share:', error);
       }
       throw error;
     }
@@ -1205,7 +1192,6 @@ class SyncStoreIntegration {
       return validShares;
     } catch (error) {
       if (__DEV__) {
-        console.error('Failed to get active shares:', error);
       }
       return [];
     }
@@ -1354,7 +1340,6 @@ class SyncStoreIntegration {
       
       return pullResult;
     } catch (error) {
-      console.error('[SyncStore] Manual sync failed:', error);
       return { success: false, error: error.message };
     }
   }

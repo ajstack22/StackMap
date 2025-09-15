@@ -211,7 +211,7 @@ class FixedEncryptionService {
           metadata.compressed = true;
         }
       } catch (error) {
-        console.warn('[Encryption] Compression failed:', error);
+        // Compression failed - continue without compression
       }
     }
 
@@ -298,7 +298,6 @@ class FixedEncryptionService {
               try {
                 dataBytes = pako.inflate(dataBytes);
               } catch (error) {
-                console.error('[Decryption] Decompression failed:', error);
                 throw new Error('Failed to decompress data');
               }
             }
@@ -326,7 +325,6 @@ class FixedEncryptionService {
         }
       }
     } catch (error) {
-      console.error('[Decryption] Error:', error);
       throw error;
     }
   }
@@ -339,7 +337,6 @@ class FixedEncryptionService {
       const key = syncId ? `@sync_phrase_${syncId}` : '@sync_phrase';
       await AsyncStorage.setItem(key, phrase);
     } catch (error) {
-      console.error('[Encryption] Failed to store recovery phrase:', error);
       throw error;
     }
   }
@@ -352,7 +349,6 @@ class FixedEncryptionService {
       const key = syncId ? `@sync_phrase_${syncId}` : '@sync_phrase';
       return await AsyncStorage.getItem(key);
     } catch (error) {
-      console.error('[Encryption] Failed to get recovery phrase:', error);
       return null;
     }
   }
@@ -367,7 +363,7 @@ class FixedEncryptionService {
       await AsyncStorage.removeItem('recovery_phrase');
       await AsyncStorage.removeItem('encryption_salt');
     } catch (error) {
-      console.error('Failed to clear encryption data:', error);
+      // Ignore clear errors - data might not exist
     }
   }
 
@@ -392,7 +388,6 @@ class FixedEncryptionService {
       }
       return deviceId;
     } catch (error) {
-      console.error('Failed to get device ID:', error);
       return '00000000000000000000000000000000';
     }
   }
@@ -416,7 +411,6 @@ class FixedEncryptionService {
       const decrypted = this.decryptData(encrypted);
       return JSON.stringify(testData) === JSON.stringify(decrypted);
     } catch (error) {
-      console.error('Encryption test failed:', error);
       return false;
     }
   }

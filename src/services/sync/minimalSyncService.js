@@ -326,8 +326,6 @@ class MinimalSyncService {
       // Use encryption service's device ID
       this.deviceId = await encryptionService.getDeviceId();
     } catch (error) {
-      console.error('[MinimalSync] ❌ Error in sync creation:', error);
-      console.error('[MinimalSync] Error stack:', error.stack);
       return { success: false, error: `Failed to initialize encryption: ${error.message}` };
     }
     
@@ -348,17 +346,16 @@ class MinimalSyncService {
     await AsyncStorage.setItem('@minimal_sync_data', JSON.stringify(dataToStore));
     
     // Verify it was stored
-    const verify = await AsyncStorage.getItem('@minimal_sync_data');
-    if (!verify) console.error('[Sync] Failed to verify local storage');
+    await AsyncStorage.getItem('@minimal_sync_data');
     
     // Test encryption before sending
     const testEncrypted = encryptionService.encryptData(dataWithMetadata);
     
     // Test decryption to verify it works
     try {
-      const testDecrypted = encryptionService.decryptData(testEncrypted);
+      encryptionService.decryptData(testEncrypted);
     } catch (error) {
-      console.error('[MinimalSync] ❌ Test decryption failed:', error);
+      return { success: false, error: 'Test decryption failed' };
     }
     
     // Now push to server - using timestamp format
@@ -383,8 +380,6 @@ class MinimalSyncService {
       // Check response status first
       if (!response.ok) {
         const text = await response.text();
-        console.error('[MinimalSync] ❌ Server error:', response.status);
-        console.error('[MinimalSync] Response:', text);
         throw new Error(`Server error ${response.status}: ${text.substring(0, 200)}`);
       }
       
@@ -405,11 +400,9 @@ class MinimalSyncService {
         
         return { success: true, syncId: this.syncId, recoveryPhrase: this.recoveryPhrase };
       } else {
-        console.error('[MinimalSync] ❌ Server error:', result);
         return { success: false, error: result.error };
       }
     } catch (error) {
-      console.error('[MinimalSync] ❌ Network error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -450,8 +443,6 @@ class MinimalSyncService {
       // Check response status first
       if (!response.ok) {
         const text = await response.text();
-        console.error('[MinimalSync] ❌ Server error:', response.status);
-        console.error('[MinimalSync] Response:', text);
         throw new Error(`Server error ${response.status}: ${text.substring(0, 200)}`);
       }
       
@@ -515,7 +506,7 @@ class MinimalSyncService {
                   latestData = decryptedData;
                 }
               } catch (error) {
-                console.error('[MinimalSync] ❌ Failed to decrypt record:', error);
+                // Failed to decrypt record
               }
             }
             
@@ -542,15 +533,12 @@ class MinimalSyncService {
           }
           
           // Still no data - return error
-          console.error('[MinimalSync] ❌ No data available in sync group');
           return { success: false, error: result.message || 'No data available in sync group' };
         }
       } else {
-        console.error('[MinimalSync] ❌ Join failed:', result);
         return { success: false, error: result.error || 'Join failed' };
       }
     } catch (error) {
-      console.error('[MinimalSync] ❌ Network error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -612,12 +600,10 @@ class MinimalSyncService {
   async pushData(newData) {
     
     if (!this.syncId) {
-      console.error('[MinimalSync] ❌ No sync ID - call createSync or joinSync first');
       return { success: false, error: 'No sync ID' };
     }
     
     if (!this.encryptionReady) {
-      console.error('[MinimalSync] ❌ Encryption not initialized');
       return { success: false, error: 'Encryption not ready' };
     }
     
@@ -672,13 +658,11 @@ class MinimalSyncService {
       
       // Check if response was successful
       if (!response.ok) {
-        console.error('[MinimalSync] ❌ Push failed with status:', response.status);
         return { success: false, error: result.error || 'Push failed' };
       }
       
       return { success: result.success };
     } catch (error) {
-      console.error('[MinimalSync] ❌ Push error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -690,7 +674,6 @@ class MinimalSyncService {
   async pullData(forceFullPull = false) {
     
     if (!this.syncId) {
-      console.error('[MinimalSync] ❌ No sync ID');
       return { success: false, error: 'No sync ID' };
     }
     
@@ -703,18 +686,11 @@ class MinimalSyncService {
     }
     
     if (!this.deviceId) {
-      console.error('[MinimalSync] ❌ No device ID after init attempt');
       return { success: false, error: 'No device ID' };
     }
     
     // Additional validation to prevent encoding issues
     if (typeof this.syncId !== 'string' || typeof this.deviceId !== 'string') {
-      console.error('[MinimalSync] ❌ Invalid sync ID or device ID type:', {
-        syncIdType: typeof this.syncId,
-        deviceIdType: typeof this.deviceId,
-        syncId: this.syncId,
-        deviceId: this.deviceId
-      });
       return { success: false, error: 'Invalid sync ID or device ID format' };
     }
     
@@ -748,10 +724,6 @@ class MinimalSyncService {
       // Use timestamp endpoint - pull changes since last timestamp
       // Ensure all values are valid strings before URL construction
       if (!this.syncId || !this.deviceId) {
-        console.error('[MinimalSync] ❌ Missing required IDs:', {
-          syncId: this.syncId,
-          deviceId: this.deviceId
-        });
         return { success: false, error: 'Missing sync ID or device ID' };
       }
       
@@ -765,9 +737,6 @@ class MinimalSyncService {
       try {
         response = await fetch(url);
       } catch (fetchError) {
-        console.error('[MinimalSync] ❌ Fetch error:', fetchError);
-        console.error('[MinimalSync] ❌ Fetch error message:', fetchError.message);
-        console.error('[MinimalSync] ❌ Fetch error stack:', fetchError.stack);
         throw fetchError;
       }
       
@@ -776,18 +745,12 @@ class MinimalSyncService {
       try {
         responseText = await response.text();
       } catch (textError) {
-        console.error('[MinimalSync] ❌ Error reading response text:', textError);
-        console.error('[MinimalSync] ❌ Error name:', textError.name);
-        console.error('[MinimalSync] ❌ Error message:', textError.message);
-        console.error('[MinimalSync] ❌ Response status:', response.status);
-        console.error('[MinimalSync] ❌ Response headers:', response.headers);
         
         // Try to get response as blob then convert to text
         try {
           const blob = await response.blob();
           responseText = await blob.text();
         } catch (blobError) {
-          console.error('[MinimalSync] ❌ Blob fallback also failed:', blobError);
           return {
             success: false,
             error: `Failed to read response: ${textError.message}`,
@@ -798,7 +761,6 @@ class MinimalSyncService {
       
       // Check if response looks like JSON before parsing
       if (!responseText || (!responseText.startsWith('{') && !responseText.startsWith('['))) {
-        console.error('[MinimalSync] ❌ Response is not JSON:', responseText.substring(0, 200));
         return { 
           success: false, 
           error: `Invalid response format: ${responseText.substring(0, 100)}`,
@@ -811,8 +773,6 @@ class MinimalSyncService {
       try {
         result = JSON.parse(responseText);
       } catch (parseError) {
-        console.error('[MinimalSync] ❌ JSON parse error:', parseError);
-        console.error('[MinimalSync] ❌ Response that failed to parse:', responseText.substring(0, 500));
         return {
           success: false,
           error: `JSON parse error: ${parseError.message}`,
@@ -868,7 +828,6 @@ class MinimalSyncService {
       }
       return { success: true, data: null };
     } catch (error) {
-      console.error('[MinimalSync] ❌ Pull error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -1021,7 +980,6 @@ class MinimalSyncService {
         maxUses: result.max_uses
       };
     } catch (error) {
-      console.error('[MinimalSync] Failed to create invite code:', error);
       throw error;
     }
   }
@@ -1076,10 +1034,6 @@ class MinimalSyncService {
       
       // Verify sync ID matches
       if (syncId !== validateResult.sync_id) {
-        console.error('[MinimalSync] Sync ID mismatch!');
-        console.error('[MinimalSync] Recovery phrase (first 8 chars):', recoveryPhrase.substring(0, 8));
-        console.error('[MinimalSync] Generated:', syncId);
-        console.error('[MinimalSync] Expected:', validateResult.sync_id);
         throw new Error('Recovery phrase does not match this sync group');
       }
       
@@ -1106,7 +1060,6 @@ class MinimalSyncService {
       };
       
     } catch (error) {
-      console.error('[MinimalSync] Failed to join with invite code:', error);
       throw error;
     }
   }
@@ -1130,7 +1083,6 @@ class MinimalSyncService {
         error: result.error
       };
     } catch (error) {
-      console.error('[MinimalSync] Failed to validate invite code:', error);
       return {
         success: false,  // Changed from 'valid' to 'success'
         valid: false,     // Keep for backward compatibility

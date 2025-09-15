@@ -30,7 +30,6 @@ export const getCurrentVersion = async () => {
     // If no stored version, generate from current date
     return generateVersion();
   } catch (error) {
-//     console.error('Error getting version:', error);
     return generateVersion();
   }
 };
@@ -97,7 +96,6 @@ export const incrementBuildCounter = async () => {
 
     return newVersion;
   } catch (error) {
-//     console.error('Error incrementing build counter:', error);
     return generateVersion();
   }
 };
@@ -114,7 +112,6 @@ export const setVersion = async version => {
     }
     return version;
   } catch (error) {
-//     console.error('Error setting version:', error);
     return null;
   }
 };

@@ -253,7 +253,6 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
             version: 3,
           });
         } catch (decryptError) {
-          console.error('Decryption error:', decryptError);
           setError('Failed to decrypt share data. The link may be invalid.');
         }
       } else {
@@ -263,7 +262,6 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
 
       setLoading(false);
     } catch (error) {
-      console.error('Error loading share:', error);
       setError(error.message || 'Failed to load share');
       setLoading(false);
     }

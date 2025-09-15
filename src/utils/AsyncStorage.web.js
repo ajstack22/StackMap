@@ -10,13 +10,11 @@ const testLocalStorage = () => {
     const retrieved = localStorage.getItem(testKey);
     localStorage.removeItem(testKey);
     if (retrieved !== testValue) {
-      console.error('[AsyncStorage.web] ❌ localStorage test failed!');
       return false;
     }
     // localStorage test passed
     return true;
   } catch (e) {
-    console.error('[AsyncStorage.web] ❌ localStorage not available:', e);
     return false;
   }
 };
@@ -51,7 +49,6 @@ const AsyncStorage = {
           // getItem complete
           resolve(value);
         } catch (error) {
-          console.error('[AsyncStorage.web] getItem error:', error);
           // Try memory fallback on error
           const memValue = memoryStorage[key];
           resolve(memValue || null);
@@ -77,10 +74,8 @@ const AsyncStorage = {
             storageSuccess = true;
             // Successfully stored in localStorage
           } else {
-            console.error(`[AsyncStorage.web] ❌ localStorage verification failed for ${key}!`);
           }
         } catch (e) {
-          console.error(`[AsyncStorage.web] ❌ localStorage.setItem failed for ${key}:`, e);
         }
         
         // Always store critical keys in sessionStorage as backup
@@ -106,7 +101,6 @@ const AsyncStorage = {
             storageSuccess = true;
             // Fallback stored in sessionStorage
           } catch (e) {
-            console.error(`[AsyncStorage.web] sessionStorage also failed:`, e);
           }
         }
         
@@ -118,7 +112,6 @@ const AsyncStorage = {
         
         resolve();
       } catch (error) {
-        console.error('[AsyncStorage.web] setItem error:', error);
         reject(error);
       }
     });
