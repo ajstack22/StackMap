@@ -118,7 +118,7 @@ class EncryptionService {
         await new Promise(resolve => setTimeout(resolve, 0));
 
         // Log progress
-        const progress = Math.round((i / KEY_DERIVATION_ITERATIONS) * 100);
+        // const progress = Math.round((i / KEY_DERIVATION_ITERATIONS) * 100);
         if (i % (batchSize * 2) === 0) {
         }
       }

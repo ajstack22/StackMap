@@ -204,7 +204,8 @@ class SimpleEncryptionService {
         // Read metadata
         const metadataBytes = decrypted.slice(4, 4 + metadataLength);
         const metadataStr = util.decodeUTF8(metadataBytes);
-        const metadata = JSON.parse(metadataStr);
+        // const metadata = JSON.parse(metadataStr);
+        JSON.parse(metadataStr); // Validate metadata format
         
         // Read data
         const dataBytes = decrypted.slice(4 + metadataLength);
@@ -230,11 +231,14 @@ class SimpleEncryptionService {
     
     await this.initializeTest();
     
-    const base64Pass = this.testBase64();
+    // const base64Pass = this.testBase64();
+    this.testBase64();
     
-    const utf8Pass = this.testUTF8();
+    // const utf8Pass = this.testUTF8();
+    this.testUTF8();
     
-    const metadataPass = this.testMetadataEncoding();
+    // const metadataPass = this.testMetadataEncoding();
+    this.testMetadataEncoding();
     
     try {
       const testData = { 
@@ -248,7 +252,8 @@ class SimpleEncryptionService {
       
       const decrypted = this.decryptData(encrypted);
       
-      const fullPass = JSON.stringify(testData) === JSON.stringify(decrypted);
+      // const fullPass = JSON.stringify(testData) === JSON.stringify(decrypted);
+      // Test passes if no exception thrown
       
     } catch (error) {
       console.error('[SimpleEncryption] Full test failed:', error);
