@@ -249,9 +249,10 @@ class SimpleEncryptionService {
       };
       
       const encrypted = this.encryptData(testData);
-      
-      const decrypted = this.decryptData(encrypted);
-      
+
+      // const decrypted = this.decryptData(encrypted);
+      this.decryptData(encrypted); // Test decryption
+
       // const fullPass = JSON.stringify(testData) === JSON.stringify(decrypted);
       // Test passes if no exception thrown
       
