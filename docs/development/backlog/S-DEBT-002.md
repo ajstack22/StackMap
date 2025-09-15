@@ -1,16 +1,16 @@
-# : Fix Code Formatting Issues
+# S-DEBT-002: Fix TypeScript Type Errors
 
 **Created**: 2025-09-15
-**Priority**: Low
-**Effort**: Small
+**Priority**: Medium
+**Effort**: Medium
 **Type**: Technical Debt
 **Status**: Backlog
 
 ## Description
-Some files are not properly formatted according to Prettier rules.
+The codebase has 123 TypeScript errors that should be resolved to improve type safety.
 
 ## Details
-Run `npm run prettier` to automatically fix all formatting issues.
+Run `npm run typecheck` to see all errors. These are non-critical but should be fixed as part of the ongoing TypeScript migration.
 
 ## Acceptance Criteria
 - [ ] Issue has been resolved
