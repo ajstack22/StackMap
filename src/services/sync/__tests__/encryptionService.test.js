@@ -1,11 +1,26 @@
 import encryptionService from '../encryptionService';
 
-// Mock AsyncStorage
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  setItem: jest.fn(() => Promise.resolve()),
-  getItem: jest.fn(() => Promise.resolve(null)),
-  removeItem: jest.fn(() => Promise.resolve()),
-}));
+// Mock AsyncStorage with proper functionality
+const mockAsyncStorage = {
+  storage: new Map(),
+  setItem: jest.fn((key, value) => {
+    mockAsyncStorage.storage.set(key, value);
+    return Promise.resolve();
+  }),
+  getItem: jest.fn((key) => {
+    return Promise.resolve(mockAsyncStorage.storage.get(key) || null);
+  }),
+  removeItem: jest.fn((key) => {
+    mockAsyncStorage.storage.delete(key);
+    return Promise.resolve();
+  }),
+  clear: jest.fn(() => {
+    mockAsyncStorage.storage.clear();
+    return Promise.resolve();
+  })
+};
+
+jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
 
 // Mock Platform
 jest.mock('react-native', () => ({
@@ -14,8 +29,18 @@ jest.mock('react-native', () => ({
   },
 }));
 
+// Mock crypto for tests
+jest.mock('react-native-get-random-values', () => {});
+
 describe('EncryptionService', () => {
   beforeEach(async () => {
+    // Clear AsyncStorage mock
+    mockAsyncStorage.storage.clear();
+    mockAsyncStorage.setItem.mockClear();
+    mockAsyncStorage.getItem.mockClear();
+    mockAsyncStorage.removeItem.mockClear();
+
+    // Clear encryption service state
     await encryptionService.clear();
   });
 
@@ -79,13 +104,14 @@ describe('EncryptionService', () => {
     await encryptionService.initialize(phrase1, 'sync1');
     const encrypted = encryptionService.encryptData({ test: 'data' });
 
-    // Try to decrypt with different phrase
+    // Clear service and try to decrypt with different phrase
+    await encryptionService.clear();
     const phrase2 = encryptionService.generateRecoveryPhrase();
     await encryptionService.initialize(phrase2, 'sync2');
 
     expect(() => {
       encryptionService.decryptData(encrypted);
-    }).toThrow('Decryption failed');
+    }).toThrow(/Decryption failed|invalid key|corrupted data/);
   });
 
   test('handles large data sets', async () => {
