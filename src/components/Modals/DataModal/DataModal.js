@@ -1137,7 +1137,6 @@ The file will remain in your Downloads folder until you delete it.`,
 
   // Handle delete server data
   const handleDeleteServerData = async () => {
-    console.log('[DataModal] handleDeleteServerData called');
     
     // Close the modal immediately
     setShowDeleteServerDataConfirm(false);
@@ -1153,20 +1152,16 @@ The file will remain in your Downloads folder until you delete it.`,
         throw new Error('No sync ID available - sync may not be enabled');
       }
       
-      console.log('[DataModal] Calling syncService.deleteFromServer()');
       
       // Delete all server data for this sync ID - checks both environments
       const deleteResult = await syncService.deleteFromServer();
       
       if (deleteResult && deleteResult.success) {
-        console.log('[DataModal] SUCCESS: Data deleted from server(s)');
       }
 
-      console.log('[DataModal] Server data deleted, disabling sync');
       
       // Disable sync after deleting server data
       await syncService.disable();
-      console.log('[DataModal] Sync disabled');
 
       setSyncEnabled(false);
       setSyncId(null);
@@ -1909,32 +1904,25 @@ The file will remain in your Downloads folder until you delete it.`,
                 icon="add-circle"
                 onPress={async () => {
                   try {
-                    console.log('[DataModal] Generate Sync Key button pressed');
                     setSyncLoading(true);
                     setSyncError('');
                     
                     // Try to get recovery phrase from multiple sources
                     let currentPhrase = syncRecoveryPhrase;
-                    console.log('[DataModal] Recovery phrase from state:', !!currentPhrase);
                     
                     if (!currentPhrase) {
-                      console.log('[DataModal] Trying syncService.getRecoveryPhrase()...');
                       currentPhrase = syncService.getRecoveryPhrase();
-                      console.log('[DataModal] Recovery phrase from service:', !!currentPhrase);
                     }
                     
                     if (!currentPhrase) {
                       throw new Error('Recovery phrase not available. Please disable and re-enable sync.');
                     }
                     
-                    console.log('[DataModal] Creating invite code with recovery phrase...');
                     const result = await syncService.createInviteCode(24, 5, 'Manual invite');
-                    console.log('[DataModal] Invite code result:', result);
                     
                     if (result && result.inviteCode) {
                       // The inviteUrl already includes the recovery phrase as a fragment
                       const fullSyncKey = result.inviteUrl;
-                      console.log('[DataModal] Generated full sync key with URL:', fullSyncKey);
                       setGeneratedSyncKey(fullSyncKey);
                       setShowGeneratedKey(true);
                       showToast({ 

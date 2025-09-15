@@ -3,9 +3,16 @@
 import '@testing-library/jest-native/extend-expect';
 
 // Mock AsyncStorage
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
-);
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(() => Promise.resolve(null)),
+  setItem: jest.fn(() => Promise.resolve()),
+  removeItem: jest.fn(() => Promise.resolve()),
+  clear: jest.fn(() => Promise.resolve()),
+  getAllKeys: jest.fn(() => Promise.resolve([])),
+  multiGet: jest.fn(() => Promise.resolve([])),
+  multiSet: jest.fn(() => Promise.resolve()),
+  multiRemove: jest.fn(() => Promise.resolve()),
+}));
 
 // Mock React Native core components and APIs
 jest.mock('react-native', () => {
@@ -37,6 +44,10 @@ jest.mock('react-native', () => {
     TouchableOpacity: 'TouchableOpacity',
     FlatList: 'FlatList',
     Modal: 'Modal',
+    TextInput: 'TextInput',
+    Image: 'Image',
+    SafeAreaView: 'SafeAreaView',
+    KeyboardAvoidingView: 'KeyboardAvoidingView',
     Dimensions: {
       get: jest.fn(() => ({
         width: 375,
@@ -55,6 +66,11 @@ jest.mock('react-native', () => {
       timing: jest.fn(() => ({
         start: jest.fn(),
       })),
+    },
+    StyleSheet: {
+      create: jest.fn((styles) => styles),
+      flatten: jest.fn((style) => style),
+      compose: jest.fn((style1, style2) => [style1, style2].filter(Boolean)),
     },
   };
 });

@@ -141,3 +141,14 @@ icon-color-preview.html
 # Old bundle backup directory
 /build-artifacts/
 tsconfig.tsbuildinfo
+
+# SonarCloud
+.scannerwork/
+.sonar/
+.last-sonar-analysis
+
+# Environment files
+.env
+*.env
+.stackmap-env
+.manylla-env

@@ -75,7 +75,6 @@ class EncryptionService {
     // Check in-memory cache first (fastest)
     const memoryCacheKey = `${recoveryPhrase}_${saltStr}`;
     if (this.keyCache[memoryCacheKey]) {
-      console.log('[Encryption] Using in-memory cached key');
       return this.keyCache[memoryCacheKey];
     }
 
@@ -84,7 +83,6 @@ class EncryptionService {
     try {
       const cachedKey = await AsyncStorage.getItem(storageCacheKey);
       if (cachedKey) {
-        console.log('[Encryption] Using persistent cached key');
         const result = {
           key: decodeBase64(cachedKey),
           salt: saltStr,
@@ -94,10 +92,8 @@ class EncryptionService {
         return result;
       }
     } catch (error) {
-      console.log('[Encryption] Error loading cached key:', error);
     }
 
-    console.log('[Encryption] Deriving key (this may take a moment)...');
 
     // Simple key derivation (in production, use proper PBKDF2)
     const phraseBytes = encodeUTF8(recoveryPhrase);
@@ -124,7 +120,6 @@ class EncryptionService {
         // Log progress
         const progress = Math.round((i / KEY_DERIVATION_ITERATIONS) * 100);
         if (i % (batchSize * 2) === 0) {
-          console.log(`[Encryption] Key derivation progress: ${progress}%`);
         }
       }
 
@@ -142,14 +137,11 @@ class EncryptionService {
     
     // Store in memory cache (instant access in same session)
     this.keyCache[memoryCacheKey] = result;
-    console.log('[Encryption] Stored key in memory cache');
     
     // Also store in AsyncStorage for persistence (helps on next app launch)
     try {
       await AsyncStorage.setItem(storageCacheKey, encodeBase64(derivedKey));
-      console.log('[Encryption] Stored key in persistent cache');
     } catch (error) {
-      console.log('[Encryption] Error storing key in persistent cache:', error);
     }
     
     return result;
@@ -166,7 +158,6 @@ class EncryptionService {
     // Check if encryption is already initialized (key is cached in memory)
     // This avoids expensive key derivation on every app start
     if (this.masterKey && this.syncId === syncId) {
-      console.log('[Encryption] Using cached master key');
       // Return the existing salt
       const cachedSalt = await AsyncStorage.getItem('encryption_salt');
       return { salt: cachedSalt || existingSalt || '' };
@@ -224,10 +215,7 @@ class EncryptionService {
 
     // Encode metadata
     const metadataStr = JSON.stringify(metadata);
-    console.log('[ENCRYPTION] Metadata string:', metadataStr);
     const metadataBytes = encodeUTF8(metadataStr);
-    console.log('[ENCRYPTION] Metadata bytes length:', metadataBytes.length);
-    console.log('[ENCRYPTION] First 10 metadata bytes:', Array.from(metadataBytes.slice(0, 10)));
     
     // Use ArrayBuffer directly for iOS compatibility
     const metadataLengthBuffer = new ArrayBuffer(4);
@@ -417,7 +405,6 @@ class EncryptionService {
       
       // Check if existing device ID is in the wrong format (not 32 hex chars)
       if (deviceId && !/^[a-f0-9]{32}$/.test(deviceId)) {
-        if (__DEV__) console.log('[Encryption] Clearing invalid device_id format:', deviceId);
         await AsyncStorage.removeItem('device_id');
         deviceId = null;
       }
@@ -428,7 +415,6 @@ class EncryptionService {
         deviceId = Array.from(randomBytes)
           .map(byte => byte.toString(16).padStart(2, '0'))
           .join('');
-        if (__DEV__) console.log('[Encryption] Generated new device_id:', deviceId);
         await AsyncStorage.setItem('device_id', deviceId);
       }
       return deviceId;

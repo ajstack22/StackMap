@@ -17,7 +17,6 @@ let encodeUTF8: (str: string) => Uint8Array;
 let decodeUTF8: (arr: Uint8Array) => string;
 
 // ALWAYS use manual implementation - tweetnacl-util is unreliable
-console.log('[EncryptionFixed] Using manual UTF-8 implementation for all platforms');
 if (true) {  // Always true, keeping structure for clarity
   // Manual UTF-8 encoding that works reliably on all platforms
   encodeUTF8 = (str: string) => {
@@ -135,11 +134,9 @@ class FixedEncryptionService {
     // Check cache
     const memoryCacheKey = `${recoveryPhrase}_${saltStr}`;
     if (this.keyCache[memoryCacheKey]) {
-      console.log('[Encryption] Using cached key');
       return this.keyCache[memoryCacheKey];
     }
 
-    console.log('[Encryption] Deriving key...');
     
     // Simple key derivation
     const phraseBytes = encodeUTF8(recoveryPhrase);
@@ -257,7 +254,6 @@ class FixedEncryptionService {
     }
 
     try {
-      console.log('[EncryptionFixed] Starting decryption...');
       
       // Validate input
       if (typeof encryptedData !== 'string') {
@@ -268,9 +264,7 @@ class FixedEncryptionService {
         throw new Error('Empty encrypted data');
       }
       
-      console.log('[EncryptionFixed] Input length:', encryptedData.length);
       const combined = decodeBase64(encryptedData);
-      console.log('[EncryptionFixed] Decoded bytes:', combined.length);
 
       // Extract nonce and encrypted data
       const nonce = combined.slice(0, nacl.secretbox.nonceLength);
@@ -291,15 +285,11 @@ class FixedEncryptionService {
           (decrypted[2] << 8) | 
           decrypted[3];
         
-        console.log('[EncryptionFixed] Metadata length:', metadataLength);
-        console.log('[EncryptionFixed] First 10 bytes:', Array.from(decrypted.slice(0, 10)));
         
         if (metadataLength > 0 && metadataLength < decrypted.length - 4) {
           try {
             const metadataBytes = decrypted.slice(4, 4 + metadataLength);
-            console.log('[EncryptionFixed] Metadata bytes:', Array.from(metadataBytes.slice(0, 20)));
             const metadataStr = decodeUTF8(metadataBytes);
-            console.log('[EncryptionFixed] Metadata string:', metadataStr);
             const metadata: EncryptionMetadata = JSON.parse(metadataStr);
             let dataBytes = decrypted.slice(4 + metadataLength);
 
@@ -317,7 +307,6 @@ class FixedEncryptionService {
             return JSON.parse(dataStr);
           } catch (metadataError) {
             // Try legacy format
-            console.log('[Decryption] Metadata parse failed, trying legacy format');
           }
         }
       }

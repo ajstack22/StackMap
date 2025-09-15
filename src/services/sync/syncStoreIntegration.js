@@ -20,7 +20,6 @@ import { encodeBase64, decodeBase64, encodeUTF8, decodeUTF8 } from 'tweetnacl-ut
 
 class SyncStoreIntegration {
   constructor() {
-    console.log('[SyncStore] 🔗 Integration layer initialized v39');
     this.isInitialized = false;
     this.isSyncing = false;
     this.lastPushTime = 0;
@@ -48,49 +47,35 @@ class SyncStoreIntegration {
    */
   async initialize() {
     if (this.isInitialized) {
-      console.log('[SyncStore] Already initialized');
       return;
     }
 
-    console.log('[SyncStore] 🚀 Initializing sync integration');
     
     // Load existing sync ID into minimalSync first
     await minimalSync.loadExistingSyncId();
     
     // Check if we have an existing sync
     const syncId = await AsyncStorage.getItem('@minimal_sync_id');
-    console.log('[SyncStore] After loadExistingSyncId - minimalSync state:', {
-      syncId: minimalSync.syncId,
-      isEnabled: minimalSync.isEnabled,
-      encryptionReady: minimalSync.encryptionReady,
-      recoveryPhrase: !!minimalSync.recoveryPhrase
-    });
     
     if (syncId && minimalSync.encryptionReady) {
-      console.log('[SyncStore] Found existing sync:', syncId);
       
       // Enable periodic sync with our callback
       minimalSync.enableSync(this.handleDataReceived);
-      console.log('[SyncStore] After enableSync - minimalSync.isEnabled:', minimalSync.isEnabled);
       
       // Subscribe to store changes
       this.subscribeToStores();
       
       // Do an initial pull to get latest data
-      console.log('[SyncStore] 🔄 Performing initial sync on app load');
       try {
         const pullResult = await minimalSync.pullData();
         if (pullResult.success && pullResult.data) {
           await this.handleDataReceived(pullResult.data);
-          console.log('[SyncStore] ✅ Initial sync complete');
         }
       } catch (error) {
         console.error('[SyncStore] Initial sync failed:', error);
       }
       
-      console.log('[SyncStore] ✅ Sync enabled for existing sync:', syncId);
     } else {
-      console.log('[SyncStore] No existing sync found or encryption not ready');
     }
     
     this.isInitialized = true;
@@ -100,7 +85,6 @@ class SyncStoreIntegration {
    * Subscribe to store changes for automatic sync
    */
   subscribeToStores() {
-    console.log('[SyncStore] 📡 Subscribing to store changes');
     
     // Subscribe to all stores with field tracking
     const unsubUser = useUserStore.subscribe(() => {
@@ -128,12 +112,10 @@ class SyncStoreIntegration {
   handleStoreChange(field = null) {
     // Don't sync if we're currently receiving data
     if (this.isSyncing) {
-      console.log('[SyncStore] ⏸️ Skipping change during sync');
       return;
     }
 
     if (field) {
-      console.log(`[SyncStore] 📝 ${field} changed - pushing immediately`);
     }
     
     // Push immediately to reduce conflicts
@@ -146,7 +128,6 @@ class SyncStoreIntegration {
 
     // Pull after a short delay to get any other changes
     this.changeDebounceTimer = setTimeout(async () => {
-      console.log('[SyncStore] ⏰ Pulling latest changes');
       const pullResult = await minimalSync.pullData();
       if (pullResult.success && pullResult.data) {
         await this.handleDataReceived(pullResult.data);
@@ -197,20 +178,6 @@ class SyncStoreIntegration {
       normalized.metadata = state.metadata;
     }
     
-    console.log('[SyncStore] 📊 Current state details:');
-    console.log('[SyncStore]   - Users count:', Object.keys(state.users || {}).length);
-    console.log('[SyncStore]   - User IDs:', Object.keys(state.users || {}));
-    console.log('[SyncStore]   - Library activities:', state.library?.activities?.length || 0);
-    console.log('[SyncStore]   - Library categories:', state.library?.categories?.length || 0);
-    console.log('[SyncStore]   - Has settings:', !!state.settings);
-    console.log('[SyncStore]   - Current user:', state.currentUser);
-    
-    console.log('[SyncStore] 📊 Current state:', {
-      userCount: Object.keys(normalized.users || {}).length,
-      libraryActivities: normalized.library?.activities?.length || 0,
-      hasSettings: !!normalized.settings,
-      fieldTimestamps: state.metadata.fieldTimestamps
-    });
     
     return normalized;
   }
@@ -219,7 +186,6 @@ class SyncStoreIntegration {
    * Apply synced state to stores
    */
   async applyState(syncedData) {
-    console.log('[SyncStore] 📥 Applying synced state');
     
     // Set flag to prevent change detection during update
     this.isSyncing = true;
@@ -231,7 +197,6 @@ class SyncStoreIntegration {
       // Update stores using proper methods
       // Users is an object, not array
       if (normalized.users && typeof normalized.users === 'object') {
-        console.log(`[SyncStore] Setting ${Object.keys(normalized.users).length} users`);
         useUserStore.getState().setUsers(normalized.users);
       }
       
@@ -250,11 +215,9 @@ class SyncStoreIntegration {
       if (normalized.library) {
         if (typeof normalized.library === 'object' && !Array.isArray(normalized.library)) {
           // Library is an object with activities, categories, etc.
-          console.log(`[SyncStore] Setting library object`);
           useLibraryStore.getState().setLibrary(normalized.library);
         } else if (Array.isArray(normalized.library)) {
           // Legacy format - library is just an array of activities
-          console.log(`[SyncStore] Setting ${normalized.library.length} library items (legacy format)`);
           useLibraryStore.getState().setLibrary({
             activities: normalized.library,
             categories: [],
@@ -266,7 +229,6 @@ class SyncStoreIntegration {
       
       // Update settings
       if (normalized.settings) {
-        console.log('[SyncStore] Updating settings');
         useSettingsStore.getState().updateSettings(normalized.settings);
       }
       
@@ -276,7 +238,6 @@ class SyncStoreIntegration {
       // Create backup as failsafe
       await this.createBackup(normalized);
       
-      console.log('[SyncStore] ✅ State applied and persisted');
     } catch (error) {
       console.error('[SyncStore] ❌ Error applying state:', error);
       throw error;
@@ -292,7 +253,6 @@ class SyncStoreIntegration {
    * Force flush all store persistence
    */
   async flushStores() {
-    console.log('[SyncStore] 💾 Flushing stores to storage');
     
     // Flush each store's persist middleware
     const flushPromises = [];
@@ -310,7 +270,6 @@ class SyncStoreIntegration {
     }
     
     await Promise.all(flushPromises);
-    console.log('[SyncStore] ✅ All stores flushed');
   }
 
   /**
@@ -322,7 +281,6 @@ class SyncStoreIntegration {
         data,
         timestamp: Date.now()
       }));
-      console.log('[SyncStore] 💾 Backup created');
     } catch (error) {
       console.error('[SyncStore] Error creating backup:', error);
     }
@@ -336,7 +294,6 @@ class SyncStoreIntegration {
       const backup = await AsyncStorage.getItem('@sync_state_backup');
       if (backup) {
         const { data, timestamp } = JSON.parse(backup);
-        console.log('[SyncStore] 📦 Found backup from', new Date(timestamp).toLocaleString());
         
         // Check if stores are empty
         const currentState = this.getCurrentState();
@@ -344,7 +301,6 @@ class SyncStoreIntegration {
                        (!currentState.library || !currentState.library.activities || currentState.library.activities.length === 0);
         
         if (isEmpty && data) {
-          console.log('[SyncStore] 🔄 Restoring from backup');
           await this.applyState(data);
           return true;
         }
@@ -359,21 +315,17 @@ class SyncStoreIntegration {
    * Handle data received from sync
    */
   async handleDataReceived(syncedData) {
-    console.log('[SyncStore] 📨 Received sync data');
     
     // Get current state for conflict resolution
     const currentState = this.getCurrentState();
     
     // Perform conflict resolution
-    console.log('[SyncStore] 🔀 Resolving conflicts...');
     const mergedData = conflictResolver.mergeStates(currentState, syncedData);
     
     // Check if there were conflicts
     const mergeLog = conflictResolver.getMergeLog();
     if (mergeLog.length > 0) {
-      console.log('[SyncStore] 📊 Conflict resolution summary:');
       mergeLog.slice(-5).forEach(entry => {
-        console.log(`  - ${entry.message}`);
       });
     }
     
@@ -393,11 +345,9 @@ class SyncStoreIntegration {
     // Rate limit pushes (5 second minimum between pushes)
     const now = Date.now();
     if (now - this.lastPushTime < 5000) {
-      console.log('[SyncStore] ⏸️ Rate limiting push (too soon)');
       return;
     }
 
-    console.log('[SyncStore] 📤 Pushing current state');
     this.lastPushTime = now;
     this.isSyncing = true;
     this.notifyStatusListeners('syncing');
@@ -407,7 +357,6 @@ class SyncStoreIntegration {
       const result = await minimalSync.pushDataWithRetry(currentState);
       
       if (result.success) {
-        console.log('[SyncStore] ✅ State pushed successfully');
         this.notifyStatusListeners('idle');
       } else {
         console.error('[SyncStore] ❌ Push failed:', result.error);
@@ -415,9 +364,7 @@ class SyncStoreIntegration {
         
         // If it was a rate limit error, schedule a retry
         if (result.rateLimited) {
-          console.log('[SyncStore] 🔄 Scheduling retry due to rate limit');
           setTimeout(() => {
-            console.log('[SyncStore] 🔁 Retrying push after rate limit');
             this.pushCurrentState();
           }, 10000); // Retry after 10 seconds
         }
@@ -434,20 +381,14 @@ class SyncStoreIntegration {
    * Create new sync with current state
    */
   async createSync() {
-    console.log('[SyncStore] 🆕 Creating new sync');
     
     const currentState = this.getCurrentState();
     const result = await minimalSync.createSync(currentState);
     
     if (result.success) {
-      console.log('[SyncStore] ✅ Sync created:', result.syncId);
-      console.log('[SyncStore] 📝 Result contains:', result);
-      console.log('[SyncStore] 🔑 Recovery phrase from result:', result.recoveryPhrase);
-      console.log('[SyncStore] 🔑 Recovery phrase from minimalSync:', minimalSync.recoveryPhrase);
       
       // Enable periodic sync
       minimalSync.enableSync(this.handleDataReceived);
-      console.log('[SyncStore] ✅ Periodic sync enabled');
       
       // Subscribe to store changes if not already subscribed
       if (!this.unsubscribers) {
@@ -478,24 +419,20 @@ class SyncStoreIntegration {
    * Join existing sync
    */
   async joinSync(recoveryPhrase) {
-    console.log('[SyncStore] 🔗 Joining sync with recovery phrase');
     
     const result = await minimalSync.joinSync(recoveryPhrase);
     
     if (result.success) {
-      console.log('[SyncStore] ✅ Joined sync successfully');
       
       // IMPORTANT: When joining a sync, we completely replace local data
       // with remote data - no merging. This is intentional to ensure
       // the device fully adopts the sync group's state.
       if (result.data) {
-        console.log('[SyncStore] 📥 Replacing local data with sync group data (no merge)');
         await this.applyState(result.data);
       }
       
       // Enable periodic sync
       minimalSync.enableSync(this.handleDataReceived);
-      console.log('[SyncStore] ✅ Periodic sync enabled - can push immediately');
       
       // Subscribe to store changes if not already subscribed
       if (!this.unsubscribers) {
@@ -533,7 +470,6 @@ class SyncStoreIntegration {
    * Disable sync
    */
   disableSync() {
-    console.log('[SyncStore] 🛑 Disabling sync');
     
     // Disable minimal sync
     minimalSync.disableSync();
@@ -557,7 +493,6 @@ class SyncStoreIntegration {
    * Clear all sync data
    */
   async clearAll() {
-    console.log('[SyncStore] 🗑️ Clearing all sync data');
     
     this.disableSync();
     await minimalSync.clearAll();
@@ -588,11 +523,6 @@ class SyncStoreIntegration {
   async isEnabled() {
     // Check both if sync is enabled AND if we have a sync ID
     const result = minimalSync.isEnabled && !!minimalSync.syncId;
-    console.log('[SyncStore] isEnabled check:', {
-      minimalSync_isEnabled: minimalSync.isEnabled,
-      minimalSync_syncId: minimalSync.syncId,
-      returning: result
-    });
     return result;
   }
 
@@ -603,7 +533,6 @@ class SyncStoreIntegration {
   async enable(recoveryPhrase = null) {
     if (recoveryPhrase) {
       // Joining existing sync with the provided recovery phrase
-      console.log('[SyncStore] 🔗 Joining sync from enable() with recovery phrase');
       const result = await this.joinSync(recoveryPhrase);
       return result;
     }
@@ -627,7 +556,6 @@ class SyncStoreIntegration {
    * Initialize for import (used by onboarding)
    */
   async initializeForImport(recoveryPhrase) {
-    console.log('[SyncStore] Initializing for import with recovery phrase');
     
     // Join the sync with the recovery phrase
     const result = await this.joinSync(recoveryPhrase);
@@ -650,7 +578,6 @@ class SyncStoreIntegration {
    * Pull data without enabling sync (for preview)
    */
   async pullWithoutEnabling(syncId) {
-    console.log('[SyncStore] Pulling data for preview');
     
     // Temporarily set sync ID for the pull
     const originalSyncId = minimalSync.syncId;
@@ -680,7 +607,6 @@ class SyncStoreIntegration {
    * Pull latest data (compatibility method)
    */
   async pullLatestData() {
-    console.log('[SyncStore] Pulling latest data');
     
     if (!minimalSync.syncId) {
       throw new Error('No sync ID set');
@@ -701,7 +627,6 @@ class SyncStoreIntegration {
    * Initialize encryption (for onboarding)
    */
   async initializeEncryption(recoveryPhrase, syncId) {
-    console.log('[SyncStore] Initializing encryption for onboarding', { syncId });
     // CRITICAL: Set the syncId on minimalSync so pullData works
     minimalSync.syncId = syncId;
     await minimalSync.initializeEncryption(recoveryPhrase, syncId);
@@ -712,9 +637,6 @@ class SyncStoreIntegration {
    * @param {boolean} forceFullPull - If true, pulls all data ignoring timestamps (for initial sync)
    */
   async pullData(forceFullPull = false) {
-    console.log('[SyncStore] Direct pullData called, forceFullPull:', forceFullPull);
-    console.log('[SyncStore] minimalSync.syncId:', minimalSync.syncId);
-    console.log('[SyncStore] minimalSync.encryptionReady:', minimalSync.encryptionReady);
     
     // Direct pass-through to minimalSync for onboarding preview
     // This doesn't update stores, just returns the raw data
@@ -1051,7 +973,6 @@ class SyncStoreIntegration {
    * Our system already auto-syncs on changes, so this is mostly a no-op
    */
   async requestSync(options = {}) {
-    console.log('[SyncStore] Sync requested (auto-sync already active)');
     
     // If we have a sync ID and are enabled, trigger a push
     if (minimalSync.syncId && minimalSync.isEnabled) {
@@ -1091,7 +1012,6 @@ class SyncStoreIntegration {
    * Delete all data from server - tries both QUAL and PROD to ensure data is truly deleted
    */
   async deleteFromServer() {
-    console.log('[SyncStore] Deleting all data from server...');
     
     try {
       // Get sync ID using the getSyncId method
@@ -1119,7 +1039,6 @@ class SyncStoreIntegration {
       let errors = [];
       
       for (const env of environments) {
-        console.log(`[SyncStore] Attempting delete from ${env.name}: ${env.url}`);
         
         try {
           const response = await fetch(env.url, {
@@ -1131,13 +1050,10 @@ class SyncStoreIntegration {
           });
           
           const data = await response.json();
-          console.log(`[SyncStore] ${env.name} response:`, response.status, data);
           
           if (response.ok) {
-            console.log(`[SyncStore] Successfully deleted from ${env.name}`);
             deletedFromAny = true;
           } else if (response.status === 404) {
-            console.log(`[SyncStore] No data found in ${env.name} (already deleted or never existed)`);
             // Not an error - data doesn't exist
           } else {
             errors.push(`${env.name}: ${data.error || response.status}`);
@@ -1150,13 +1066,11 @@ class SyncStoreIntegration {
       
       // If we deleted from at least one environment, that's a success
       if (deletedFromAny) {
-        console.log('[SyncStore] Server data deleted successfully from at least one environment');
         return { success: true, message: 'Server data deleted successfully' };
       }
       
       // If all attempts resulted in 404 (not found), that's okay - data is gone
       if (errors.length === 0) {
-        console.log('[SyncStore] No data found in any environment - already deleted');
         return { success: true, message: 'Data already deleted or never existed on server' };
       }
       
@@ -1331,7 +1245,6 @@ class SyncStoreIntegration {
    * Set sync ID (for onboarding preview)
    */
   set syncId(value) {
-    console.log('[SyncStore] Setting syncId:', value);
     minimalSync.syncId = value;
   }
   
@@ -1375,7 +1288,6 @@ class SyncStoreIntegration {
    * Perform manual sync
    */
   async performManualSync() {
-    console.log('[SyncStore] Manual sync requested');
     if (minimalSync.isEnabled) {
       await this.pushCurrentState();
       const pullResult = await minimalSync.pullData();
@@ -1390,7 +1302,6 @@ class SyncStoreIntegration {
    * Retry failed sync (stub)
    */
   async retryFailed() {
-    console.log('[SyncStore] Retry failed sync');
     return this.performManualSync();
   }
 
@@ -1405,7 +1316,6 @@ class SyncStoreIntegration {
    * Verify sync exists
    */
   async verifySyncExists(syncId) {
-    console.log('[SyncStore] Verifying sync exists:', syncId);
     // Could make an API call to verify, for now assume it exists
     return { exists: true };
   }
@@ -1426,10 +1336,8 @@ class SyncStoreIntegration {
    * Trigger immediate sync (for AppState changes on mobile)
    */
   async triggerSync() {
-    console.log('[SyncStore] Manual sync triggered');
     
     if (!minimalSync.isEnabled || !minimalSync.syncId) {
-      console.log('[SyncStore] Sync not enabled or no sync ID');
       return { success: false, error: 'Sync not enabled' };
     }
     
@@ -1441,7 +1349,6 @@ class SyncStoreIntegration {
       const pullResult = await minimalSync.pullData();
       if (pullResult.success && pullResult.data) {
         await this.handleDataReceived(pullResult.data);
-        console.log('[SyncStore] ✅ Manual sync complete');
         return { success: true };
       }
       

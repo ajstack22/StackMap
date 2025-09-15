@@ -15,7 +15,6 @@ class ConflictResolver {
    * Main merge function - combines local and remote data
    */
   mergeStates(local, remote) {
-    console.log('[ConflictResolver] 🔀 Starting merge');
     this.mergeLog = [];
     
     // Handle edge cases
@@ -563,7 +562,6 @@ class ConflictResolver {
    */
   log(message) {
     if (this.enableLogging) {
-      console.log(`[ConflictResolver] ${message}`);
       this.mergeLog.push({
         timestamp: Date.now(),
         message
@@ -576,16 +574,11 @@ class ConflictResolver {
    */
   logSummary() {
     if (this.enableLogging && this.mergeLog.length > 0) {
-      console.log('[ConflictResolver] 📊 Merge Summary:');
-      console.log(`  Total decisions: ${this.mergeLog.length}`);
       
       const remoteWins = this.mergeLog.filter(l => l.message.includes('Remote wins')).length;
       const localWins = this.mergeLog.filter(l => l.message.includes('Local wins')).length;
       const ties = this.mergeLog.filter(l => l.message.includes('Tie broken')).length;
       
-      console.log(`  Remote wins: ${remoteWins}`);
-      console.log(`  Local wins: ${localWins}`);
-      console.log(`  Ties resolved: ${ties}`);
     }
   }
 

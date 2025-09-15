@@ -23,7 +23,9 @@
     "check:methods": "./scripts/check-method-calls.sh",
     "check:all": "npm run lint && npm run typecheck && npm run check:methods",
     "prettier": "prettier --write \"src/**/*.{js,ts,tsx}\" \"App.js\"",
-    "prettier:check": "prettier --check \"src/**/*.{js,ts,tsx}\" \"App.js\""
+    "prettier:check": "prettier --check \"src/**/*.{js,ts,tsx}\" \"App.js\"",
+    "sonar": "./scripts/sonar-analysis.sh",
+    "quality": "npm run sonar"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",

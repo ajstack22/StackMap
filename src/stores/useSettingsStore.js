@@ -79,6 +79,7 @@ const useSettingsStore = create(
         displayMode: 'numbers',
         dayMode: 'today',
         hasCompletedOnboarding: false,
+        syncSkipped: false,
 
         // Device-specific toolbar settings (not synced)
         toolbarOrder: null,
@@ -151,6 +152,7 @@ const useSettingsStore = create(
           displayMode: state.displayMode,
           dayMode: state.dayMode,
           hasCompletedOnboarding: state.hasCompletedOnboarding,
+          syncSkipped: state.syncSkipped,
           toolbarOrder: state.toolbarOrder,
           moreButtonPosition: state.moreButtonPosition,
         }),

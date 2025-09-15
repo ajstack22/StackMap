@@ -24,7 +24,7 @@ import syncService from '../../services/sync';
 import minimalSync from '../../services/sync/minimalSyncService';
 import encryptionService from '../../services/sync/encryptionService';
 import { BUILD_VERSION } from '../../utils/version';
-import { useAppStore, useUserStore } from '../../stores';
+import { useAppStore, useUserStore, useSettingsStore } from '../../stores';
 import {
   TYPOGRAPHY,
   SPACING,
@@ -165,7 +165,6 @@ const OnboardingUserCentered = ({
     // Only auto-trigger if we're on the sync import step with a complete invite
     if (currentStep === 'syncImport' && Platform.OS === 'web' && window.syncInviteData) {
       if (window.syncInviteData.inviteCode && window.syncInviteData.recoveryPhrase) {
-        console.log('[Onboarding] Auto-triggering sync preview for invite URL');
         // Auto-trigger the sync preview after a brief delay
         setTimeout(() => {
           fetchSyncPreview();
@@ -179,7 +178,6 @@ const OnboardingUserCentered = ({
     // Check if we have preview data and are coming from an invite URL with full data
     if (syncPreviewData && currentStep === 'syncImport' && Platform.OS === 'web' && window.syncInviteData) {
       if (window.syncInviteData.inviteCode && window.syncInviteData.recoveryPhrase) {
-        console.log('[Onboarding] Auto-importing sync data from invite URL');
         // Auto-trigger the import after a brief delay for UI to update
         setTimeout(() => {
           importSyncData();
@@ -272,14 +270,11 @@ const OnboardingUserCentered = ({
       setShowCopiedToast(true);
       setTimeout(() => setShowCopiedToast(false), 2000);
     } catch (error) {
-      console.log('Failed to copy:', error);
     }
   };
 
   // Fetch sync preview
   const fetchSyncPreview = async () => {
-    console.log('[OnboardingSync] ===== START fetchSyncPreview =====');
-    console.log('[OnboardingSync] Raw input:', recoveryPhrase);
     
     setSyncLoading(true);
     setSyncError('');
@@ -296,17 +291,14 @@ const OnboardingUserCentered = ({
         const [code, phrase] = trimmed.split('#');
         inviteCode = code.toUpperCase();
         phraseToUse = phrase?.replace(/[\s-]+/g, '') || '';
-        console.log('[OnboardingSync] Using invite code format:', inviteCode);
       } else if (/^[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(trimmed)) {
         // Just an invite code without recovery phrase
         throw new Error('Please enter the complete sync code including the recovery key after #');
       } else {
         // Legacy format - just the recovery phrase
         phraseToUse = trimmed.replace(/[\s-]+/g, '');
-        console.log('[OnboardingSync] Using legacy format');
       }
       
-      console.log('[OnboardingSync] Processed phrase:', phraseToUse);
 
       if (phraseToUse.length !== 32 || !/^[a-f0-9]+$/i.test(phraseToUse)) {
         throw new Error('Invalid recovery phrase format - must be 32 characters');
@@ -314,26 +306,21 @@ const OnboardingUserCentered = ({
       
       // If we have an invite code, validate it first
       if (inviteCode) {
-        console.log('[OnboardingSync] Validating invite code:', inviteCode);
         const validateResult = await minimalSync.validateInviteCode(inviteCode);
         if (!validateResult.success) {
           throw new Error(validateResult.error || 'Invalid or expired invite code');
         }
-        console.log('[OnboardingSync] Invite code validated successfully');
       }
 
-      console.log('[OnboardingSync] Initializing sync for preview...');
       
       // Ensure minimalSync is ready (device ID initialized)
       if (!minimalSync.deviceId) {
-        console.log('[OnboardingSync] Waiting for device ID...');
         await minimalSync.initDeviceId();
       }
       
       let syncId;
       try {
         syncId = await minimalSync.generateSyncId(phraseToUse);
-        console.log('[OnboardingSync] Generated sync ID:', syncId);
       } catch (genError) {
         console.error('[OnboardingSync] Error generating sync ID:', genError);
         throw new Error(`Failed to generate sync ID: ${genError.message}`);
@@ -345,7 +332,6 @@ const OnboardingUserCentered = ({
       
       // Initialize encryption properly for onboarding preview
       await minimalSync.initializeEncryption(phraseToUse, syncId);
-      console.log('[OnboardingSync] Encryption initialized with sync ID:', syncId);
 
       // Try pulling with retries for race conditions
       let pullResult = null;
@@ -354,7 +340,6 @@ const OnboardingUserCentered = ({
       
       while (!pullResult?.data && attempts < maxAttempts) {
         attempts++;
-        console.log(`[OnboardingSync] Pull attempt ${attempts}/${maxAttempts}`);
         
         // Force full pull for onboarding preview (as per SYNC_SYSTEM_COMPLETE.md)
         pullResult = await minimalSync.pullData(true);
@@ -370,7 +355,6 @@ const OnboardingUserCentered = ({
           
           if (attempts < maxAttempts) {
             // Wait before retry to allow other devices to complete push
-            console.log('[OnboardingSync] Waiting 2 seconds before retry...');
             await new Promise(resolve => setTimeout(resolve, 2000));
           }
         }
@@ -387,7 +371,6 @@ const OnboardingUserCentered = ({
       }
       
       // Data is already decrypted by minimalSync
-      console.log('[OnboardingSync] Using decrypted sync data...');
       const decryptedData = pullResult.data;
 
       if (!decryptedData) {
@@ -398,14 +381,6 @@ const OnboardingUserCentered = ({
       const users = decryptedData.users || {};
       const validUsers = Object.keys(users).filter(id => !users[id].deleted);
       const userCount = validUsers.length;
-      
-      console.log('[OnboardingSync] Decrypted data contains:', {
-        userCount,
-        totalUsers: Object.keys(users).length,
-        deletedUsers: Object.keys(users).filter(id => users[id].deleted).length,
-        hasLibrary: !!(decryptedData.library?.categories?.length > 0),
-        version: decryptedData.version
-      });
       
       // Validate that we have users data
       if (userCount === 0) {
@@ -463,11 +438,9 @@ const OnboardingUserCentered = ({
         const [code, phrase] = trimmed.split('#');
         inviteCode = code.toUpperCase();
         phraseToUse = phrase?.replace(/[\s-]+/g, '') || '';
-        console.log('[OnboardingImport] Using invite code format:', inviteCode);
       } else {
         // Legacy format - just the recovery phrase
         phraseToUse = trimmed.replace(/[\s-]+/g, '');
-        console.log('[OnboardingImport] Using legacy format');
       }
       
       if (phraseToUse.length !== 32 || !/^[a-f0-9]+$/i.test(phraseToUse)) {
@@ -476,13 +449,11 @@ const OnboardingUserCentered = ({
       
       // If we have an invite code, use it to join
       if (inviteCode) {
-        console.log('[OnboardingImport] Using invite code to join sync:', inviteCode);
         const joinResult = await syncService.joinWithInviteCode(inviteCode, phraseToUse);
         if (!joinResult.success) {
           throw new Error(joinResult.error || 'Failed to join sync with invite code');
         }
         // joinWithInviteCode handles everything including marking the invite as used
-        console.log('[OnboardingImport] Successfully joined via invite code');
       }
       
       // Initialize temporarily just to decrypt (don't enable sync yet)
@@ -492,14 +463,11 @@ const OnboardingUserCentered = ({
       // Recovery phrase 8b993a49ebf42aaf3d06e63ae8aee6c8 should map to 12e8a92bf426e20b1c28c7d6b3acd7bc
       // but generates bb6d11d2a3490da04511f642e6d166c9 instead
       if (phraseToUse === '8b993a49ebf42aaf3d06e63ae8aee6c8') {
-        console.log('[OnboardingImport] Using hardcoded sync ID for known mismatched sync');
         syncId = '12e8a92bf426e20b1c28c7d6b3acd7bc';
       }
       
       const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
       
-      console.log('[OnboardingImport] Generated sync ID:', syncId);
-      console.log('[OnboardingImport] Using recovery phrase (first 8 chars):', phraseToUse.substring(0, 8));
       
       // Initialize encryption without enabling sync
       await encryptionService.initialize(phraseToUse, syncId, fixedSalt);
@@ -513,12 +481,6 @@ const OnboardingUserCentered = ({
       // This ignores any stored timestamps and pulls everything
       const pullResult = await syncService.pullData(true);
       
-      console.log('[OnboardingImport] Pull result:', {
-        success: pullResult?.success,
-        hasData: !!pullResult?.data,
-        dataKeys: pullResult?.data ? Object.keys(pullResult.data) : [],
-        error: pullResult?.error
-      });
       
       if (!pullResult || !pullResult.success || !pullResult.data) {
         console.error('[OnboardingImport] Pull failed:', pullResult);
@@ -533,30 +495,13 @@ const OnboardingUserCentered = ({
       }
 
       // Log imported data for debugging
-      console.log('[OnboardingUserCentered] Sync import - decrypted data:', {
-        userCount: Object.keys(decryptedData.users || {}).length,
-        hasLibrary: !!decryptedData.library,
-        hasSettings: !!decryptedData.globalSettings,
-        version: decryptedData.version,
-        users: Object.entries(decryptedData.users || {}).map(([id, u]) => ({
-          id,
-          name: u.name,
-          icon: u.icon || u.emoji,
-          hasToday: !!(u.days?.today),
-          todayCount: u.days?.today?.activities?.length || 0,
-          hasTomorrow: !!(u.days?.tomorrow),
-          tomorrowCount: u.days?.tomorrow?.activities?.length || 0
-        }))
-      });
 
       // IMPORTANT: Pass the data to onComplete FIRST before enabling sync
       // This ensures the data is in the stores before sync starts
-      console.log('[OnboardingUserCentered] Passing imported data to onComplete');
       
       // Don't restore via syncService - let onComplete handle it
       // Don't enable sync yet - let it happen after data is restored
       
-      console.log('[OnboardingUserCentered] Data restored to sync service, completing onboarding');
       
       onComplete({
         importedData: decryptedData,
@@ -710,12 +655,6 @@ const OnboardingUserCentered = ({
         
         // Log to verify users were set with activities
         const verifyState = useAppStore.getState();
-        console.log('[Onboarding] After setting users, state check:', {
-          hasUsers: !!verifyState.users,
-          userCount: Object.keys(verifyState.users || {}).length,
-          firstUserActivities: verifyState.users?.[firstUserId]?.days?.today?.activities?.length || 0,
-          firstUserName: verifyState.users?.[firstUserId]?.name
-        });
         
         // Wait longer for store to fully update before sync
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -742,14 +681,11 @@ const OnboardingUserCentered = ({
       
       // Generate an invite code for easy sharing
       try {
-        console.log('[OnboardingSync] Generating invite code for new sync...');
         const inviteResult = await syncService.createInviteCode(24, 5, 'Initial setup');
         if (inviteResult && inviteResult.inviteCode) {
           setGeneratedInviteCode(inviteResult.inviteCode);
-          console.log('[OnboardingSync] Generated invite code:', inviteResult.inviteCode);
         }
       } catch (inviteError) {
-        console.log('[OnboardingSync] Could not generate invite code:', inviteError.message);
         // Non-critical error - sync still works without invite code
       }
       
@@ -828,6 +764,7 @@ const OnboardingUserCentered = ({
                 setUserJourney(prev => ({ ...prev, journeyType: 'new' }));
                 animateStepTransition('userType');
               }}
+              accessibilityLabel="I'm new to StackMap - Get started with a new account"
             >
               <Text style={styles.buttonText}>I'm new to StackMap</Text>
             </TouchableOpacity>
@@ -838,6 +775,7 @@ const OnboardingUserCentered = ({
                 setUserJourney(prev => ({ ...prev, journeyType: 'existing' }));
                 animateStepTransition('existingUser');
               }}
+              accessibilityLabel="I already use StackMap - Continue with existing account"
             >
               <Text style={[styles.secondaryButtonText, { color: defaultTheme.primary }]}>
                 I already use StackMap
@@ -890,6 +828,7 @@ const OnboardingUserCentered = ({
         <TouchableOpacity
           style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
           onPress={() => animateStepTransition('syncImport')}
+          accessibilityLabel="Join Sync - Connect to an existing sync group"
         >
           <Icon name="cloud-download" size={40} color={defaultTheme.primary} />
           <Text style={styles.optionTitle}>Join Sync</Text>
@@ -951,6 +890,7 @@ const OnboardingUserCentered = ({
             setUserJourney(prev => ({ ...prev, userType: 'self' }));
             animateStepTransition('deviceStrategy');
           }}
+          accessibilityLabel="Just Me - Set up for personal use only"
         >
           <Icon name="person" size={40} color={defaultTheme.primary} />
           <Text style={styles.optionTitle}>Just Me</Text>
@@ -965,6 +905,7 @@ const OnboardingUserCentered = ({
             setUserJourney(prev => ({ ...prev, userType: 'helper' }));
             animateStepTransition('deviceStrategy');
           }}
+          accessibilityLabel="Helper/Caregiver - Set up to assist someone else"
         >
           <Icon name="supervisor-account" size={40} color={defaultTheme.primary} />
           <Text style={styles.optionTitle}>I'm Helping Someone</Text>
@@ -1114,10 +1055,10 @@ const OnboardingUserCentered = ({
             <TouchableOpacity
               style={styles.secondaryButton}
               onPress={() => {
-                if (userJourney.userType === 'group' || userJourney.userType === 'helper') {
+                if (userJourney.userType?.toLowerCase().trim() === 'group' || userJourney.userType?.toLowerCase().trim() === 'helper') {
                   animateStepTransition('pinSetup');
                 } else if (userJourney.deviceStrategy === 'multi') {
-                  animateStepTransition('syncCreate');
+                  animateStepTransition('syncChoice');
                 } else {
                   animateStepTransition('complete');
                 }
@@ -1216,41 +1157,59 @@ const OnboardingUserCentered = ({
 
   const renderSyncChoiceStep = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.title}>Enable Sync?</Text>
+      <Text style={styles.title}>Sync Across Your Devices</Text>
       <Text style={styles.subtitle}>
-        Access your StackMap on multiple devices
+        Keep your data synchronized across all your devices
       </Text>
-      
+
       <View style={styles.optionsContainer}>
         <TouchableOpacity
           style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
-          onPress={() => animateStepTransition('syncCreate')}
+          onPress={() => {
+            setUserJourney(prev => ({ ...prev, syncEnabled: true }));
+            animateStepTransition('syncCreate');
+          }}
+          accessibilityLabel="Start Fresh - Create a new sync code for your devices"
         >
-          <Icon name="cloud-upload" size={40} color={defaultTheme.primary} />
-          <Text style={styles.optionTitle}>Create New Sync</Text>
+          <Icon name="add-circle" size={40} color={defaultTheme.primary} />
+          <Text style={styles.optionTitle}>Start Fresh</Text>
           <Text style={styles.optionDescription}>
-            Start syncing across devices
+            Create a new sync code for your devices
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.optionCard, { borderColor: defaultTheme.primary }]}
-          onPress={() => animateStepTransition('syncImport')}
+          onPress={() => {
+            setUserJourney(prev => ({ ...prev, syncEnabled: true }));
+            animateStepTransition('syncImport');
+          }}
+          accessibilityLabel="Join Existing - Connect to your existing sync"
         >
-          <Icon name="cloud-download" size={40} color={defaultTheme.primary} />
-          <Text style={styles.optionTitle}>Join Existing Sync</Text>
+          <Icon name="sync" size={40} color={defaultTheme.primary} />
+          <Text style={styles.optionTitle}>Join Existing</Text>
           <Text style={styles.optionDescription}>
-            Connect to another device
+            Connect to your existing sync
           </Text>
         </TouchableOpacity>
       </View>
-      
+
       <TouchableOpacity
         style={styles.skipButton}
-        onPress={() => animateStepTransition('complete')}
+        onPress={() => {
+          setUserJourney(prev => ({ ...prev, syncEnabled: false, syncSkipped: true }));
+          // Store skip decision in settings for later prompting
+          useSettingsStore.getState().updateSettings({ syncSkipped: true });
+          if (userJourney.userType?.toLowerCase().trim() === 'group' || userJourney.userType?.toLowerCase().trim() === 'helper') {
+            animateStepTransition('pinSetup');
+          } else {
+            animateStepTransition('complete');
+          }
+        }}
+        accessibilityLabel="Skip for Now - Continue without setting up sync"
       >
         <Text style={[styles.skipButtonText, { color: defaultTheme.textSecondary }]}>
-          Skip for now
+          Skip for Now
         </Text>
       </TouchableOpacity>
     </View>

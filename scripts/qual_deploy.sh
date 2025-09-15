@@ -165,7 +165,10 @@ echo "🔍 Running pre-deployment sanity checks..."
 echo "- Checking for TODO/FIXME comments..."
 TODO_COUNT=$(grep -r "TODO\|FIXME\|XXX\|HACK" src/ --include="*.js" --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l | tr -d ' ')
 if [ "$TODO_COUNT" -gt "0" ]; then
-    echo "⚠️  Found $TODO_COUNT TODO/FIXME comments - review before production deployment"
+    echo "⚠️  Found $TODO_COUNT TODO/FIXME comments"
+    # Create backlog story for TODOs
+    ./scripts/manage-backlog.sh todos "$TODO_COUNT" 2>/dev/null || true
+    echo "   Continuing deployment (TODOs are non-blocking)..."
 fi
 
 # Check for Prettier formatting issues
@@ -175,8 +178,10 @@ if command -v npx &> /dev/null && [ -f ".prettierrc.js" ]; then
     if grep -q "Checking formatting..." /tmp/prettier-output.txt && ! grep -q "All matched files use Prettier code style!" /tmp/prettier-output.txt; then
         echo ""
         echo "⚠️  Some files are not properly formatted!"
-        echo "Run 'npx prettier --write src/**/*.{js,ts,tsx} App.js' to fix formatting"
-        echo "Continuing deployment (formatting issues are non-blocking)..."
+        # Create backlog story for prettier issues
+        ./scripts/manage-backlog.sh prettier failed 2>/dev/null || true
+        echo "   Run 'npm run prettier' to fix formatting"
+        echo "   Continuing deployment (formatting issues are non-blocking)..."
     else
         echo "✅ Prettier format check passed!"
     fi
@@ -194,6 +199,31 @@ npm run security:audit || {
     exit 1
 }
 echo "✅ Security audit passed!"
+
+# SonarCloud Code Quality Analysis (non-blocking)
+echo "- Running SonarCloud analysis..."
+# Load SonarCloud token if available
+if [ -f "$HOME/.manylla-env" ]; then
+    source "$HOME/.manylla-env"
+elif [ -f "$HOME/.stackmap-env" ]; then
+    source "$HOME/.stackmap-env"
+fi
+
+if [ -n "$SONAR_TOKEN" ]; then
+    npm run sonar 2>&1 | tee /tmp/sonar-output.txt || {
+        echo "⚠️  SonarCloud analysis failed (non-blocking)"
+        echo "Continuing with deployment..."
+    }
+
+    # Check if analysis was successful
+    if grep -q "Analysis complete!" /tmp/sonar-output.txt; then
+        echo "✅ Code quality check completed"
+        echo "   View results at: https://sonarcloud.io/project/overview?id=ajstack22_stackmap"
+    fi
+else
+    echo "ℹ️  SonarCloud token not found. Skipping analysis."
+    echo "   To enable: echo 'SONAR_TOKEN=\"your-token\"' > ~/.manylla-env"
+fi
 
 # Lint check (warnings are OK, errors are not)
 echo "- Running lint check..."
@@ -222,7 +252,11 @@ if [ "$DEPLOY_WEB" = true ] || [ "$DEPLOY_PROD" = true ]; then
         # Check if bundle is over 5MB (warning threshold)
         BUNDLE_BYTES=$(du -b web/build/bundle.js | cut -f1)
         if [ "$BUNDLE_BYTES" -gt "5242880" ]; then
-            echo "⚠️  Warning: Bundle size exceeds 5MB - consider code splitting"
+            echo "⚠️  Warning: Bundle size exceeds 5MB"
+            # Create backlog story for bundle optimization
+            ./scripts/manage-backlog.sh bundle "$BUNDLE_SIZE" 2>/dev/null || true
+            echo "   Consider code splitting and optimization"
+            echo "   Continuing deployment (bundle size is non-blocking)..."
         fi
     fi
 fi
@@ -244,7 +278,10 @@ if [ -f "tsconfig.json" ] && command -v npx &> /dev/null; then
     else
         ERROR_COUNT=$(grep -c "error TS" /tmp/tsc-output.txt 2>/dev/null || echo "0")
         if [ "$ERROR_COUNT" -gt "0" ]; then
-            echo "⚠️  TypeScript check found $ERROR_COUNT errors (non-critical, migration in progress)"
+            echo "⚠️  TypeScript check found $ERROR_COUNT errors (non-critical)"
+            # Create backlog story for TypeScript errors
+            ./scripts/manage-backlog.sh typescript "$ERROR_COUNT" 2>/dev/null || true
+            echo "   Continuing deployment (TypeScript warnings are non-blocking)..."
         else
             echo "✅ TypeScript check passed!"
         fi
@@ -458,6 +495,23 @@ if [ "$DEPLOY_IOS" = true ] || [ "$DEPLOY_IOS_DEVICE" = true ]; then
     
     echo "✅ iOS deployment complete"
     echo ""
+fi
+
+# Check if any backlog stories were created during deployment
+BACKLOG_DIR="$PROJECT_ROOT/docs/development/backlog"
+if [ -d "$BACKLOG_DIR" ] && ls "$BACKLOG_DIR"/S-DEBT-*.md 2>/dev/null | grep -q .; then
+    echo ""
+    echo "📋 Technical Debt Backlog Updated:"
+    echo "========================================="
+    # Show recently created stories (within last 5 minutes)
+    find "$BACKLOG_DIR" -name "S-DEBT-*.md" -mmin -5 2>/dev/null | while read story; do
+        story_name=$(basename "$story" .md)
+        title=$(grep "^# " "$story" | sed 's/^# //')
+        echo "  • $title"
+    done
+    echo ""
+    echo "Run './scripts/manage-backlog.sh list' to see all backlog items"
+    echo "========================================="
 fi
 
 # Summary

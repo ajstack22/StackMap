@@ -31,12 +31,9 @@ jest.mock('react-native', () => ({
 jest.mock('react-native-get-random-values', () => {});
 
 // Mock console to reduce noise in tests
-const originalConsoleLog = console.log;
 beforeAll(() => {
-  console.log = jest.fn();
 });
 afterAll(() => {
-  console.log = originalConsoleLog;
 });
 
 // Import after mocks are set up

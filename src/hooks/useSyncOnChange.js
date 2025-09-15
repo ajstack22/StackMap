@@ -48,19 +48,16 @@ export const useSyncOnChange = () => {
       
       // CRITICAL: Skip if we just joined a sync to prevent race conditions
       if (syncService._justJoinedSync) {
-        console.log('[useSyncOnChange] Skipping sync trigger - just joined sync group');
         return;
       }
       
       // CRITICAL: Skip if we're applying remote state to prevent feedback loop
       if (syncService._applyingRemoteState) {
-        console.log('[useSyncOnChange] Skipping sync trigger - applying remote state');
         return;
       }
       
       // Skip if sync is already in progress to prevent race conditions
       if (syncService.syncInProgress) {
-        console.log('[useSyncOnChange] Skipping sync trigger - sync already in progress');
         return;
       }
 
@@ -72,15 +69,6 @@ export const useSyncOnChange = () => {
         JSON.stringify(lastStateRef.current) !== JSON.stringify(currentState)
       ) {
         // Log what changed for debugging
-        console.log('[useSyncOnChange] State changed, requesting sync', {
-          usersChanged:
-            JSON.stringify(lastStateRef.current.users) !==
-            JSON.stringify(currentState.users),
-          libraryChanged:
-            JSON.stringify(lastStateRef.current.library) !==
-            JSON.stringify(currentState.library),
-          syncEnabled: syncService.enabled || syncService.syncEnabled, // Simple sync uses 'enabled', complex uses 'syncEnabled'
-        });
 
         // Request debounced sync with 5 second delay to allow for AsyncStorage debounce
         syncService

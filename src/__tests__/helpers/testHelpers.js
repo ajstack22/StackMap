@@ -293,7 +293,6 @@ export const performance = {
     const end = Date.now();
     const duration = end - start;
 
-    console.log(`[Performance] ${description}: ${duration.toFixed(2)}ms`);
 
     return { result, duration };
   },

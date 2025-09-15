@@ -19,8 +19,6 @@ class DebugSync {
     if (data) {
       this.logs.push(JSON.stringify(data));
     }
-    // Try console.log anyway
-    console.log(entry, data || '');
   }
   
   async load() {

@@ -45,12 +45,10 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
   useEffect(() => {
     // If we have shareId and shareKey from props (best case - captured immediately)
     if (shareId && shareKey) {
-      console.log('[ShareView] Using share data from props:', { shareId, keyLength: shareKey?.length });
       loadShareDataV3(shareId, shareKey);
     }
     // Legacy V2 format: ?share=[token]
     else if (shareToken) {
-      console.log('[ShareView] Using legacy share token');
       loadShareData();
     }
     // Fallback: try to detect from URL (shouldn't happen with proper capture)
@@ -63,7 +61,6 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
         const key = window.location.hash.substring(1);
         
         if (id && key) {
-          console.log('[ShareView] Fallback: detected share from URL');
           loadShareDataV3(id, key);
         } else if (id) {
           setError('Invalid share link - missing security key');
