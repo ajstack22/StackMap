@@ -146,7 +146,7 @@ class SimpleEncryptionService {
       
       // Encrypt with nacl
       const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
-      const encrypted = nacl.secretbox(combined, nonce, this.masterKey);
+      const encrypted = (nacl.secretbox as any)(combined, nonce, this.masterKey);
       
       if (!encrypted) {
         throw new Error('Encryption failed');

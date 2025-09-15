@@ -32,8 +32,8 @@ if (__DEV__ && typeof window !== 'undefined') {
   
   // Old sync systems have been removed
   window.useCRDTSync = () => {
-    console.warn('⚠️ Old sync systems have been removed.');
-    console.warn('The modern sync system is the only implementation.');
+    
+    
     return 'Modern sync (minimalSyncService + syncStoreIntegration)';
   };
   

@@ -77,7 +77,7 @@ const PreferencesModal = ({
             return reorderedThemes.slice(0, 20).map(color => {
               // Safety check: ensure the theme exists before rendering
               if (!color || !THEMES[color]) {
-//                 console.warn(`Theme "${color}" not found in THEMES`);
+//                 
                 return null;
               }
               

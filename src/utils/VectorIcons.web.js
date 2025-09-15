@@ -127,7 +127,7 @@ const Icon = ({ name, size = 24, color = '#000', style }) => {
       link.href = 'https://fonts.googleapis.com/icon?family=Material+Icons';
       link.rel = 'stylesheet';
       link.onerror = () => {
-        console.warn('Failed to load Material Icons from Google Fonts. Using local fallback.');
+        
       };
       document.head.appendChild(link);
     }

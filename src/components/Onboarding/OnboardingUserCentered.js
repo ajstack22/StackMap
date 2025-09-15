@@ -366,7 +366,7 @@ const OnboardingUserCentered = ({
       }
       
       if (!pullResult.data) {
-        console.warn('[OnboardingSync] Sync group exists but has no data yet');
+        
         throw new Error('The sync group exists but contains no data yet. Please ensure the other device has completed setup and try again.');
       }
       

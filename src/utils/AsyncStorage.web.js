@@ -91,7 +91,7 @@ const AsyncStorage = {
               // Backed up to sessionStorage
             }
           } catch (e) {
-            console.warn(`[AsyncStorage.web] sessionStorage backup failed:`, e);
+            
           }
           
           // Always store in memory as final fallback
@@ -131,14 +131,14 @@ const AsyncStorage = {
         try {
           localStorage.removeItem(key);
         } catch (e) {
-          console.warn('[AsyncStorage.web] localStorage.removeItem failed:', e);
+          
         }
         
         if (typeof sessionStorage !== 'undefined') {
           try {
             sessionStorage.removeItem(key);
           } catch (e) {
-            console.warn('[AsyncStorage.web] sessionStorage.removeItem failed:', e);
+            
           }
         }
         
@@ -205,11 +205,11 @@ const AsyncStorage = {
   
   // Debug function to check what's in all storage locations
   debugStorage: () => {
-    console.warn('=== AsyncStorage Debug ===');
-    console.warn('localStorage available:', isLocalStorageAvailable);
+    
+    
     
     // Check localStorage
-    console.warn('Total items in localStorage:', localStorage.length);
+    
     const localSyncItems = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -218,7 +218,7 @@ const AsyncStorage = {
         localSyncItems.push({ key, value: value?.substring(0, 100), storage: 'localStorage' });
       }
     }
-    console.warn('localStorage sync items:', localSyncItems);
+    
     
     // Check sessionStorage
     if (typeof sessionStorage !== 'undefined') {
@@ -230,25 +230,25 @@ const AsyncStorage = {
           sessionSyncItems.push({ key, value: value?.substring(0, 100), storage: 'sessionStorage' });
         }
       }
-      console.warn('sessionStorage sync items:', sessionSyncItems);
+      
     }
     
     // Check memory storage
     const memoryItems = Object.keys(memoryStorage)
       .filter(key => key.includes('sync'))
       .map(key => ({ key, value: memoryStorage[key]?.substring(0, 100), storage: 'memory' }));
-    console.warn('Memory sync items:', memoryItems);
+    
     
     return { localSyncItems, memoryStorage: memoryItems };
   }
 };
 
-console.warn('[AsyncStorage.web] Exporting AsyncStorage with custom flag:', AsyncStorage.__isCustomWebImplementation);
+
 
 // Make debug function globally available in browser console
 if (typeof window !== 'undefined') {
   window.debugAsyncStorage = AsyncStorage.debugStorage;
-  console.warn('💡 Type "debugAsyncStorage()" in console to see stored sync data');
+  
 }
 
 export default AsyncStorage;

@@ -101,7 +101,7 @@ if (Platform.OS === 'web') {
 } else {
   // Use native modules for both iOS and Android
   try {
-    DocumentPicker = require('react-native-document-picker').default;
+    DocumentPicker = require('react-native-document-picker');
   } catch (e) {
     if (__DEV__) {
       console.warn('DocumentPicker not available:', e);
@@ -1196,7 +1196,7 @@ const App = () => {
                 
                 // Also clean the URL to remove the sync parameter
                 if (Platform.OS === 'web' && window.history) {
-                  const url = new URL(window.location);
+                  const url = new URL(window.location.href);
                   url.searchParams.delete('sync');
                   window.history.replaceState({}, '', url.toString());
                   console.log('[handleOnboardingComplete] Cleaned sync parameter from URL');
@@ -2002,6 +2002,7 @@ const App = () => {
   }
 
   // Helper to update auto-update shares after activity changes
+  let updateAutoUpdateSharesTimeout = null;
   const updateAutoUpdateShares = async userId => {
     try {
       if (
@@ -2009,10 +2010,10 @@ const App = () => {
         (await syncService.hasAutoUpdateShares(userId))
       ) {
         // Use a small delay to batch multiple updates
-        if (updateAutoUpdateShares.timeout) {
-          clearTimeout(updateAutoUpdateShares.timeout);
+        if (updateAutoUpdateSharesTimeout) {
+          clearTimeout(updateAutoUpdateSharesTimeout);
         }
-        updateAutoUpdateShares.timeout = setTimeout(async () => {
+        updateAutoUpdateSharesTimeout = setTimeout(async () => {
           await syncService.updateActiveShares(userId);
 
         }, 1000); // 1 second delay to batch updates
@@ -2419,8 +2420,8 @@ const App = () => {
   };
 
   const handleReorder = () => {
-    if (newPosition && !isNaN(newPosition)) {
-      const newIndex = parseInt(newPosition) - 1;
+    if (newPosition && !isNaN(Number(newPosition))) {
+      const newIndex = parseInt(newPosition, 10) - 1;
       const currentIndex = activities.findIndex(
         a => a.id === reorderingActivity.activity.id,
       );
@@ -2888,7 +2889,7 @@ The file will remain in your Downloads folder until you delete it.`,
           input.type = 'file';
           input.accept = '.json';
           input.onchange = async e => {
-            const file = e.target.files[0];
+            const file = e.target && /** @type {HTMLInputElement} */ (e.target).files && /** @type {HTMLInputElement} */ (e.target).files[0];
             if (file) {
               const reader = new FileReader();
               reader.onload = e => resolve(e.target.result);
@@ -3001,7 +3002,6 @@ To use an older backup, delete some recent exports first.`,
 
             buttons.push({
               text: 'Cancel',
-              style: 'cancel',
               onPress: () => resolve(null),
             });
 
@@ -3251,7 +3251,7 @@ To use an older backup, delete some recent exports first.`,
             }
 
             // Always add cancel at the end
-            buttons.push({ text: 'Cancel', style: 'cancel' });
+            buttons.push({ text: 'Cancel', onPress: () => Promise.resolve() });
 
             // Ensure we don't exceed 4 buttons (Android limit)
             while (buttons.length > 4) {
@@ -4496,7 +4496,7 @@ Users: ${userNames} (${userCount} total)
       >
         <View style={styles.headerContent}>
           <View style={styles.logoContainer}>
-            <Logo size={isTablet() ? 40 : 32} theme={theme} />
+            <Logo size={isTablet() ? 40 : 32} theme={theme} color={theme.text} />
             <Text style={styles.headerTitle}>StackMap</Text>
           </View>
           {Platform.OS === 'ios' && PanGestureHandler ? (
@@ -4644,12 +4644,12 @@ Users: ${userNames} (${userCount} total)
 
         {/* Main Content Area */}
         <View style={styles.contentArea}>
-          {Platform.OS === 'android' &&
-            numColumns === 2 &&
+          {Platform.OS === 'android' && numColumns === 2 && (() => {
             console.warn(
               `Android: Should render 2 columns! Width: ${screenDimensions.width}`,
-            ) &&
-            null}
+            );
+            return null;
+          })()}
 
           {/* Edit Mode List - Positioned absolutely for crossfade */}
           {showEditModeList && (
@@ -4818,16 +4818,10 @@ Users: ${userNames} (${userCount} total)
                                   ? {
                                       // Web uses flexbox with gaps
                                       margin: CARD_LAYOUT.gap / 2,
-                                      flex:
-                                        numColumns > 1
-                                          ? '0 0 auto'
-                                          : '0 0 100%',
-                                      width:
-                                        numColumns === 1
-                                          ? '100%'
-                                          : `calc(${100 / numColumns}% - ${
-                                              CARD_LAYOUT.gap
-                                            }px)`,
+                                      flexGrow: 0,
+                                      flexShrink: 0,
+                                      flexBasis: numColumns > 1 ? 'auto' : '100%',
+                                      width: numColumns === 1 ? '100%' : undefined,
                                       maxWidth:
                                         numColumns === 1
                                           ? CARD_LAYOUT.singleColumnMaxWidth
@@ -4878,6 +4872,7 @@ Users: ${userNames} (${userCount} total)
                                 index,
                                 drag: null,
                                 isActive: false,
+                                customWidth: null,
                               })}
                             </View>
                           );
@@ -4910,7 +4905,13 @@ Users: ${userNames} (${userCount} total)
               // Android/Web fallback - regular FlatList with reorder buttons
               <FlatList
                 data={activities.filter(a => !a.deleted)}
-                renderItem={renderActivity}
+                renderItem={({ item, index }) => renderActivity({
+                  item,
+                  index,
+                  drag: null,
+                  isActive: false,
+                  customWidth: null
+                })}
                 keyExtractor={item => item.id}
                 ItemSeparatorComponent={() => (
                   <View style={{ height: CARD_LAYOUT.gap }} />
@@ -5032,6 +5033,7 @@ Users: ${userNames} (${userCount} total)
               }
             }}
             onMoreToggle={expanded => setEditToolbarMoreExpanded(expanded)}
+            style={{}}
             />
             </Animated.View>
           </View>
@@ -5153,6 +5155,7 @@ Users: ${userNames} (${userCount} total)
               }
             }}
             onMoreToggle={expanded => setEditToolbarMoreExpanded(expanded)}
+            style={{}}
             />
             </Animated.View>
           </View>
@@ -5169,6 +5172,7 @@ Users: ${userNames} (${userCount} total)
           }}
           position={{ bottom: fabBottom, top: fabTop, left: 20, zIndex: 10000, elevation: 200 }}
           theme={theme}
+          style={{}}
         />
 
         <FAB
@@ -5236,21 +5240,10 @@ Users: ${userNames} (${userCount} total)
         // State
         currentTheme={currentTheme}
         setCurrentTheme={setCurrentTheme}
-        bannerPosition={bannerPosition}
-        setBannerPosition={setBannerPosition}
-        displayMode={displayMode}
-        setDisplayMode={setDisplayMode}
-        taskCelebration={taskCelebration}
-        setTaskCelebration={setTaskCelebration}
-        routineCelebration={routineCelebration}
-        setRoutineCelebration={setRoutineCelebration}
         preferencesScrollKey={preferencesScrollKey}
         setPreferencesScrollKey={setPreferencesScrollKey}
         // Actions
         onSaveTheme={saveThemePreference}
-        onSaveBannerPosition={saveBannerPositionPreference}
-        onSaveDisplayMode={saveDisplayModePreference}
-        onSaveCelebration={saveCelebrationPreference}
         onPrivacyPress={() => {
           setShowUserModal(false);
           setTimeout(() => setShowPrivacyModal(true), 300);
@@ -5297,6 +5290,9 @@ Users: ${userNames} (${userCount} total)
         showToast={showToast}
         categories={library?.categories}
         onSaveCategories={updateLibraryCategories}
+        stackMapLibrary={library}
+        myLibrary={library}
+        onCopyGroupToMyLibrary={() => {}}
         onSelectActivity={async activity => {
           // Get device ID for enhanced activity IDs
           const deviceId = await encryptionService.getDeviceId();
@@ -5388,8 +5384,6 @@ Users: ${userNames} (${userCount} total)
         visible={showPrivacyModal}
         onClose={() => setShowPrivacyModal(false)}
         insets={insets}
-        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
-        styles={styles}
         onShowSupport={() => {
           setShowPrivacyModal(false);
           setTimeout(() => setShowSupportModal(true), 300);
@@ -5410,7 +5404,6 @@ Users: ${userNames} (${userCount} total)
         newPosition={newPosition}
         setNewPosition={setNewPosition}
         onReorder={handleReorder}
-        styles={styles}
       />
 
       {/* Support Us Modal */}
@@ -5418,9 +5411,7 @@ Users: ${userNames} (${userCount} total)
         visible={showSupportModal}
         onClose={() => setShowSupportModal(false)}
         insets={insets}
-        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
-        styles={styles}
-        // onSyncDiagnostic prop removed - test component no longer needed
+        onSyncDiagnostic={() => {}}
       />
       
       {/* Sync Diagnostic Modal removed - test component no longer needed */}
@@ -5491,7 +5482,6 @@ Users: ${userNames} (${userCount} total)
         users={users}
         currentUser={currentUser}
         currentDay={currentDay}
-        templates={libraryTemplates}
         libraryCategories={library?.categories}
         currentTheme={currentTheme}
         bannerPosition={bannerPosition}
@@ -5569,13 +5559,6 @@ Users: ${userNames} (${userCount} total)
         insets={insets}
         getAndroidModalBottomHeight={getAndroidModalBottomHeight}
         initialTab={accessModalActiveTab}
-        setNewUserEmoji={setNewUserEmoji}
-        showUserEmojiPicker={showUserEmojiPicker}
-        setShowUserEmojiPicker={setShowUserEmojiPicker}
-        editingUser={editingUser}
-        setEditingUser={setEditingUser}
-        handleAddUser={handleAddUser}
-        handleUpdateUser={handleUpdateUser}
       />
 
       {/* Add/Edit User Modal - Only render when AccessModal is not visible */}
@@ -5637,51 +5620,9 @@ Users: ${userNames} (${userCount} total)
         completedCount={activities.filter(a => a.completed).length}
         totalCount={activities.length}
         onCompleteDay={handleCompleteDayConfirm}
-        onPlanTomorrow={() => {
-          /* TODO: Implement plan tomorrow */
-        }}
         showToast={showToast}
-        templates={(() => {
-          // Transform library?.categories to templates format
-          const templatesObject = {};
-          if (library?.categories && Array.isArray(library?.categories)) {
-            library?.categories.forEach(category => {
-              templatesObject[category.id] = {
-                name: category.name,
-                activities: (category.activities || []).map(activity => ({
-                  id: activity.id,
-                  text: activity.name,
-                  icon: activity.icon,
-                })),
-              };
-            });
-          }
-          return templatesObject;
-        })()}
         users={users}
         currentUser={currentUser}
-        tomorrowActivities={
-          users[currentUser]?.days?.tomorrow?.activities || []
-        }
-        onUpdateTomorrowActivities={planData => {
-          // Update activities for the specified user and day
-          const updatedUsers = { ...users };
-          if (!updatedUsers[planData.userId]) return;
-
-          if (!updatedUsers[planData.userId].days) {
-            updatedUsers[planData.userId].days = {};
-          }
-          if (!updatedUsers[planData.userId].days[planData.day]) {
-            updatedUsers[planData.userId].days[planData.day] = {};
-          }
-
-          updatedUsers[planData.userId].days[planData.day].activities =
-            planData.activities;
-          setUsers(updatedUsers);
-
-          showToast({ message: 'Plan saved successfully!' });
-          setShowDayManagementModal(false);
-        }}
         initialActiveTab={dayManagementActiveTab}
         dayMode={dayMode}
         setDayMode={setDayMode}
@@ -5788,6 +5729,8 @@ Users: ${userNames} (${userCount} total)
           });
         }}
         initialTab={activityManagementActiveTab}
+        myLibrary={library}
+        onSaveToMyLibrary={() => {}}
       />
 
       {/* PIN Modal for Edit Mode - Standalone for when not in Users & Security modal */}
@@ -5806,6 +5749,7 @@ Users: ${userNames} (${userCount} total)
           setPinInput={setPinInput}
           isSettingPin={isSettingPin}
           confirmPin={confirmPin}
+          onPinComplete={() => {}}
         />
       )}
     </>
@@ -5840,11 +5784,10 @@ Users: ${userNames} (${userCount} total)
 
   // Show share view if share token or share ID is present
   if (shareToken || shareId) {
-    return <ShareView 
-      shareToken={shareToken} 
+    return <ShareView
+      shareToken={shareToken}
       shareId={shareId}
       shareKey={shareKey}
-      theme={theme} 
     />;
   }
 
@@ -5864,7 +5807,6 @@ Users: ${userNames} (${userCount} total)
           }}
           onShowPrivacy={() => setShowPrivacyModal(true)}
           onShowSupport={() => setShowSupportModal(true)}
-          isAbbreviated={!!syncSetupPhrase}
           syncSetupPhrase={syncSetupPhrase}
         />
 
@@ -5873,8 +5815,6 @@ Users: ${userNames} (${userCount} total)
           visible={showPrivacyModal}
           onClose={() => setShowPrivacyModal(false)}
           insets={insets}
-          getAndroidModalBottomHeight={getAndroidModalBottomHeight}
-          styles={styles}
           onShowSupport={() => {
             setShowPrivacyModal(false);
             setTimeout(() => setShowSupportModal(true), 300);
@@ -5885,8 +5825,8 @@ Users: ${userNames} (${userCount} total)
         <SupportModal
           visible={showSupportModal}
           onClose={() => setShowSupportModal(false)}
-          showToast={showToast}
-          theme={theme}
+          insets={insets}
+          onSyncDiagnostic={() => {}}
         />
 
         {/* Data Modal - Available during onboarding for import */}
@@ -5911,7 +5851,6 @@ Users: ${userNames} (${userCount} total)
           users={users}
           currentUser={currentUser}
           currentDay={currentDay}
-          templates={libraryTemplates}
           libraryCategories={library?.categories}
           currentTheme={currentTheme}
           bannerPosition={bannerPosition}

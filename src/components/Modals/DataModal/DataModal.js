@@ -39,7 +39,7 @@ const loadFileSystemModules = () => {
     } else {
       // Use native modules - wrap in try/catch for missing modules
       try {
-        DocumentPicker = require('react-native-document-picker').default;
+        DocumentPicker = require('react-native-document-picker');
       } catch (e) {
         DocumentPicker = null;
       }
@@ -114,7 +114,7 @@ const DataModal = ({
   const [includeCompleted, setIncludeCompleted] = useState(true);
   const [includeTomorrow, setIncludeTomorrow] = useState(true);
   const [autoUpdate, setAutoUpdate] = useState(true);
-  const [activeShares, setActiveShares] = useState([]);
+  const [activeShares, setActiveShares] = useState({});
   const [showActiveShares, setShowActiveShares] = useState(true);
   const [selectedShareUser, setSelectedShareUser] = useState(null);
   const [showShareQR, setShowShareQR] = useState(false);
@@ -327,7 +327,7 @@ const DataModal = ({
         }
       }
 
-      setActiveShares(userShares);
+      setActiveShares(userShares || {});
     } catch (error) {
       console.error('[DataModal] Error loading shares:', error);
     }
@@ -1056,7 +1056,7 @@ The file will remain in your Downloads folder until you delete it.`,
         // Use joinSync method to join existing sync
         const result = await syncService.joinSync(recoveryInput.trim());
 
-        setSyncId(result.syncId || syncService.syncId);
+        setSyncId((typeof result === 'object' && result.syncId) || syncService.syncId);
         setSyncRecoveryPhrase(recoveryInput.trim());
         setSyncEnabled(true);
         setShowRecoveryInput(false);
@@ -1066,7 +1066,7 @@ The file will remain in your Downloads folder until you delete it.`,
           onSyncStatusChange(true);
         }
 
-        const message = result.isNewSync
+        const message = (typeof result === 'object' && result.isNewSync)
           ? 'New sync created successfully!'
           : 'Joined existing sync successfully!';
         showToast({ message });
@@ -1144,8 +1144,7 @@ The file will remain in your Downloads folder until you delete it.`,
     try {
       setSyncLoading(true);
       
-      const currentSyncId = syncService.getSyncId ? syncService.getSyncId() : 
-                           syncService.minimalSync?.syncId || 
+      const currentSyncId = syncService.getSyncId ? syncService.getSyncId() :
                            syncService.syncId;
       
       if (!currentSyncId) {
@@ -2376,7 +2375,7 @@ The file will remain in your Downloads folder until you delete it.`,
             <Text style={styles.shareSuccessTitle}>Share Link Created!</Text>
 
             <View style={styles.shareInfoBox}>
-              <View style={[styles.shareFieldGroup, { alignItems: 'center' }]}>
+              <View style={[styles.shareField, { alignItems: 'center' }]}>
                 <Text style={[styles.shareFieldLabel, { textAlign: 'center', fontSize: 16 }]}>Share Link Ready</Text>
               </View>
               <Text style={[styles.shareFieldHelper, { textAlign: 'center', marginTop: 8, marginBottom: 16 }]}>
@@ -2491,7 +2490,7 @@ The file will remain in your Downloads folder until you delete it.`,
                             : 'N/A'}
                         </Text>
                         {share.shareNote && (
-                          <Text style={styles.activeShareNote} numberOfLines={1}>
+                          <Text style={styles.activeShareInfo} numberOfLines={1}>
                             {share.shareNote}
                           </Text>
                         )}
@@ -2531,6 +2530,7 @@ The file will remain in your Downloads folder until you delete it.`,
         icon="source"
         tabs={tabs}
         activeTab={activeTab}
+        headerRight={null}
         onTabChange={newTab => {
           // Reset share state when leaving share tab
           if (activeTab === 1 && newTab !== 1) {
@@ -2553,7 +2553,7 @@ The file will remain in your Downloads folder until you delete it.`,
       >
         {isOnboarding ? (
           // In onboarding mode, only show import content
-          <TabContent isActive={activeTab === 0} modalVisible={visible}>
+          <TabContent isActive={activeTab === 0} modalVisible={visible} onScrollStateChange={() => {}}>
             {renderImportContent()}
           </TabContent>
         ) : (
@@ -2563,6 +2563,7 @@ The file will remain in your Downloads folder until you delete it.`,
               key="sync"
               isActive={activeTab === 0}
               modalVisible={visible}
+              onScrollStateChange={() => {}}
             >
               {renderSyncContent()}
             </TabContent>,
@@ -2570,6 +2571,7 @@ The file will remain in your Downloads folder until you delete it.`,
               key="share"
               isActive={activeTab === 1}
               modalVisible={visible}
+              onScrollStateChange={() => {}}
             >
               {renderShareContent()}
             </TabContent>,
@@ -2577,6 +2579,7 @@ The file will remain in your Downloads folder until you delete it.`,
               key="import"
               isActive={activeTab === 2}
               modalVisible={visible}
+              onScrollStateChange={() => {}}
             >
               {renderImportContent()}
             </TabContent>,
@@ -2584,6 +2587,7 @@ The file will remain in your Downloads folder until you delete it.`,
               key="export"
               isActive={activeTab === 3}
               modalVisible={visible}
+              onScrollStateChange={() => {}}
             >
               {renderExportContent()}
             </TabContent>,
@@ -2591,6 +2595,7 @@ The file will remain in your Downloads folder until you delete it.`,
               key="reset"
               isActive={activeTab === 4}
               modalVisible={visible}
+              onScrollStateChange={() => {}}
             >
               {renderResetContent()}
             </TabContent>,

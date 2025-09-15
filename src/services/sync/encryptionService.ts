@@ -1,7 +1,7 @@
 // Import crypto polyfill for React Native BEFORE tweetnacl
 // Only import on native platforms, not web
-// @ts-ignore
 if (typeof window === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   require('react-native-get-random-values');
 }
 
@@ -11,13 +11,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import pako from 'pako';
 import { Platform } from 'react-native';
 
-// Type helpers for tweetnacl-util with proper casting
-const encodeBase64 = (arr: Uint8Array): string =>
-  (util as any).encodeBase64(arr);
-const decodeBase64 = (str: string): Uint8Array =>
-  (util as any).decodeBase64(str);
-const encodeUTF8 = (str: string): Uint8Array => (util as any).encodeUTF8(str);
-const decodeUTF8 = (arr: Uint8Array): string => (util as any).decodeUTF8(arr);
+// Type helpers for tweetnacl-util with proper typing
+interface TweetnaclUtil {
+  encodeBase64: (arr: Uint8Array) => string;
+  decodeBase64: (str: string) => Uint8Array;
+  encodeUTF8: (str: string) => Uint8Array;
+  decodeUTF8: (arr: Uint8Array) => string;
+}
+
+const typedUtil = util as TweetnaclUtil;
+const encodeBase64 = (arr: Uint8Array): string => typedUtil.encodeBase64(arr);
+const decodeBase64 = (str: string): Uint8Array => typedUtil.decodeBase64(str);
+const encodeUTF8 = (str: string): Uint8Array => typedUtil.encodeUTF8(str);
+const decodeUTF8 = (arr: Uint8Array): string => typedUtil.decodeUTF8(arr);
 
 const ENCRYPTION_VERSION = 2; // Bumped for compression support
 const SALT_LENGTH = 16;
@@ -180,7 +186,7 @@ class EncryptionService {
   /**
    * Encrypt data using nacl secretbox
    */
-  encryptData(data: any): string {
+  encryptData(data: unknown): string {
     if (!this.masterKey) {
       throw new Error('Encryption not initialized');
     }
@@ -204,12 +210,7 @@ class EncryptionService {
           metadata.compressed = true;
         }
       } catch (error) {
-        if (__DEV__) {
-          console.warn(
-            '[ENCRYPTION] Compression failed, using uncompressed data:',
-            error,
-          );
-        }
+        // Compression failed, using uncompressed data
       }
     }
 
@@ -233,7 +234,7 @@ class EncryptionService {
 
     // Generate nonce and encrypt
     const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
-    const encrypted = (nacl.secretbox as any)(combined, nonce, this.masterKey);
+    const encrypted = (nacl.secretbox as unknown as (msg: Uint8Array, nonce: Uint8Array, key: Uint8Array) => Uint8Array)(combined, nonce, this.masterKey);
 
     // Combine nonce and encrypted data
     const result = new Uint8Array(nonce.length + encrypted.length);
@@ -246,7 +247,7 @@ class EncryptionService {
   /**
    * Decrypt data using nacl secretbox
    */
-  decryptData(encryptedData: string): any {
+  decryptData(encryptedData: string): unknown {
     if (!this.masterKey) {
       throw new Error('Encryption not initialized');
     }
@@ -254,7 +255,6 @@ class EncryptionService {
     try {
       // Validate input
       if (typeof encryptedData !== 'string') {
-        console.error('[DECRYPTION] Invalid input type:', typeof encryptedData);
         throw new Error(`Expected string but got ${typeof encryptedData}`);
       }
       
@@ -295,9 +295,6 @@ class EncryptionService {
                 try {
                   dataBytes = pako.inflate(dataBytes);
                 } catch (error) {
-                  if (__DEV__) {
-                    console.error('[DECRYPTION] Decompression failed:', error);
-                  }
                   throw new Error('Failed to decompress data');
                 }
               }
@@ -326,9 +323,6 @@ class EncryptionService {
         }
       }
     } catch (error) {
-      if (__DEV__) {
-        console.error('[DECRYPTION] Decryption error:', error);
-      }
       throw error;
     }
   }
@@ -347,20 +341,10 @@ class EncryptionService {
       // Verification complete
       
       if (!verify) {
-        const errorMsg = `[CRITICAL] Recovery phrase storage verification failed! Key: ${key}`;
-        console.error(errorMsg);
-        // In production, show a visible warning
-        if (!__DEV__) {
-          console.warn('⚠️ IMPORTANT: Recovery phrase may not persist after page refresh. Please copy it immediately!');
-        }
+        throw new Error(`Recovery phrase storage verification failed for key: ${key}`);
       }
     } catch (error) {
-      console.error('[Encryption TS] Failed to store recovery phrase:', error);
-      // In production, show a visible warning
-      if (!__DEV__) {
-        console.warn('⚠️ CRITICAL ERROR: Could not save recovery phrase. Copy it now before refreshing!');
-      }
-      throw error;
+      throw new Error(`Failed to store recovery phrase: ${error}`);
     }
   }
 
@@ -375,7 +359,6 @@ class EncryptionService {
       // Retrieval complete
       return phrase;
     } catch (error) {
-      console.error('[Encryption TS] Failed to get recovery phrase:', error);
       return null;
     }
   }
@@ -390,9 +373,7 @@ class EncryptionService {
       await AsyncStorage.removeItem('recovery_phrase');
       await AsyncStorage.removeItem('encryption_salt');
     } catch (error) {
-      if (__DEV__) {
-        console.error('Failed to clear encryption data:', error);
-      }
+      // Failed to clear encryption data
     }
   }
 
@@ -419,9 +400,6 @@ class EncryptionService {
       }
       return deviceId;
     } catch (error) {
-      if (__DEV__) {
-        console.error('Failed to get device ID:', error);
-      }
       // Return a fallback ID in correct format (32 hex chars)
       return '00000000000000000000000000000000';
     }
@@ -446,9 +424,6 @@ class EncryptionService {
       const decrypted = this.decryptData(encrypted);
       return JSON.stringify(testData) === JSON.stringify(decrypted);
     } catch (error) {
-      if (__DEV__) {
-        console.error('Encryption test failed:', error);
-      }
       return false;
     }
   }

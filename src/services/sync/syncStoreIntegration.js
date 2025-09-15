@@ -733,7 +733,7 @@ class SyncStoreIntegration {
       if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
           if (__DEV__) {
-            console.warn('Share links require deployment to stackmap.app. Returning mock data for local testing.');
+            
           }
           const mockUrl = `https://stackmap.app?share=${accessToken}`;
           return {

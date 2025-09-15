@@ -6,6 +6,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles, getTabletStyles } from './styles';
 
 export const EditModeListItem = React.memo(
+  /** @param {Object} props */
   ({
     item,
     index,
@@ -30,8 +31,8 @@ export const EditModeListItem = React.memo(
             item.text || item.name || item.title
           }"?`,
           [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Delete', style: 'destructive', onPress: onDelete },
+            { text: 'Cancel', onPress: () => {} },
+            { text: 'Delete', onPress: onDelete },
           ],
         );
       } else {

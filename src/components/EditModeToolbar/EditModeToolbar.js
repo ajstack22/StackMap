@@ -37,6 +37,7 @@ const EditModeToolbar = ({
   toolbarOrder,
   moreButtonPosition = 'right',
   onMoreToggle,
+  style,
 }) => {
   const insets = useSafeAreaInsets();
   const [showMoreMenu, setShowMoreMenu] = useState(false);

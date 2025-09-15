@@ -142,7 +142,7 @@ class MinimalSyncService {
           // CRITICAL: Set isEnabled flag after successfully loading sync
           this.isEnabled = true;
         } else {
-          console.warn('[MinimalSync] ⚠️ Sync ID found but no recovery phrase - sync disabled');
+          
           this.syncId = null; // Clear sync ID if we can't decrypt
         }
         
@@ -173,7 +173,7 @@ class MinimalSyncService {
         .join('');
     } else {
       // Use nacl.randomBytes as secure fallback (already available)
-      console.warn('[MinimalSync] Using nacl.randomBytes for ID generation');
+      
       const bytes = nacl.randomBytes(16);
       return Array.from(bytes)
         .map(b => b.toString(16).padStart(2, '0'))
@@ -666,7 +666,7 @@ class MinimalSyncService {
       
       // Check if we got a 429 (rate limit)
       if (response.status === 429) {
-        console.warn('[MinimalSync] ⚠️ Rate limited:', result.error);
+        
         return { success: false, error: result.error, rateLimited: true };
       }
       
