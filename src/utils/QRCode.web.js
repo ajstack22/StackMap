@@ -20,7 +20,7 @@ const QRCodeComponent = ({
         },
       })
         .then(url => setDataUrl(url))
-        .catch(err => { /* QR code generation failed */ });
+        .catch(() => { /* QR code generation failed */ });
     }
   }, [value, size, color, backgroundColor]);
 

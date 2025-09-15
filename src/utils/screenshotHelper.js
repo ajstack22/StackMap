@@ -1,5 +1,3 @@
-import { NativeModules, Platform } from 'react-native';
-
 /**
  * Helper class for managing screenshots during automated testing
  */
@@ -40,11 +38,7 @@ class ScreenshotHelper {
     }
 
     // Signal to the test runner that we're ready for a screenshot
-    if (Platform.OS === 'ios') {
-      // For iOS, we'll use accessibility labels that the UI test can find
-    } else {
-      // For Android, we can use a similar approach
-    }
+    // Both iOS and Android use accessibility labels that UI tests can find
 
     // Give the test runner time to capture
     await new Promise(resolve => setTimeout(resolve, 500));

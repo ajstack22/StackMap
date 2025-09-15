@@ -5,6 +5,175 @@ import { Text } from '../Typography';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles, getTabletStyles } from './styles';
 
+// Helper function to render reorder buttons
+const renderReorderButtons = ({ index, totalCount, onMoveUp, onMoveDown, theme, isTablet, itemStyles }) => {
+  return (
+    <View style={itemStyles.reorderButtons}>
+      <TouchableOpacity
+        onPress={() => onMoveUp(index)}
+        disabled={index === 0}
+        style={[
+          itemStyles.reorderButton,
+          index === 0 && itemStyles.disabled,
+        ]}
+        accessibilityLabel="Move up"
+        accessibilityRole="button"
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+      >
+        <View
+          style={[
+            itemStyles.actionCircle,
+            index === 0 && itemStyles.disabledCircle,
+          ]}
+        >
+          <Icon
+            name="arrow-upward"
+            size={isTablet ? 24 : 20}
+            color={index === 0 ? '#ccc' : theme.primary}
+          />
+        </View>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => onMoveDown(index)}
+        disabled={index === totalCount - 1}
+        style={[
+          itemStyles.reorderButton,
+          index === totalCount - 1 && itemStyles.disabled,
+        ]}
+        accessibilityLabel="Move down"
+        accessibilityRole="button"
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+      >
+        <View
+          style={[
+            itemStyles.actionCircle,
+            index === totalCount - 1 && itemStyles.disabledCircle,
+          ]}
+        >
+          <Icon
+            name="arrow-downward"
+            size={isTablet ? 24 : 20}
+            color={index === totalCount - 1 ? '#ccc' : theme.primary}
+          />
+        </View>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+// Helper function to render action buttons
+const renderActionButtons = ({ item, index, displayMode, onToggle, onLibrary, onDelete, theme, isTablet, itemStyles }) => {
+  return (
+    <View style={itemStyles.actionButtons}>
+      {/* Number/Time Badge - aligned with other action buttons */}
+      {displayMode !== 'none' && (
+        <View style={itemStyles.actionButton}>
+          <View
+            style={[
+              itemStyles.actionCircle,
+              { backgroundColor: theme.primary },
+              displayMode === 'time' && itemStyles.timeBadge,
+            ]}
+          >
+            <Text style={itemStyles.numberText}>
+              {displayMode === 'time' ? item.time || '--:--' : index + 1}
+            </Text>
+          </View>
+        </View>
+      )}
+
+      <TouchableOpacity
+        onPress={onToggle}
+        style={itemStyles.actionButton}
+        accessibilityLabel={
+          item.completed ? 'Mark incomplete' : 'Mark complete'
+        }
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+      >
+        <View
+          style={[
+            itemStyles.completionCircle,
+            item.completed && [
+              itemStyles.completionCircleCompleted,
+              { backgroundColor: theme.primary },
+            ],
+          ]}
+        >
+          <Text
+            style={[
+              itemStyles.checkmark,
+              !item.completed && [
+                itemStyles.checkmarkIncomplete,
+                { color: theme.primary },
+              ],
+            ]}
+          >
+            ✓
+          </Text>
+        </View>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={onLibrary}
+        style={itemStyles.actionButton}
+        accessibilityLabel={
+          item.addedToLibrary ? 'Already in library' : 'Add to library'
+        }
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+      >
+        <View
+          style={[
+            itemStyles.actionCircle,
+            item.addedToLibrary && [
+              itemStyles.bookmarkAdded,
+              { backgroundColor: theme.primary },
+            ],
+          ]}
+        >
+          <Icon
+            name="bookmark"
+            size={isTablet ? 24 : 20}
+            color={item.addedToLibrary ? '#fff' : theme.primary}
+          />
+        </View>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={onDelete}
+        style={itemStyles.actionButton}
+        accessibilityLabel="Delete activity"
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+      >
+        <View style={itemStyles.actionCircle}>
+          <Icon name="delete" size={isTablet ? 24 : 20} color="#e53e3e" />
+        </View>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+// Helper function to handle delete action with platform-specific behavior
+const createHandleDelete = (item, onDelete) => {
+  return () => {
+    if (Platform.OS === 'ios') {
+      Alert.alert(
+        'Delete Activity',
+        `Are you sure you want to delete "${
+          item.text || item.name || item.title
+        }"?`,
+        [
+          { text: 'Cancel', onPress: () => {} },
+          { text: 'Delete', onPress: onDelete },
+        ],
+      );
+    } else {
+      // For Android and Web, parent should show ConfirmModal
+      onDelete();
+    }
+  };
+};
+
 export const EditModeListItem = React.memo(
   /** @param {Object} props */
   ({
@@ -22,24 +191,7 @@ export const EditModeListItem = React.memo(
     displayMode,
   }) => {
     const itemStyles = isTablet ? getTabletStyles() : styles;
-
-    const handleDelete = () => {
-      if (Platform.OS === 'ios') {
-        Alert.alert(
-          'Delete Activity',
-          `Are you sure you want to delete "${
-            item.text || item.name || item.title
-          }"?`,
-          [
-            { text: 'Cancel', onPress: () => {} },
-            { text: 'Delete', onPress: onDelete },
-          ],
-        );
-      } else {
-        // For Android and Web, parent should show ConfirmModal
-        onDelete();
-      }
-    };
+    const handleDelete = createHandleDelete(item, onDelete);
 
     return (
       <View style={itemStyles.listItem}>
@@ -74,163 +226,35 @@ export const EditModeListItem = React.memo(
         {/* Unified actions row */}
         <View style={itemStyles.actionsRow}>
           {/* Reorder buttons - consistent across all platforms */}
-          <View style={itemStyles.reorderButtons}>
-            <TouchableOpacity
-              onPress={() => onMoveUp(index)}
-              disabled={index === 0}
-              style={[
-                itemStyles.reorderButton,
-                index === 0 && itemStyles.disabled,
-              ]}
-              accessibilityLabel="Move up"
-              accessibilityRole="button"
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            >
-              <View
-                style={[
-                  itemStyles.actionCircle,
-                  index === 0 && itemStyles.disabledCircle,
-                ]}
-              >
-                <Icon
-                  name="arrow-upward"
-                  size={isTablet ? 24 : 20}
-                  color={index === 0 ? '#ccc' : theme.primary}
-                />
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => onMoveDown(index)}
-              disabled={index === totalCount - 1}
-              style={[
-                itemStyles.reorderButton,
-                index === totalCount - 1 && itemStyles.disabled,
-              ]}
-              accessibilityLabel="Move down"
-              accessibilityRole="button"
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            >
-              <View
-                style={[
-                  itemStyles.actionCircle,
-                  index === totalCount - 1 && itemStyles.disabledCircle,
-                ]}
-              >
-                <Icon
-                  name="arrow-downward"
-                  size={isTablet ? 24 : 20}
-                  color={index === totalCount - 1 ? '#ccc' : theme.primary}
-                />
-              </View>
-            </TouchableOpacity>
-          </View>
+          {renderReorderButtons({ index, totalCount, onMoveUp, onMoveDown, theme, isTablet, itemStyles })}
 
           {/* Other actions */}
-          <View style={itemStyles.actionButtons}>
-            {/* Number/Time Badge - aligned with other action buttons */}
-            {displayMode !== 'none' && (
-              <View style={itemStyles.actionButton}>
-                <View
-                  style={[
-                    itemStyles.actionCircle,
-                    { backgroundColor: theme.primary },
-                    displayMode === 'time' && itemStyles.timeBadge,
-                  ]}
-                >
-                  <Text style={itemStyles.numberText}>
-                    {displayMode === 'time' ? item.time || '--:--' : index + 1}
-                  </Text>
-                </View>
-              </View>
-            )}
-            
-            <TouchableOpacity
-              onPress={onToggle}
-              style={itemStyles.actionButton}
-              accessibilityLabel={
-                item.completed ? 'Mark incomplete' : 'Mark complete'
-              }
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            >
-              <View
-                style={[
-                  itemStyles.completionCircle,
-                  item.completed && [
-                    itemStyles.completionCircleCompleted,
-                    { backgroundColor: theme.primary },
-                  ],
-                ]}
-              >
-                <Text
-                  style={[
-                    itemStyles.checkmark,
-                    !item.completed && [
-                      itemStyles.checkmarkIncomplete,
-                      { color: theme.primary },
-                    ],
-                  ]}
-                >
-                  ✓
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={onLibrary}
-              style={itemStyles.actionButton}
-              accessibilityLabel={
-                item.addedToLibrary ? 'Already in library' : 'Add to library'
-              }
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            >
-              <View
-                style={[
-                  itemStyles.actionCircle,
-                  item.addedToLibrary && [
-                    itemStyles.bookmarkAdded,
-                    { backgroundColor: theme.primary },
-                  ],
-                ]}
-              >
-                <Icon
-                  name="bookmark"
-                  size={isTablet ? 24 : 20}
-                  color={item.addedToLibrary ? '#fff' : theme.primary}
-                />
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={handleDelete}
-              style={itemStyles.actionButton}
-              accessibilityLabel="Delete activity"
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            >
-              <View style={itemStyles.actionCircle}>
-                <Icon name="delete" size={isTablet ? 24 : 20} color="#e53e3e" />
-              </View>
-            </TouchableOpacity>
-          </View>
+          {renderActionButtons({ item, index, displayMode, onToggle, onLibrary, onDelete: handleDelete, theme, isTablet, itemStyles })}
         </View>
       </View>
     );
   },
   // Custom comparison for better performance on Android
   (prevProps, nextProps) => {
-    return (
+    // Simple equality check for all relevant props
+    const itemPropsEqual = (
       prevProps.item.id === nextProps.item.id &&
       prevProps.item.text === nextProps.item.text &&
       prevProps.item.description === nextProps.item.description &&
       prevProps.item.icon === nextProps.item.icon &&
       prevProps.item.completed === nextProps.item.completed &&
       prevProps.item.addedToLibrary === nextProps.item.addedToLibrary &&
-      prevProps.item.time === nextProps.item.time &&
+      prevProps.item.time === nextProps.item.time
+    );
+
+    const otherPropsEqual = (
       prevProps.index === nextProps.index &&
       prevProps.totalCount === nextProps.totalCount &&
       prevProps.theme.primary === nextProps.theme.primary &&
       prevProps.isTablet === nextProps.isTablet &&
       prevProps.displayMode === nextProps.displayMode
     );
+
+    return itemPropsEqual && otherPropsEqual;
   }
 );

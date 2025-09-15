@@ -1,24 +1,20 @@
 // @ts-check
 import React, { useState, useEffect } from 'react';
-import { Text, TextInput } from '../../Typography';
+import { Text } from '../../Typography';
 import {
   View,
   TouchableOpacity,
   ScrollView,
   Platform,
-  ActivityIndicator,
   Alert,
-  Modal,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './styles';
-import { SPACING, COLORS } from '../../../constants';
 import ConfirmModal from '../ConfirmModal';
 import { TabbedModal, TabContent } from '../../../components';
-import { FormInput, ModalFooter, ModalButton } from '../../ModalUtilities';
-import SyncStatusIndicator from '../../SyncStatusIndicator';
+import { FormInput, ModalButton } from '../../ModalUtilities';
 import syncService from '../../../services/sync';
 import useAppStore from '../../../stores/useAppStore';
 import QRCode from 'react-native-qrcode-svg';
@@ -1289,7 +1285,9 @@ The file will remain in your Downloads folder until you delete it.`,
                   Platform.OS === 'android' ? 'Search for Files' : 'Select File'
                 }
                 icon="folder-open"
-                onPress={handleSelectFile}
+                onPress={() => {
+                  handleSelectFile();
+                }}
                 disabled={loading}
                 loading={loading}
                 fullWidth
@@ -1514,7 +1512,9 @@ The file will remain in your Downloads folder until you delete it.`,
                           {
                             text: 'Import',
                             style: 'destructive',
-                            onPress: handleImportConfirm,
+                            onPress: () => {
+                              handleImportConfirm();
+                            },
                           },
                         ],
                       );
@@ -1661,7 +1661,9 @@ The file will remain in your Downloads folder until you delete it.`,
             variant="primary"
             label="Export Selected Data"
             icon="file-upload"
-            onPress={handleExport}
+            onPress={() => {
+              handleExport();
+            }}
             disabled={!Object.values(exportSelections).some(v => v) || loading}
             loading={loading}
             fullWidth
@@ -1746,7 +1748,9 @@ The file will remain in your Downloads folder until you delete it.`,
                     {
                       text: 'Reset App',
                       style: 'destructive',
-                      onPress: handleReset,
+                      onPress: () => {
+                        handleReset();
+                      },
                     },
                   ],
                 );
@@ -1832,7 +1836,9 @@ The file will remain in your Downloads folder until you delete it.`,
                   variant="primary"
                   label="Create New Sync"
                   icon="add-circle"
-                  onPress={handleEnableSync}
+                  onPress={() => {
+                    handleEnableSync();
+                  }}
                   disabled={syncLoading}
                   loading={syncLoading}
                   fullWidth
@@ -1866,7 +1872,9 @@ The file will remain in your Downloads folder until you delete it.`,
                     theme={theme}
                     variant="primary"
                     label="Restore"
-                    onPress={handleRestoreSync}
+                    onPress={() => {
+                      handleRestoreSync();
+                    }}
                     disabled={syncLoading || !recoveryInput.trim()}
                     loading={syncLoading}
                   />
@@ -1893,44 +1901,46 @@ The file will remain in your Downloads folder until you delete it.`,
                 variant="primary"
                 label="Add Device"
                 icon="add-circle"
-                onPress={async () => {
-                  try {
-                    setSyncLoading(true);
-                    setSyncError('');
-                    
-                    // Try to get recovery phrase from multiple sources
-                    let currentPhrase = syncRecoveryPhrase;
-                    
-                    if (!currentPhrase) {
-                      currentPhrase = syncService.getRecoveryPhrase();
-                    }
-                    
-                    if (!currentPhrase) {
-                      throw new Error('Recovery phrase not available. Please disable and re-enable sync.');
-                    }
-                    
-                    const result = await syncService.createInviteCode(24, 5, 'Manual invite');
-                    
-                    if (result && result.inviteCode) {
-                      // The inviteUrl already includes the recovery phrase as a fragment
-                      const fullSyncKey = result.inviteUrl;
-                      setGeneratedSyncKey(fullSyncKey);
-                      setShowGeneratedKey(true);
-                      showToast({ 
-                        message: 'Sync key generated! Valid for 24 hours.', 
-                        type: 'success' 
+                onPress={() => {
+                  (async () => {
+                    try {
+                      setSyncLoading(true);
+                      setSyncError('');
+
+                      // Try to get recovery phrase from multiple sources
+                      let currentPhrase = syncRecoveryPhrase;
+
+                      if (!currentPhrase) {
+                        currentPhrase = syncService.getRecoveryPhrase();
+                      }
+
+                      if (!currentPhrase) {
+                        throw new Error('Recovery phrase not available. Please disable and re-enable sync.');
+                      }
+
+                      const result = await syncService.createInviteCode(24, 5, 'Manual invite');
+
+                      if (result && result.inviteCode) {
+                        // The inviteUrl already includes the recovery phrase as a fragment
+                        const fullSyncKey = result.inviteUrl;
+                        setGeneratedSyncKey(fullSyncKey);
+                        setShowGeneratedKey(true);
+                        showToast({
+                          message: 'Sync key generated! Valid for 24 hours.',
+                          type: 'success'
+                        });
+                      } else {
+                        throw new Error('Failed to generate invite code');
+                      }
+                    } catch (error) {
+                      showToast({
+                        message: error.message || 'Failed to generate sync key',
+                        type: 'error'
                       });
-                    } else {
-                      throw new Error('Failed to generate invite code');
+                    } finally {
+                      setSyncLoading(false);
                     }
-                  } catch (error) {
-                    showToast({ 
-                      message: error.message || 'Failed to generate sync key', 
-                      type: 'error' 
-                    });
-                  } finally {
-                    setSyncLoading(false);
-                  }
+                  })();
                 }}
                 disabled={syncLoading}
                 loading={syncLoading}
@@ -2013,37 +2023,39 @@ The file will remain in your Downloads folder until you delete it.`,
                       variant="secondary"
                       label="Regenerate Key"
                       icon="refresh"
-                      onPress={async () => {
-                        try {
-                          setSyncLoading(true);
-                          
-                          // Get recovery phrase - extract from current key if needed
-                          let currentPhrase = syncRecoveryPhrase || syncService.getRecoveryPhrase();
-                          if (!currentPhrase && generatedSyncKey) {
-                            // Extract recovery phrase from the URL format
-                            const parts = generatedSyncKey.split('#');
-                            currentPhrase = parts[1]; // Recovery phrase is after the #
-                          }
-                          
-                          const result = await syncService.createInviteCode(24, 5, 'Manual invite');
-                          
-                          if (result && result.inviteCode) {
-                            // The inviteUrl already includes the recovery phrase as a fragment
-                            const fullSyncKey = result.inviteUrl;
-                            setGeneratedSyncKey(fullSyncKey);
-                            showToast({ 
-                              message: 'New sync key generated!', 
-                              type: 'success' 
+                      onPress={() => {
+                        (async () => {
+                          try {
+                            setSyncLoading(true);
+
+                            // Get recovery phrase - extract from current key if needed
+                            let currentPhrase = syncRecoveryPhrase || syncService.getRecoveryPhrase();
+                            if (!currentPhrase && generatedSyncKey) {
+                              // Extract recovery phrase from the URL format
+                              const parts = generatedSyncKey.split('#');
+                              currentPhrase = parts[1]; // Recovery phrase is after the #
+                            }
+
+                            const result = await syncService.createInviteCode(24, 5, 'Manual invite');
+
+                            if (result && result.inviteCode) {
+                              // The inviteUrl already includes the recovery phrase as a fragment
+                              const fullSyncKey = result.inviteUrl;
+                              setGeneratedSyncKey(fullSyncKey);
+                              showToast({
+                                message: 'New sync key generated!',
+                                type: 'success'
+                              });
+                            }
+                          } catch (error) {
+                            showToast({
+                              message: 'Failed to generate new key',
+                              type: 'error'
                             });
+                          } finally {
+                            setSyncLoading(false);
                           }
-                        } catch (error) {
-                          showToast({ 
-                            message: 'Failed to generate new key', 
-                            type: 'error' 
-                          });
-                        } finally {
-                          setSyncLoading(false);
-                        }
+                        })();
                       }}
                       disabled={syncLoading}
                       loading={syncLoading}
@@ -2062,7 +2074,9 @@ The file will remain in your Downloads folder until you delete it.`,
               variant="secondary"
               label="Sync Now"
               icon="sync"
-              onPress={handleManualSync}
+              onPress={() => {
+                handleManualSync();
+              }}
               disabled={syncLoading || syncStatus === 'syncing'}
               loading={syncStatus === 'syncing'}
               fullWidth
@@ -2087,7 +2101,9 @@ The file will remain in your Downloads folder until you delete it.`,
                       {
                         text: 'Disable',
                         style: 'destructive',
-                        onPress: handleDisableSync,
+                        onPress: () => {
+                          handleDisableSync();
+                        },
                       },
                     ],
                   );
@@ -2118,7 +2134,9 @@ The file will remain in your Downloads folder until you delete it.`,
                       {
                         text: 'Delete Server Data',
                         style: 'destructive',
-                        onPress: handleDeleteServerData,
+                        onPress: () => {
+                          handleDeleteServerData();
+                        },
                       },
                     ],
                   );
@@ -2349,7 +2367,9 @@ The file will remain in your Downloads folder until you delete it.`,
                   variant="primary"
                   label="Create Share Link"
                   icon="share"
-                  onPress={handleCreateShare}
+                  onPress={() => {
+                    handleCreateShare();
+                  }}
                   disabled={shareLoading}
                   loading={shareLoading}
                   fullWidth
@@ -2487,7 +2507,9 @@ The file will remain in your Downloads folder until you delete it.`,
                         )}
                       </View>
                       <TouchableOpacity
-                        onPress={() => handleDeleteShare(share.shareId)}
+                        onPress={() => {
+                          handleDeleteShare(share.shareId);
+                        }}
                         style={styles.activeShareDelete}
                       >
                         <Icon name="delete" size={20} color="#d32f2f" />

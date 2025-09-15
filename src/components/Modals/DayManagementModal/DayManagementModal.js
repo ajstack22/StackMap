@@ -1,17 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Text } from '../../Typography';
-import {
-  View,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import TabbedModal from '../../TabbedModal';
 import { TabContent } from '../../TabbedModal';
 import CompleteTabContent from './CompleteTabContent';
 import PlanTabContent from './PlanTabContent';
-import { styles } from './styles';
 
 const DayManagementModal = ({
   visible,

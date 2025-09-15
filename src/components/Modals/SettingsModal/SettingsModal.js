@@ -71,9 +71,9 @@ const SettingsModal = ({
     const availableWidth = screenWidth - containerPadding;
 
     // Button width calculation - more accurate based on actual button content
-    const buttonWidth = Platform.OS === 'web' ? 50 : 50; // Actual button width is smaller
+    const buttonWidth = 50; // Actual button width is smaller
     const buttonGap = Platform.OS === 'web' ? 8 : 10; // Gap between buttons from styles
-    const editModeTextWidth = Platform.OS === 'web' ? 65 : 65; // More accurate text width
+    const editModeTextWidth = 65; // More accurate text width
     const moreButtonWidth = buttonWidth; // Same as regular buttons
 
     // Reserve space for "Edit Mode" text and "More" button

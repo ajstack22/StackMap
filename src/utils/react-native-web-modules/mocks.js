@@ -7,15 +7,15 @@ import { View } from 'react-native-web';
 
 // Mock codegenNativeCommands
 export const codegenNativeCommands = () => ({});
-export default function codegenNativeComponent(name) {
+export default function codegenNativeComponent() {
   // Return a View component as a fallback
   return View;
 }
 
 // Mock NativeComponentRegistry
 export const NativeComponentRegistry = {
-  get: name => View,
-  getWithFallback_DEPRECATED: name => View,
+  get: () => View,
+  getWithFallback_DEPRECATED: () => View,
   setRuntimeConfigProvider: () => {},
 };
 

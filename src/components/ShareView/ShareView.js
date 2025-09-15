@@ -272,7 +272,7 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
     if (activity.deleted) return null;
 
     const renderActivityEmoji = () => {
-      const activityIcon = activity.icon || activity.icon;
+      const activityIcon = activity.icon || activity.emoji || '🎯';
       if (activityIcon && activityIcon.includes('.png')) {
         const imageSource = getCustomImageSource(activityIcon);
         if (imageSource) {

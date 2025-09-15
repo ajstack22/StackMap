@@ -61,10 +61,24 @@ jest.mock('react-native', () => {
       Text: 'Animated.Text',
       Value: jest.fn(() => ({
         setValue: jest.fn(),
-        interpolate: jest.fn(),
+        interpolate: jest.fn(() => ({
+          inputRange: [0, 1],
+          outputRange: ['0deg', '360deg'],
+        })),
       })),
       timing: jest.fn(() => ({
         start: jest.fn(),
+      })),
+      sequence: jest.fn((animations) => ({
+        start: jest.fn((callback) => {
+          // Execute all animations and call callback
+          animations.forEach(anim => {
+            if (anim && anim.start) {
+              anim.start();
+            }
+          });
+          if (callback) callback();
+        }),
       })),
     },
     StyleSheet: {

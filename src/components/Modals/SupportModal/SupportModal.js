@@ -18,12 +18,100 @@ import { getAndroidModalBottomHeight } from '../../../utils/modalHelpers';
 // Import team photo
 const TeamPhoto = require('../../../../image_library/StackMapTeam.jpg');
 
-// Debug log for web
-if (Platform.OS === 'web') {
 
-  // If it's an object with default property (ES6 module)
-  if (TeamPhoto && typeof TeamPhoto === 'object' && TeamPhoto.default) {}
-}
+// Support option component
+const SupportOption = ({ icon, title, description }) => (
+  <View style={styles.supportOptionFun}>
+    <Text style={styles.supportIconBig}>{icon}</Text>
+    <View style={styles.supportOptionContent}>
+      <Text style={styles.supportOptionTitleFun}>{title}</Text>
+      <Text style={styles.supportOptionTextFun}>{description}</Text>
+    </View>
+  </View>
+);
+
+// Support ways section component to reduce complexity
+const SupportWaysSection = () => (
+  <View style={styles.supportWaysSection}>
+    <Text style={styles.supportSectionTitle}>Ways to Contribute</Text>
+    <View style={styles.supportOptionsGrid}>
+      <SupportOption
+        icon="🎆"
+        title="Leave a Review"
+        description="Help other families find us"
+      />
+      <SupportOption
+        icon="📣"
+        title="Tell a Friend"
+        description="Share with someone who could use StackMap"
+      />
+      <SupportOption
+        icon="💬"
+        title="Share Your Story"
+        description="We'd love to hear how StackMap helps"
+      />
+      <SupportOption
+        icon="💡"
+        title="Send Ideas"
+        description="What would make StackMap better for you?"
+      />
+    </View>
+  </View>
+);
+
+// Impact section component to reduce complexity
+const ImpactSection = () => (
+  <View style={styles.impactWrapper}>
+    <Text
+      style={[
+        styles.contributionHeader,
+        { textAlign: 'left', paddingLeft: 0 },
+      ]}
+    >
+      Your contributions help us provide:
+    </Text>
+
+    <View style={[styles.impactSection, { alignItems: 'flex-start' }]}>
+      <View style={styles.impactRow}>
+        <View style={styles.impactIcon}>
+          <Icon name="lock" size={24} color="#5C7E9D" />
+        </View>
+        <View style={styles.impactContent}>
+          <Text style={styles.impactTitle}>
+            Private & Ad-Free Solutions
+          </Text>
+          <Text style={styles.impactDescription}>
+            No ads, no tracking, your data stays yours
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.impactRow}>
+        <View style={styles.impactIcon}>
+          <Icon name="cloud" size={24} color="#5C7E9D" />
+        </View>
+        <View style={styles.impactContent}>
+          <Text style={styles.impactTitle}>Free Sync Service</Text>
+          <Text style={styles.impactDescription}>
+            Convenient family sync and provider sharing
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.impactRow}>
+        <View style={styles.impactIcon}>
+          <Icon name="favorite" size={24} color="#5C7E9D" />
+        </View>
+        <View style={styles.impactContent}>
+          <Text style={styles.impactTitle}>Ongoing Development</Text>
+          <Text style={styles.impactDescription}>
+            Continuous improvements & support
+          </Text>
+        </View>
+      </View>
+    </View>
+  </View>
+);
 
 const SupportModal = ({ visible, onClose, insets, onSyncDiagnostic }) => {
   const [scrollKey, setScrollKey] = useState(0);
@@ -56,10 +144,6 @@ const SupportModal = ({ visible, onClose, insets, onSyncDiagnostic }) => {
                   objectFit: 'cover',
                 }}
                 alt="The StackMap Team"
-                onError={(e) => {
-
-                }}
-                onLoad={() => {}}
               />
             ) : (
               <Image
@@ -71,56 +155,7 @@ const SupportModal = ({ visible, onClose, insets, onSyncDiagnostic }) => {
             <Text style={styles.teamCaption}>The StackMap Team</Text>
           </View>
 
-          <View style={styles.impactWrapper}>
-            <Text
-              style={[
-                styles.contributionHeader,
-                { textAlign: 'left', paddingLeft: 0 },
-              ]}
-            >
-              Your contributions help us provide:
-            </Text>
-
-            <View style={[styles.impactSection, { alignItems: 'flex-start' }]}>
-              <View style={styles.impactRow}>
-                <View style={styles.impactIcon}>
-                  <Icon name="lock" size={24} color="#5C7E9D" />
-                </View>
-                <View style={styles.impactContent}>
-                  <Text style={styles.impactTitle}>
-                    Private & Ad-Free Solutions
-                  </Text>
-                  <Text style={styles.impactDescription}>
-                    No ads, no tracking, your data stays yours
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.impactRow}>
-                <View style={styles.impactIcon}>
-                  <Icon name="cloud" size={24} color="#5C7E9D" />
-                </View>
-                <View style={styles.impactContent}>
-                  <Text style={styles.impactTitle}>Free Sync Service</Text>
-                  <Text style={styles.impactDescription}>
-                    Convenient family sync and provider sharing
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.impactRow}>
-                <View style={styles.impactIcon}>
-                  <Icon name="favorite" size={24} color="#5C7E9D" />
-                </View>
-                <View style={styles.impactContent}>
-                  <Text style={styles.impactTitle}>Ongoing Development</Text>
-                  <Text style={styles.impactDescription}>
-                    Continuous improvements & support
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
+          <ImpactSection />
         </View>
         {Platform.OS === 'web' && (
           <View style={{ marginTop: 20, alignItems: 'center' }}>
@@ -154,51 +189,7 @@ const SupportModal = ({ visible, onClose, insets, onSyncDiagnostic }) => {
         </TouchableOpacity>
       )}
 
-      <View style={styles.supportWaysSection}>
-        <Text style={styles.supportSectionTitle}>Ways to Contribute</Text>
-
-        <View style={styles.supportOptionsGrid}>
-          <View style={styles.supportOptionFun}>
-            <Text style={styles.supportIconBig}>🎆</Text>
-            <View style={styles.supportOptionContent}>
-              <Text style={styles.supportOptionTitleFun}>Leave a Review</Text>
-              <Text style={styles.supportOptionTextFun}>
-                Help other families find us
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.supportOptionFun}>
-            <Text style={styles.supportIconBig}>📣</Text>
-            <View style={styles.supportOptionContent}>
-              <Text style={styles.supportOptionTitleFun}>Tell a Friend</Text>
-              <Text style={styles.supportOptionTextFun}>
-                Share with someone who could use StackMap
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.supportOptionFun}>
-            <Text style={styles.supportIconBig}>💬</Text>
-            <View style={styles.supportOptionContent}>
-              <Text style={styles.supportOptionTitleFun}>Share Your Story</Text>
-              <Text style={styles.supportOptionTextFun}>
-                We'd love to hear how StackMap helps
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.supportOptionFun}>
-            <Text style={styles.supportIconBig}>💡</Text>
-            <View style={styles.supportOptionContent}>
-              <Text style={styles.supportOptionTitleFun}>Send Ideas</Text>
-              <Text style={styles.supportOptionTextFun}>
-                What would make StackMap better for you?
-              </Text>
-            </View>
-          </View>
-        </View>
-      </View>
+      <SupportWaysSection />
 
       <View style={styles.supportContactBox}>
         <Text style={styles.supportContactTitle}>Get in Touch</Text>

@@ -1,25 +1,4 @@
 // Web implementation of AsyncStorage using localStorage
-const VERBOSE_LOGGING = false; // Set to true for debugging
-
-// Test localStorage availability
-const testLocalStorage = () => {
-  try {
-    const testKey = '__asyncstorage_test__';
-    const testValue = Date.now().toString();
-    localStorage.setItem(testKey, testValue);
-    const retrieved = localStorage.getItem(testKey);
-    localStorage.removeItem(testKey);
-    if (retrieved !== testValue) {
-      return false;
-    }
-    // localStorage test passed
-    return true;
-  } catch (e) {
-    return false;
-  }
-};
-
-const isLocalStorageAvailable = testLocalStorage();
 
 // Memory fallback for critical data like recovery phrases
 const memoryStorage = {};

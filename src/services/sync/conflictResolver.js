@@ -574,11 +574,7 @@ class ConflictResolver {
    */
   logSummary() {
     if (this.enableLogging && this.mergeLog.length > 0) {
-      
-      const remoteWins = this.mergeLog.filter(l => l.message.includes('Remote wins')).length;
-      const localWins = this.mergeLog.filter(l => l.message.includes('Local wins')).length;
-      const ties = this.mergeLog.filter(l => l.message.includes('Tie broken')).length;
-      
+      // Could add merge statistics logging here if needed
     }
   }
 

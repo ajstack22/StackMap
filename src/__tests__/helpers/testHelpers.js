@@ -34,9 +34,14 @@ export const resetAllStores = () => {
     currentTheme: 'stackBlue',
     soundEnabled: true,
     hasCompletedOnboarding: false,
-    syncEnabled: false,
-    celebrationMode: 'rainbow',
-    displayMode: 'numbers'
+    taskCelebration: 'rainbow',
+    routineCelebration: 'rainbow',
+    displayMode: 'numbers',
+    bannerPosition: 'top',
+    dayMode: 'today',
+    syncSkipped: false,
+    toolbarOrder: null,
+    moreButtonPosition: 'left'
   });
 
   // Reset sync store
@@ -148,15 +153,26 @@ export const createMockLibrary = (overrides = {}) => {
 export const setupTestEnvironment = (config = {}) => {
   const {
     user = createMockUser(),
+    users = null,
     library = createMockLibrary(),
     settings = {},
     sync = {}
   } = config;
 
-  // Set up user
-  if (user) {
-    useUserStore.getState().setUsers({ [user.id]: user });
-    useUserStore.getState().setCurrentUser(user.id);
+  // Set up users (single user or multiple users)
+  if (users) {
+    // Multiple users case (for family/multi-user scenarios)
+    const userStore = useUserStore.getState();
+    userStore.setUsers(users);
+    const firstUserId = Object.keys(users)[0];
+    if (firstUserId) {
+      userStore.setCurrentUser(firstUserId);
+    }
+  } else if (user) {
+    // Single user case
+    const userStore = useUserStore.getState();
+    userStore.setUsers({ [user.id]: user });
+    userStore.setCurrentUser(user.id);
   }
 
   // Set up library
@@ -174,7 +190,7 @@ export const setupTestEnvironment = (config = {}) => {
     useSyncStore.getState().updateSyncState(sync);
   }
 
-  return { user, library, settings, sync };
+  return { user: users ? Object.values(users)[0] : user, users, library, settings, sync };
 };
 
 /**

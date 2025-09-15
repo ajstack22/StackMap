@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text } from '../../Typography';
-import { Modal, View, TouchableOpacity, Platform } from 'react-native';
+import { Modal, View, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
 

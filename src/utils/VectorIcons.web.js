@@ -93,9 +93,9 @@ const Icon = ({ name, size = 24, color = '#000', style }) => {
   React.useEffect(() => {
     if (!document.getElementById('material-icons-font')) {
       // First try local font file (avoids CSP issues)
-      const style = document.createElement('style');
-      style.id = 'material-icons-font';
-      style.innerHTML = `
+      const styleElement = document.createElement('style');
+      styleElement.id = 'material-icons-font';
+      styleElement.innerHTML = `
         @font-face {
           font-family: 'Material Icons';
           font-style: normal;
@@ -120,7 +120,7 @@ const Icon = ({ name, size = 24, color = '#000', style }) => {
           -webkit-font-smoothing: antialiased;
         }
       `;
-      document.head.appendChild(style);
+      document.head.appendChild(styleElement);
       
       // Fallback: Try Google Fonts (might be blocked by CSP)
       const link = document.createElement('link');

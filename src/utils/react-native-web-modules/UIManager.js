@@ -19,12 +19,12 @@ const UIManager = {
   }),
 
   // View management methods (mostly no-ops on web)
-  getViewManagerConfig: viewManagerName => {
+  getViewManagerConfig: () => {
     // Return null for all view managers on web
     return null;
   },
 
-  hasViewManagerConfig: viewManagerName => {
+  hasViewManagerConfig: () => {
     return false;
   },
 
@@ -87,7 +87,7 @@ const UIManager = {
   },
 
   // Command dispatching (no-op on web)
-  dispatchViewManagerCommand: (reactTag, commandID, commandArgs) => {
+  dispatchViewManagerCommand: () => {
     // No-op on web
     // UIManager.dispatchViewManagerCommand is not supported on web
   },

@@ -3,21 +3,16 @@ import { Text, TextInput } from '../../Typography';
 import {
   View,
   TouchableOpacity,
-  FlatList,
   ScrollView,
   Platform,
   Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ConfirmModal from '../../Modals/ConfirmModal';
-import { ModalFooter, FormInput } from '../../ModalUtilities';
+import { FormInput } from '../../ModalUtilities';
 import Logo from '../../Logo';
 import { styles } from './styles';
-import { DEFAULT_ACTIVITY_EMOJI } from '../../../constants';
 
-// Empty template for new users - no pre-loaded activities
-const EMPTY_TEMPLATE = [];
 
 const LibraryTabContent = ({
   theme,
@@ -124,44 +119,6 @@ const LibraryTabContent = ({
     showToast({ message: 'Activity deleted!' });
   };
 
-  const getFilteredData = () => {
-    const myLibraryGroups = localCategories || [];
-    const stackMapGroups = stackMapLibrary?.activityGroups || [];
-
-    if (!searchQuery) {
-      // Return all data when not searching
-      return [...myLibraryGroups, ...stackMapGroups];
-    }
-
-    const query = searchQuery.toLowerCase();
-
-    // Filter and combine both libraries
-    const filterGroups = groups => {
-      return groups
-        .map(category => {
-          const matchingActivities =
-            category.activities?.filter(
-              activity =>
-                (activity.text || '').toLowerCase().includes(query) ||
-                (activity.icon || '')?.includes(query),
-            ) || [];
-
-          const categoryMatches = category.name.toLowerCase().includes(query);
-
-          if (categoryMatches || matchingActivities.length > 0) {
-            return {
-              ...category,
-              activities: matchingActivities,
-              expanded: true, // Auto-expand matching categories
-            };
-          }
-          return null;
-        })
-        .filter(Boolean);
-    };
-
-    return [...filterGroups(myLibraryGroups), ...filterGroups(stackMapGroups)];
-  };
 
   const renderActivity = (activity, categoryId) => {
     const isSystemProvided = stackMapLibrary?.activityGroups?.some(

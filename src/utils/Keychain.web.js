@@ -32,11 +32,9 @@ const Keychain = {
     try {
       const keys = Object.keys(localStorage);
 
-      let removed = false;
       for (const key of keys) {
         if (key.startsWith(`keychain_${server}_`)) {
           localStorage.removeItem(key);
-          removed = true;
         }
       }
 

@@ -73,8 +73,12 @@ describe('FAB Component', () => {
     );
 
     const fab = getByTestId('fab-button');
+    // Style prop should be an array that includes the custom style
+    expect(Array.isArray(fab.props.style)).toBe(true);
     expect(fab.props.style).toEqual(
-      expect.objectContaining({ backgroundColor: '#FF0000' })
+      expect.arrayContaining([
+        expect.objectContaining({ backgroundColor: '#FF0000' })
+      ])
     );
   });
 
@@ -91,8 +95,12 @@ describe('FAB Component', () => {
     );
 
     const fab = getByTestId('fab-button');
+    // Position should be merged into one of the style objects
+    expect(Array.isArray(fab.props.style)).toBe(true);
     expect(fab.props.style).toEqual(
-      expect.objectContaining({ bottom: 20, right: 20 })
+      expect.arrayContaining([
+        expect.objectContaining({ bottom: 20, right: 20 })
+      ])
     );
   });
 
@@ -158,12 +166,15 @@ describe('FAB Component', () => {
 
     const fab = getByTestId('fab-button');
     // We mocked isTablet to return false, so it should use mobile dimensions
+    expect(Array.isArray(fab.props.style)).toBe(true);
     expect(fab.props.style).toEqual(
-      expect.objectContaining({
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-      })
+      expect.arrayContaining([
+        expect.objectContaining({
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+        })
+      ])
     );
   });
 });

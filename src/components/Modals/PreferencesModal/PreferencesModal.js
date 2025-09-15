@@ -1,10 +1,9 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef } from 'react';
 import { Text } from '../../Typography';
 import {
   Modal,
   View,
   TouchableOpacity,
-  ScrollView,
   SafeAreaView,
   Platform,
   StatusBar,
@@ -14,6 +13,61 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { THEMES } from '../../../constants';
 import { styles } from './styles';
 import { BUILD_VERSION } from '../../../utils/version';
+
+// Theme color option component to reduce complexity
+const ThemeColorOption = ({ color, isSelected, onPress }) => {
+  // Safety check: ensure the theme exists before rendering
+  if (!color || !THEMES[color]) {
+    return null;
+  }
+
+  return (
+    <View style={{ width: '20%', padding: 5, alignItems: 'center' }}>
+      <TouchableOpacity
+        style={[
+          styles.colorOption,
+          { backgroundColor: THEMES[color].primary },
+          isSelected && styles.colorSelected,
+        ]}
+        onPress={() => onPress(color)}
+      >
+        {isSelected && (
+          <Icon name="check" size={20} color="white" />
+        )}
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+// Theme grid component to reduce complexity
+const ThemeGrid = ({ currentTheme, onThemeChange }) => {
+  // Put stackBlue (default) first, then all other themes
+  const themeKeys = Object.keys(THEMES);
+  const reorderedThemes = [
+    'stackBlue',
+    ...themeKeys.filter(key => key !== 'stackBlue'),
+  ];
+
+  return (
+    <View style={styles.colorGrid}>
+      {reorderedThemes.slice(0, 20).map(color => {
+        // Validate currentTheme to prevent comparison issues
+        const isSelected = currentTheme && THEMES[currentTheme]
+          ? currentTheme === color
+          : false;
+
+        return (
+          <ThemeColorOption
+            key={color}
+            color={color}
+            isSelected={isSelected}
+            onPress={onThemeChange}
+          />
+        );
+      }).filter(Boolean)}
+    </View>
+  );
+};
 
 const PreferencesModal = ({
   visible,
@@ -63,50 +117,10 @@ const PreferencesModal = ({
 
         {/* Divider */}
         <View style={styles.divider} />
-        <View style={styles.colorGrid}>
-          {(() => {
-            // Put stackBlue (default) first, then all other themes
-            const themeKeys = Object.keys(THEMES);
-            const reorderedThemes = [
-              'stackBlue',
-              ...themeKeys.filter(key => key !== 'stackBlue'),
-            ];
-
-            // Only show first 20 themes (4x5 grid)
-            return reorderedThemes.slice(0, 20).map(color => {
-              // Safety check: ensure the theme exists before rendering
-              if (!color || !THEMES[color]) {
-//                 
-                return null;
-              }
-              
-              // Validate currentTheme to prevent comparison issues
-              const isSelected = currentTheme && THEMES[currentTheme] 
-                ? currentTheme === color 
-                : false;
-              
-              return (
-                <View
-                  key={color}
-                  style={{ width: '20%', padding: 5, alignItems: 'center' }}
-                >
-                  <TouchableOpacity
-                    style={[
-                      styles.colorOption,
-                      { backgroundColor: THEMES[color].primary },
-                      isSelected && styles.colorSelected,
-                    ]}
-                    onPress={() => handleThemeChange(color)}
-                  >
-                    {isSelected && (
-                      <Icon name="check" size={20} color="white" />
-                    )}
-                  </TouchableOpacity>
-                </View>
-              );
-            }).filter(Boolean);
-          })()}
-        </View>
+        <ThemeGrid
+          currentTheme={currentTheme}
+          onThemeChange={handleThemeChange}
+        />
       </View>
 
       {/* Info Section */}

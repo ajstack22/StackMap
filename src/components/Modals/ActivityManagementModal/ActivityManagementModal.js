@@ -38,11 +38,6 @@ const ActivityManagementModal = ({
     { id: 'library', label: 'Library', icon: 'bookmark' },
   ];
 
-  const handleSelectFromLibrary = (activity, category) => {
-    setSelectedFromLibrary({ activity, category });
-    setActiveTab(0); // Switch to Add tab
-    showToast({ message: 'Activity selected - customize and add' });
-  };
 
   const handleAddActivity = async activityData => {
     setLoading(true);

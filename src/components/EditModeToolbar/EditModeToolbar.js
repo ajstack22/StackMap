@@ -22,6 +22,253 @@ import {
   getContainerPadding,
 } from '../../constants';
 
+// Helper function to get icon name based on position and state
+const getMoreIconName = (showMoreMenu, position) => {
+  if (showMoreMenu) {
+    return position === 'top' ? 'expand-less' : 'expand-more';
+  }
+  return position === 'top' ? 'expand-more' : 'expand-less';
+};
+
+// Helper function to get icon size based on platform and screen size
+const getIconSize = () => {
+  if (Platform.OS === 'web') {
+    return isTablet() ? 28 : 24;
+  }
+  return isTablet() ? 34 : 30;
+};
+
+// Helper function to calculate visible buttons
+const calculateVisibleButtons = (screenWidth) => {
+  const containerPadding = getContainerPadding() * 2;
+  const availableWidth = screenWidth - containerPadding;
+
+  // Button width calculation - adjusted for Galaxy S25+ and similar phones
+  const buttonWidth = isTablet(screenWidth) ? 65 : 44;
+  const buttonGap = Platform.OS === 'web' ? 5 : 5;
+  const editModeTextWidth = isTablet(screenWidth) ? 85 : 58;
+  const moreButtonWidth = buttonWidth;
+
+  // Always reserve space for More button since Sort is always in overflow
+  const reservedWidth = editModeTextWidth + moreButtonWidth + buttonGap * 2;
+  const usableWidth = availableWidth - reservedWidth;
+
+  // Calculate how many buttons fit (including gaps)
+  const maxButtons = Math.floor(
+    (usableWidth + buttonGap) / (buttonWidth + buttonGap),
+  );
+
+  // Android tablets should always show all 4 buttons
+  if (Platform.OS === 'android' && isTablet(screenWidth)) {
+    return 4;
+  }
+
+  // Force 4 buttons on phones with reasonable screen width
+  const minVisible = screenWidth >= 360 ? 4 : 3;
+  return Math.max(minVisible, maxButtons);
+};
+
+// Helper function to render action button
+const renderActionButton = (item) => (
+  <TouchableOpacity
+    style={[styles.actionButton, item.disabled && styles.disabledButton]}
+    onPress={item.disabled ? null : item.onPress}
+    disabled={item.disabled}
+  >
+    <Icon
+      name={item.icon}
+      size={getIconSize()}
+      color={item.disabled ? '#999' : 'white'}
+    />
+    <Text
+      style={[
+        styles.actionLabel,
+        { color: item.disabled ? '#999' : 'white' },
+      ]}
+    >
+      {item.label}
+      {item.disabled && ' *'}
+    </Text>
+  </TouchableOpacity>
+);
+
+// Helper function to render more button
+const renderMoreButton = (
+  showMoreMenu,
+  setShowMoreMenu,
+  onMoreToggle,
+  position
+) => (
+  <TouchableOpacity
+    style={[
+      styles.actionButton,
+      showMoreMenu && styles.actionButtonActive,
+    ]}
+    onPress={() => {
+      const newState = !showMoreMenu;
+      setShowMoreMenu(newState);
+      if (onMoreToggle) onMoreToggle(newState);
+    }}
+  >
+    <Icon
+      name={getMoreIconName(showMoreMenu, position)}
+      size={getIconSize()}
+      color="white"
+    />
+    <Text style={[styles.actionLabel, { color: 'white' }]}>
+      {showMoreMenu ? 'Less' : 'More'}
+    </Text>
+  </TouchableOpacity>
+);
+
+// Helper function to get action configurations
+const getActionConfigurations = (
+  onActivityManagement,
+  onDayManagement,
+  onUsers,
+  onData,
+  onCustomize,
+  onSupport,
+  theme
+) => {
+  return {
+    activities: {
+      label: 'Activities',
+      icon: 'add-photo-alternate',
+      onPress: () => onActivityManagement && onActivityManagement('add'),
+    },
+    day: {
+      label: 'Day',
+      icon: 'event',
+      onPress: () => onDayManagement && onDayManagement('plan'),
+    },
+    access: {
+      label: 'Access',
+      icon: 'security',
+      onPress: onUsers,
+    },
+    data: {
+      label: 'Data',
+      icon: 'source',
+      onPress: onData,
+    },
+    // Overflow items
+    settings: {
+      label: 'Settings',
+      icon: 'settings',
+      onPress: onCustomize,
+      alwaysOverflow: true,
+    },
+    ...(Platform.OS === 'web' && onSupport
+      ? {
+          contribute: {
+            label: 'Support',
+            icon: 'favorite',
+            onPress: onSupport,
+            alwaysOverflow: true,
+          },
+        }
+      : {}),
+  };
+};
+
+// Helper function to get visible and overflow actions
+const getVisibleAndOverflowActions = (
+  actionMap,
+  toolbarOrder,
+  visibleButtonCount,
+  moreButtonPosition,
+  theme
+) => {
+  // Default order if none provided
+  const defaultOrder = ['data', 'access', 'day', 'activities'];
+
+  // Validate toolbar order
+  const validIds = Object.keys(actionMap);
+  const validatedOrder = toolbarOrder
+    ? toolbarOrder.filter(id => validIds.includes(id))
+    : [];
+
+  const currentOrder =
+    validatedOrder.length >= 3 ? validatedOrder : defaultOrder;
+
+  // Create actions array
+  const actions = currentOrder
+    .filter(id => actionMap[id] && !actionMap[id].alwaysOverflow)
+    .map(id => ({
+      id,
+      ...actionMap[id],
+      color: theme.primary,
+    }));
+
+  const visibleActions =
+    moreButtonPosition === 'left'
+      ? actions.slice(-visibleButtonCount)
+      : actions.slice(0, visibleButtonCount);
+
+  const regularOverflowActions =
+    moreButtonPosition === 'left'
+      ? actions.slice(0, -visibleButtonCount)
+      : actions.slice(visibleButtonCount);
+
+  // Add always overflow actions
+  const settingsAction = {
+    id: 'settings',
+    ...actionMap.settings,
+    color: theme.primary,
+  };
+
+  const alwaysOverflowActions = [settingsAction];
+  if (Platform.OS === 'web' && actionMap.contribute) {
+    alwaysOverflowActions.push({
+      id: 'contribute',
+      ...actionMap.contribute,
+      color: theme.primary,
+    });
+  }
+
+  const overflowActions = [...regularOverflowActions, ...alwaysOverflowActions];
+  const showMore = overflowActions.length > 0;
+
+  return { visibleActions, overflowActions, showMore };
+};
+
+// Helper function to render overflow row
+const renderOverflowRow = (
+  showMore,
+  position,
+  expandHeight,
+  overflowActions
+) => {
+  if (!showMore) return null;
+
+  const isTop = position === 'top';
+  const style = [
+    styles.overflowRow,
+    isTop ? {} : styles.overflowRowTop,
+    {
+      maxHeight: expandHeight.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 100],
+      }),
+      opacity: expandHeight,
+      overflow: 'hidden',
+    },
+  ];
+
+  return (
+    <Animated.View style={style}>
+      <View style={styles.overflowButtons}>
+        {overflowActions.map(action => (
+          <View key={action.id}>
+            {renderActionButton(action)}
+          </View>
+        ))}
+      </View>
+    </Animated.View>
+  );
+};
+
 const EditModeToolbar = ({
   onExit,
   onData,
@@ -119,158 +366,27 @@ const EditModeToolbar = ({
     }
   }, [visible, position, onAnimationComplete]);
 
-  // Define all actions - only modal buttons
-  const actionMap = {
-    activities: {
-      label: 'Activities',
-      icon: 'add-photo-alternate',
-      onPress: () => onActivityManagement && onActivityManagement('add'),
-    },
-    day: {
-      label: 'Day',
-      icon: 'event',
-      onPress: () => onDayManagement && onDayManagement('plan'),
-    },
-    access: {
-      label: 'Access',
-      icon: 'security',
-      onPress: onUsers,
-    },
-    data: {
-      label: 'Data',
-      icon: 'source',
-      onPress: onData,
-    },
-    // Overflow items
-    settings: {
-      label: 'Settings',
-      icon: 'settings',
-      onPress: onCustomize,
-      alwaysOverflow: true,
-    },
-    ...(Platform.OS === 'web' && onSupport
-      ? {
-          contribute: {
-            label: 'Support',
-            icon: 'favorite',
-            onPress: onSupport,
-            alwaysOverflow: true,
-          },
-        }
-      : {}),
-  };
-
-  // Default order if none provided - R->L: Activities, Day, Access, Data
-  const defaultOrder = ['data', 'access', 'day', 'activities'];
-
-  // Validate toolbar order - filter out invalid IDs
-  const validIds = Object.keys(actionMap);
-  const validatedOrder = toolbarOrder
-    ? toolbarOrder.filter(id => validIds.includes(id))
-    : [];
-
-  // Use validated order only if it has at least 3 valid buttons, otherwise use default
-  // This prevents using an incomplete/corrupted toolbar order
-  const currentOrder =
-    validatedOrder.length >= 3 ? validatedOrder : defaultOrder;
-
-  // Create actions array based on custom order (excluding special buttons like sort)
-  const actions = currentOrder
-    .filter(id => actionMap[id] && !actionMap[id].alwaysOverflow) // Filter first
-    .map(id => ({
-      id,
-      ...actionMap[id],
-      color: theme.primary,
-    }));
-
-  // Calculate how many buttons can fit based on screen width
-  const calculateVisibleButtons = () => {
-    const containerPadding = getContainerPadding() * 2;
-    const availableWidth = screenWidth - containerPadding;
-
-    // Button width calculation - adjusted for Galaxy S25+ and similar phones
-    const buttonWidth = isTablet(screenWidth) ? 65 : 44; // Reduced from 45 to 44 for phones
-    const buttonGap = Platform.OS === 'web' ? 5 : 5; // Reduced gap from 6 to 5 for phones
-    const editModeTextWidth = isTablet(screenWidth) ? 85 : 58; // Reduced from 60 to 58
-    const moreButtonWidth = buttonWidth; // Same as regular buttons
-
-    // Always reserve space for More button since Sort is always in overflow
-    const reservedWidth = editModeTextWidth + moreButtonWidth + buttonGap * 2;
-    const usableWidth = availableWidth - reservedWidth;
-
-    // Calculate how many buttons fit (including gaps)
-    const maxButtons = Math.floor(
-      (usableWidth + buttonGap) / (buttonWidth + buttonGap),
-    );
-
-    // Android tablets should always show all 4 buttons
-    if (Platform.OS === 'android' && isTablet(screenWidth)) {
-      return 4; // Force all 4 action buttons to be visible
-    }
-
-    // Force 4 buttons on phones with reasonable screen width (like Galaxy S25+)
-    // Only drop to 3 on very small screens
-    const minVisible = screenWidth >= 360 ? 4 : 3;
-
-    // Return the number of buttons that can fit, but at least minVisible
-    return Math.max(minVisible, Math.min(maxButtons, actions.length));
-  };
-
-  const visibleButtonCount = calculateVisibleButtons();
-
-  const visibleActions =
-    moreButtonPosition === 'left'
-      ? actions.slice(-visibleButtonCount) // Take from the end when More is on left
-      : actions.slice(0, visibleButtonCount); // Take from the beginning when More is on right
-  const regularOverflowActions =
-    moreButtonPosition === 'left'
-      ? actions.slice(0, -visibleButtonCount) // Overflow from the beginning when More is on left
-      : actions.slice(visibleButtonCount); // Overflow from the end when More is on right
-
-  // Add Settings button to overflow actions
-  const settingsAction = {
-    id: 'settings',
-    ...actionMap.settings,
-    color: theme.primary,
-  };
-
-  // Add Contribute button for web only
-  const alwaysOverflowActions = [settingsAction];
-  if (Platform.OS === 'web' && actionMap.contribute) {
-    alwaysOverflowActions.push({
-      id: 'contribute',
-      ...actionMap.contribute,
-      color: theme.primary,
-    });
-  }
-
-  const overflowActions = [...regularOverflowActions, ...alwaysOverflowActions];
-  const showMore = overflowActions.length > 0;
-
-  const renderAction = ({ item }) => (
-    <TouchableOpacity
-      style={[styles.actionButton, item.disabled && styles.disabledButton]}
-      onPress={item.disabled ? null : item.onPress}
-      disabled={item.disabled}
-    >
-      <Icon
-        name={item.icon}
-        size={
-          Platform.OS === 'web' ? (isTablet() ? 28 : 24) : isTablet() ? 34 : 30
-        }
-        color={item.disabled ? '#999' : 'white'}
-      />
-      <Text
-        style={[
-          styles.actionLabel,
-          { color: item.disabled ? '#999' : 'white' },
-        ]}
-      >
-        {item.label}
-        {item.disabled && ' *'}
-      </Text>
-    </TouchableOpacity>
+  const actionMap = getActionConfigurations(
+    onActivityManagement,
+    onDayManagement,
+    onUsers,
+    onData,
+    onCustomize,
+    onSupport,
+    theme
   );
+
+  const visibleButtonCount = calculateVisibleButtons(screenWidth);
+
+  const { visibleActions, overflowActions, showMore } = getVisibleAndOverflowActions(
+    actionMap,
+    toolbarOrder,
+    visibleButtonCount,
+    moreButtonPosition,
+    theme
+  );
+
+  const renderAction = ({ item }) => renderActionButton(item);
 
   // Calculate top padding for safe area
   const topPadding =
@@ -322,71 +438,23 @@ const EditModeToolbar = ({
             )}
 
             {/* Expandable overflow row - appears above main toolbar when position is bottom */}
-            {showMore && position === 'bottom' && (
-              <Animated.View
-                style={[
-                  styles.overflowRow,
-                  styles.overflowRowTop,
-                  {
-                    maxHeight: expandHeight.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, 100],
-                    }),
-                    opacity: expandHeight,
-                    overflow: 'hidden',
-                  },
-                ]}
-              >
-                <View style={styles.overflowButtons}>
-                  {overflowActions.map(action => (
-                    <View key={action.id}>
-                      {renderAction({ item: action })}
-                    </View>
-                  ))}
-                </View>
-              </Animated.View>
+            {position === 'bottom' && renderOverflowRow(
+              showMore,
+              position,
+              expandHeight,
+              overflowActions
             )}
 
             <View style={styles.toolbar}>
               {/* More button on the left */}
-              {showMore && moreButtonPosition === 'left' && (
-                <TouchableOpacity
-                  style={[
-                    styles.actionButton,
-                    showMoreMenu && styles.actionButtonActive,
-                  ]}
-                  onPress={() => {
-                    const newState = !showMoreMenu;
-                    setShowMoreMenu(newState);
-                    if (onMoreToggle) onMoreToggle(newState);
-                  }}
-                >
-                  <Icon
-                    name={
-                      showMoreMenu
-                        ? position === 'top'
-                          ? 'expand-less'
-                          : 'expand-more'
-                        : position === 'top'
-                        ? 'expand-more'
-                        : 'expand-less'
-                    }
-                    size={
-                      Platform.OS === 'web'
-                        ? isTablet()
-                          ? 28
-                          : 24
-                        : isTablet()
-                        ? 34
-                        : 30
-                    }
-                    color="white"
-                  />
-                  <Text style={[styles.actionLabel, { color: 'white' }]}>
-                    {showMoreMenu ? 'Less' : 'More'}
-                  </Text>
-                </TouchableOpacity>
-              )}
+              {showMore && moreButtonPosition === 'left' &&
+                renderMoreButton(
+                  showMoreMenu,
+                  setShowMoreMenu,
+                  onMoreToggle,
+                  position
+                )
+              }
 
               {/* Regular action buttons */}
               {visibleActions.map(action => (
@@ -394,44 +462,14 @@ const EditModeToolbar = ({
               ))}
 
               {/* More button on the right */}
-              {showMore && moreButtonPosition === 'right' && (
-                <TouchableOpacity
-                  style={[
-                    styles.actionButton,
-                    showMoreMenu && styles.actionButtonActive,
-                  ]}
-                  onPress={() => {
-                    const newState = !showMoreMenu;
-                    setShowMoreMenu(newState);
-                    if (onMoreToggle) onMoreToggle(newState);
-                  }}
-                >
-                  <Icon
-                    name={
-                      showMoreMenu
-                        ? position === 'top'
-                          ? 'expand-less'
-                          : 'expand-more'
-                        : position === 'top'
-                        ? 'expand-more'
-                        : 'expand-less'
-                    }
-                    size={
-                      Platform.OS === 'web'
-                        ? isTablet()
-                          ? 28
-                          : 24
-                        : isTablet()
-                        ? 34
-                        : 30
-                    }
-                    color="white"
-                  />
-                  <Text style={[styles.actionLabel, { color: 'white' }]}>
-                    {showMoreMenu ? 'Less' : 'More'}
-                  </Text>
-                </TouchableOpacity>
-              )}
+              {showMore && moreButtonPosition === 'right' &&
+                renderMoreButton(
+                  showMoreMenu,
+                  setShowMoreMenu,
+                  onMoreToggle,
+                  position
+                )
+              }
             </View>
 
             {/* Edit Mode label at bottom when position is bottom */}
@@ -447,28 +485,11 @@ const EditModeToolbar = ({
             )}
 
             {/* Expandable overflow row - appears below main toolbar when position is top */}
-            {showMore && position === 'top' && (
-              <Animated.View
-                style={[
-                  styles.overflowRow,
-                  {
-                    maxHeight: expandHeight.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, 100],
-                    }),
-                    opacity: expandHeight,
-                    overflow: 'hidden',
-                  },
-                ]}
-              >
-                <View style={styles.overflowButtons}>
-                  {overflowActions.map(action => (
-                    <View key={action.id}>
-                      {renderAction({ item: action })}
-                    </View>
-                  ))}
-                </View>
-              </Animated.View>
+            {position === 'top' && renderOverflowRow(
+              showMore,
+              position,
+              expandHeight,
+              overflowActions
             )}
           </Animated.View>
         </View>

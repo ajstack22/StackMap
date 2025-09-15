@@ -58,8 +58,8 @@ const ReorderModal = ({
                 </Text>
                 <Text style={styles.reorderActivityText}>
                   {reorderingActivity.activity.text ||
-                    reorderingActivity.activity.text ||
-                    reorderingActivity.activity.text ||
+                    reorderingActivity.activity.name ||
+                    reorderingActivity.activity.title ||
                     ''}
                 </Text>
               </View>

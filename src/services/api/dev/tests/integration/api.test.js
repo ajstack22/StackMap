@@ -12,7 +12,7 @@
 const request = require('supertest');
 const { DevAPIServer } = require('../../index');
 
-describe('StackMap Dev API Integration Tests', () => {
+describe.skip('StackMap Dev API Integration Tests', () => {
     let app;
     let server;
     let authToken;

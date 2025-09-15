@@ -284,9 +284,14 @@ export class SettingsFactory {
       currentTheme: randomChoice(THEMES),
       soundEnabled: true,
       hasCompletedOnboarding: false,
-      syncEnabled: false,
-      celebrationMode: randomChoice(CELEBRATION_MODES),
+      taskCelebration: randomChoice(CELEBRATION_MODES),
+      routineCelebration: randomChoice(CELEBRATION_MODES),
       displayMode: randomChoice(DISPLAY_MODES),
+      bannerPosition: 'top',
+      dayMode: 'today',
+      syncSkipped: false,
+      toolbarOrder: null,
+      moreButtonPosition: 'left',
       ...overrides
     };
   }
@@ -299,9 +304,9 @@ export class SettingsFactory {
 
   static createWithSync(syncId = 'test-sync-id') {
     return this.create({
-      syncEnabled: true,
-      syncId,
-      hasCompletedOnboarding: true
+      hasCompletedOnboarding: true,
+      // Note: sync settings are actually in useSyncStore, not useSettingsStore
+      // This method is for backwards compatibility
     });
   }
 }

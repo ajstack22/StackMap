@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Text, TextInput } from '../../Typography';
+import { Text } from '../../Typography';
 import { View, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { FormInput } from '../../ModalUtilities';
@@ -24,7 +24,6 @@ const AddTabContent = ({
   const [activityIcon, setActivityIcon] = useState(DEFAULT_ACTIVITY_EMOJI);
   const [activityTime, setActivityTime] = useState('');
   // Always use 'my-templates' for now since we're not implementing custom categories yet
-  const selectedCategory = 'my-templates';
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [saveToLibrary, setSaveToLibrary] = useState(false);
   const [errors, setErrors] = useState({});

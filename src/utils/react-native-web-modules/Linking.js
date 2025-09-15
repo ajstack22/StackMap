@@ -3,7 +3,7 @@
  */
 
 const LinkingWeb = {
-  canOpenURL: url => {
+  canOpenURL: () => {
     return Promise.resolve(true);
   },
 
@@ -18,7 +18,7 @@ const LinkingWeb = {
 
   addEventListener: (type, handler) => {
     if (type === 'url') {
-      const listener = event => {
+      const listener = () => {
         handler({ url: window.location.href });
       };
       window.addEventListener('popstate', listener);

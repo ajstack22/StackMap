@@ -22,7 +22,7 @@ const PINTabContent = ({
   const [pinInput, setPinInput] = useState('');
   const [isSettingPin, setIsSettingPin] = useState(false);
   const [confirmPin, setConfirmPin] = useState('');
-  const [pinLength, setPinLength] = useState(4);
+  const [pinLength] = useState(4);
 
   const handlePinSet = () => {
     setIsSettingPin(true);

@@ -163,13 +163,13 @@ const CompleteTabContent = ({
     const CardContent = (
       <>
         <Text style={styles.completeActivityEmoji}>
-          {activity.icon || activity.icon || '🎯'}
+          {activity.icon || activity.emoji || '🎯'}
         </Text>
         <Text
           style={[styles.completeActivityTitle, { flex: 1 }]}
           numberOfLines={2}
         >
-          {activity.text || activity.text || activity.text || ''}
+          {activity.text || activity.name || activity.title || ''}
         </Text>
         {showActions && category !== 'newTomorrow' && (
           <Icon
