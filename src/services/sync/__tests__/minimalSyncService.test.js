@@ -107,6 +107,9 @@ describe('MinimalSyncService', () => {
   });
 
   beforeEach(async () => {
+    // Store and restore original window to prevent interference
+    const originalWindow = global.window;
+
     // Clear all mocks
     jest.clearAllMocks();
     mockAsyncStorage.storage.clear();
@@ -128,6 +131,9 @@ describe('MinimalSyncService', () => {
 
     mockConflictResolver.mergeStates.mockImplementation((local, remote) => ({ ...local, ...remote }));
     mockConflictResolver.getMergeLog.mockReturnValue(['Test merge log']);
+
+    // Ensure window is in a clean state before creating service
+    global.window = originalWindow;
 
     // Create a fresh instance for each test
     service = new MinimalSyncService.constructor();
@@ -860,6 +866,584 @@ describe('MinimalSyncService', () => {
       global.window = originalWindow;
       global.document = originalDocument;
       testService.stopPeriodicPull();
+    });
+  });
+
+  describe('API URL Detection and Environment Handling', () => {
+    test('handles localhost environment detection', () => {
+      // Store original values
+      const originalWindow = global.window;
+
+      // Mock localhost environment
+      global.window = {
+        location: {
+          hostname: 'localhost',
+          href: 'http://localhost:3000/app'
+        }
+      };
+
+      const testService = new MinimalSyncService.constructor();
+
+      expect(testService.API_BASE).toBe('/api/sync');
+
+      // Restore
+      global.window = originalWindow;
+      testService.stopPeriodicPull();
+    });
+
+    test('handles QUAL environment detection via URL path', () => {
+      const originalWindow = global.window;
+
+      global.window = {
+        location: {
+          hostname: 'stackmap.app',
+          href: 'https://stackmap.app/qual/app'
+        }
+      };
+
+      const testService = new MinimalSyncService.constructor();
+
+      expect(testService.API_BASE).toBe('https://stackmap.app/qual/api/sync');
+
+      global.window = originalWindow;
+      testService.stopPeriodicPull();
+    });
+
+    test('handles QUAL environment detection via subdomain', () => {
+      const originalWindow = global.window;
+
+      global.window = {
+        location: {
+          hostname: 'qual.stackmap.app',
+          href: 'https://qual.stackmap.app/app'
+        }
+      };
+
+      const testService = new MinimalSyncService.constructor();
+
+      expect(testService.API_BASE).toBe('https://stackmap.app/qual/api/sync');
+
+      global.window = originalWindow;
+      testService.stopPeriodicPull();
+    });
+
+    test('handles window.location access errors gracefully', () => {
+      const originalWindow = global.window;
+
+      try {
+        // Mock throwing error when accessing location
+        global.window = {
+          get location() {
+            throw new Error('Location access denied');
+          }
+        };
+
+        const testService = new MinimalSyncService.constructor();
+
+        // Should fall back to production API
+        expect(testService.API_BASE).toBe('https://stackmap.app/api/sync');
+
+        testService.stopPeriodicPull();
+      } finally {
+        global.window = originalWindow;
+      }
+    });
+
+    test('handles __DEV__ detection for mobile development builds', () => {
+      const originalDEV = global.__DEV__;
+      const originalPlatform = jest.requireMock('react-native').Platform.OS;
+
+      // Mock mobile development environment
+      global.__DEV__ = true;
+      jest.requireMock('react-native').Platform.OS = 'ios';
+
+      const testService = new MinimalSyncService.constructor();
+
+      expect(testService.API_BASE).toBe('https://stackmap.app/qual/api/sync');
+
+      // Restore
+      global.__DEV__ = originalDEV;
+      jest.requireMock('react-native').Platform.OS = originalPlatform;
+      testService.stopPeriodicPull();
+    });
+
+    test('handles missing __DEV__ variable', () => {
+      const originalDEV = global.__DEV__;
+      const originalPlatform = jest.requireMock('react-native').Platform.OS;
+
+      // Remove __DEV__ variable
+      delete global.__DEV__;
+      jest.requireMock('react-native').Platform.OS = 'android';
+
+      const testService = new MinimalSyncService.constructor();
+
+      // Should default to development (QUAL) when __DEV__ is missing
+      expect(testService.API_BASE).toBe('https://stackmap.app/qual/api/sync');
+
+      // Restore
+      global.__DEV__ = originalDEV;
+      jest.requireMock('react-native').Platform.OS = originalPlatform;
+      testService.stopPeriodicPull();
+    });
+  });
+
+  describe('Device ID Initialization Edge Cases', () => {
+    test('handles AsyncStorage errors during device ID initialization', async () => {
+      const originalGetItem = mockAsyncStorage.getItem;
+      const originalSetItem = mockAsyncStorage.setItem;
+
+      try {
+        // Mock AsyncStorage errors
+        mockAsyncStorage.getItem = jest.fn().mockRejectedValue(new Error('Storage error'));
+        mockAsyncStorage.setItem = jest.fn().mockRejectedValue(new Error('Storage error'));
+
+        await service.initDeviceId();
+
+        // Should generate a device ID for the session despite storage errors
+        expect(service.deviceId).toBeTruthy();
+        expect(service.deviceId).toMatch(/^[a-f0-9]{32}$/);
+      } finally {
+        // Restore mocks
+        mockAsyncStorage.getItem = originalGetItem;
+        mockAsyncStorage.setItem = originalSetItem;
+      }
+    });
+  });
+
+  describe('Crypto Fallback Branches', () => {
+    test('generateId falls back to Web Crypto API when global.crypto is not available', () => {
+      const originalGlobalCrypto = global.crypto;
+
+      try {
+        // Remove global.crypto but keep crypto available
+        delete global.crypto;
+        global.crypto = {
+          getRandomValues: jest.fn((array) => {
+            for (let i = 0; i < array.length; i++) {
+              array[i] = Math.floor(Math.random() * 256);
+            }
+            return array;
+          })
+        };
+
+        const id = service.generateId();
+
+        expect(id).toMatch(/^[a-f0-9]{32}$/);
+        expect(global.crypto.getRandomValues).toHaveBeenCalled();
+      } finally {
+        // Restore
+        global.crypto = originalGlobalCrypto;
+      }
+    });
+
+    test('generateId falls back to nacl.randomBytes when crypto is not available', () => {
+      const originalGlobalCrypto = global.crypto;
+
+      try {
+        // Remove both global.crypto and crypto
+        delete global.crypto;
+        global.crypto = undefined;
+
+        const id = service.generateId();
+
+        expect(id).toMatch(/^[a-f0-9]{32}$/);
+        expect(id.length).toBe(32);
+      } finally {
+        // Restore
+        global.crypto = originalGlobalCrypto;
+      }
+    });
+  });
+
+  describe('Enhanced Error Handling', () => {
+    beforeEach(async () => {
+      service.syncId = 'test-sync-id';
+      service.deviceId = 'test-device-id';
+      service.encryptionReady = true;
+    });
+
+    test('pullData handles response text reading failures with blob fallback', async () => {
+      global.fetch.mockResolvedValueOnce({
+        text: () => Promise.reject(new Error('Text read error')),
+        blob: () => Promise.resolve({
+          text: () => Promise.resolve('{"success": true, "records": []}')
+        })
+      });
+
+      const result = await service.pullData();
+
+      expect(result.success).toBe(true);
+    });
+
+    test('pullData handles both text and blob reading failures', async () => {
+      global.fetch.mockResolvedValueOnce({
+        status: 200,
+        text: () => Promise.reject(new Error('Text read error')),
+        blob: () => Promise.reject(new Error('Blob read error'))
+      });
+
+      const result = await service.pullData();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Failed to read response');
+      expect(result.responseStatus).toBe(200);
+    });
+
+    test('pullData handles JSON parse errors with detailed error info', async () => {
+      global.fetch.mockResolvedValueOnce({
+        text: () => Promise.resolve('Invalid JSON {malformed}')
+      });
+
+      const result = await service.pullData();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('JSON parse error');
+      expect(result.rawResponse).toContain('Invalid JSON');
+    });
+
+    test('pullData handles missing encrypted blob in records', async () => {
+      global.fetch.mockResolvedValueOnce({
+        text: () => Promise.resolve(JSON.stringify({
+          success: true,
+          records: [{
+            timestamp: Date.now()
+            // Missing encrypted_blob
+          }]
+        }))
+      });
+
+      const result = await service.pullData();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('No encrypted blob in record');
+    });
+
+    test('pullData handles invalid sync ID or device ID format', async () => {
+      service.syncId = 123; // Invalid type
+      service.deviceId = null;
+
+      const result = await service.pullData();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Invalid sync ID or device ID format');
+    });
+
+    test('pullData handles missing sync ID or device ID in URL construction', async () => {
+      service.syncId = '';
+      service.deviceId = '';
+
+      const result = await service.pullData();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Missing sync ID or device ID');
+    });
+  });
+
+  describe('Join Sync Network Failure Scenarios', () => {
+    test('joinSync handles server error responses', async () => {
+      global.fetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        text: () => Promise.resolve('Internal Server Error')
+      });
+
+      const result = await service.joinSync('test-phrase');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Server error 500');
+    });
+
+    test('joinSync handles network errors during pull fallback', async () => {
+      // Mock successful join but no data
+      global.fetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ success: true })
+        })
+        // Mock network error during pull
+        .mockRejectedValueOnce(new Error('Network timeout'));
+
+      const result = await service.joinSync('test-phrase');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Network timeout');
+    });
+  });
+
+  describe('Invite Code Validation Edge Cases', () => {
+    beforeEach(() => {
+      service.syncId = 'test-sync-id';
+      service.deviceId = 'test-device-id';
+      service.recoveryPhrase = 'test-recovery-phrase';
+    });
+
+    test('joinWithInviteCode handles missing recovery phrase in browser without URL fragment', async () => {
+      const originalWindow = global.window;
+
+      try {
+        // Mock browser environment with no hash
+        global.window = {
+          location: {
+            hash: '',
+            pathname: '/test',
+            search: ''
+          }
+        };
+
+        // Mock validate response
+        global.fetch.mockResolvedValueOnce({
+          json: () => Promise.resolve({
+            success: true,
+            sync_id: 'test-sync-id'
+          })
+        });
+
+        // Clear pending recovery phrase
+        service.pendingRecoveryPhrase = null;
+
+        await expect(service.joinWithInviteCode('ABC123')).rejects.toThrow('Recovery phrase required');
+      } finally {
+        global.window = originalWindow;
+      }
+    });
+
+    test('joinWithInviteCode handles URL fragment reading and clearing', async () => {
+      const originalWindow = global.window;
+      const originalDocument = global.document;
+      const recoveryPhrase = 'test-phrase-from-fragment';
+
+      try {
+        const mockHistory = {
+          replaceState: jest.fn()
+        };
+
+        global.window = {
+          location: {
+            hash: `#${recoveryPhrase}`,
+            pathname: '/test',
+            search: ''
+          },
+          history: mockHistory
+        };
+        global.document = { title: 'Test' };
+
+        // Mock generateSyncId to return matching sync ID
+        jest.spyOn(service, 'generateSyncId').mockResolvedValueOnce('test-sync-id');
+
+        // Mock responses
+        global.fetch
+          .mockResolvedValueOnce({
+            json: () => Promise.resolve({
+              success: true,
+              sync_id: 'test-sync-id'
+            })
+          })
+          .mockResolvedValueOnce({
+            json: () => Promise.resolve({ success: true })
+          });
+
+        jest.spyOn(service, 'joinSync').mockResolvedValueOnce({ success: true });
+
+        const result = await service.joinWithInviteCode('ABC123');
+
+        expect(result.success).toBe(true);
+        expect(mockHistory.replaceState).toHaveBeenCalled();
+        expect(service.joinSync).toHaveBeenCalledWith(recoveryPhrase);
+      } finally {
+        global.window = originalWindow;
+        global.document = originalDocument;
+      }
+    });
+
+    test('joinWithInviteCode handles sync ID mismatch', async () => {
+      jest.spyOn(service, 'generateSyncId').mockResolvedValueOnce('different-sync-id');
+
+      global.fetch.mockResolvedValueOnce({
+        json: () => Promise.resolve({
+          success: true,
+          sync_id: 'test-sync-id'
+        })
+      });
+
+      await expect(service.joinWithInviteCode('ABC123', 'wrong-phrase'))
+        .rejects.toThrow('Recovery phrase does not match this sync group');
+    });
+
+    test('validateInviteCode handles network errors', async () => {
+      global.fetch.mockRejectedValueOnce(new Error('Network error'));
+
+      const result = await service.validateInviteCode('ABC123');
+
+      expect(result.success).toBe(false);
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe('Network error');
+    });
+  });
+
+  describe('Additional Edge Cases for 90% Coverage', () => {
+    test('loadExistingSyncId handles missing recovery phrase', async () => {
+      mockAsyncStorage.storage.set('@minimal_sync_id', 'test-sync-id');
+      // Don't set recovery phrase
+
+      await service.loadExistingSyncId();
+
+      expect(service.syncId).toBeNull(); // Should clear sync ID if no phrase
+    });
+
+    test('createSync handles test decryption failure', async () => {
+      mockEncryptionService.decryptData.mockImplementationOnce(() => {
+        throw new Error('Decryption failed');
+      });
+
+      const result = await service.createSync({});
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Test decryption failed');
+    });
+
+    test('pushData handles non-ok response without rate limiting', async () => {
+      service.syncId = 'test-sync-id';
+      service.encryptionReady = true;
+
+      global.fetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: () => Promise.resolve({ error: 'Bad request' })
+      });
+
+      const result = await service.pushData({});
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Bad request');
+    });
+
+    test('updateMetadata handles undefined old data gracefully', () => {
+      const newData = { users: [{ id: '1', name: 'User' }] };
+
+      const result = service.updateMetadata(newData, undefined);
+
+      expect(result.metadata).toBeDefined();
+      expect(result.metadata.fieldTimestamps.users).toBeGreaterThan(0);
+    });
+
+    test('enableSync does not start periodic pull without sync ID', () => {
+      service.syncId = null;
+
+      service.enableSync();
+
+      expect(service.isEnabled).toBe(true);
+      expect(service.pullInterval).toBeNull();
+    });
+
+    test('pullAndNotify handles pullData errors gracefully', async () => {
+      jest.spyOn(service, 'pullData').mockResolvedValueOnce({
+        success: false,
+        error: 'Pull failed'
+      });
+
+      service.onDataReceived = jest.fn();
+      service.lastPullTime = 0;
+
+      await service.pullAndNotify();
+
+      expect(service.onDataReceived).not.toHaveBeenCalled();
+    });
+
+    test('createInviteCode handles server error response', async () => {
+      service.syncId = 'test-sync-id';
+      service.recoveryPhrase = 'test-recovery-phrase';
+
+      global.fetch.mockResolvedValueOnce({
+        json: () => Promise.resolve({
+          success: false,
+          error: 'Server error'
+        })
+      });
+
+      await expect(service.createInviteCode()).rejects.toThrow('Server error');
+    });
+
+    test('joinSync handles decrypt error during record processing', async () => {
+      mockEncryptionService.decryptData.mockImplementationOnce(() => {
+        throw new Error('Decrypt failed');
+      });
+
+      global.fetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ success: true })
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          text: () => Promise.resolve(JSON.stringify({
+            success: true,
+            records: [{
+              encrypted_blob: 'encrypted-data',
+              timestamp: Date.now()
+            }]
+          }))
+        });
+
+      const result = await service.joinSync('test-phrase');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('No data available');
+    });
+
+    test('pullData handles empty records array', async () => {
+      global.fetch.mockResolvedValueOnce({
+        text: () => Promise.resolve(JSON.stringify({
+          success: true,
+          records: []
+        }))
+      });
+
+      const result = await service.pullData();
+
+      expect(result.success).toBe(true);
+      expect(result.data).toBeNull();
+    });
+
+    test('checkForRecoveryPhrase handles non-web environment gracefully', () => {
+      const originalWindow = global.window;
+
+      try {
+        delete global.window;
+
+        // Should not throw error
+        service.checkForRecoveryPhrase();
+
+        expect(service.pendingRecoveryPhrase).toBeNull();
+      } finally {
+        global.window = originalWindow;
+      }
+    });
+
+    test('getDeviceName returns correct platform names', () => {
+      const originalPlatform = jest.requireMock('react-native').Platform.OS;
+
+      try {
+        jest.requireMock('react-native').Platform.OS = 'ios';
+        expect(service.getDeviceName()).toBe('iOS Device');
+
+        jest.requireMock('react-native').Platform.OS = 'android';
+        expect(service.getDeviceName()).toBe('Android Device');
+
+        jest.requireMock('react-native').Platform.OS = 'web';
+        expect(service.getDeviceName()).toBe('Web Browser');
+      } finally {
+        jest.requireMock('react-native').Platform.OS = originalPlatform;
+      }
+    });
+
+    test('initializeEncryption handles missing device ID', async () => {
+      service.deviceId = null;
+      mockEncryptionService.getDeviceId.mockResolvedValue('fallback-device-id');
+
+      await service.initializeEncryption('test-phrase', 'test-sync-id');
+
+      expect(service.deviceId).toBe('fallback-device-id');
+      expect(mockEncryptionService.getDeviceId).toHaveBeenCalled();
     });
   });
 });

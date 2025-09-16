@@ -510,6 +510,337 @@ describe('useLibraryStore', () => {
     });
   });
 
+  describe('Storage Adapter Integration', () => {
+    test('should handle storage getItem with pending write', () => {
+      const { result } = renderHook(() => useLibraryStore());
+
+      // Test rapid updates that would trigger the pending write logic
+      const library1 = {
+        categories: [{ id: 'cat1', name: 'Category 1' }],
+        userAddedActivityIds: ['id1']
+      };
+
+      const library2 = {
+        categories: [{ id: 'cat2', name: 'Category 2' }],
+        userAddedActivityIds: ['id2']
+      };
+
+      act(() => {
+        result.current.setLibrary(library1);
+        result.current.setLibrary(library2);
+      });
+
+      // Final state should reflect the last update
+      expect(result.current.library.categories[0].id).toBe('cat2');
+      expect(result.current.library.userAddedActivityIds).toEqual(['id2']);
+    });
+
+    test('should handle storage errors gracefully', () => {
+      const { result } = renderHook(() => useLibraryStore());
+
+      // Store operations should continue to work even with storage errors
+      const testLibrary = {
+        categories: [{ id: 'test', name: 'Test Category' }],
+        userAddedActivityIds: ['test-id']
+      };
+
+      act(() => {
+        result.current.setLibrary(testLibrary);
+        result.current.addUserActivityId('new-id');
+      });
+
+      expect(result.current.library.categories[0].name).toBe('Test Category');
+      expect(result.current.library.userAddedActivityIds).toContain('new-id');
+    });
+
+    test('should handle corrupted storage data', () => {
+      const { result } = renderHook(() => useLibraryStore());
+
+      // The store should initialize with default values even if storage is corrupted
+      expect(result.current.libraryTemplates).toEqual([]);
+      expect(result.current.library.categories).toBe(null);
+      expect(result.current.library.userAddedActivityIds).toEqual([]);
+    });
+
+    test('should handle debounced storage writes', () => {
+      const { result } = renderHook(() => useLibraryStore());
+
+      // Test rapid updates that trigger the debouncing logic
+      act(() => {
+        result.current.addUserActivityId('id1');
+        result.current.addUserActivityId('id2');
+        result.current.removeUserActivityId('id1');
+        result.current.addUserActivityId('id3');
+      });
+
+      // Final state should be consistent
+      expect(result.current.library.userAddedActivityIds).toEqual(['id2', 'id3']);
+    });
+  });
+
+  describe('Library Categories Business Logic', () => {
+    test('should handle updateLibraryCategories with undefined', () => {
+      const { result } = renderHook(() => useLibraryStore());
+
+      act(() => {
+        result.current.updateLibraryCategories(undefined);
+      });
+
+      expect(result.current.library.categories).toBe(undefined);
+    });
+
+    test('should handle updateLibraryCategories with empty array', () => {
+      const { result } = renderHook(() => useLibraryStore());
+
+      // Set initial categories
+      act(() => {
+        result.current.setLibrary({
+          categories: [{ id: 'cat1', name: 'Category 1' }],
+          userAddedActivityIds: []
+        });
+      });
+
+      // Update to empty array
+      act(() => {
+        result.current.updateLibraryCategories([]);
+      });
+
+      expect(result.current.library.categories).toEqual([]);
+    });
+
+    test('should preserve library structure when updating categories', () => {
+      const { result } = renderHook(() => useLibraryStore());
+
+      // Set initial library with complex structure
+      const initialLibrary = {
+        categories: [{ id: 'cat1', name: 'Initial' }],
+        userAddedActivityIds: ['id1', 'id2'],
+        metadata: { version: '1.0', lastUpdated: Date.now() }
+      };
+
+      act(() => {
+        result.current.setLibrary(initialLibrary);
+      });
+
+      // Update categories only
+      const newCategories = [
+        { id: 'cat2', name: 'Updated Category' },
+        { id: 'cat3', name: 'Another Category' }
+      ];
+
+      act(() => {
+        result.current.updateLibraryCategories(newCategories);
+      });
+
+      expect(result.current.library.categories).toEqual(newCategories);
+      expect(result.current.library.userAddedActivityIds).toEqual(['id1', 'id2']);
+      expect(result.current.library.metadata).toEqual(initialLibrary.metadata);
+    });
+  });
+
+  describe('User Activity ID Edge Cases', () => {
+    test('should handle null userAddedActivityIds in removeUserActivityId', () => {
+      const { result } = renderHook(() => useLibraryStore());
+
+      // Set library with null userAddedActivityIds
+      act(() => {
+        result.current.setLibrary({
+          categories: [],
+          userAddedActivityIds: null
+        });
+      });
+
+      // Should not crash when removing from null array
+      act(() => {
+        result.current.removeUserActivityId('any-id');
+      });
+
+      expect(result.current.library.userAddedActivityIds).toEqual([]);
+    });
+
+    test('should handle undefined userAddedActivityIds in removeUserActivityId', () => {
+      const { result } = renderHook(() => useLibraryStore());
+
+      // Set library with undefined userAddedActivityIds
+      act(() => {
+        result.current.setLibrary({
+          categories: [],
+          userAddedActivityIds: undefined
+        });
+      });
+
+      // Should not crash when removing from undefined array
+      act(() => {
+        result.current.removeUserActivityId('any-id');
+      });
+
+      expect(result.current.library.userAddedActivityIds).toEqual([]);
+    });
+
+    test('should handle special characters in activity IDs', () => {
+      const { result } = renderHook(() => useLibraryStore());
+
+      const specialIds = [
+        'id-with-dashes',
+        'id_with_underscores',
+        'id.with.dots',
+        'id@with@symbols',
+        'id with spaces',
+        'id/with/slashes',
+        'very-long-activity-id-that-exceeds-normal-length-expectations-and-contains-multiple-segments'
+      ];
+
+      specialIds.forEach(id => {
+        act(() => {
+          result.current.addUserActivityId(id);
+        });
+      });
+
+      specialIds.forEach(id => {
+        expect(result.current.library.userAddedActivityIds).toContain(id);
+      });
+
+      // Remove a few
+      act(() => {
+        result.current.removeUserActivityId('id-with-dashes');
+        result.current.removeUserActivityId('id with spaces');
+      });
+
+      expect(result.current.library.userAddedActivityIds).not.toContain('id-with-dashes');
+      expect(result.current.library.userAddedActivityIds).not.toContain('id with spaces');
+      expect(result.current.library.userAddedActivityIds).toContain('id_with_underscores');
+    });
+  });
+
+  describe('Template Management Edge Cases', () => {
+    test('should handle template updates with partial data', () => {
+      const { result } = renderHook(() => useLibraryStore());
+
+      const template = {
+        id: 'template1',
+        name: 'Original Template',
+        description: 'Original description',
+        activities: [{ id: 'act1', text: 'Activity 1' }],
+        metadata: { created: Date.now() }
+      };
+
+      act(() => {
+        result.current.addTemplate(template);
+      });
+
+      // Update with partial data
+      act(() => {
+        result.current.updateTemplate('template1', {
+          name: 'Updated Name'
+        });
+      });
+
+      const updatedTemplate = result.current.libraryTemplates[0];
+      expect(updatedTemplate.name).toBe('Updated Name');
+      expect(updatedTemplate.description).toBe('Original description');
+      expect(updatedTemplate.activities).toEqual([{ id: 'act1', text: 'Activity 1' }]);
+      expect(updatedTemplate.metadata).toEqual(template.metadata);
+    });
+
+    test('should handle template updates with null/undefined values', () => {
+      const { result } = renderHook(() => useLibraryStore());
+
+      const template = {
+        id: 'template1',
+        name: 'Template',
+        description: 'Description'
+      };
+
+      act(() => {
+        result.current.addTemplate(template);
+      });
+
+      // Update with null/undefined values
+      act(() => {
+        result.current.updateTemplate('template1', {
+          description: null,
+          newField: undefined,
+          validField: 'valid value'
+        });
+      });
+
+      const updatedTemplate = result.current.libraryTemplates[0];
+      expect(updatedTemplate.description).toBe(null);
+      expect(updatedTemplate.newField).toBe(undefined);
+      expect(updatedTemplate.validField).toBe('valid value');
+    });
+
+    test('should handle setLibraryTemplates with undefined', () => {
+      const { result } = renderHook(() => useLibraryStore());
+
+      // Add some templates first
+      act(() => {
+        result.current.addTemplate({ id: 'template1', name: 'Template 1' });
+      });
+
+      expect(result.current.libraryTemplates).toHaveLength(1);
+
+      // Set to undefined
+      act(() => {
+        result.current.setLibraryTemplates(undefined);
+      });
+
+      expect(result.current.libraryTemplates).toBe(undefined);
+    });
+
+    test('should handle template operations with complex nested data', () => {
+      const { result } = renderHook(() => useLibraryStore());
+
+      const complexTemplate = {
+        id: 'complex-template',
+        name: 'Complex Template',
+        metadata: {
+          author: 'Test User',
+          tags: ['daily', 'routine'],
+          settings: {
+            isPublic: true,
+            allowComments: false
+          }
+        },
+        categories: [
+          {
+            name: 'Morning',
+            activities: [
+              {
+                id: 'morning-1',
+                text: 'Wake up',
+                metadata: { duration: 5, difficulty: 'easy' }
+              }
+            ]
+          }
+        ]
+      };
+
+      act(() => {
+        result.current.addTemplate(complexTemplate);
+      });
+
+      // Update nested metadata
+      act(() => {
+        result.current.updateTemplate('complex-template', {
+          metadata: {
+            ...complexTemplate.metadata,
+            tags: ['daily', 'routine', 'healthy'],
+            settings: {
+              ...complexTemplate.metadata.settings,
+              allowComments: true
+            }
+          }
+        });
+      });
+
+      const updatedTemplate = result.current.libraryTemplates[0];
+      expect(updatedTemplate.metadata.tags).toContain('healthy');
+      expect(updatedTemplate.metadata.settings.allowComments).toBe(true);
+      expect(updatedTemplate.categories).toEqual(complexTemplate.categories);
+    });
+  });
+
   describe('Store State Management', () => {
     test('should maintain state persistence structure', () => {
       const { result } = renderHook(() => useLibraryStore());

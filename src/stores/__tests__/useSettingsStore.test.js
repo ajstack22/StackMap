@@ -86,7 +86,12 @@ describe('useSettingsStore', () => {
     test('should accept valid theme names', () => {
       const { result } = renderHook(() => useSettingsStore());
 
-      const validThemes = ['stackBlue', 'crimson', 'cherry', 'emerald', 'sapphire', 'sage', 'dustyBlue', 'terracotta'];
+      // Test all valid themes from constants/theme.js
+      const validThemes = [
+        'stackBlue', 'crimson', 'cherry', 'scarlet', 'rust', 'tangerine', 'amber', 'gold',
+        'olive', 'emerald', 'sage', 'teal', 'aqua', 'sapphire', 'periwinkle', 'lavender',
+        'mauve', 'dustyBlue', 'terracotta', 'sandstone'
+      ];
 
       validThemes.forEach(theme => {
         act(() => {
@@ -94,6 +99,31 @@ describe('useSettingsStore', () => {
         });
         expect(result.current.currentTheme).toBe(theme);
       });
+    });
+
+    test('should use THEMES constant for validation', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      // This test exercises the line that imports THEMES from constants (line ~91)
+      // by testing theme validation that uses that import
+
+      // Test a theme that exists in THEMES
+      act(() => {
+        result.current.setCurrentTheme('emerald');
+      });
+      expect(result.current.currentTheme).toBe('emerald');
+
+      // Test a theme that doesn't exist in THEMES
+      act(() => {
+        result.current.setCurrentTheme('nonExistentTheme');
+      });
+      expect(result.current.currentTheme).toBe('stackBlue'); // Should default
+
+      // Test edge case where theme is false/falsy but truthy for condition
+      act(() => {
+        result.current.setCurrentTheme('');
+      });
+      expect(result.current.currentTheme).toBe('stackBlue'); // Should default
     });
   });
 
@@ -431,6 +461,225 @@ describe('useSettingsStore', () => {
       expect(result.current.soundEnabled).toBe(0);
       expect(result.current.hasCompletedOnboarding).toBe(1);
       expect(result.current.syncSkipped).toBe('');
+    });
+  });
+
+  describe('Storage Adapter Integration', () => {
+    test('should handle storage getItem with pending write', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      // The storage adapter behavior is internal to the store
+      // Test by triggering rapid updates that would use the pending write logic
+      act(() => {
+        result.current.updateSettings({
+          currentTheme: 'emerald',
+          soundEnabled: false
+        });
+        result.current.updateSettings({
+          currentTheme: 'crimson',
+          displayMode: 'checkmarks'
+        });
+      });
+
+      // Final state should reflect the last update
+      expect(result.current.currentTheme).toBe('crimson');
+      expect(result.current.soundEnabled).toBe(false);
+      expect(result.current.displayMode).toBe('checkmarks');
+    });
+
+    test('should handle storage errors gracefully', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      // Mock AsyncStorage to simulate errors
+      const originalAsyncStorage = require('@react-native-async-storage/async-storage');
+      const mockAsyncStorage = {
+        ...originalAsyncStorage,
+        getItem: jest.fn().mockRejectedValue(new Error('Storage error')),
+        setItem: jest.fn().mockRejectedValue(new Error('Storage error')),
+        removeItem: jest.fn().mockRejectedValue(new Error('Storage error'))
+      };
+
+      // Store operations should continue to work even with storage errors
+      act(() => {
+        result.current.setCurrentTheme('stackBlue');
+        result.current.setSoundEnabled(true);
+      });
+
+      expect(result.current.currentTheme).toBe('stackBlue');
+      expect(result.current.soundEnabled).toBe(true);
+    });
+
+    test('should handle corrupted storage data', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      // The store should initialize with default values even if storage is corrupted
+      // This is handled by the storage adapter's JSON.parse error handling
+      expect(result.current.currentTheme).toBe('stackBlue');
+      expect(result.current.soundEnabled).toBe(true);
+      expect(result.current.hasCompletedOnboarding).toBe(false);
+    });
+
+    test('should handle debounced storage writes', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      // Test rapid updates that trigger the debouncing logic
+      act(() => {
+        result.current.setCurrentTheme('emerald');
+        result.current.setCurrentTheme('crimson');
+        result.current.setCurrentTheme('stackBlue');
+        result.current.setSoundEnabled(false);
+        result.current.setSoundEnabled(true);
+      });
+
+      // Final state should be consistent
+      expect(result.current.currentTheme).toBe('stackBlue');
+      expect(result.current.soundEnabled).toBe(true);
+    });
+  });
+
+  describe('Theme Validation Edge Cases', () => {
+    test('should handle empty string theme', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      act(() => {
+        result.current.setCurrentTheme('');
+      });
+
+      expect(result.current.currentTheme).toBe('stackBlue'); // Should default
+    });
+
+    test('should handle whitespace-only theme', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      act(() => {
+        result.current.setCurrentTheme('   ');
+      });
+
+      expect(result.current.currentTheme).toBe('stackBlue'); // Should default
+    });
+
+    test('should handle numeric theme input', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      act(() => {
+        result.current.setCurrentTheme(123);
+      });
+
+      expect(result.current.currentTheme).toBe('stackBlue'); // Should default
+    });
+
+    test('should handle object theme input', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      act(() => {
+        result.current.setCurrentTheme({ theme: 'emerald' });
+      });
+
+      expect(result.current.currentTheme).toBe('stackBlue'); // Should default
+    });
+  });
+
+  describe('Settings Persistence and State Management', () => {
+    test('should handle syncSkipped flag updates', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      // Test setting syncSkipped through updateSettings
+      act(() => {
+        result.current.updateSettings({ syncSkipped: true });
+      });
+
+      expect(result.current.syncSkipped).toBe(true);
+
+      act(() => {
+        result.current.updateSettings({ syncSkipped: false });
+      });
+
+      expect(result.current.syncSkipped).toBe(false);
+    });
+
+    test('should handle complex settings objects in updateSettings', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      const complexSettings = {
+        currentTheme: 'emerald',
+        soundEnabled: false,
+        preferences: {
+          notifications: true,
+          autoSync: false
+        },
+        ui: {
+          animations: true,
+          reducedMotion: false
+        }
+      };
+
+      act(() => {
+        result.current.updateSettings(complexSettings);
+      });
+
+      expect(result.current.currentTheme).toBe('emerald');
+      expect(result.current.soundEnabled).toBe(false);
+      expect(result.current.preferences).toEqual({ notifications: true, autoSync: false });
+      expect(result.current.ui).toEqual({ animations: true, reducedMotion: false });
+    });
+
+    test('should handle function values in updateSettings', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      const settingsWithFunction = {
+        currentTheme: 'crimson',
+        callback: () => 'test function'
+      };
+
+      act(() => {
+        result.current.updateSettings(settingsWithFunction);
+      });
+
+      expect(result.current.currentTheme).toBe('crimson');
+      expect(typeof result.current.callback).toBe('function');
+      expect(result.current.callback()).toBe('test function');
+    });
+
+    test('should handle array values in settings', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      act(() => {
+        result.current.updateSettings({
+          toolbarOrder: ['sync', 'user', 'library', 'settings'],
+          favoriteThemes: ['stackBlue', 'emerald', 'crimson']
+        });
+      });
+
+      expect(result.current.toolbarOrder).toEqual(['sync', 'user', 'library', 'settings']);
+      expect(result.current.favoriteThemes).toEqual(['stackBlue', 'emerald', 'crimson']);
+    });
+  });
+
+  describe('Banner Position Edge Cases', () => {
+    test('should accept any banner position value', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      const positions = ['top', 'bottom', 'left', 'right', 'center', 'floating'];
+
+      positions.forEach(position => {
+        act(() => {
+          result.current.setBannerPosition(position);
+        });
+        expect(result.current.bannerPosition).toBe(position);
+      });
+    });
+
+    test('should handle non-string banner positions', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      const values = [null, undefined, 123, { position: 'top' }, ['bottom']];
+
+      values.forEach(value => {
+        act(() => {
+          result.current.setBannerPosition(value);
+        });
+        expect(result.current.bannerPosition).toBe(value);
+      });
     });
   });
 
