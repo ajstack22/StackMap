@@ -29,6 +29,42 @@ const ConflictResolutionModal = ({
   const currentConflict = conflicts?.[currentIndex];
   const hasMore = currentIndex < (conflicts?.length || 0) - 1;
 
+  const getMergedValue = (field, localValue, remoteValue) => {
+    try {
+      if (field === 'activities') {
+        return conflictResolver.mergeActivitiesArray(
+          localValue || [],
+          remoteValue || []
+        );
+      } else if (field === 'users') {
+        // For users, we need to create mock metadata for the merge
+        const localMeta = { fieldTimestamps: { users: Date.now() - 1000 } };
+        const remoteMeta = { fieldTimestamps: { users: Date.now() } };
+        return conflictResolver.mergeUsers(
+          localValue,
+          remoteValue,
+          localMeta,
+          remoteMeta
+        );
+      } else if (Array.isArray(localValue) && Array.isArray(remoteValue)) {
+        // For other arrays, combine and deduplicate by id
+        const combined = [...(localValue || []), ...(remoteValue || [])];
+        const seen = new Set();
+        return combined.filter(item => {
+          const key = item.id || JSON.stringify(item);
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+      // For non-array values, prefer remote as fallback
+      return remoteValue;
+    } catch (error) {
+      // Fallback to remote value on merge error
+      return remoteValue;
+    }
+  };
+
   useEffect(() => {
     if (visible) {
       setCurrentIndex(0);
@@ -42,10 +78,41 @@ const ConflictResolutionModal = ({
     setSelectedChoice(choice);
 
     try {
-      const resolution = conflictResolver.resolveUserConflict(
-        currentConflict.id,
+      let resolvedValue;
+
+      if (choice === 'local') {
+        resolvedValue = currentConflict.localValue;
+      } else if (choice === 'remote') {
+        resolvedValue = currentConflict.remoteValue;
+      } else if (choice === 'merge') {
+        // Use the appropriate merge method based on field type
+        if (currentConflict.field === 'activities') {
+          resolvedValue = conflictResolver.mergeActivitiesArray(
+            currentConflict.localValue || [],
+            currentConflict.remoteValue || []
+          );
+        } else if (currentConflict.field === 'users') {
+          // For users, we need to create mock metadata for the merge
+          const localMeta = { fieldTimestamps: { users: Date.now() - 1000 } };
+          const remoteMeta = { fieldTimestamps: { users: Date.now() } };
+          resolvedValue = conflictResolver.mergeUsers(
+            currentConflict.localValue,
+            currentConflict.remoteValue,
+            localMeta,
+            remoteMeta
+          );
+        } else {
+          // For other fields, default to remote value as fallback
+          resolvedValue = currentConflict.remoteValue;
+        }
+      }
+
+      const resolution = {
+        id: currentConflict.id,
+        field: currentConflict.field,
         choice,
-      );
+        resolvedValue
+      };
 
       if (onResolve) {
         await onResolve(resolution);
@@ -247,7 +314,7 @@ const ConflictResolutionModal = ({
 
             {currentConflict.strategy === 'merge' &&
               renderValue(
-                conflictResolver.mergeValues(
+                getMergedValue(
                   currentConflict.field,
                   currentConflict.localValue,
                   currentConflict.remoteValue,

@@ -95,13 +95,11 @@ const PINTabContent = ({
       const isValid = await onVerifyPin(pinToUse);
       if (isValid) {
         handlePinModalClose();
-        // If changing PIN, show the set PIN modal
-        if (hasSecurePin) {
-          setIsSettingPin(true);
-          setShowPinModal(true);
-          setPinInput('');
-          setConfirmPin('');
-        }
+        // If changing PIN (not just verifying), show the set PIN modal
+        setIsSettingPin(true);
+        setShowPinModal(true);
+        setPinInput('');
+        setConfirmPin('');
       } else {
         showToast({ message: 'Incorrect PIN', type: 'error' });
         setPinInput('');

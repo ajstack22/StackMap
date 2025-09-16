@@ -7,6 +7,7 @@ import EmojiPicker from '../../EmojiPicker';
 import TimePicker from '../../TimePicker';
 import { styles } from './styles';
 import { DEFAULT_ACTIVITY_EMOJI } from '../../../constants';
+import { generateSecureRandomString } from '../../../utils/secureId';
 
 const AddTabContent = ({
   theme,
@@ -70,9 +71,7 @@ const AddTabContent = ({
     })();
 
     const activityData = {
-      id: `${deviceId}-${Date.now()}-${Math.random()
-        .toString(36)
-        .substr(2, 9)}`,
+      id: `${deviceId}-${Date.now()}-${generateSecureRandomString(9)}`,
       text: activityText.trim(),
       description: activityDescription.trim(),
       icon: activityIcon,
@@ -114,9 +113,7 @@ const AddTabContent = ({
     })();
 
     const activityData = {
-      id: `${deviceId}-${Date.now()}-${Math.random()
-        .toString(36)
-        .substr(2, 9)}`,
+      id: `${deviceId}-${Date.now()}-${generateSecureRandomString(9)}`,
       text: activityText.trim(),
       description: activityDescription.trim(),
       icon: activityIcon,

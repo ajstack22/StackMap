@@ -301,13 +301,16 @@ const PasswordUtils = {
 
     /**
      * Generate secure random password
+     * SECURITY: Fixed to use cryptographically secure randomness
      */
     generateSecurePassword: (length = 16) => {
+        const crypto = require('crypto');
         const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
         let password = '';
 
         for (let i = 0; i < length; i++) {
-            password += charset.charAt(Math.floor(Math.random() * charset.length));
+            const randomIndex = crypto.randomInt(0, charset.length);
+            password += charset.charAt(randomIndex);
         }
 
         return password;

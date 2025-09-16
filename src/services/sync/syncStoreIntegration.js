@@ -681,10 +681,14 @@ class SyncStoreIntegration {
     
     // Convert key to URL-safe base64
     const fullToken = encodeBase64(keyBytes);
-    const encryptionKey = fullToken
+    // SECURITY: ReDoS-safe padding removal - replaced vulnerable regex with string methods
+    let encryptionKey = fullToken
       .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
+      .replace(/\//g, '_');
+    // Remove trailing padding characters safely
+    while (encryptionKey.endsWith('=')) {
+      encryptionKey = encryptionKey.slice(0, -1);
+    }
     
     return { shareId, encryptionKey };
   }

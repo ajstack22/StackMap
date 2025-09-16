@@ -17,29 +17,15 @@ const PinModal = ({
 }) => {
   // No need to clear PIN on unmount - handled by parent
   const handleNumberPress = num => {
-    if (isSettingPin && confirmPin) {
-      // During PIN confirmation phase - requires both isSettingPin AND confirmPin flags
-      // This ensures we're in the specific confirmation state, not initial setup
-      if (pinInput.length < 4) {
-        const newPin = pinInput + num;
-        setPinInput(newPin);
-        // Check if PIN is complete and call callback
-        if (newPin.length === 4 && onPinComplete) {
-          // Pass the PIN directly to avoid state sync issues
-          onPinComplete(newPin);
-        }
-      }
-    } else {
-      // Initial PIN entry phase (either setting new PIN or entering existing PIN)
-      // This covers: new PIN setup (isSettingPin=true, confirmPin=false) and PIN verification (isSettingPin=false)
-      if (pinInput.length < 4) {
-        const newPin = pinInput + num;
-        setPinInput(newPin);
-        // Check if PIN is complete and call callback
-        if (newPin.length === 4 && onPinComplete) {
-          // Pass the PIN directly to avoid state sync issues
-          onPinComplete(newPin);
-        }
+    // Both PIN confirmation and initial entry phases use the same input logic
+    // The distinction between phases is handled by the parent component
+    if (pinInput.length < 4) {
+      const newPin = pinInput + num;
+      setPinInput(newPin);
+      // Check if PIN is complete and call callback
+      if (newPin.length === 4 && onPinComplete) {
+        // Pass the PIN directly to avoid state sync issues
+        onPinComplete(newPin);
       }
     }
   };

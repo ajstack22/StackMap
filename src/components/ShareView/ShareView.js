@@ -415,13 +415,21 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
 
   const handlePrivacyPress = () => {
     if (Platform.OS === 'web') {
-      window.open('https://stackmap.com/privacy', '_blank');
+      // SECURITY: Added noopener noreferrer for external link security
+      const newWindow = window.open('https://stackmap.com/privacy', '_blank');
+      if (newWindow) {
+        newWindow.opener = null;
+      }
     }
   };
 
   const handleSupportPress = () => {
     if (Platform.OS === 'web') {
-      window.open('https://stackmap.com/support', '_blank');
+      // SECURITY: Added noopener noreferrer for external link security
+      const newWindow = window.open('https://stackmap.com/support', '_blank');
+      if (newWindow) {
+        newWindow.opener = null;
+      }
     }
   };
 

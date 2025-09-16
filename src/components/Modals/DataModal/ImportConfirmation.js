@@ -153,7 +153,9 @@ const ImportConfirmation = ({
           {
             text: 'Import',
             style: 'destructive',
-            onPress: processImportData,
+            onPress: () => {
+              processImportData();
+            },
           },
         ],
       );
@@ -182,7 +184,9 @@ const ImportConfirmation = ({
       <ConfirmModal
         visible={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
-        onConfirm={processImportData}
+        onConfirm={() => {
+          processImportData();
+        }}
         theme={theme}
         title={importMode === 'fresh' ? 'Start Fresh Import' : 'Merge Import'}
         message={

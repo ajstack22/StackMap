@@ -45,7 +45,7 @@ const calculateVisibleButtons = (screenWidth) => {
 
   // Button width calculation - adjusted for Galaxy S25+ and similar phones
   const buttonWidth = isTablet(screenWidth) ? 65 : 44;
-  const buttonGap = Platform.OS === 'web' ? 5 : 5;
+  const buttonGap = 5;
   const editModeTextWidth = isTablet(screenWidth) ? 85 : 58;
   const moreButtonWidth = buttonWidth;
 
@@ -532,11 +532,11 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   editModeLabelContainer: {
-    marginBottom: Platform.OS === 'web' ? 1 : 1,
+    marginBottom: 1,
   },
   editModeLabelBottom: {
     marginBottom: Platform.OS === 'android' ? 2 : 0,
-    marginTop: Platform.OS === 'web' ? 1 : 1,
+    marginTop: 1,
   },
   editModeLabel: {
     color: 'white',

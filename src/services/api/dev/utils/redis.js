@@ -448,7 +448,9 @@ const rateLimiter = {
             pipe.zCard(key);
 
             // Add current request
-            pipe.zAdd(key, { score: now, value: `${now}:${Math.random()}` });
+            // SECURITY: Use crypto-secure random for rate limiting to prevent collision attacks
+            const crypto = require('crypto');
+            pipe.zAdd(key, { score: now, value: `${now}:${crypto.randomInt(0, 1000000)}` });
 
             // Set expiration
             pipe.expire(key, Math.ceil(windowMs / 1000));

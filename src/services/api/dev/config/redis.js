@@ -274,6 +274,7 @@ const CacheUtils = {
 
     /**
      * Hash parameters for cache key generation
+     * SECURITY: MD5 safe for non-security cache key generation - no cryptographic use
      */
     hashParams: (params) => {
         const crypto = require('crypto');

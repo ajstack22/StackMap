@@ -1,6 +1,7 @@
 import { Alert } from 'react-native';
 import { DEFAULT_ACTIVITY_EMOJI } from '../../constants';
 import { handleCategoryDragOperations } from './CategoryDragOperations';
+import { generateSecureId } from '../../utils/secureId';
 
 // Category CRUD operations
 const useCategoryActions = (categories, setCategories, onSaveCategories) => {
@@ -222,7 +223,7 @@ const useCategoryActions = (categories, setCategories, onSaveCategories) => {
                 if (!exists) {
                   mergedActivities.push({
                     ...newActivity,
-                    id: `activity-${Date.now()}-${Math.random()}`,
+                    id: generateSecureId('activity'),
                   });
                 }
               });
@@ -248,7 +249,7 @@ const useCategoryActions = (categories, setCategories, onSaveCategories) => {
       name: group.name,
       activities: group.activities.map(activity => ({
         ...activity,
-        id: `activity-${Date.now()}-${Math.random()}`,
+        id: generateSecureId('activity'),
       })),
     };
 

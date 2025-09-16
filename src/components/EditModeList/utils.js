@@ -1,4 +1,5 @@
 import { Platform, Vibration, LayoutAnimation, UIManager } from 'react-native';
+import { generateSecureId } from '../../utils/secureId';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -60,7 +61,7 @@ export const batchUpdate = (array, updates) => {
  * Generate unique ID for new items
  */
 export const generateId = () => {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return generateSecureId();
 };
 
 /**

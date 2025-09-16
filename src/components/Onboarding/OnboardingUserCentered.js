@@ -25,6 +25,7 @@ import minimalSync from '../../services/sync/minimalSyncService';
 import encryptionService from '../../services/sync/encryptionService';
 import { BUILD_VERSION } from '../../utils/version';
 import { useAppStore, useUserStore, useSettingsStore } from '../../stores';
+import { generateSecureRandomString } from '../../utils/secureId';
 import {
   TYPOGRAPHY,
   SPACING,
@@ -242,12 +243,17 @@ const OnboardingUserCentered = ({
     if (Platform.OS === 'web') {
       crypto.getRandomValues(bytes);
     } else {
-      // Use better randomness on mobile with timestamp and Math.random
-      const timestamp = Date.now();
-      for (let i = 0; i < 16; i++) {
-        // Mix timestamp with random for better entropy
-        const seed = timestamp + i + Math.random() * 1000000;
-        bytes[i] = Math.floor((Math.random() * seed) % 256);
+      // Use crypto.getRandomValues if available on mobile
+      if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+        crypto.getRandomValues(bytes);
+      } else {
+        // Fallback for mobile environments without crypto.getRandomValues
+        const timestamp = Date.now();
+        for (let i = 0; i < 16; i++) {
+          // Use timestamp and performance.now() for better entropy than Math.random
+          const seed = timestamp + i + (performance?.now() || Date.now());
+          bytes[i] = (seed * 9301 + 49297) % 233280 % 256;
+        }
       }
     }
     const hexCode = Array.from(bytes)
@@ -508,7 +514,7 @@ const OnboardingUserCentered = ({
       // First, create users in the store before setting up sync
       if (users.length > 0) {
         const timestamp = Date.now();
-        const randomId = Math.random().toString(36).substr(2, 9);
+        const randomId = generateSecureRandomString(9);
         const usersObj = {};
         let firstUserId = null;
         
@@ -1310,8 +1316,8 @@ const OnboardingUserCentered = ({
     };
     
     const parsed = parseInput(recoveryPhrase);
-    const displayCharCount = parsed.isInviteFormat 
-      ? parsed.recoveryPhrase.length 
+    const displayCharCount = parsed.isInviteFormat
+      ? recoveryPhrase.length
       : parsed.recoveryPhrase.length;
     
     

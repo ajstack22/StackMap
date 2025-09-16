@@ -3,6 +3,7 @@ import TabbedModal from '../../TabbedModal';
 import { TabContent } from '../../TabbedModal';
 import LibraryTabContent from './LibraryTabContent';
 import AddTabContent from './AddTabContent';
+import { generateSecureId } from '../../../utils/secureId';
 
 const ActivityManagementModal = ({
   visible,
@@ -76,7 +77,7 @@ const ActivityManagementModal = ({
         };
 
         const newActivity = {
-          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: generateSecureId(),
           name: activityData.text,
           icon: activityData.icon,
         };

@@ -38,8 +38,9 @@ export const validators = {
   },
 
   // Check if value is a valid email
+  // SECURITY: ReDoS-safe email regex - replaced vulnerable [^\s@]+ patterns
   email: value => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (value && !emailRegex.test(value)) {
       return 'Please enter a valid email address';
     }

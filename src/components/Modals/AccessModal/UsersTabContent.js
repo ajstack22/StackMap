@@ -32,16 +32,15 @@ const UsersTabContent = ({
   const handleUserSelect = userId => {
     onSelectUser(userId);
     const userName =
-      typeof users[userId]?.name === 'string'
-        ? users[userId].name
-        : String(users[userId]?.name || 'User');
+      users[userId]?.name
+        ? String(users[userId].name)
+        : 'User';
     showToast({ message: `Switched to ${userName}` });
   };
 
   const handleUserDelete = (userId, userName) => {
     // Ensure userName is a string
-    const name =
-      typeof userName === 'string' ? userName : String(userName || 'User');
+    const name = userName ? String(userName) : 'User';
     setUserToDelete({ id: userId, name: name });
     setShowDeleteConfirm(true);
   };
@@ -126,9 +125,7 @@ const UsersTabContent = ({
                     currentUser === userId && styles.userItemNameActive,
                   ]}
                 >
-                  {typeof user.name === 'string'
-                    ? user.name
-                    : String(user.name || 'User')}
+                  {user.name ? String(user.name) : 'User'}
                 </Text>
                 {currentUser === userId && (
                   <View style={styles.enabledBadge}>
