@@ -45,6 +45,8 @@ import EmojiPicker from '../EmojiPicker';
 import LibraryHeader from './LibraryHeader';
 import TabSelector from './TabSelector';
 import LibraryActions from './LibraryActions';
+import { getFilteredActivities, getFilteredCategories, useFilterControls } from './FilterControls';
+import { useSortControls, getDragActivationDistance, isScrollEnabled } from './SortControls';
 
 // Empty template for new users - no pre-loaded activities
 // Users can create their own activity groups in My Library
@@ -717,19 +719,6 @@ const renderCategoryActions = ({
   );
 };
 
-// Helper function to filter activities based on search query
-const getFilteredActivities = (activities, searchQuery) => {
-  if (!searchQuery) return activities;
-
-  const query = searchQuery.toLowerCase();
-  return activities.filter(activity => {
-    const activityIcon = activity.icon || '';
-    return (
-      (activity.text || '').toLowerCase().includes(query) ||
-      activityIcon.includes(searchQuery)
-    );
-  });
-};
 
 // Helper function to render activities list content
 const renderActivitiesListContent = ({
@@ -1323,93 +1312,11 @@ const handleCategoryDragOperations = ({
   return { handleCategoryDragStart, handleCategoryDragEnd };
 };
 
-// Helper function to handle sort mode operations
-const handleSortModeOperations = ({
-  isSortMode,
-  categories,
-  categoryExpandedStates,
-  setSavedExpandedStates,
-  setCategoryExpandedStates,
-  setIsSortMode,
-}) => {
-  const toggleSortMode = () => {
-    if (!isSortMode) {
-      // Entering sort mode - save current states and collapse all
-      const currentStates = {};
-      categories.forEach(cat => {
-        currentStates[cat.id] =
-          categoryExpandedStates[cat.id] !== undefined
-            ? categoryExpandedStates[cat.id]
-            : true;
-      });
-      setSavedExpandedStates(currentStates);
-
-      // Collapse all categories
-      const collapsedStates = {};
-      categories.forEach(cat => {
-        collapsedStates[cat.id] = false;
-      });
-      setCategoryExpandedStates(collapsedStates);
-    } else {
-      // Exiting sort mode - restore saved states
-      setCategoryExpandedStates({}); // This should be restored from saved states
-    }
-    setIsSortMode(!isSortMode);
-  };
-
-  return { toggleSortMode };
-};
 
 
 
 
-// Helper function to filter categories based on search
-const getFilteredCategories = (categories, stackMapLibrary, activeTab, searchQuery) => {
-  const dataToFilter = activeTab === 'stackmap'
-    ? stackMapLibrary?.activityGroups || []
-    : categories;
 
-  return dataToFilter.filter(category => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    // Check category name
-    if (category.name.toLowerCase().includes(query)) return true;
-    // Check activities within category
-    return category.activities.some(
-      activity =>
-        (activity.text || '').toLowerCase().includes(query) ||
-        (activity.icon || '').includes(searchQuery),
-    );
-  });
-};
-
-// Helper function to get drag event handlers
-const getDragEventHandlers = (
-  activeTab,
-  categories,
-  handleCategoryDragStart,
-  handleCategoryDragEnd,
-  hasActuallyDragged
-) => {
-  const shouldDisableDrag = Platform.OS === 'android' || activeTab === 'stackmap';
-
-  return {
-    onDragBegin: shouldDisableDrag
-      ? undefined
-      : index => {
-          const draggedItem = categories[index];
-          if (draggedItem) {
-            handleCategoryDragStart(draggedItem.id);
-          }
-        },
-    onPlaceholderIndexChange: Platform.OS === 'android'
-      ? undefined
-      : () => {
-          hasActuallyDragged.current = true;
-        },
-    onDragEnd: shouldDisableDrag ? undefined : handleCategoryDragEnd,
-  };
-};
 
 // Helper function to render edit modal
 const renderEditModal = (
@@ -1545,11 +1452,8 @@ const ActivityLibrary = ({
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [editingCategoryId, setEditingCategoryId] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [isDraggingAnyCategory, setIsDraggingAnyCategory] = useState(false);
   const [categoryExpandedStates, setCategoryExpandedStates] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSortMode, setIsSortMode] = useState(false);
-  const [savedExpandedStates, setSavedExpandedStates] = useState({});
 
   // Ensure My Templates folder always exists
   useEffect(() => {
@@ -1761,61 +1665,7 @@ const ActivityLibrary = ({
     setEditingCategoryId(null);
   };
 
-  const [activeDragId, setActiveDragId] = useState(null);
-  const [draggedData, setDraggedData] = useState(null);
-  const hasActuallyDragged = useRef(false);
 
-  const handleCategoryDragStart = itemId => {
-    // Save the initial state when drag might begin
-    if (activeDragId !== itemId) {
-      setActiveDragId(itemId);
-      hasActuallyDragged.current = false;
-      setDraggedData([...categories]); // Save original order
-
-      // Save current expanded states before any animations
-      const states = {};
-      categories.forEach(cat => {
-        // Get actual expanded state from the component if available
-        const currentExpanded =
-          cat.id in categoryExpandedStates
-            ? categoryExpandedStates[cat.id]
-            : true;
-        states[cat.id] = currentExpanded;
-      });
-      setCategoryExpandedStates(states);
-
-      // Small delay to let state update propagate
-      setTimeout(() => {
-        setIsDraggingAnyCategory(true);
-      }, 50);
-    }
-  };
-
-  const handleCategoryDragEnd = ({ data }) => {
-    // Only update if we actually dragged (data changed)
-    const dataChanged = JSON.stringify(data) !== JSON.stringify(draggedData);
-
-    if (dataChanged && hasActuallyDragged.current) {
-      // Real drag occurred with reordering
-      setCategories(data);
-      if (onSaveCategories) onSaveCategories(data);
-    } else {
-      // No real drag, restore original order
-      if (draggedData) {
-        setCategories(draggedData);
-      }
-    }
-
-    // Reset drag states
-    setActiveDragId(null);
-    setDraggedData(null);
-    hasActuallyDragged.current = false;
-
-    // Restore expanded states after a delay
-    setTimeout(() => {
-      setIsDraggingAnyCategory(false);
-    }, 300);
-  };
 
   const handleExpandedChange = (categoryId, isExpanded) => {
     setCategoryExpandedStates(prev => ({
@@ -1824,6 +1674,15 @@ const ActivityLibrary = ({
     }));
   };
 
+  // Use sort controls hook
+  const {
+    isSortMode,
+    isDraggingAnyCategory,
+    toggleSortMode,
+    getDragEventHandlers,
+    handleCategoryDragEnd,
+  } = useSortControls(categories, categoryExpandedStates, setCategoryExpandedStates);
+
   const filteredCategories = getFilteredCategories(
     categories,
     stackMapLibrary,
@@ -1831,13 +1690,15 @@ const ActivityLibrary = ({
     searchQuery
   );
 
-  const dragHandlers = getDragEventHandlers(
-    activeTab,
-    categories,
-    handleCategoryDragStart,
-    handleCategoryDragEnd,
-    hasActuallyDragged
-  );
+  const dragHandlers = getDragEventHandlers(activeTab);
+
+  // Handle drag end with category saving
+  const handleDragEndWithSave = (dragResult) => {
+    const newCategories = handleCategoryDragEnd(dragResult, onSaveCategories);
+    if (newCategories) {
+      setCategories(newCategories);
+    }
+  };
 
   return (
     <Modal
@@ -1876,44 +1737,19 @@ const ActivityLibrary = ({
             onSearchChange={setSearchQuery}
             onSearchClear={() => setSearchQuery('')}
             isSortMode={isSortMode}
-            onSortToggle={() => {
-              if (!isSortMode) {
-                // Entering sort mode - save current states and collapse all
-                const currentStates = {};
-                categories.forEach(cat => {
-                  currentStates[cat.id] =
-                    categoryExpandedStates[cat.id] !== undefined
-                      ? categoryExpandedStates[cat.id]
-                      : true;
-                });
-                setSavedExpandedStates(currentStates);
-
-                // Collapse all categories
-                const collapsedStates = {};
-                categories.forEach(cat => {
-                  collapsedStates[cat.id] = false;
-                });
-                setCategoryExpandedStates(collapsedStates);
-              } else {
-                // Exiting sort mode - restore saved states
-                setCategoryExpandedStates(savedExpandedStates);
-              }
-              setIsSortMode(!isSortMode);
-            }}
+            onSortToggle={toggleSortMode}
             theme={theme}
           />
           <DraggableFlatList
             data={filteredCategories}
             onDragBegin={dragHandlers.onDragBegin}
             onPlaceholderIndexChange={dragHandlers.onPlaceholderIndexChange}
-            onDragEnd={dragHandlers.onDragEnd}
+            onDragEnd={dragHandlers.onDragEnd ? handleDragEndWithSave : undefined}
             keyExtractor={item => item.id}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 0 }}
-            scrollEnabled={!isDraggingAnyCategory && !isSortMode}
-            activationDistance={
-              activeTab === 'stackmap' ? 999999 : isSortMode ? 0 : 20
-            }
+            scrollEnabled={isScrollEnabled(isDraggingAnyCategory, isSortMode)}
+            activationDistance={getDragActivationDistance(activeTab, isSortMode)}
             renderItem={({ item, drag, isActive }) => (
               <ScaleDecorator activeScale={0.98}>
                 <CategorySection

@@ -1,0 +1,87 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`LibraryActions has proper component structure 1`] = `
+<View
+  style={
+    {
+      "alignItems": "center",
+      "flexDirection": "row",
+      "gap": 8,
+      "marginBottom": 16,
+    }
+  }
+>
+  <View
+    style={
+      [
+        {
+          "alignItems": "center",
+          "backgroundColor": "#f0f0f0",
+          "borderRadius": 12,
+          "flexDirection": "row",
+          "minHeight": 44,
+          "paddingHorizontal": 16,
+          "paddingVertical": 4,
+        },
+        {
+          "flex": 1,
+        },
+      ]
+    }
+  >
+    <Icon
+      color="#9e9e9e"
+      name="search"
+      size={20}
+      style={
+        {
+          "marginRight": 8,
+        }
+      }
+    />
+    <TextInput
+      accessibilityHint="Type to search through activities and categories"
+      accessibilityLabel="Search input"
+      onChangeText={[MockFunction]}
+      placeholder="Search activities..."
+      placeholderTextColor="#9e9e9e"
+      returnKeyType="search"
+      style={
+        {
+          "color": "#000",
+          "flex": 1,
+          "fontFamily": "'Comic Relief', 'Comic Sans MS', cursive",
+          "fontSize": 14,
+          "paddingVertical": 8,
+        }
+      }
+      testID="search-input"
+      value=""
+    />
+  </View>
+  <TouchableOpacity
+    accessibilityLabel="Enter sort mode"
+    onPress={[MockFunction]}
+    style={
+      [
+        {
+          "alignItems": "center",
+          "backgroundColor": "#f0f0f0",
+          "borderRadius": 12,
+          "height": 44,
+          "justifyContent": "center",
+          "width": 44,
+        },
+        false,
+      ]
+    }
+    testID="sort-toggle-button"
+  >
+    <Icon
+      color="#757575"
+      name="sort"
+      size={20}
+    />
+  </TouchableOpacity>
+</View>
+`;
