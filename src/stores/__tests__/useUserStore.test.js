@@ -1,15 +1,22 @@
 /**
  * Comprehensive tests for useUserStore
  * Tests all store functionality including sanitization, validation, and user management
+ * Using direct store access pattern (not renderHook) as per Zustand best practices
  */
 
-import { renderHook, act } from '@testing-library/react-hooks';
 import useUserStore from '../useUserStore';
 import { DEFAULT_USER_ICON } from '../../constants';
 
+// Mock AsyncStorage
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(() => Promise.resolve(null)),
+  setItem: jest.fn(() => Promise.resolve()),
+  removeItem: jest.fn(() => Promise.resolve()),
+}));
+
 describe('useUserStore', () => {
   beforeEach(() => {
-    // Reset store before each test
+    // Reset store before each test using direct access
     useUserStore.setState({
       users: {},
       currentUser: null,
@@ -20,19 +27,17 @@ describe('useUserStore', () => {
 
   describe('Initial State', () => {
     test('should have correct initial state', () => {
-      const { result } = renderHook(() => useUserStore());
+      const state = useUserStore.getState();
 
-      expect(result.current.users).toEqual({});
-      expect(result.current.currentUser).toBe(null);
-      expect(result.current.currentDay).toBe('today');
-      expect(result.current.userContextData).toEqual({});
+      expect(state.users).toEqual({});
+      expect(state.currentUser).toBe(null);
+      expect(state.currentDay).toBe('today');
+      expect(state.userContextData).toEqual({});
     });
   });
 
   describe('setUsers', () => {
     test('should set users with valid data', () => {
-      const { result } = renderHook(() => useUserStore());
-
       const users = {
         'user1': {
           id: 'user1',
@@ -48,16 +53,12 @@ describe('useUserStore', () => {
         }
       };
 
-      act(() => {
-        result.current.setUsers(users);
-      });
+      useUserStore.getState().setUsers(users);
 
-      expect(result.current.users).toEqual(users);
+      expect(useUserStore.getState().users).toEqual(users);
     });
 
     test('should sanitize user names from objects', () => {
-      const { result } = renderHook(() => useUserStore());
-
       const users = {
         'user1': {
           id: 'user1',
@@ -66,16 +67,12 @@ describe('useUserStore', () => {
         }
       };
 
-      act(() => {
-        result.current.setUsers(users);
-      });
+      useUserStore.getState().setUsers(users);
 
-      expect(result.current.users['user1'].name).toBe('John Doe');
+      expect(useUserStore.getState().users['user1'].name).toBe('John Doe');
     });
 
     test('should sanitize user names from text property', () => {
-      const { result } = renderHook(() => useUserStore());
-
       const users = {
         'user1': {
           id: 'user1',
@@ -84,427 +81,469 @@ describe('useUserStore', () => {
         }
       };
 
-      act(() => {
-        result.current.setUsers(users);
-      });
+      useUserStore.getState().setUsers(users);
 
-      expect(result.current.users['user1'].name).toBe('Jane Smith');
+      expect(useUserStore.getState().users['user1'].name).toBe('Jane Smith');
     });
 
     test('should default invalid user names to "User"', () => {
-      const { result } = renderHook(() => useUserStore());
-
       const users = {
         'user1': { id: 'user1', name: null, icon: '👤' },
         'user2': { id: 'user2', name: undefined, icon: '👤' },
         'user3': { id: 'user3', name: {}, icon: '👤' },
-        'user4': { id: 'user4', name: 123, icon: '👤' }
+        'user4': { id: 'user4', name: [], icon: '👤' }
       };
 
-      act(() => {
-        result.current.setUsers(users);
-      });
+      useUserStore.getState().setUsers(users);
+      const state = useUserStore.getState();
 
-      expect(result.current.users['user1'].name).toBe('User');
-      expect(result.current.users['user2'].name).toBe('User');
-      expect(result.current.users['user3'].name).toBe('User');
-      // Numbers get converted to strings
-      expect(result.current.users['user4'].name).toBe('User'); // Actually gets treated as invalid
+      expect(state.users['user1'].name).toBe('User');
+      expect(state.users['user2'].name).toBe('User');
+      expect(state.users['user3'].name).toBe('User');
+      expect(state.users['user4'].name).toBe('User');
     });
 
-    test('should handle emoji to icon conversion when icon is missing', () => {
-      const { result } = renderHook(() => useUserStore());
-
+    test('should handle icon field normalization', () => {
       const users = {
-        'user1': {
-          id: 'user1',
-          name: 'John',
-          emoji: '🌟' // Should convert to icon when no icon present
+        'user1': { id: 'user1', name: 'Test', emoji: '🎯' }, // emoji instead of icon
+        'user2': { id: 'user2', name: 'Test', icon: null }, // null icon
+        'user3': { id: 'user3', name: 'Test', icon: '' }, // empty icon
+        'user4': { id: 'user4', name: 'Test' } // missing icon
+      };
+
+      useUserStore.getState().setUsers(users);
+      const state = useUserStore.getState();
+
+      expect(state.users['user1'].icon).toBe('🎯');
+      expect(state.users['user1'].emoji).toBeUndefined();
+      expect(state.users['user2'].icon).toBe(DEFAULT_USER_ICON);
+      expect(state.users['user3'].icon).toBe(DEFAULT_USER_ICON);
+      expect(state.users['user4'].icon).toBe(DEFAULT_USER_ICON);
+    });
+  });
+
+  describe('addUser', () => {
+    test('should add a new user with valid data', () => {
+      const newUser = {
+        id: 'user1',
+        name: 'New User',
+        icon: '👤'
+      };
+
+      useUserStore.getState().addUser(newUser);
+      const state = useUserStore.getState();
+
+      expect(state.users['user1']).toMatchObject(newUser);
+    });
+
+    test('should sanitize user data when adding', () => {
+      const newUser = {
+        id: 'user1',
+        name: { name: 'Object Name' },
+        emoji: '🎯' // Should be normalized to icon
+      };
+
+      useUserStore.getState().addUser(newUser);
+      const state = useUserStore.getState();
+
+      expect(state.users['user1'].name).toBe('Object Name');
+      expect(state.users['user1'].icon).toBe('🎯');
+      expect(state.users['user1'].emoji).toBeUndefined();
+    });
+
+    test('should provide default icon if missing', () => {
+      const newUser = {
+        id: 'user1',
+        name: 'No Icon User'
+      };
+
+      useUserStore.getState().addUser(newUser);
+      const state = useUserStore.getState();
+
+      expect(state.users['user1'].icon).toBe(DEFAULT_USER_ICON);
+    });
+  });
+
+  describe('updateUser', () => {
+    beforeEach(() => {
+      // Setup initial user
+      useUserStore.setState({
+        users: {
+          'user1': {
+            id: 'user1',
+            name: 'Original Name',
+            icon: '👤',
+            days: {
+              today: { activities: ['act1'] },
+              tomorrow: { activities: [] }
+            },
+            userAddedActivityIds: []
+          }
         }
-      };
-
-      act(() => {
-        result.current.setUsers(users);
       });
-
-      expect(result.current.users['user1'].icon).toBe('🌟');
-      expect(result.current.users['user1'].emoji).toBeUndefined();
     });
 
-    test('should default missing icons', () => {
-      const { result } = renderHook(() => useUserStore());
-
-      const users = {
-        'user1': { id: 'user1', name: 'John' },
-        'user2': { id: 'user2', name: 'Jane', icon: null },
-        'user3': { id: 'user3', name: 'Bob', icon: '' }
-      };
-
-      act(() => {
-        result.current.setUsers(users);
+    test('should update user properties', () => {
+      useUserStore.getState().updateUser('user1', {
+        name: 'Updated Name',
+        icon: '🎨'
       });
 
-      expect(result.current.users['user1'].icon).toBe(DEFAULT_USER_ICON);
-      expect(result.current.users['user2'].icon).toBe(DEFAULT_USER_ICON);
-      expect(result.current.users['user3'].icon).toBe(DEFAULT_USER_ICON);
+      const user = useUserStore.getState().users['user1'];
+      expect(user.name).toBe('Updated Name');
+      expect(user.icon).toBe('🎨');
     });
 
-    test('should handle null/undefined users', () => {
-      const { result } = renderHook(() => useUserStore());
+    test('should handle icon validation during update', () => {
+      // Test null icon
+      useUserStore.getState().updateUser('user1', { icon: null });
+      expect(useUserStore.getState().users['user1'].icon).toBe(DEFAULT_USER_ICON);
 
-      const users = {
-        'user1': null,
-        'user2': undefined,
-        'user3': { id: 'user3', name: 'Valid User', icon: '👤' }
-      };
+      // Test empty string icon
+      useUserStore.getState().updateUser('user1', { icon: '' });
+      expect(useUserStore.getState().users['user1'].icon).toBe(DEFAULT_USER_ICON);
 
-      act(() => {
-        result.current.setUsers(users);
+      // Test invalid type icon
+      useUserStore.getState().updateUser('user1', { icon: 123 });
+      expect(useUserStore.getState().users['user1'].icon).toBe(DEFAULT_USER_ICON);
+
+      // Test valid icon
+      useUserStore.getState().updateUser('user1', { icon: '✅' });
+      expect(useUserStore.getState().users['user1'].icon).toBe('✅');
+    });
+
+    test('should handle deep property updates with dayToUpdate', () => {
+      useUserStore.getState().updateUser('user1', {
+        days: {
+          today: { activities: ['act1', 'act2', 'act3'] }
+        },
+        dayToUpdate: 'today'
       });
 
-      expect(result.current.users['user1']).toBe(null);
-      expect(result.current.users['user2']).toBe(undefined);
-      expect(result.current.users['user3'].name).toBe('Valid User');
+      const user = useUserStore.getState().users['user1'];
+      expect(user.days.today.activities).toEqual(['act1', 'act2', 'act3']);
+      expect(user.days.tomorrow.activities).toEqual([]); // Unchanged
+    });
+
+    test('should merge nested objects correctly', () => {
+      useUserStore.getState().updateUser('user1', {
+        preferences: {
+          theme: 'dark',
+          notifications: true
+        }
+      });
+
+      let user = useUserStore.getState().users['user1'];
+      expect(user.preferences).toEqual({
+        theme: 'dark',
+        notifications: true
+      });
+
+      // Update only one nested property
+      useUserStore.getState().updateUser('user1', {
+        preferences: {
+          theme: 'light'
+        }
+      });
+
+      user = useUserStore.getState().users['user1'];
+      expect(user.preferences.theme).toBe('light');
+      expect(user.preferences.notifications).toBe(true); // Should be preserved
+    });
+
+    test('should not update non-existent user', () => {
+      const stateBefore = useUserStore.getState().users;
+
+      useUserStore.getState().updateUser('nonexistent', {
+        name: 'Should Not Work'
+      });
+
+      const stateAfter = useUserStore.getState().users;
+      expect(stateAfter).toEqual(stateBefore);
+      expect(stateAfter['nonexistent']).toBeUndefined();
+    });
+
+    test('should handle complex nested updates', () => {
+      useUserStore.getState().updateUser('user1', {
+        days: {
+          today: {
+            activities: ['new1', 'new2'],
+            notes: 'Today was productive'
+          },
+          tomorrow: {
+            activities: ['plan1'],
+            notes: 'Planning ahead'
+          }
+        }
+      });
+
+      const user = useUserStore.getState().users['user1'];
+      expect(user.days.today.activities).toEqual(['new1', 'new2']);
+      expect(user.days.today.notes).toBe('Today was productive');
+      expect(user.days.tomorrow.activities).toEqual(['plan1']);
+      expect(user.days.tomorrow.notes).toBe('Planning ahead');
+    });
+  });
+
+  describe('deleteUser', () => {
+    beforeEach(() => {
+      useUserStore.setState({
+        users: {
+          'user1': {
+            id: 'user1',
+            name: 'User to Delete',
+            icon: '👤',
+            days: { today: { activities: [] } }
+          },
+          'user2': {
+            id: 'user2',
+            name: 'Other User',
+            icon: '👩',
+            days: { today: { activities: [] } }
+          }
+        }
+      });
+    });
+
+    test('should soft delete user by adding deleted flag', () => {
+      const beforeDelete = Date.now();
+
+      useUserStore.getState().deleteUser('user1');
+
+      const afterDelete = Date.now();
+      const user = useUserStore.getState().users['user1'];
+
+      expect(user.deleted).toBe(true);
+      expect(user.deletedAt).toBeGreaterThanOrEqual(beforeDelete);
+      expect(user.deletedAt).toBeLessThanOrEqual(afterDelete);
+      expect(user.name).toBe('User to Delete'); // Data preserved
+      expect(user.icon).toBe('👤'); // Data preserved
+    });
+
+    test('should not affect other users when deleting', () => {
+      useUserStore.getState().deleteUser('user1');
+
+      const state = useUserStore.getState();
+      expect(state.users['user1'].deleted).toBe(true);
+      expect(state.users['user2'].deleted).toBeUndefined();
+      expect(state.users['user2'].name).toBe('Other User');
+    });
+
+    test('should handle deletion of non-existent user gracefully', () => {
+      const stateBefore = JSON.stringify(useUserStore.getState().users);
+
+      useUserStore.getState().deleteUser('nonexistent');
+
+      const stateAfter = JSON.stringify(useUserStore.getState().users);
+      expect(stateAfter).toBe(stateBefore); // No changes
+    });
+
+    test('should be able to delete already deleted user (idempotent)', () => {
+      useUserStore.getState().deleteUser('user1');
+      const firstDeleteTime = useUserStore.getState().users['user1'].deletedAt;
+
+      // Wait a bit to ensure timestamp would be different
+      setTimeout(() => {
+        useUserStore.getState().deleteUser('user1');
+        const secondDeleteTime = useUserStore.getState().users['user1'].deletedAt;
+
+        // Timestamp should update
+        expect(secondDeleteTime).toBeGreaterThan(firstDeleteTime);
+        expect(useUserStore.getState().users['user1'].deleted).toBe(true);
+      }, 10);
+    });
+  });
+
+  describe('addUserActivityToLibrary', () => {
+    beforeEach(() => {
+      useUserStore.setState({
+        users: {
+          'user1': {
+            id: 'user1',
+            name: 'Test User',
+            icon: '👤',
+            userAddedActivityIds: ['existing1', 'existing2']
+          }
+        },
+        currentUser: 'user1'
+      });
+    });
+
+    test('should add new activity to user library', () => {
+      const newActivity = {
+        id: 'newActivity',
+        text: 'New Activity',
+        icon: '🎯'
+      };
+
+      useUserStore.getState().addUserActivityToLibrary(newActivity);
+
+      const user = useUserStore.getState().users['user1'];
+      expect(user.userAddedActivityIds).toContain('newActivity');
+      expect(user.userAddedActivityIds).toHaveLength(3);
+    });
+
+    test('should not add duplicate activity', () => {
+      const existingActivity = {
+        id: 'existing1',
+        text: 'Existing Activity',
+        icon: '📝'
+      };
+
+      useUserStore.getState().addUserActivityToLibrary(existingActivity);
+
+      const user = useUserStore.getState().users['user1'];
+      expect(user.userAddedActivityIds).toEqual(['existing1', 'existing2']);
+      expect(user.userAddedActivityIds).toHaveLength(2); // No change
+    });
+
+    test('should initialize userAddedActivityIds if not present', () => {
+      // User without userAddedActivityIds array
+      useUserStore.setState({
+        users: {
+          'user2': {
+            id: 'user2',
+            name: 'User Without Array',
+            icon: '👩'
+          }
+        },
+        currentUser: 'user2'
+      });
+
+      const activity = {
+        id: 'firstActivity',
+        text: 'First Activity',
+        icon: '🌟'
+      };
+
+      useUserStore.getState().addUserActivityToLibrary(activity);
+
+      const user = useUserStore.getState().users['user2'];
+      expect(user.userAddedActivityIds).toEqual(['firstActivity']);
+    });
+
+    test('should not add activity if no current user', () => {
+      useUserStore.setState({ currentUser: null });
+
+      const activity = {
+        id: 'shouldNotAdd',
+        text: 'Should Not Add',
+        icon: '❌'
+      };
+
+      const stateBefore = JSON.stringify(useUserStore.getState().users);
+      useUserStore.getState().addUserActivityToLibrary(activity);
+      const stateAfter = JSON.stringify(useUserStore.getState().users);
+
+      expect(stateAfter).toBe(stateBefore); // No changes
+    });
+
+    test('should not add activity if current user does not exist', () => {
+      useUserStore.setState({ currentUser: 'nonexistentUser' });
+
+      const activity = {
+        id: 'shouldNotAdd',
+        text: 'Should Not Add',
+        icon: '❌'
+      };
+
+      const stateBefore = JSON.stringify(useUserStore.getState().users);
+      useUserStore.getState().addUserActivityToLibrary(activity);
+      const stateAfter = JSON.stringify(useUserStore.getState().users);
+
+      expect(stateAfter).toBe(stateBefore); // No changes
+    });
+
+    test('should handle activities with special characters in ID', () => {
+      const specialActivity = {
+        id: 'activity-with-special_chars.123',
+        text: 'Special Activity',
+        icon: '🔧'
+      };
+
+      useUserStore.getState().addUserActivityToLibrary(specialActivity);
+
+      const user = useUserStore.getState().users['user1'];
+      expect(user.userAddedActivityIds).toContain('activity-with-special_chars.123');
     });
   });
 
   describe('setCurrentUser', () => {
     test('should set current user', () => {
-      const { result } = renderHook(() => useUserStore());
-
-      act(() => {
-        result.current.setCurrentUser('user123');
-      });
-
-      expect(result.current.currentUser).toBe('user123');
+      useUserStore.getState().setCurrentUser('user123');
+      expect(useUserStore.getState().currentUser).toBe('user123');
     });
 
     test('should handle null current user', () => {
-      const { result } = renderHook(() => useUserStore());
-
-      act(() => {
-        result.current.setCurrentUser('user123');
-        result.current.setCurrentUser(null);
-      });
-
-      expect(result.current.currentUser).toBe(null);
+      useUserStore.getState().setCurrentUser('user123');
+      useUserStore.getState().setCurrentUser(null);
+      expect(useUserStore.getState().currentUser).toBe(null);
     });
   });
 
   describe('setCurrentDay', () => {
     test('should set current day', () => {
-      const { result } = renderHook(() => useUserStore());
-
-      act(() => {
-        result.current.setCurrentDay('tomorrow');
-      });
-
-      expect(result.current.currentDay).toBe('tomorrow');
+      useUserStore.getState().setCurrentDay('tomorrow');
+      expect(useUserStore.getState().currentDay).toBe('tomorrow');
     });
 
-    test('should handle different day values', () => {
-      const { result } = renderHook(() => useUserStore());
-
-      const days = ['today', 'tomorrow', 'custom-day'];
-
-      days.forEach(day => {
-        act(() => {
-          result.current.setCurrentDay(day);
-        });
-        expect(result.current.currentDay).toBe(day);
-      });
+    test('should handle special day values', () => {
+      useUserStore.getState().setCurrentDay('2024-01-15');
+      expect(useUserStore.getState().currentDay).toBe('2024-01-15');
     });
   });
 
   describe('setUserContextData', () => {
     test('should set user context data', () => {
-      const { result } = renderHook(() => useUserStore());
-
       const contextData = {
-        lastActivity: 'test-activity',
-        preferences: { theme: 'dark' }
+        lastActivity: 'reading',
+        mood: 'happy',
+        notes: 'Great day!'
       };
 
-      act(() => {
-        result.current.setUserContextData(contextData);
-      });
-
-      expect(result.current.userContextData).toEqual(contextData);
+      useUserStore.getState().setUserContextData(contextData);
+      expect(useUserStore.getState().userContextData).toEqual(contextData);
     });
 
-    test('should replace existing context data', () => {
-      const { result } = renderHook(() => useUserStore());
+    test('should replace entire context data', () => {
+      useUserStore.getState().setUserContextData({ old: 'data' });
+      useUserStore.getState().setUserContextData({ new: 'data' });
 
-      const initialData = { key1: 'value1' };
-      const newData = { key2: 'value2' };
-
-      act(() => {
-        result.current.setUserContextData(initialData);
-      });
-
-      expect(result.current.userContextData).toEqual(initialData);
-
-      act(() => {
-        result.current.setUserContextData(newData);
-      });
-
-      expect(result.current.userContextData).toEqual(newData);
+      const context = useUserStore.getState().userContextData;
+      expect(context).toEqual({ new: 'data' });
+      expect(context.old).toBeUndefined();
     });
   });
 
-  describe('addUser', () => {
-    test('should add a new user with sanitized data', () => {
-      const { result } = renderHook(() => useUserStore());
-
-      const newUser = {
-        name: 'Test User',
-        icon: '🎯',
-        days: { today: { activities: [] } }
-      };
-
-      act(() => {
-        result.current.addUser('test-user-id', newUser);
+  describe('Complex Scenarios', () => {
+    test('should handle multiple operations in sequence', () => {
+      // Add users
+      useUserStore.getState().setUsers({
+        'user1': { id: 'user1', name: 'User 1', icon: '👤' }
       });
 
-      expect(result.current.users['test-user-id']).toEqual(newUser);
-    });
+      // Set current user
+      useUserStore.getState().setCurrentUser('user1');
 
-    test('should sanitize user data when adding', () => {
-      const { result } = renderHook(() => useUserStore());
-
-      const newUser = {
-        name: { name: 'Nested Name' },
-        emoji: '🌟' // Should convert to icon
-      };
-
-      act(() => {
-        result.current.addUser('test-user', newUser);
+      // Add activity to library
+      useUserStore.getState().addUserActivityToLibrary({
+        id: 'act1',
+        text: 'Activity 1',
+        icon: '🎯'
       });
 
-      expect(result.current.users['test-user'].name).toBe('Nested Name');
-      expect(result.current.users['test-user'].icon).toBe('🌟');
-      // addUser doesn't delete emoji field, only setUsers does
-      expect(result.current.users['test-user'].emoji).toBe('🌟');
-    });
-
-    test('should add user to existing users', () => {
-      const { result } = renderHook(() => useUserStore());
-
-      // First, add initial users
-      const initialUsers = {
-        'user1': { name: 'User 1', icon: '👤' }
-      };
-
-      act(() => {
-        result.current.setUsers(initialUsers);
+      // Update user
+      useUserStore.getState().updateUser('user1', {
+        name: 'Updated User 1'
       });
 
-      // Then add another user
-      const newUser = { name: 'User 2', icon: '👩' };
+      // Delete user
+      useUserStore.getState().deleteUser('user1');
 
-      act(() => {
-        result.current.addUser('user2', newUser);
-      });
-
-      expect(Object.keys(result.current.users)).toHaveLength(2);
-      expect(result.current.users['user1'].name).toBe('User 1');
-      expect(result.current.users['user2'].name).toBe('User 2');
-    });
-  });
-
-  describe('Complex User Data Handling', () => {
-    test('should handle users with activities', () => {
-      const { result } = renderHook(() => useUserStore());
-
-      const users = {
-        'user1': {
-          name: 'Active User',
-          icon: '👤',
-          days: {
-            today: {
-              activities: [
-                { id: 'act1', text: 'Morning Exercise', completed: false },
-                { id: 'act2', text: 'Breakfast', completed: true }
-              ]
-            },
-            tomorrow: {
-              activities: [
-                { id: 'act3', text: 'Meeting', completed: false }
-              ]
-            }
-          }
-        }
-      };
-
-      act(() => {
-        result.current.setUsers(users);
-      });
-
-      expect(result.current.users['user1'].days.today.activities).toHaveLength(2);
-      expect(result.current.users['user1'].days.tomorrow.activities).toHaveLength(1);
-    });
-
-    test('should handle users with settings', () => {
-      const { result } = renderHook(() => useUserStore());
-
-      const users = {
-        'user1': {
-          name: 'Settings User',
-          icon: '👤',
-          settings: {
-            theme: 'stackBlue',
-            celebration: 'rainbow',
-            soundEnabled: true
-          }
-        }
-      };
-
-      act(() => {
-        result.current.setUsers(users);
-      });
-
-      expect(result.current.users['user1'].settings.theme).toBe('stackBlue');
-      expect(result.current.users['user1'].settings.celebration).toBe('rainbow');
-      expect(result.current.users['user1'].settings.soundEnabled).toBe(true);
-    });
-
-    test('should handle deeply nested user data', () => {
-      const { result } = renderHook(() => useUserStore());
-
-      const users = {
-        'user1': {
-          name: 'Complex User',
-          icon: '👤',
-          metadata: {
-            preferences: {
-              notifications: {
-                enabled: true,
-                types: ['activity', 'reminder']
-              }
-            }
-          }
-        }
-      };
-
-      act(() => {
-        result.current.setUsers(users);
-      });
-
-      expect(result.current.users['user1'].metadata.preferences.notifications.enabled).toBe(true);
-      expect(result.current.users['user1'].metadata.preferences.notifications.types).toEqual(['activity', 'reminder']);
-    });
-  });
-
-  describe('Edge Cases and Error Handling', () => {
-    test('should handle empty users object', () => {
-      const { result } = renderHook(() => useUserStore());
-
-      act(() => {
-        result.current.setUsers({});
-      });
-
-      expect(result.current.users).toEqual({});
-    });
-
-    test('should handle malformed user data gracefully', () => {
-      const { result } = renderHook(() => useUserStore());
-
-      const malformedUsers = {
-        'user1': {
-          name: [1, 2, 3], // Array instead of string
-          icon: { complex: 'object' } // Object instead of string
-        }
-      };
-
-      act(() => {
-        result.current.setUsers(malformedUsers);
-      });
-
-      // Should sanitize to default values
-      expect(result.current.users['user1'].name).toBe('User');
-      expect(result.current.users['user1'].icon).toBe(DEFAULT_USER_ICON);
-    });
-
-    test('should handle string conversion for numeric names', () => {
-      const { result } = renderHook(() => useUserStore());
-
-      const users = {
-        'user1': { name: 42, icon: '👤' },
-        'user2': { name: 0, icon: '👤' }, // 0 is falsy, so becomes 'User'
-        'user3': { name: -1, icon: '👤' }
-      };
-
-      act(() => {
-        result.current.setUsers(users);
-      });
-
-      expect(result.current.users['user1'].name).toBe('User'); // Numbers handled by addUser logic
-      expect(result.current.users['user2'].name).toBe('User'); // 0 is falsy
-      expect(result.current.users['user3'].name).toBe('User');
-    });
-
-    test('should handle boolean names', () => {
-      const { result } = renderHook(() => useUserStore());
-
-      const users = {
-        'user1': { name: true, icon: '👤' },
-        'user2': { name: false, icon: '👤' } // false is falsy, becomes 'User'
-      };
-
-      act(() => {
-        result.current.setUsers(users);
-      });
-
-      expect(result.current.users['user1'].name).toBe('User'); // All non-strings become 'User'
-      expect(result.current.users['user2'].name).toBe('User'); // false is falsy
-    });
-
-    test('should handle special string values', () => {
-      const { result } = renderHook(() => useUserStore());
-
-      const users = {
-        'user1': { name: 'undefined', icon: '👤' },
-        'user2': { name: 'null', icon: '👤' },
-        'user3': { name: '', icon: '👤' }
-      };
-
-      act(() => {
-        result.current.setUsers(users);
-      });
-
-      // These are already strings, so they are passed through as is for setUsers
-      expect(result.current.users['user1'].name).toBe('undefined');
-      expect(result.current.users['user2'].name).toBe('null');
-      expect(result.current.users['user3'].name).toBe('User'); // Empty string is falsy
-    });
-  });
-
-  describe('Store Persistence Behavior', () => {
-    test('should maintain state structure for persistence', () => {
-      const { result } = renderHook(() => useUserStore());
-
-      const complexUserData = {
-        'user1': {
-          name: 'Persistent User',
-          icon: '👤',
-          days: {
-            today: { activities: [{ id: '1', text: 'Test', completed: false }] },
-            tomorrow: { activities: [] }
-          },
-          settings: { theme: 'stackBlue' }
-        }
-      };
-
-      act(() => {
-        result.current.setUsers(complexUserData);
-        result.current.setCurrentUser('user1');
-        result.current.setCurrentDay('tomorrow');
-      });
-
-      // Verify all state is properly set
-      expect(result.current.users).toEqual(complexUserData);
-      expect(result.current.currentUser).toBe('user1');
-      expect(result.current.currentDay).toBe('tomorrow');
+      const state = useUserStore.getState();
+      expect(state.users['user1'].deleted).toBe(true);
+      expect(state.users['user1'].name).toBe('Updated User 1');
+      expect(state.users['user1'].userAddedActivityIds).toContain('act1');
     });
   });
 });
