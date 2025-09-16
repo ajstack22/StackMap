@@ -24,6 +24,9 @@ import {
   getCustomImageSource,
 } from '../../constants';
 import emojiData from 'emoji-datasource-apple/emoji.json';
+import EmojiSearch, { performEmojiSearch } from './EmojiSearch';
+import SearchResults from './SearchResults';
+import { applySkinTone, supportsSkinTone, SKIN_TONE_MODIFIERS } from './skinToneUtils';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -1149,176 +1152,6 @@ const EMOJI_CATEGORIES = {
   ],
 };
 
-// Skin tone modifiers
-const SKIN_TONE_MODIFIERS = {
-  none: null,
-  light: '🏻',
-  mediumLight: '🏼',
-  medium: '🏽',
-  mediumDark: '🏾',
-  dark: '🏿',
-};
-
-// List of emojis that support skin tone modifiers
-// This includes base people emojis and hand gestures only
-const SKIN_TONE_SUPPORTED = [
-  // Hand gestures
-  '👋',
-  '🤚',
-  '🖐',
-  '✋',
-  '🖖',
-  '👌',
-  '🤌',
-  '🤏',
-  '✌️',
-  '🤞',
-  '🤟',
-  '🤘',
-  '🤙',
-  '👈',
-  '👉',
-  '👆',
-  '🖕',
-  '👇',
-  '☝️',
-  '👍',
-  '👎',
-  '✊',
-  '👊',
-  '🤛',
-  '🤜',
-  '👏',
-  '🙌',
-  '👐',
-  '🤲',
-  '🙏',
-  '✍️',
-  '💅',
-  '🤳',
-  '💪',
-  // Body parts
-  '🦵',
-  '🦶',
-  '👂',
-  '🦻',
-  '👃',
-  // Base people (no gender/role modifiers)
-  '👶',
-  '🧒',
-  '👦',
-  '👧',
-  '🧑',
-  '👨',
-  '👩',
-  '🧓',
-  '👴',
-  '👵',
-  // Simple professions and roles
-  '👮',
-  '👷',
-  '💂',
-  '🕵️',
-  '👳',
-  '👲',
-  '🧕',
-  '🤴',
-  '👸',
-  '🎅',
-  '🤶',
-  '🦸',
-  '🦹',
-  '🧙',
-  '🧚',
-  '🧛',
-  '🧜',
-  '🧝',
-  '🧞',
-  '🧟',
-  '👼',
-  '🤰',
-  '🤱',
-  // Activities
-  '🙇',
-  '💁',
-  '🙅',
-  '🙆',
-  '🙋',
-  '🧏',
-  '🤦',
-  '🤷',
-  '🙎',
-  '🙍',
-  '💇',
-  '💆',
-  '🧖',
-  '💃',
-  '🕺',
-  '🕴',
-  '🚶',
-  '🧍',
-  '🧎',
-  '🏃',
-  '🤸',
-  '🏋️',
-  '🤾',
-  '🏌️',
-  '🏇',
-  '🧘',
-  '🏄',
-  '🏊',
-  '🤽',
-  '🚣',
-  '🧗',
-  '🚵',
-  '🚴',
-  '🤹',
-];
-
-// Helper function to check if emoji supports skin tone
-const supportsSkinTone = icon => {
-  return SKIN_TONE_SUPPORTED.includes(icon);
-};
-
-// Helper function to apply skin tone to emoji
-const applySkinTone = (icon, skinTone) => {
-  if (!skinTone || !supportsSkinTone(icon)) {
-    return icon;
-  }
-
-  // Simply concatenate the skin tone modifier
-  // React Native should handle the rendering
-  return icon + skinTone;
-};
-
-// Helper function to detect if a string contains emoji
-const containsEmoji = text => {
-  // Unicode ranges for emoji detection
-  const emojiRegex =
-    /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F000}-\u{1F02F}]|[\u{1F0A0}-\u{1F0FF}]|[\u{1F100}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA70}-\u{1FAFF}]|[\u{2300}-\u{23FF}]|[\u{2460}-\u{24FF}]|[\u{2B50}]/gu;
-  return emojiRegex.test(text);
-};
-
-// Helper function to extract emojis from text
-const extractEmojis = text => {
-  // More comprehensive emoji regex that works on both iOS and Android
-  // Includes emoji sequences, modifiers, and zero-width joiners
-  const emojiRegex =
-    /(\p{Emoji_Presentation}|\p{Emoji}\uFE0F|\p{Emoji_Modifier_Base}\p{Emoji_Modifier}?|\p{Emoji_Component})+/gu;
-  const matches = text.match(emojiRegex);
-  if (!matches) return '';
-
-  // Filter out non-visible characters and join the results
-  const emojis = matches
-    .filter(match => {
-      // Remove any standalone variation selectors or zero-width joiners
-      return match && match.trim() && !/^[\uFE0F\u200D]+$/.test(match);
-    })
-    .join('');
-
-  return emojis;
-};
-
 // Custom images list (matching PWA)
 const CUSTOM_IMAGES = [
   { name: 'Chicken Nuggets', src: 'ChickenNuggets.png' },
@@ -1388,41 +1221,10 @@ const EmojiPicker = ({
   // Filter items based on search
   useEffect(() => {
     if (searchQuery) {
-      // Check if the search query contains emoji(s)
-      const extractedEmojis = extractEmojis(searchQuery);
-      if (extractedEmojis) {
-        setDetectedEmoji(extractedEmojis);
-      } else {
-        setDetectedEmoji('');
-      }
-
-      const query = searchQuery.toLowerCase();
-      const filtered = [];
-
-      // Search all categories when there's a search query
-      Object.entries(EMOJI_CATEGORIES).forEach(([category, items]) => {
-        items.forEach(item => {
-          if (typeof item === 'string') {
-            // For emojis, check if search terms match
-            const emojiInfo = EMOJI_SEARCH_INDEX[item];
-            if (emojiInfo) {
-              const matches = emojiInfo.searchTerms.some(term =>
-                term.includes(query),
-              );
-              if (matches || item.includes(searchQuery)) {
-                filtered.push({ type: 'emoji', icon: item, category });
-              }
-            }
-          } else {
-            // For custom images
-            if (item.name.toLowerCase().includes(query)) {
-              filtered.push({ type: 'image', ...item, category });
-            }
-          }
-        });
-      });
-
-      setFilteredItems(filtered);
+      const { filteredItems: searchResults, detectedEmoji: searchDetectedEmoji } =
+        performEmojiSearch(searchQuery, EMOJI_CATEGORIES, EMOJI_SEARCH_INDEX);
+      setFilteredItems(searchResults);
+      setDetectedEmoji(searchDetectedEmoji);
     } else {
       // No search, show selected category
       setDetectedEmoji('');
@@ -1450,48 +1252,6 @@ const EmojiPicker = ({
     setSearchQuery('');
   };
 
-  const renderItem = ({ item }) => {
-    if (item.type === 'placeholder') {
-      return <View style={styles.emojiItem} />;
-    }
-
-    // Apply skin tone if applicable
-    let displayEmoji = item.icon;
-    if (
-      item.type === 'emoji' &&
-      selectedCategory === 'People' &&
-      selectedSkinTone &&
-      supportsSkinTone(item.icon)
-    ) {
-      displayEmoji = applySkinTone(item.icon, selectedSkinTone);
-    }
-
-    const isSelected =
-      item.type === 'emoji'
-        ? selectedEmoji === displayEmoji
-        : selectedEmoji === `image:${item.src}`;
-
-    return (
-      <TouchableOpacity
-        style={[styles.emojiItem, isSelected && styles.selectedItem]}
-        onPress={() =>
-          handleSelect(
-            item.type === 'emoji' ? { ...item, icon: displayEmoji } : item,
-          )
-        }
-      >
-        {item.type === 'emoji' ? (
-          <Text style={styles.emoji}>{displayEmoji}</Text>
-        ) : (
-          <Image
-            source={getCustomImageSource(item.src)}
-            style={styles.customImage}
-            resizeMode="contain"
-          />
-        )}
-      </TouchableOpacity>
-    );
-  };
 
   const content = (
     <View
@@ -1507,28 +1267,15 @@ const EmojiPicker = ({
         </View>
       )}
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Icon name="search" size={20} color="#999" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search, type, or paste emoji..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor="#999"
-          autoCorrect={false}
-          autoCapitalize="none"
-          returnKeyType="done"
-          keyboardType="default"
-          autoFocus={false}
-          enablesReturnKeyAutomatically={true}
-        />
-        {searchQuery ? (
-          <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Icon name="close" size={20} color="#999" />
-          </TouchableOpacity>
-        ) : null}
-      </View>
+      {/* Search Component */}
+      <EmojiSearch
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onClearSearch={() => setSearchQuery('')}
+        detectedEmoji={detectedEmoji}
+        onSelectDetectedEmoji={() => handleSelect({ type: 'emoji', icon: detectedEmoji })}
+        theme={theme}
+      />
 
       {/* Category Tabs */}
       {!searchQuery && (
@@ -1591,71 +1338,17 @@ const EmojiPicker = ({
         </View>
       )}
 
-      {/* Detected Emoji Result */}
-      {!!detectedEmoji && !!searchQuery && (
-        <View style={styles.detectedEmojiContainer}>
-          <Text style={styles.detectedEmojiLabel}>Tap to use your emoji:</Text>
-          <TouchableOpacity
-            style={[
-              styles.detectedEmojiButton,
-              { backgroundColor: theme?.light || '#E8F0FE' },
-            ]}
-            onPress={() => handleSelect({ type: 'emoji', icon: detectedEmoji })}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.detectedEmoji}>{detectedEmoji}</Text>
-            <Icon
-              name="check-circle"
-              size={24}
-              color={theme?.primary || '#667eea'}
-              style={{ marginLeft: 8 }}
-            />
-          </TouchableOpacity>
-          <Text style={styles.detectedEmojiHint}>
-            You can type or paste any emoji!
-          </Text>
-        </View>
-      )}
 
-      {/* Emoji Grid */}
-      {
-        <View style={{ flex: 1, overflow: 'hidden' }}>
-          <FlatList
-            data={(() => {
-              // Add empty items to fill the last row
-              const items = [...filteredItems];
-              const remainder = items.length % numColumns;
-              if (remainder !== 0) {
-                for (let i = 0; i < numColumns - remainder; i++) {
-                  items.push({ type: 'placeholder', id: `placeholder-${i}` });
-                }
-              }
-              return items;
-            })()}
-            renderItem={renderItem}
-            keyExtractor={(item, index) =>
-              item.type === 'emoji'
-                ? item.icon
-                : item.type === 'placeholder'
-                ? item.id
-                : item.src
-            }
-            numColumns={numColumns}
-            contentContainerStyle={styles.emojiGrid}
-            showsVerticalScrollIndicator={false}
-            removeClippedSubviews={Platform.OS === 'android'}
-            keyboardShouldPersistTaps="handled"
-            nestedScrollEnabled={true}
-            windowSize={
-              Platform.OS === 'web' ? 21 : Platform.OS === 'android' ? 10 : 21
-            }
-            maxToRenderPerBatch={
-              Platform.OS === 'web' ? 50 : Platform.OS === 'android' ? 10 : 15
-            }
-            initialNumToRender={Platform.OS === 'web' ? 50 : 20}
-          />
-        </View>
-      }
+      {/* Search Results Grid */}
+      <SearchResults
+        filteredItems={filteredItems}
+        numColumns={numColumns}
+        selectedCategory={selectedCategory}
+        selectedSkinTone={selectedSkinTone}
+        selectedEmoji={selectedEmoji}
+        onSelect={handleSelect}
+        isSearching={!!searchQuery}
+      />
     </View>
   );
 
@@ -1733,27 +1426,6 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.gray[900],
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.gray[100],
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    margin: SPACING.md,
-    marginHorizontal: isTablet() ? SPACING.xl : SPACING.md,
-    height: isTablet() ? 48 : 40,
-    gap: SPACING.sm,
-  },
-  searchInput: {
-    flex: 1,
-    paddingVertical: SPACING.sm,
-    fontSize: isTablet() ? TYPOGRAPHY.sizes.lg : TYPOGRAPHY.sizes.md,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: COLORS.gray[900],
-    ...(Platform.OS === 'android' && {
-      textAlignVertical: 'center',
-    }),
-  },
   categoryContainer: {
     paddingHorizontal: isTablet() ? SPACING.xl : SPACING.md,
     marginBottom: SPACING.sm,
@@ -1780,53 +1452,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: TYPOGRAPHY.weights.bold,
   },
-  emojiGrid: {
-    paddingVertical: SPACING.md,
-    paddingHorizontal: Platform.OS === 'android' ? SPACING.sm : SPACING.md,
-    paddingBottom: Platform.OS === 'android' ? 80 : SPACING.md, // Extra bottom padding for Android
-  },
-  emojiItem: {
-    flex: 1,
-    aspectRatio: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    margin:
-      Platform.OS === 'web'
-        ? 4
-        : Platform.OS === 'android'
-        ? 2
-        : isTablet()
-        ? SPACING.xs
-        : 3,
-    borderRadius: RADIUS.md,
-    minHeight:
-      Platform.OS === 'web'
-        ? 56
-        : isTablet()
-        ? 64
-        : Platform.OS === 'android'
-        ? 52
-        : 60,
-  },
-  selectedItem: {
-    backgroundColor: COLORS.gray[200],
-  },
-  emoji: {
-    fontSize:
-      Platform.OS === 'web'
-        ? 28
-        : isTablet()
-        ? 42
-        : Platform.OS === 'android'
-        ? 28
-        : 32,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    textAlign: 'center',
-  },
-  customImage: {
-    width: isTablet() ? 48 : 36,
-    height: isTablet() ? 48 : 36,
-  },
   skinToneContainer: {
     paddingVertical: SPACING.sm,
     paddingHorizontal: isTablet() ? SPACING.xl : SPACING.md,
@@ -1851,38 +1476,6 @@ const styles = StyleSheet.create({
   skinToneEmoji: {
     fontSize: isTablet() ? 26 : 22,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-  },
-  detectedEmojiContainer: {
-    paddingHorizontal: isTablet() ? SPACING.xl : SPACING.md,
-    paddingVertical: SPACING.md,
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  detectedEmojiLabel: {
-    fontSize: isTablet() ? TYPOGRAPHY.sizes.sm : TYPOGRAPHY.sizes.xs,
-    color: COLORS.gray[600],
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-  },
-  detectedEmojiButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: SPACING.xl,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.lg,
-    borderWidth: 2,
-    borderColor: '#667eea',
-    ...SHADOWS.level2,
-  },
-  detectedEmoji: {
-    fontSize: isTablet() ? 48 : 40,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-  },
-  detectedEmojiHint: {
-    fontSize: isTablet() ? TYPOGRAPHY.sizes.xs : 11,
-    color: COLORS.gray[500],
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    marginTop: SPACING.xs,
   },
 });
 
