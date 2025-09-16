@@ -18,7 +18,7 @@ import {
   RADIUS,
   isTablet,
 } from '../../constants';
-import ActivityGrid from './ActivityGrid';
+import LibraryActivityGrid from './LibraryActivityGrid';
 import { CategoryNameEditor } from './CategoryEditor';
 import CategoryMobileMenu from './CategoryMobileMenu';
 import { renderCategoryActions } from './CategoryActionButtons';
@@ -204,7 +204,7 @@ const CategorySectionComponent = ({
           { maxHeight: animatedStyles.maxHeight, opacity: animatedStyles.opacity },
         ]}
       >
-        <ActivityGrid
+        <LibraryActivityGrid
           category={category}
           isEditingCategory={isEditingCategory}
           orderedActivities={orderedActivities}

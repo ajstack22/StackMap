@@ -130,8 +130,8 @@ npm run build:web
 
 ### Story 2.3: Activity Grid Module
 **Files to Create**:
-- `ActivityGrid.js` - Main grid display
-- `ActivityCard.js` - Individual cards
+- `LibraryActivityGrid.js` - Main grid display
+- `LibraryActivityCard.js` - Individual cards
 - `EmptyState.js` - Empty state display
 
 **Requirements**:

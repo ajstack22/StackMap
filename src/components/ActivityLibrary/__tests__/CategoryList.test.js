@@ -9,7 +9,7 @@ jest.mock('react-native-vector-icons/MaterialIcons', () => 'Icon');
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
-jest.mock('../ActivityGrid', () => 'ActivityGrid');
+jest.mock('../LibraryActivityGrid', () => 'LibraryActivityGrid');
 jest.mock('../CategoryEditor', () => ({
   CategoryNameEditor: 'CategoryNameEditor',
 }));

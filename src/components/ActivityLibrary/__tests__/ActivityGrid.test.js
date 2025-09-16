@@ -5,11 +5,11 @@ import ActivityGrid, {
   renderDragActivity,
   renderNormalActivities,
   loadDragComponents,
-} from '../ActivityGrid';
+} from '../LibraryActivityGrid';
 
 // Mock dependencies
 jest.mock('react-native-vector-icons/MaterialIcons', () => 'Icon');
-jest.mock('../ActivityCard', () => {
+jest.mock('../LibraryActivityCard', () => {
   return function MockActivityCard(props) {
     return null; // Mock component
   };

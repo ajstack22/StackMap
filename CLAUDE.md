@@ -57,6 +57,10 @@
 - **Modal constraints**: Must use specific flex rules (see styles.js)
 
 ### Web
+- **3-Column Layout**: Main screen cards MUST use percentage widths in App.js lines 4831-4832
+  - 3 columns: width: '31%', 2 columns: width: '48%', 1 column: width: '100%'
+  - DO NOT use flexBasis: 'auto' or width: undefined for multi-column layouts
+  - Breakpoints: <768px: 1 col, 768-1199px: 2 cols, ≥1200px: 3 cols
 - **VectorIcons.web.js**: MUST use `<span>` not `<Text>` component
 - **Alert.alert**: Not supported - use ConfirmModal component
 - **Build files**: Go in ROOT for qual, not web/build/

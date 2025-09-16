@@ -21,9 +21,9 @@ Successfully decomposed the monolithic ActivityLibrary component from 2,576 line
 - **SortControls.js** (255 lines) - Sort mode and drag operations
 
 #### Activity Grid Modules (Story 2.3)
-- **ActivityGrid.js** (205 lines) - Main grid display
-- **ActivityCard.js** (264 lines) - Individual card rendering
-- **ActivityCardMenus.js** (190 lines) - Mobile menu helpers
+- **LibraryActivityGrid.js** (205 lines) - Main grid display
+- **LibraryActivityCard.js** (264 lines) - Individual card rendering
+- **LibraryActivityMenus.js** (190 lines) - Mobile menu helpers
 - **EmptyState.js** (68 lines) - Empty state UI
 
 #### Category Management Modules (Story 2.4)
@@ -104,9 +104,9 @@ ActivityLibrary.js
 │       └── CategoryMobileMenu.js
 │           ├── CategoryMobileMenuComponents.js
 │           └── CategoryDropdownMenu.js
-└── ActivityGrid.js
-    ├── ActivityCard.js
-    │   └── ActivityCardMenus.js
+└── LibraryActivityGrid.js
+    ├── LibraryActivityCard.js
+    │   └── LibraryActivityMenus.js
     └── EmptyState.js
 ```
 

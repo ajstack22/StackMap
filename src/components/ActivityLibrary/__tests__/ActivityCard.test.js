@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Alert, Platform } from 'react-native';
-import ActivityCard from '../ActivityCard';
+import ActivityCard from '../LibraryActivityCard';
 
 // Mock dependencies
 jest.mock('react-native-vector-icons/MaterialIcons', () => 'Icon');

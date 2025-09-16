@@ -14,7 +14,7 @@ module.exports = {
     buildDependencies: { 
       config: [__filename] 
     },
-    version: 'v2-sync-fix-deployed'  // Bump this for cache invalidation
+    version: 'v3-grid-layout-fix'  // Bump this for cache invalidation
   },
   mode: process.env.NODE_ENV || 'development',
   entry: './index.web.js',

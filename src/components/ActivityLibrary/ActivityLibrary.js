@@ -45,8 +45,8 @@ import EmojiPicker from '../EmojiPicker';
 import LibraryHeader from './LibraryHeader';
 import TabSelector from './TabSelector';
 import LibraryActions from './LibraryActions';
-import ActivityGrid from './ActivityGrid';
-import ActivityCard from './ActivityCard';
+import LibraryActivityGrid from './LibraryActivityGrid';
+import LibraryActivityCard from './LibraryActivityCard';
 import EmptyState from './EmptyState';
 import { getFilteredActivities, getFilteredCategories, useFilterControls } from './FilterControls';
 import { useSortControls, getDragActivationDistance, isScrollEnabled } from './SortControls';
@@ -60,9 +60,9 @@ import { useCategorySaveHandler } from './CategorySaveHandler';
 // Users can create their own activity groups in My Library
 // StackMap Library provides curated activity groups separately
 
-// ActivityRow component is now extracted to ActivityCard.js
+// ActivityRow component is now extracted to LibraryActivityCard.js
 
-// Activities list rendering is now handled by ActivityGrid component
+// Activities list rendering is now handled by LibraryActivityGrid component
 // Category display logic moved to CategoryList.js
 
 // Category editing logic moved to CategoryEditor.js
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
   activitiesList: {
     overflow: 'hidden',
   },
-  // Activity styles moved to ActivityCard.js
+  // Activity styles moved to LibraryActivityCard.js
   iconButton: {
     width: 36,
     height: 36,
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255, 255, 255, 0.5)',
     paddingVertical: SPACING.xs,
   },
-  // Drag styles moved to ActivityGrid.js
+  // Drag styles moved to LibraryActivityGrid.js
   categoryDragHandle: {
     paddingLeft: SPACING.sm,
     paddingRight: SPACING.md,

@@ -18,6 +18,14 @@ import {
   Modal,
 } from 'react-native';
 
+// DEBUG: Check screen dimensions
+if (Platform.OS === 'web') {
+  console.log('=== GRID DEBUG FROM APP.JS ===');
+  console.log('Window width:', window.innerWidth);
+  console.log('Dimensions.get("window").width:', Dimensions.get('window').width);
+  console.log('Should have columns:', window.innerWidth >= 1200 ? 3 : window.innerWidth >= 768 ? 2 : 1);
+}
+
 // Capture sync URL data immediately before React renders
 if (Platform.OS === 'web' && typeof window !== 'undefined') {
   // First check if HTML captured the hash
@@ -4820,12 +4828,12 @@ Users: ${userNames} (${userCount} total)
                                       margin: CARD_LAYOUT.gap / 2,
                                       flexGrow: 0,
                                       flexShrink: 0,
-                                      flexBasis: numColumns > 1 ? 'auto' : '100%',
-                                      width: numColumns === 1 ? '100%' : undefined,
+                                      flexBasis: numColumns === 3 ? '31%' : numColumns === 2 ? '48%' : '100%',
+                                      width: numColumns === 3 ? '31%' : numColumns === 2 ? '48%' : '100%',
                                       maxWidth:
                                         numColumns === 1
                                           ? CARD_LAYOUT.singleColumnMaxWidth
-                                          : CARD_LAYOUT.maxWidth,
+                                          : undefined,
                                     }
                                   : {
                                       // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

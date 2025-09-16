@@ -86,5 +86,9 @@
   
   // Debugging
   "debug.console.fontSize": 14,
-  "debug.console.fontFamily": "Monaco, 'Courier New', monospace"
+  "debug.console.fontFamily": "Monaco, 'Courier New', monospace",
+  "sonarlint.connectedMode.project": {
+    "connectionId": "ajstack22",
+    "projectKey": "ajstack22_StackMap"
+  }
 }

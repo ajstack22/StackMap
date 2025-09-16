@@ -25,7 +25,7 @@ const TabSelector = ({ activeTab, onTabChange, theme }) => {
             activeTab === 'stackmap' && styles.activeTabText,
           ]}
         >
-          StackMap Library
+          TEST CHANGE VISIBLE
         </Text>
       </TouchableOpacity>
 

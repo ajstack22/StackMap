@@ -34,13 +34,24 @@ export const CARD_LAYOUT = {
 // Helper functions
 export const getContainerPadding = (width = screenWidth) => {
   if (width <= 600) return CARD_LAYOUT.containerPaddingMobile;
-  if (width <= 1024) return CARD_LAYOUT.containerPaddingTablet;
+  if (width <= 1200) return CARD_LAYOUT.containerPaddingTablet;
   return CARD_LAYOUT.containerPaddingDesktop;
 };
 
 export const calculateColumns = (width = screenWidth) => {
   const containerPadding = getContainerPadding(width);
   const availableWidth = width - containerPadding * 2;
+
+  // Web should use standard responsive breakpoints
+  if (Platform.OS === 'web') {
+    if (width < 768) {
+      return 1;
+    }
+    if (width < 1200) {
+      return 2;
+    }
+    return 3; // 3 columns for 1200px and above
+  }
 
   // Android tablets: Always 2 columns (portrait ~800px, landscape ~1280px)
   if (Platform.OS === 'android' && width >= 768) {

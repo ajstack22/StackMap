@@ -9,7 +9,7 @@ import {
   Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import ActivityCard from './ActivityCard';
+import LibraryActivityCard from './LibraryActivityCard';
 import EmptyState, { getEmptyStateMessage } from './EmptyState';
 import { getFilteredActivities } from './FilterControls';
 import {
@@ -73,7 +73,7 @@ const renderNormalActivities = ({
   categoryId,
 }) => {
   return activities.map((activity, originalIndex) => (
-    <ActivityCard
+    <LibraryActivityCard
       key={activity.id}
       activity={activity}
       onEdit={onEditActivity}

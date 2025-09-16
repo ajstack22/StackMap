@@ -23,9 +23,9 @@ import {
 } from '../../constants';
 
 // Import menu helpers from separate file
-import { renderMobileDropdownMenu, renderMobileCenterMenu } from './ActivityCardMenus';
+import { renderMobileDropdownMenu, renderMobileCenterMenu } from './LibraryActivityMenus';
 
-const ActivityCard = ({ activity, onEdit, onDelete, onQuickAdd, theme }) => {
+const ActivityCard = ({ activity, onEdit, onDelete, onQuickAdd, theme, style }) => {
   const [justAdded, setJustAdded] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
@@ -73,7 +73,7 @@ const ActivityCard = ({ activity, onEdit, onDelete, onQuickAdd, theme }) => {
   };
 
   return (
-    <View style={styles.activityRow}>
+    <View style={[styles.activityRow, style]}>
       <View style={styles.activityInfo}>
         {activity.icon && activity.icon.startsWith('image:') ? (
           <Image
