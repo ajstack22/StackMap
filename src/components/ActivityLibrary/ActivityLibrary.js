@@ -45,6 +45,9 @@ import EmojiPicker from '../EmojiPicker';
 import LibraryHeader from './LibraryHeader';
 import TabSelector from './TabSelector';
 import LibraryActions from './LibraryActions';
+import ActivityGrid from './ActivityGrid';
+import ActivityCard from './ActivityCard';
+import EmptyState from './EmptyState';
 import { getFilteredActivities, getFilteredCategories, useFilterControls } from './FilterControls';
 import { useSortControls, getDragActivationDistance, isScrollEnabled } from './SortControls';
 
@@ -52,259 +55,7 @@ import { useSortControls, getDragActivationDistance, isScrollEnabled } from './S
 // Users can create their own activity groups in My Library
 // StackMap Library provides curated activity groups separately
 
-const ActivityRow = ({ activity, onEdit, onDelete, onQuickAdd, theme }) => {
-  const [justAdded, setJustAdded] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
-  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const menuButtonRef = useRef(null);
-  const screenWidth = Dimensions.get('window').width;
-  const isMobile = screenWidth < 480;
-  const insets = useSafeAreaInsets();
-  const handleDelete = () => {
-    if (Platform.OS === 'web') {
-      setShowDeleteConfirm(true);
-    } else {
-      Alert.alert(
-        'Delete Activity',
-        `Are you sure you want to delete "${activity.text}"?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: () => {
-              onDelete(activity);
-            },
-          },
-        ],
-      );
-    }
-  };
-
-  return (
-    <View style={styles.activityRow}>
-      <View style={styles.activityInfo}>
-        {activity.icon && activity.icon.startsWith('image:') ? (
-          <Image
-            source={getCustomImageSource(activity.icon.substring(6))}
-            style={styles.activityImage}
-            resizeMode="contain"
-          />
-        ) : (
-          <Text style={styles.activityEmoji}>{activity.icon || ''}</Text>
-        )}
-        <Text style={styles.activityName}>{activity.text}</Text>
-      </View>
-
-      <View style={styles.activityActions}>
-        {isMobile ? (
-          <>
-            <TouchableOpacity
-              style={[styles.addIconButton, { marginRight: SPACING.xs, backgroundColor: justAdded ? '#4CAF50' : theme.primary }]}
-              onPress={() => {
-                onQuickAdd(activity);
-                setJustAdded(true);
-                setTimeout(() => setJustAdded(false), 1500);
-              }}
-              disabled={justAdded}
-            >
-              <Icon
-                name={justAdded ? 'check' : 'add'}
-                size={20}
-                color="white"
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              ref={menuButtonRef}
-              style={styles.iconButton}
-              onPress={() => {
-                if (menuButtonRef.current && !showMenu) {
-                  menuButtonRef.current.measure(
-                    (x, y, width, height, pageX, pageY) => {
-                      setMenuPosition({ x: pageX, y: pageY + height });
-                    },
-                  );
-                }
-                setShowMenu(!showMenu);
-              }}
-            >
-              <Icon name="more-vert" size={20} color={theme.primary} />
-            </TouchableOpacity>
-
-            {showMenu && (
-              <Modal
-                transparent={true}
-                visible={showMenu}
-                onRequestClose={() => setShowMenu(false)}
-                animationType="fade"
-              >
-                <TouchableOpacity
-                  style={styles.menuOverlay}
-                  activeOpacity={1}
-                  onPress={() => setShowMenu(false)}
-                >
-                  {Platform.OS === 'web' ? (
-                    <View
-                      style={[
-                        styles.menuDropdown,
-                        {
-                          top: menuPosition.y,
-                          right: Math.max(20, screenWidth - menuPosition.x),
-                        },
-                      ]}
-                    >
-                      <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={() => {
-                          setShowMenu(false);
-                          onEdit(activity);
-                        }}
-                      >
-                        <Icon name="edit" size={20} color={theme.primary} />
-                        <Text
-                          style={[
-                            styles.menuItemText,
-                            { color: theme.primary },
-                          ]}
-                        >
-                          Edit Activity
-                        </Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={[styles.menuItem, styles.menuItemDanger]}
-                        onPress={() => {
-                          setShowMenu(false);
-                          handleDelete();
-                        }}
-                      >
-                        <Icon name="delete" size={20} color={COLORS.error} />
-                        <Text
-                          style={[styles.menuItemText, { color: COLORS.error }]}
-                        >
-                          Delete Activity
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <View style={styles.centerMenuContainer}>
-                      <View style={styles.centerMenuCard}>
-                        <Text
-                          style={[
-                            styles.activityName,
-                            {
-                              textAlign: 'center',
-                              marginBottom: SPACING.md,
-                              fontSize: 18,
-                            },
-                          ]}
-                        >
-                          {activity.text}
-                        </Text>
-
-                        <TouchableOpacity
-                          style={[
-                            styles.menuItem,
-                            { paddingHorizontal: SPACING.lg },
-                          ]}
-                          onPress={() => {
-                            setShowMenu(false);
-                            onEdit(activity);
-                          }}
-                        >
-                          <Icon name="edit" size={24} color={theme.primary} />
-                          <Text
-                            style={[
-                              styles.menuItemText,
-                              { color: theme.primary, fontSize: 18 },
-                            ]}
-                          >
-                            Edit Activity
-                          </Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                          style={[
-                            styles.menuItem,
-                            styles.menuItemDanger,
-                            { paddingHorizontal: SPACING.lg },
-                          ]}
-                          onPress={() => {
-                            setShowMenu(false);
-                            handleDelete();
-                          }}
-                        >
-                          <Icon name="delete" size={24} color={COLORS.error} />
-                          <Text
-                            style={[
-                              styles.menuItemText,
-                              { color: COLORS.error, fontSize: 18 },
-                            ]}
-                          >
-                            Delete Activity
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </Modal>
-            )}
-          </>
-        ) : (
-          <>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => onEdit(activity)}
-            >
-              <Icon name="edit" size={20} color={theme.primary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.iconButton} onPress={handleDelete}>
-              <Icon name="delete" size={20} color={COLORS.error} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.addIconButton, { backgroundColor: justAdded ? '#4CAF50' : theme.primary }]}
-              onPress={() => {
-                onQuickAdd(activity);
-                setJustAdded(true);
-                setTimeout(() => setJustAdded(false), 1500);
-              }}
-              disabled={justAdded}
-            >
-              <Icon
-                name={justAdded ? 'check' : 'add'}
-                size={20}
-                color="white"
-              />
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
-
-      {Platform.OS === 'web' && (
-        <ConfirmModal
-          visible={showDeleteConfirm}
-          onClose={() => setShowDeleteConfirm(false)}
-          onConfirm={() => {
-            onDelete(activity);
-            setShowDeleteConfirm(false);
-          }}
-          theme={theme}
-          title="Delete Activity"
-          message={`Are you sure you want to delete "${activity.text}"?`}
-          confirmText="Delete"
-          confirmButtonColor="#e53e3e"
-          icon="delete"
-          iconColor="#e53e3e"
-        />
-      )}
-    </View>
-  );
-};
+// ActivityRow component is now extracted to ActivityCard.js
 
 // Helper function to render mobile dropdown menu
 const renderMobileDropdownMenu = ({
@@ -720,94 +471,7 @@ const renderCategoryActions = ({
 };
 
 
-// Helper function to render activities list content
-const renderActivitiesListContent = ({
-  isEditingCategory,
-  orderedActivities,
-  setOrderedActivities,
-  category,
-  searchQuery,
-  onEditActivity,
-  onDeleteActivity,
-  onQuickAdd,
-  theme,
-}) => {
-  if (isEditingCategory) {
-    return orderedActivities.length > 0 ? (
-      <DraggableFlatList
-        data={orderedActivities}
-        onDragEnd={
-          Platform.OS === 'android'
-            ? undefined
-            : ({ data }) => setOrderedActivities(data)
-        }
-        keyExtractor={item => item.id}
-        renderItem={({ item, drag, isActive }) => (
-          <ScaleDecorator>
-            <TouchableOpacity
-              onLongPress={undefined}
-              disabled={isActive}
-              style={[styles.activityRow, isActive && styles.draggingRow]}
-            >
-              <View style={styles.activityInfo}>
-                {item.icon && item.icon.startsWith('image:') ? (
-                  <Image
-                    source={getCustomImageSource(item.icon.substring(6))}
-                    style={styles.activityImage}
-                    resizeMode="contain"
-                  />
-                ) : (
-                  <Text style={styles.activityEmoji}>
-                    {item.icon || ''}
-                  </Text>
-                )}
-                <Text style={styles.activityName}>{item.text}</Text>
-              </View>
-              <View style={styles.dragHandle}>
-                <Icon
-                  name="drag-handle"
-                  size={24}
-                  color={COLORS.gray[400]}
-                />
-              </View>
-            </TouchableOpacity>
-          </ScaleDecorator>
-        )}
-      />
-    ) : (
-      <Text style={styles.emptyMessage}>
-        No activities yet. Tap + to add one.
-      </Text>
-    );
-  }
-
-  const filteredActivities = getFilteredActivities(category.activities, searchQuery);
-
-  return (
-    <>
-      {filteredActivities.map((activity, originalIndex) => (
-        <ActivityRow
-          key={activity.id}
-          activity={activity}
-          onEdit={onEditActivity}
-          onDelete={activity => onDeleteActivity(category.id, activity)}
-          onQuickAdd={onQuickAdd}
-          theme={theme}
-        />
-      ))}
-      {category.activities.length === 0 && (
-        <Text style={styles.emptyMessage}>
-          No activities yet. Tap + to add one.
-        </Text>
-      )}
-      {category.activities.length > 0 && filteredActivities.length === 0 && (
-        <Text style={styles.emptyMessage}>
-          No activities match your search.
-        </Text>
-      )}
-    </>
-  );
-};
+// Activities list rendering is now handled by ActivityGrid component
 
 const CategorySection = ({
   category,
@@ -1138,17 +802,17 @@ const CategorySection = ({
           },
         ]}
       >
-        {renderActivitiesListContent({
-          isEditingCategory,
-          orderedActivities,
-          setOrderedActivities,
-          category,
-          searchQuery,
-          onEditActivity,
-          onDeleteActivity,
-          onQuickAdd,
-          theme,
-        })}
+        <ActivityGrid
+          category={category}
+          isEditingCategory={isEditingCategory}
+          orderedActivities={orderedActivities}
+          setOrderedActivities={setOrderedActivities}
+          searchQuery={searchQuery}
+          onEditActivity={onEditActivity}
+          onDeleteActivity={onDeleteActivity}
+          onQuickAdd={onQuickAdd}
+          theme={theme}
+        />
       </Animated.View>
 
       {Platform.OS === 'web' && (
@@ -1909,40 +1573,7 @@ const styles = StyleSheet.create({
   activitiesList: {
     overflow: 'hidden',
   },
-  activityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: COLORS.gray[50],
-    padding: SPACING.md,
-    marginBottom: SPACING.xs,
-    borderRadius: RADIUS.lg,
-    ...SHADOWS.level1,
-  },
-  activityInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  activityEmoji: {
-    fontSize: isTablet() ? 28 : 24,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    marginRight: SPACING.sm,
-  },
-  activityImage: {
-    width: isTablet() ? 28 : 24,
-    height: isTablet() ? 28 : 24,
-    marginRight: SPACING.sm,
-  },
-  activityName: {
-    fontSize: isTablet() ? 16 : 14,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#000',
-  },
-  activityActions: {
-    flexDirection: 'row',
-    gap: SPACING.xs,
-  },
+  // Activity styles moved to ActivityCard.js
   iconButton: {
     width: 36,
     height: 36,
@@ -1974,15 +1605,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255, 255, 255, 0.5)',
     paddingVertical: SPACING.xs,
   },
-  dragHandle: {
-    paddingLeft: SPACING.md,
-    paddingRight: SPACING.sm,
-    justifyContent: 'center',
-  },
-  draggingRow: {
-    backgroundColor: COLORS.gray[100],
-    opacity: 0.9,
-  },
+  // Drag styles moved to ActivityGrid.js
   categoryDragHandle: {
     paddingLeft: SPACING.sm,
     paddingRight: SPACING.md,
@@ -2000,13 +1623,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 10,
   },
-  emptyMessage: {
-    textAlign: 'center',
-    color: 'white',
-    fontStyle: 'italic',
-    padding: SPACING.lg,
-    opacity: 0.8,
-  },
+  // Empty message styles moved to EmptyState.js
   addCategoryButton: {
     flexDirection: 'row',
     alignItems: 'center',
