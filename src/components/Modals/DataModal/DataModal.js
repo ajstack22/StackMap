@@ -19,32 +19,12 @@ import syncService from '../../../services/sync';
 import useAppStore from '../../../stores/useAppStore';
 import QRCode from 'react-native-qrcode-svg';
 import DataExport from './DataExport';
+import DataImport from './DataImport';
+import ImportPreview from './ImportPreview';
+import ImportConfirmation from './ImportConfirmation';
 // Normalization removed - v3 support discontinued
 
-// Import platform-specific modules
-let DocumentPicker = null;
-let RNFS = null;
-
-// Lazy load file system modules to avoid module-level Platform.OS access
-const loadFileSystemModules = () => {
-  if (!RNFS || !DocumentPicker) {
-    if (Platform.OS === 'web') {
-      // Use web polyfills
-      RNFS = require('../../../utils/platformHelpers.web').default;
-      DocumentPicker =
-        require('../../../utils/platformHelpers.web').DocumentPicker;
-    } else {
-      // Use native modules - wrap in try/catch for missing modules
-      try {
-        DocumentPicker = require('react-native-document-picker');
-      } catch (e) {
-        DocumentPicker = null;
-      }
-      RNFS = require('react-native-fs');
-    }
-  }
-  return { RNFS, DocumentPicker };
-};
+// Import platform-specific modules moved to DataImport.js
 
 const DataModal = ({
   visible,
@@ -74,7 +54,6 @@ const DataModal = ({
   const [importData, setImportData] = useState(null);
   const [importMode, setImportMode] = useState('fresh'); // 'fresh' or 'merge'
   const [importSelections, setImportSelections] = useState({});
-  const [showImportConfirm, setShowImportConfirm] = useState(false);
 
   // Sync state
   const [syncEnabled, setSyncEnabled] = useState(false);
@@ -126,10 +105,8 @@ const DataModal = ({
   // Reset state when modal opens/closes
   useEffect(() => {
     if (!visible) {
-      setImportFile(null);
-      setImportData(null);
-      setImportMode('fresh');
-      setImportSelections({});
+      // Reset import state
+      handleResetImportState();
       setSyncError('');
       setShowRecoveryInput(false);
       setRecoveryInput('');
@@ -147,10 +124,11 @@ const DataModal = ({
     } else {
       // If onboarding mode with import data, set it up
       if (isOnboarding && onboardingImportData) {
-        setImportFile({ name: 'Imported Data' });
-        setImportData(onboardingImportData);
+        handleFileSelected({
+          file: { name: 'Imported Data' },
+          data: onboardingImportData
+        });
         setImportMode('fresh'); // Always fresh for onboarding
-        initializeImportSelections(onboardingImportData);
         setActiveTab(0); // Import is the only tab in onboarding
       }
       // When opening, load active shares
@@ -323,390 +301,41 @@ const DataModal = ({
   };
 
 
-  // Initialize import selections based on file data
-  const initializeImportSelections = parsedData => {
-    const selections = {};
+  // Import state management
+  const handleResetImportState = () => {
+    setImportFile(null);
+    setImportData(null);
+    setImportMode('fresh');
+    setImportSelections({});
+  };
 
-    if (parsedData.users) {
-      Object.entries(parsedData.users).forEach(([userId, user]) => {
-        selections[`user_${userId}`] = true;
-      });
-    }
+  const handleFileSelected = ({ file, data }) => {
+    setImportFile(file);
+    setImportData(data);
+    // Selections will be initialized by ImportPreview component
+  };
 
-    if (parsedData.activityCards) {
-      parsedData.activityCards.forEach(activity => {
-        selections[`activity_${activity.id}`] = true;
-      });
-    }
+  const handleImportError = (error) => {
+    Alert.alert('Import Error', error);
+  };
 
-    // v4 only - no templates support
-    if (parsedData.library && parsedData.library.categories) {
-      parsedData.library.categories.forEach(category => {
-        selections[`category_${category.id}`] = true;
-        if (category.activities) {
-          category.activities.forEach(activity => {
-            selections[`template_${category.id}_${activity.id}`] = true;
-          });
-        }
-      });
-    }
+  const handleImportModeChange = (mode) => {
+    setImportMode(mode);
+  };
 
+  const handleImportSelectionsChange = (selections) => {
     setImportSelections(selections);
   };
 
 
-  // Handle file selection
-  const handleSelectFile = async () => {
-    // Load file system modules at function start for error handling
-    const modules = loadFileSystemModules();
+  // File selection is now handled by DataImport component
 
-    try {
-      setLoading(true);
+  // Import selection is now handled by ImportPreview component
 
-      // Android uses file system search
-      if (Platform.OS === 'android') {
-        if (!modules.RNFS) {
-          throw new Error('File system not available');
-        }
-
-        // Search for StackMap export files in various directories
-        let jsonFiles = [];
-
-        const searchPaths = [
-          modules.RNFS.DownloadDirectoryPath,
-          modules.RNFS.ExternalDirectoryPath,
-          `${modules.RNFS.ExternalDirectoryPath}/Documents`,
-          modules.RNFS.DocumentDirectoryPath,
-        ];
-
-        for (const path of searchPaths) {
-          try {
-            const files = await modules.RNFS.readDir(path);
-            const foundFiles = files.filter(
-              f =>
-                f.name.endsWith('.json') &&
-                f.name.toLowerCase().includes('stackmap'),
-            );
-            jsonFiles = jsonFiles.concat(foundFiles);
-          } catch (e) {
-            // Skip paths we can't access
-          }
-        }
-
-        // Remove duplicates based on file name
-        const uniqueFiles = Array.from(
-          new Map(jsonFiles.map(f => [f.name, f])).values(),
-        );
-
-        if (uniqueFiles.length === 0) {
-          Alert.alert(
-            'How to Import Your Data 📱',
-            'Your exported StackMap files are saved in the Downloads folder.\n\nTo access them:\n\n1. Open your phone\'s Files app\n2. Navigate to Downloads\n3. Look for files starting with "stackmap-export"\n4. You can open them with StackMap from there\n\nOr use the Export button first to create a backup file.',
-            [
-              { 
-                text: 'Open Files App',
-                onPress: () => {
-                  // Try to open the file manager
-                  if (Platform.OS === 'android') {
-                    const { Linking } = require('react-native');
-                    Linking.openURL('content://com.android.documentsui.documents/root/downloads');
-                  }
-                }
-              },
-              { text: 'OK', style: 'cancel' }
-            ],
-          );
-          setLoading(false);
-          return;
-        }
-
-        // Sort files by modified time (newest first)
-        uniqueFiles.sort((a, b) => b.mtime - a.mtime);
-
-        // Helper function to load a file
-        const loadFile = async file => {
-          try {
-            const fileContent = await modules.RNFS.readFile(file.path, 'utf8');
-            let parsedData = JSON.parse(fileContent);
-
-            if (!parsedData.version) {
-              Alert.alert('Error', 'Invalid StackMap export file');
-              return;
-            }
-
-            // No normalization - v3 support removed
-
-            setImportFile({ name: file.name, path: file.path });
-            setImportData(parsedData);
-            initializeImportSelections(parsedData);
-          } catch (error) {
-            Alert.alert('Error', 'Failed to read file: ' + error.message);
-          }
-        };
-
-        // If multiple files, show picker
-        if (uniqueFiles.length > 1) {
-          // Android Alert can only show 3 buttons max
-          if (uniqueFiles.length > 2) {
-            // Show only the 2 most recent files
-            const recentFiles = uniqueFiles.slice(0, 2);
-            const fileOptions = recentFiles.map(f => {
-              const match = f.name.match(
-                /stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/,
-              );
-              let displayName = f.name;
-
-              if (match) {
-                const date = match[1];
-                const time = match[2] ? match[2].replace(/-/g, ':') : '';
-                displayName = time ? `${date} at ${time}` : date;
-                const sizeKB = Math.round(f.size / 1024);
-                displayName += ` (${sizeKB} KB)`;
-              }
-
-              return {
-                text: displayName,
-                onPress: () => loadFile(f),
-              };
-            });
-
-            Alert.alert(
-              'Select Backup to Import',
-              `Found ${uniqueFiles.length} backups. Showing 2 most recent:`,
-              [
-                ...fileOptions,
-                {
-                  text: 'Cancel',
-                  style: 'cancel',
-                  onPress: () => setLoading(false),
-                },
-              ],
-            );
-          } else {
-            // 2 or fewer files, show them all
-            const fileOptions = uniqueFiles.map(f => {
-              const match = f.name.match(
-                /stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/,
-              );
-              let displayName = f.name;
-
-              if (match) {
-                const date = match[1];
-                const time = match[2] ? match[2].replace(/-/g, ':') : '';
-                displayName = time ? `${date} at ${time}` : date;
-                const sizeKB = Math.round(f.size / 1024);
-                displayName += ` (${sizeKB} KB)`;
-              }
-
-              return {
-                text: displayName,
-                onPress: () => loadFile(f),
-              };
-            });
-
-            Alert.alert(
-              'Select Backup to Import',
-              `Found ${uniqueFiles.length} StackMap backups:`,
-              [
-                ...fileOptions,
-                {
-                  text: 'Cancel',
-                  style: 'cancel',
-                  onPress: () => setLoading(false),
-                },
-              ],
-            );
-          }
-        } else {
-          // Single file found - load it directly
-          await loadFile(uniqueFiles[0]);
-        }
-
-        setLoading(false);
-        return;
-      }
-
-      // iOS and Web use DocumentPicker
-      if (!modules.DocumentPicker || !modules.DocumentPicker.pick) {
-        Alert.alert('Error', 'File picker is not available on this platform.');
-        setLoading(false);
-        return;
-      }
-
-      const result = await modules.DocumentPicker.pick({
-        type:
-          Platform.OS === 'web'
-            ? 'application/json'
-            : [modules.DocumentPicker.types.json],
-        copyTo: 'cachesDirectory',
-      });
-
-      let fileContent;
-
-      if (Platform.OS === 'web' && result[0]?.content) {
-        fileContent = result[0].content;
-      } else if (result[0]?.fileCopyUri) {
-        fileContent = await modules.RNFS.readFile(
-          result[0].fileCopyUri,
-          'utf8',
-        );
-        await modules.RNFS.unlink(result[0].fileCopyUri);
-      } else {
-        Alert.alert('Error', 'Could not read the selected file');
-        return;
-      }
-
-      // Parse and validate
-      let parsedData = JSON.parse(fileContent);
-
-      // Validate data structure
-      if (!parsedData.version) {
-        Alert.alert('Error', 'Invalid StackMap export file');
-        return;
-      }
-
-      // No normalization - v3 support removed
-
-      setImportFile(result[0]);
-      setImportData(parsedData);
-      initializeImportSelections(parsedData);
-    } catch (error) {
-      if (
-        error.code !== modules.DocumentPicker?.errorCodes?.cancelled &&
-        error.code !== 'DOCUMENT_PICKER_CANCELED'
-      ) {
-        Alert.alert('Error', 'Failed to select file. Please try again.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Toggle import selection
-  const toggleImportSelection = key => {
-    setImportSelections(prev => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
-
-  // Handle import confirmation
-  const handleImportConfirm = async () => {
-    try {
-      setLoading(true);
-
-      // Prepare imported data based on selections
-      const dataToImport = {
-        mode: importMode,
-        users: {},
-        activityCards: [],
-        library: null,
-        libraryTemplates: [],
-        globalSettings: importData.globalSettings || {},
-      };
-
-      // Process selected users with validation
-      if (importData.users) {
-        Object.entries(importData.users).forEach(([userId, user]) => {
-          if (importSelections[`user_${userId}`]) {
-            // Validate user data before adding to import
-            const validatedUser = { ...user };
-
-            // Ensure name is a string
-            if (!validatedUser.name || typeof validatedUser.name !== 'string') {
-              if (
-                typeof validatedUser.name === 'object' &&
-                validatedUser.name !== null
-              ) {
-                // Try to extract name from object
-                validatedUser.name =
-                  validatedUser.name.name || validatedUser.name.text || 'User';
-              } else {
-                validatedUser.name = 'User';
-              }
-            }
-
-            // Normalize icon field - always use 'icon', not 'emoji'
-            if (!validatedUser.icon || typeof validatedUser.icon !== 'string') {
-              if (
-                validatedUser.emoji &&
-                typeof validatedUser.emoji === 'string'
-              ) {
-                // Legacy support - migrate emoji to icon
-                validatedUser.icon = validatedUser.emoji;
-              } else {
-//                   `Import: User ${userId} has no valid icon, using default`,
-//                 );
-                validatedUser.icon = '👤';
-              }
-            }
-
-            // Remove redundant emoji field to prevent confusion
-            if (validatedUser.emoji) {
-              delete validatedUser.emoji;
-            }
-
-            dataToImport.users[userId] = validatedUser;
-          }
-        });
-      }
-
-      // Process selected activity cards
-      if (importData.activityCards) {
-        importData.activityCards.forEach(activity => {
-          if (importSelections[`activity_${activity.id}`]) {
-            dataToImport.activityCards.push(activity);
-          }
-        });
-      }
-
-      // Process selected library (v4 only)
-      if (importData.library && importData.library.categories) {
-        const selectedCategories = [];
-        importData.library.categories.forEach(category => {
-          if (importSelections[`category_${category.id}`]) {
-            const categoryToImport = { ...category, activities: [] };
-
-            if (category.activities) {
-              category.activities.forEach(activity => {
-                if (
-                  importSelections[`template_${category.id}_${activity.id}`]
-                ) {
-                  categoryToImport.activities.push(activity);
-                }
-              });
-            }
-
-            selectedCategories.push(categoryToImport);
-          }
-        });
-        dataToImport.library = {
-          categories: selectedCategories,
-          userAddedActivityIds: importData.library.userAddedActivityIds || [],
-        };
-      }
-
-      if (importData.libraryTemplates) {
-        dataToImport.libraryTemplates = importData.libraryTemplates;
-      }
-
-      // Call parent import handler
-      await onImportComplete(dataToImport);
-
-      showToast({
-        message:
-          importMode === 'fresh'
-            ? 'Data imported successfully!'
-            : 'Data merged successfully!',
-      });
-
-      onClose();
-    } catch (error) {
-      Alert.alert('Import Error', 'Failed to import data. Please try again.');
-    } finally {
-      setLoading(false);
-      setShowImportConfirm(false);
-    }
+  // Import completion handler
+  const handleImportComplete = async (dataToImport) => {
+    await onImportComplete(dataToImport);
+    onClose();
   };
 
   // Safe clipboard copy helper
@@ -1043,272 +672,38 @@ const DataModal = ({
       contentContainerStyle={styles.scrollContainer}
     >
       {!importData ? (
-        <>
-          <View style={styles.section}>
-            <View style={styles.standardTabContainer}>
-              <Icon name="file-download" size={48} color={theme.primary} />
-              <Text style={styles.standardTabTitle}>Import Data</Text>
-              <Text style={styles.standardTabDescription}>
-                {Platform.OS === 'android'
-                  ? 'Will search Downloads folder for export files'
-                  : 'Import your saved StackMap data from a backup file'}
-              </Text>
-            </View>
-
-            <View style={styles.inPanelButtonContainer}>
-              <ModalButton
-                theme={theme}
-                variant="primary"
-                label={
-                  Platform.OS === 'android' ? 'Search for Files' : 'Select File'
-                }
-                icon="folder-open"
-                onPress={() => {
-                  handleSelectFile();
-                }}
-                disabled={loading}
-                loading={loading}
-                fullWidth
-              />
-            </View>
-          </View>
-        </>
+        <DataImport
+          theme={theme}
+          onFileSelected={handleFileSelected}
+          onError={handleImportError}
+          loading={loading}
+        />
       ) : (
         <>
-          <View style={styles.section}>
-            <View style={styles.fileInfoCard}>
-              <Icon name="insert-drive-file" size={24} color={theme.primary} />
-              <View style={styles.fileInfoContent}>
-                <Text style={styles.fileInfoName} numberOfLines={1}>
-                  {importFile.name}
-                </Text>
-                <Text style={styles.fileInfoDate}>
-                  Exported:{' '}
-                  {new Date(importData.exportDate).toLocaleDateString()}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => {
-                  setImportFile(null);
-                  setImportData(null);
-                  setImportSelections({});
-                }}
-              >
-                <Icon name="close" size={20} color="#999" />
-              </TouchableOpacity>
-            </View>
+          <ImportPreview
+            theme={theme}
+            importFile={importFile}
+            importData={importData}
+            importMode={importMode}
+            importSelections={importSelections}
+            isOnboarding={isOnboarding}
+            onImportModeChange={handleImportModeChange}
+            onSelectionChange={handleImportSelectionsChange}
+            onRemoveFile={handleResetImportState}
+            onGetSelectedCounts={() => {}} // Optional callback for selection counts
+          />
 
-            {!isOnboarding && (
-              <View style={styles.importModeContainer}>
-                <Text style={styles.importModeTitle}>Import Mode</Text>
-                <View style={styles.importModeOptions}>
-                  <TouchableOpacity
-                    style={[
-                      styles.importModeOption,
-                      importMode === 'fresh' && styles.importModeOptionActive,
-                    ]}
-                    onPress={() => setImportMode('fresh')}
-                  >
-                    <Icon
-                      name="refresh"
-                      size={20}
-                      color={importMode === 'fresh' ? theme.primary : '#666'}
-                    />
-                    <Text
-                      style={[
-                        styles.importModeText,
-                        importMode === 'fresh' && styles.importModeTextActive,
-                      ]}
-                    >
-                      Start Fresh
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.importModeOption,
-                      importMode === 'merge' && styles.importModeOptionActive,
-                    ]}
-                    onPress={() => setImportMode('merge')}
-                  >
-                    <Icon
-                      name="merge-type"
-                      size={20}
-                      color={importMode === 'merge' ? theme.primary : '#666'}
-                    />
-                    <Text
-                      style={[
-                        styles.importModeText,
-                        importMode === 'merge' && styles.importModeTextActive,
-                      ]}
-                    >
-                      Merge with Existing
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.importModeDescription}>
-                  {importMode === 'fresh'
-                    ? 'Clear all existing data, then add only the selected items'
-                    : 'Keep existing data and add selected items'}
-                </Text>
-              </View>
-            )}
-
-            <View style={styles.importSelectionsContainer}>
-              <Text style={styles.sectionTitle}>Select Items to Import</Text>
-
-              {!!importData.users && Object.keys(importData.users).length > 0 && (
-                <View style={styles.importCategory}>
-                  <Text style={styles.importCategoryTitle}>Users</Text>
-                  {Object.entries(importData.users).map(([userId, user]) => (
-                    <TouchableOpacity
-                      key={userId}
-                      style={styles.importItem}
-                      onPress={() => toggleImportSelection(`user_${userId}`)}
-                      activeOpacity={0.7}
-                    >
-                      <Icon
-                        name={
-                          importSelections[`user_${userId}`]
-                            ? 'check-box'
-                            : 'check-box-outline-blank'
-                        }
-                        size={20}
-                        color={
-                          importSelections[`user_${userId}`]
-                            ? theme.primary
-                            : '#999'
-                        }
-                      />
-                      <Text style={styles.importItemEmoji}>
-                        {user.icon || '😀'}
-                      </Text>
-                      <Text style={styles.importItemText}>{user.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-
-              {importData.activityCards &&
-                importData.activityCards.length > 0 && (
-                  <View style={styles.importCategory}>
-                    <Text style={styles.importCategoryTitle}>
-                      Activity Cards ({importData.activityCards.length})
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.selectAllButton}
-                      onPress={() => {
-                        const allSelected = importData.activityCards.every(
-                          a => importSelections[`activity_${a.id}`],
-                        );
-                        const newSelections = { ...importSelections };
-                        importData.activityCards.forEach(activity => {
-                          newSelections[`activity_${activity.id}`] =
-                            !allSelected;
-                        });
-                        setImportSelections(newSelections);
-                      }}
-                    >
-                      <Text style={styles.selectAllText}>
-                        {importData.activityCards.every(
-                          a => importSelections[`activity_${a.id}`],
-                        )
-                          ? 'Deselect All'
-                          : 'Select All'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-
-              {importData.library &&
-                importData.library.categories &&
-                importData.library.categories.length > 0 && (
-                  <View style={styles.importCategory}>
-                    <Text style={styles.importCategoryTitle}>
-                      Activity Library
-                    </Text>
-                    {importData.library.categories.map(category => (
-                      <View key={category.id}>
-                        <TouchableOpacity
-                          style={styles.importItem}
-                          onPress={() =>
-                            toggleImportSelection(`category_${category.id}`)
-                          }
-                          activeOpacity={0.7}
-                        >
-                          <Icon
-                            name={
-                              importSelections[`category_${category.id}`]
-                                ? 'check-box'
-                                : 'check-box-outline-blank'
-                            }
-                            size={20}
-                            color={
-                              importSelections[`category_${category.id}`]
-                                ? theme.primary
-                                : '#999'
-                            }
-                          />
-                          <Icon
-                            name="folder"
-                            size={16}
-                            color="#666"
-                            style={{ marginLeft: 8 }}
-                          />
-                          <Text style={styles.importItemText}>
-                            {category.name}
-                          </Text>
-                          <Text style={styles.importItemCount}>
-                            ({category.activities?.length || 0})
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    ))}
-                  </View>
-                )}
-            </View>
-
-            {!!importData && (
-              <View style={styles.inPanelButtonContainer}>
-                <ModalButton
-                  theme={theme}
-                  variant="primary"
-                  label="Import Selected Items"
-                  icon="file-download"
-                  onPress={() => {
-                    if (Platform.OS === 'ios') {
-                      // Use native iOS alert
-                      Alert.alert(
-                        importMode === 'fresh'
-                          ? 'Start Fresh Import'
-                          : 'Merge Import',
-                        importMode === 'fresh'
-                          ? 'This will DELETE all your current data and replace it with only the selected items. This action cannot be undone.'
-                          : 'This will add the selected items to your existing data. Duplicate items will be skipped.',
-                        [
-                          { text: 'Cancel', style: 'cancel' },
-                          {
-                            text: 'Import',
-                            style: 'destructive',
-                            onPress: () => {
-                              handleImportConfirm();
-                            },
-                          },
-                        ],
-                      );
-                    } else {
-                      // Use ConfirmModal for Android/Web
-                      setShowImportConfirm(true);
-                    }
-                  }}
-                  disabled={
-                    !Object.values(importSelections).some(v => v) || loading
-                  }
-                  loading={loading}
-                  fullWidth
-                />
-              </View>
-            )}
+          <View style={styles.inPanelButtonContainer}>
+            <ImportConfirmation
+              theme={theme}
+              importData={importData}
+              importMode={importMode}
+              importSelections={importSelections}
+              onImportComplete={handleImportComplete}
+              onError={handleImportError}
+              disabled={loading}
+              showToast={showToast}
+            />
           </View>
         </>
       )}
@@ -2279,22 +1674,7 @@ const DataModal = ({
         )}
       </TabbedModal>
 
-      <ConfirmModal
-        visible={showImportConfirm}
-        onClose={() => setShowImportConfirm(false)}
-        onConfirm={handleImportConfirm}
-        theme={theme}
-        title={importMode === 'fresh' ? 'Start Fresh Import' : 'Merge Import'}
-        message={
-          importMode === 'fresh'
-            ? 'This will DELETE all your current data and replace it with only the selected items. This action cannot be undone.'
-            : 'This will add the selected items to your existing data. Duplicate items will be skipped.'
-        }
-        confirmText="Import"
-        confirmButtonColor={theme.primary}
-        icon="file-download"
-        iconColor={theme.primary}
-      />
+      {/* Import confirmation is now handled by ImportConfirmation component */}
 
       <ConfirmModal
         visible={showDisableSyncConfirm}
