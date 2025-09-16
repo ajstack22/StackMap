@@ -141,7 +141,7 @@ const ActivityGrid = ({
 
   // Render filtered activities
   return (
-    <View>
+    <View style={styles.activitiesGrid}>
       {renderNormalActivities({
         activities: filteredActivities,
         onEditActivity,
@@ -163,6 +163,13 @@ export {
 };
 
 const styles = StyleSheet.create({
+  activitiesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -SPACING.xs / 2,
+    // Android requires alignContent for proper grid alignment with flexWrap
+    ...(Platform.OS === 'android' && { alignContent: 'flex-start' }),
+  },
   activityRow: {
     flexDirection: 'row',
     alignItems: 'center',
