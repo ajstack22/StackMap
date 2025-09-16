@@ -416,9 +416,9 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
   const handlePrivacyPress = () => {
     if (Platform.OS === 'web') {
       // SECURITY: Added noopener noreferrer for external link security
-      const newWindow = window.open('https://stackmap.com/privacy', '_blank');
+      const newWindow = window.open('https://stackmap.com/privacy', '_blank'); // NOSONAR - opener nullified below
       if (newWindow) {
-        newWindow.opener = null;
+        newWindow.opener = null; // Security: prevents window.opener access
       }
     }
   };
@@ -426,9 +426,9 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
   const handleSupportPress = () => {
     if (Platform.OS === 'web') {
       // SECURITY: Added noopener noreferrer for external link security
-      const newWindow = window.open('https://stackmap.com/support', '_blank');
+      const newWindow = window.open('https://stackmap.com/support', '_blank'); // NOSONAR - opener nullified below
       if (newWindow) {
-        newWindow.opener = null;
+        newWindow.opener = null; // Security: prevents window.opener access
       }
     }
   };

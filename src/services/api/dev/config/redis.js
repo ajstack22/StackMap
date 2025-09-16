@@ -278,7 +278,7 @@ const CacheUtils = {
      */
     hashParams: (params) => {
         const crypto = require('crypto');
-        return crypto.createHash('md5').update(JSON.stringify(params)).digest('hex');
+        return crypto.createHash('md5').update(JSON.stringify(params)).digest('hex'); // NOSONAR - MD5 safe for cache key generation (non-security use)
     },
 
     /**
