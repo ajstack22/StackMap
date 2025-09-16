@@ -43,15 +43,15 @@ const useAppStore = create(
       // Global timestamp for last-write-wins sync
       lastModified: Date.now(),
 
-      // Activities are stored per user/day - provide a getter
-      get activities() {
+      // Activities are stored per user/day - synced from UserStore subscription
+      activities: (() => {
         const state = useUserStore.getState();
         const user = state.users[state.currentUser];
         if (!user || !user.days || !user.days[state.currentDay]) {
           return [];
         }
         return user.days[state.currentDay].activities || [];
-      },
+      })(),
 
       // Re-export all actions from sub-stores
       setUsers: users => useUserStore.getState().setUsers(users),
@@ -304,11 +304,18 @@ const useAppStore = create(
 
 // Subscribe to sub-stores to keep wrapper in sync and update lastModified
 useUserStore.subscribe(state => {
+  // Derive activities from current state
+  const user = state.users[state.currentUser];
+  const activities = (user && user.days && user.days[state.currentDay])
+    ? user.days[state.currentDay].activities || []
+    : [];
+
   useAppStore.setState({
     users: state.users,
     currentUser: state.currentUser,
     currentDay: state.currentDay,
     userContextData: state.userContextData,
+    activities: activities,
     lastModified: Date.now(), // Update timestamp on any change
   });
 });

@@ -5,7 +5,7 @@
 
 // Common themes available in the app
 export const THEMES = [
-  'stackBlue', 'stackGreen', 'stackOrange', 'stackRed',
+  'stackBlue', 'emerald', 'stackOrange', 'stackRed',
   'stackYellow', 'stackPurple', 'stackPink', 'crimson'
 ];
 
@@ -209,7 +209,7 @@ export class UserFactory {
       this.create({
         name: 'Child 1',
         icon: '👦',
-        settings: { theme: 'stackGreen' }
+        settings: { theme: 'emerald' }
       }),
       this.create({
         name: 'Child 2',

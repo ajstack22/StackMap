@@ -50,6 +50,7 @@ export default function EditModeList({
 
   return (
     <FlatList
+      testID="edit-mode-list"
       data={activities}
       renderItem={renderItem}
       keyExtractor={keyExtractor}

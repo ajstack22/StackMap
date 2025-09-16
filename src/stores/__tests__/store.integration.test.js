@@ -36,7 +36,7 @@ describe('Store Integration Tests', () => {
       // Set up test data
       const user = UserFactory.create({ name: 'Integration User' });
       const library = LibraryFactory.create();
-      const settings = SettingsFactory.create({ currentTheme: 'stackGreen' });
+      const settings = SettingsFactory.create({ currentTheme: 'emerald' });
 
       // Set up stores individually
       const { result: userResult } = renderHook(() => useUserStore());
@@ -55,12 +55,12 @@ describe('Store Integration Tests', () => {
       expect(appResult.current.users[user.id]).toEqual(user);
       expect(appResult.current.currentUser).toBe(user.id);
       expect(appResult.current.library).toEqual(library);
-      expect(appResult.current.currentTheme).toBe('stackGreen');
+      expect(appResult.current.currentTheme).toBe('emerald');
 
       // Verify direct store access still works
       expect(userResult.current.users[user.id].name).toBe('Integration User');
       expect(libraryResult.current.library.categories).toHaveLength(3);
-      expect(settingsResult.current.currentTheme).toBe('stackGreen');
+      expect(settingsResult.current.currentTheme).toBe('emerald');
     });
 
     test('should handle user updates through app store delegation', () => {

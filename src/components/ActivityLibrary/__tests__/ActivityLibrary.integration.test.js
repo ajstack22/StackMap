@@ -76,6 +76,22 @@ describe('ActivityLibrary Integration Tests', () => {
     theme: 'stackBlue'
   };
 
+  // Helper to render ActivityLibrary with library data from store
+  const renderActivityLibrary = (additionalProps = {}) => {
+    const library = useLibraryStore.getState().library;
+    const props = {
+      ...defaultProps,
+      ...additionalProps
+    };
+
+    // Pass library as stackMapLibrary prop if it exists
+    if (library && library.categories && library.categories.length > 0) {
+      props.stackMapLibrary = { activityGroups: library.categories };
+    }
+
+    return render(<ActivityLibrary {...props} />);
+  };
+
   beforeEach(() => {
     resetAllStores();
     jest.clearAllMocks();
@@ -84,9 +100,18 @@ describe('ActivityLibrary Integration Tests', () => {
   describe('Basic Rendering and Props', () => {
     test('should render library with categories', () => {
       const library = LibraryFactory.create();
-      setupTestEnvironment({ library });
 
-      const { getByText } = render(<ActivityLibrary {...defaultProps} />);
+      act(() => {
+        setupTestEnvironment({ library });
+      });
+
+      // Pass library data as props for StackMap library tab (default)
+      const { getByText } = render(
+        <ActivityLibrary
+          {...defaultProps}
+          stackMapLibrary={{ activityGroups: library.categories }}
+        />
+      );
 
       // Should display category names
       library.categories.forEach(category => {
@@ -96,34 +121,43 @@ describe('ActivityLibrary Integration Tests', () => {
 
     test('should render empty library state', () => {
       const emptyLibrary = LibraryFactory.createEmpty();
-      setupTestEnvironment({ library: emptyLibrary });
 
-      const { container } = render(<ActivityLibrary {...defaultProps} />);
+      act(() => {
+        setupTestEnvironment({ library: emptyLibrary });
+      });
 
-      expect(container).toBeTruthy();
+      const { UNSAFE_root } = render(<ActivityLibrary {...defaultProps} />);
+
+      expect(UNSAFE_root).toBeTruthy();
       // Should handle empty state gracefully
     });
 
     test('should apply theme correctly', () => {
       const library = LibraryFactory.create();
-      setupTestEnvironment({ library });
 
-      const { container } = render(
-        <ActivityLibrary {...defaultProps} theme="stackRed" />
+      act(() => {
+        setupTestEnvironment({ library });
+      });
+
+      const { UNSAFE_root } = render(
+        <ActivityLibrary {...defaultProps} theme="emerald" />
       );
 
-      expect(container).toBeTruthy();
+      expect(UNSAFE_root).toBeTruthy();
     });
 
     test('should handle visibility prop', () => {
       const library = LibraryFactory.create();
-      setupTestEnvironment({ library });
 
-      const { container: visibleContainer } = render(
+      act(() => {
+        setupTestEnvironment({ library });
+      });
+
+      const { UNSAFE_root: visibleContainer } = render(
         <ActivityLibrary {...defaultProps} visible={true} />
       );
 
-      const { container: hiddenContainer } = render(
+      const { UNSAFE_root: hiddenContainer } = render(
         <ActivityLibrary {...defaultProps} visible={false} />
       );
 
@@ -141,7 +175,12 @@ describe('ActivityLibrary Integration Tests', () => {
         libraryResult.current.setLibrary(library);
       });
 
-      const { getByText } = render(<ActivityLibrary {...defaultProps} />);
+      const { getByText } = render(
+        <ActivityLibrary
+          {...defaultProps}
+          stackMapLibrary={{ activityGroups: library.categories }}
+        />
+      );
 
       // Verify library categories are displayed
       library.categories.forEach(category => {
@@ -162,7 +201,7 @@ describe('ActivityLibrary Integration Tests', () => {
         libraryResult.current.setLibrary(initialLibrary);
       });
 
-      const { getByText, rerender } = render(<ActivityLibrary {...defaultProps} />);
+      const { getByText, rerender } = renderActivityLibrary();
 
       // Verify initial state
       expect(getByText(initialLibrary.categories[0].name)).toBeTruthy();
@@ -177,7 +216,12 @@ describe('ActivityLibrary Integration Tests', () => {
       });
 
       // Rerender to pick up changes
-      rerender(<ActivityLibrary {...defaultProps} />);
+      rerender(
+        <ActivityLibrary
+          {...defaultProps}
+          stackMapLibrary={{ activityGroups: [...initialLibrary.categories, newCategory] }}
+        />
+      );
 
       expect(getByText('New Test Category')).toBeTruthy();
     });
@@ -190,7 +234,7 @@ describe('ActivityLibrary Integration Tests', () => {
         libraryResult.current.setLibrary(emptyLibrary);
       });
 
-      const { container } = render(<ActivityLibrary {...defaultProps} />);
+      const { container } = renderActivityLibrary();
 
       // Simulate creating a new category
       const newCategory = CategoryFactory.create({ name: 'Workout Routine' });
@@ -294,7 +338,7 @@ describe('ActivityLibrary Integration Tests', () => {
       const library = LibraryFactory.createWithUserActivities(5);
       setupTestEnvironment({ library });
 
-      const { getByText, container } = render(<ActivityLibrary {...defaultProps} />);
+      const { getByText, container } = renderActivityLibrary();
 
       // Categories should be present
       library.categories.forEach(category => {
@@ -313,7 +357,7 @@ describe('ActivityLibrary Integration Tests', () => {
         libraryResult.current.setLibrary(library);
       });
 
-      const { container } = render(<ActivityLibrary {...defaultProps} />);
+      const { container } = renderActivityLibrary();
 
       // Simulate editing an activity
       const categoryToEdit = library.categories[0];
@@ -356,7 +400,7 @@ describe('ActivityLibrary Integration Tests', () => {
         libraryResult.current.setLibrary(library);
       });
 
-      const { container } = render(<ActivityLibrary {...defaultProps} />);
+      const { container } = renderActivityLibrary();
 
       // Simulate deleting an activity
       const categoryWithActivity = library.categories[0];
@@ -389,7 +433,7 @@ describe('ActivityLibrary Integration Tests', () => {
       const library = LibraryFactory.createLarge(5, 10);
       setupTestEnvironment({ library });
 
-      const { container, getByText } = render(<ActivityLibrary {...defaultProps} />);
+      const { container, getByText } = renderActivityLibrary();
 
       // Test that all categories are initially visible
       library.categories.forEach(category => {
@@ -404,7 +448,7 @@ describe('ActivityLibrary Integration Tests', () => {
       const library = LibraryFactory.create();
       setupTestEnvironment({ library });
 
-      const { getByText } = render(<ActivityLibrary {...defaultProps} />);
+      const { getByText } = renderActivityLibrary();
 
       // Each category should display its own activities
       library.categories.forEach(category => {
@@ -421,7 +465,7 @@ describe('ActivityLibrary Integration Tests', () => {
 
       await performance.assertPerformance(
         () => {
-          const { container } = render(<ActivityLibrary {...defaultProps} />);
+          const { container } = renderActivityLibrary();
           return container;
         },
         1000, // Should render large library in under 1 second
@@ -538,7 +582,7 @@ describe('ActivityLibrary Integration Tests', () => {
       const { rerender } = render(<ActivityLibrary {...defaultProps} />);
 
       // Test various theme changes
-      const themes = ['stackBlue', 'stackRed', 'stackGreen', 'invalid-theme'];
+      const themes = ['stackBlue', 'stackRed', 'emerald', 'invalid-theme'];
 
       themes.forEach(theme => {
         expect(() => {

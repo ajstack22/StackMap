@@ -199,23 +199,30 @@ describe('useAppStore', () => {
     test('should delegate settings actions to SettingsStore', async () => {
       const { result } = renderHook(() => useAppStore());
 
+      // First verify the initial state
+      expect(result.current.currentTheme).toBe('stackBlue');
+
       act(() => {
-        result.current.setCurrentTheme('stackGreen');
+        result.current.setCurrentTheme('emerald');
       });
+
+      // Let's also check the SettingsStore directly
+      const settingsState = useSettingsStore.getState();
+      expect(settingsState.currentTheme).toBe('emerald'); // This should pass if the delegate works
 
       // Need to wait for subscription to propagate
       await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise(resolve => setTimeout(resolve, 10));
       });
 
-      expect(result.current.currentTheme).toBe('stackGreen');
+      expect(result.current.currentTheme).toBe('emerald');
 
       act(() => {
         result.current.setSoundEnabled(false);
       });
 
       await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise(resolve => setTimeout(resolve, 10));
       });
 
       expect(result.current.soundEnabled).toBe(false);
@@ -225,7 +232,7 @@ describe('useAppStore', () => {
       });
 
       await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise(resolve => setTimeout(resolve, 10));
       });
 
       expect(result.current.taskCelebration).toBe('confetti');
@@ -235,7 +242,7 @@ describe('useAppStore', () => {
       });
 
       await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise(resolve => setTimeout(resolve, 10));
       });
 
       expect(result.current.displayMode).toBe('checkmarks');
@@ -574,7 +581,7 @@ describe('useAppStore', () => {
         result.current.setState({
           users: { 'user1': { name: 'Test User', icon: '👤' } },
           currentUser: 'user1',
-          currentTheme: 'stackGreen',
+          currentTheme: 'emerald',
           syncEnabled: true
         });
       });
@@ -583,7 +590,7 @@ describe('useAppStore', () => {
 
       expect(fullState.users).toEqual({ 'user1': { name: 'Test User', icon: '👤' } });
       expect(fullState.currentUser).toBe('user1');
-      expect(fullState.currentTheme).toBe('stackGreen');
+      expect(fullState.currentTheme).toBe('emerald');
       expect(fullState.syncEnabled).toBe(true);
       expect(fullState.activities).toEqual([]);
       expect(fullState.library).toBeDefined();

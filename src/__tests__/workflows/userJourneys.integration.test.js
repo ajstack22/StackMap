@@ -329,7 +329,7 @@ describe('End-to-End User Journey Tests', () => {
       const userIds = Object.keys(familyData.users);
 
       // 1. Set different themes for each user
-      const themes = ['stackBlue', 'stackGreen', 'stackPink'];
+      const themes = ['stackBlue', 'emerald', 'stackPink'];
 
       userIds.forEach((userId, index) => {
         act(() => {

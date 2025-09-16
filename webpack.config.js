@@ -200,7 +200,7 @@ module.exports = {
       directory: path.join(__dirname, 'web/public'),
     },
     compress: true,
-    port: 5303,
+    port: process.env.PORT || 5303,
     hot: true,
     open: true,
     historyApiFallback: true,

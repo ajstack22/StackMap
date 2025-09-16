@@ -194,12 +194,12 @@ export const EditModeListItem = React.memo(
     const handleDelete = createHandleDelete(item, onDelete);
 
     return (
-      <View style={itemStyles.listItem}>
+      <View style={itemStyles.listItem} testID={`edit-mode-item-${item.id}`}>
         {/* Main content area */}
         <View style={itemStyles.contentRow}>
           <Text style={itemStyles.emoji}>{item.icon || '📝'}</Text>
           <View style={itemStyles.textContent}>
-            <Text style={itemStyles.title} numberOfLines={1}>
+            <Text style={itemStyles.title} numberOfLines={1} testID={`activity-text-${item.id}`}>
               {item.text || item.name || item.title || 'Untitled'}
             </Text>
             {item.description && (

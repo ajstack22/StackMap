@@ -275,7 +275,7 @@ describe('useSettingsStore', () => {
       // Set initial values
       act(() => {
         result.current.updateSettings({
-          currentTheme: 'stackGreen',
+          currentTheme: 'emerald',
           soundEnabled: true,
           displayMode: 'numbers'
         });
@@ -289,7 +289,7 @@ describe('useSettingsStore', () => {
         });
       });
 
-      expect(result.current.currentTheme).toBe('stackGreen'); // unchanged
+      expect(result.current.currentTheme).toBe('emerald'); // unchanged
       expect(result.current.soundEnabled).toBe(false); // changed
       expect(result.current.displayMode).toBe('progress'); // changed
     });
