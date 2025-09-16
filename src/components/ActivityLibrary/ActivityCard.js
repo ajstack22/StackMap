@@ -212,6 +212,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     marginBottom: SPACING.xs,
     borderRadius: RADIUS.lg,
+    width: '100%',
     ...SHADOWS.level1,
   },
   activityInfo: {

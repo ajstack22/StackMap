@@ -141,7 +141,7 @@ const ActivityGrid = ({
 
   // Render filtered activities
   return (
-    <View>
+    <View style={styles.activitiesContainer}>
       {renderNormalActivities({
         activities: filteredActivities,
         onEditActivity,
@@ -163,6 +163,11 @@ export {
 };
 
 const styles = StyleSheet.create({
+  activitiesContainer: {
+    maxWidth: 375,
+    width: '100%',
+    alignSelf: 'center',
+  },
   activitiesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
