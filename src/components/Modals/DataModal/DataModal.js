@@ -18,6 +18,7 @@ import { FormInput, ModalButton } from '../../ModalUtilities';
 import syncService from '../../../services/sync';
 import useAppStore from '../../../stores/useAppStore';
 import QRCode from 'react-native-qrcode-svg';
+import DataExport from './DataExport';
 // Normalization removed - v3 support discontinued
 
 // Import platform-specific modules
@@ -67,13 +68,6 @@ const DataModal = ({
 }) => {
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
-
-  // Export state
-  const [exportSelections, setExportSelections] = useState({
-    users: true,
-    activityCards: true,
-    activityLibrary: true,
-  });
 
   // Import state
   const [importFile, setImportFile] = useState(null);
@@ -328,13 +322,6 @@ const DataModal = ({
     }
   };
 
-  // Toggle export selection
-  const toggleExportSelection = key => {
-    setExportSelections(prev => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
 
   // Initialize import selections based on file data
   const initializeImportSelections = parsedData => {
@@ -367,215 +354,6 @@ const DataModal = ({
     setImportSelections(selections);
   };
 
-  // Handle export
-  const handleExport = async () => {
-    try {
-      setLoading(true);
-
-      // Build export data based on selections
-      const exportData = {
-        version: 4,
-        exportDate: new Date().toISOString(),
-        exportedItems: {
-          users: exportSelections.users,
-          activityCards: exportSelections.activityCards,
-          activityLibrary: exportSelections.activityLibrary,
-        },
-      };
-
-      // Add selected data
-      if (exportSelections.users) {
-        exportData.users = users;
-        exportData.currentDay = currentDay;
-        exportData.currentUser = currentUser; // Add current user to export
-      }
-
-      if (exportSelections.activityCards) {
-        // Extract all activity cards from users
-        const allActivities = {};
-        Object.entries(users).forEach(([userId, user]) => {
-          if (user.days?.today?.activities) {
-            user.days.today.activities.forEach(activity => {
-              allActivities[activity.id] = activity;
-            });
-          }
-          if (user.days?.tomorrow?.activities) {
-            user.days.tomorrow.activities.forEach(activity => {
-              allActivities[activity.id] = activity;
-            });
-          }
-        });
-        exportData.activityCards = Object.values(allActivities);
-      }
-
-      if (exportSelections.activityLibrary) {
-        // Get library data from store
-        const { library, libraryTemplates } = useAppStore.getState();
-
-        // Include v4 library structure ONLY
-        exportData.library = library || {
-          categories: libraryCategories || [
-            {
-              id: 'my-templates',
-              name: 'My Templates',
-              icon: '⭐',
-              activities: [],
-            },
-          ],
-          userAddedActivityIds: [],
-        };
-
-        exportData.libraryTemplates = libraryTemplates || [];
-      }
-
-      // Add global settings
-      // Handle hasSecurePin being either a function or a boolean
-      let pinEnabled = false;
-      if (typeof hasSecurePin === 'function') {
-        pinEnabled = await hasSecurePin();
-      } else if (typeof hasSecurePin === 'boolean') {
-        pinEnabled = hasSecurePin;
-      }
-
-      exportData.globalSettings = {
-        currentTheme,
-        bannerPosition,
-        defaultView: 'normal',
-        displayMode: 'numbers',
-        enableDayManagement: true,
-        pinEnabled,
-      };
-
-      // Convert to JSON
-      const jsonData = JSON.stringify(exportData, null, 2);
-
-      // Generate filename
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const dateStr = `${year}-${month}-${day}`;
-      const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-      const fileName = `stackmap-export-${dateStr}-${timeStr}.json`;
-
-      // Platform-specific export
-      if (Platform.OS === 'android') {
-        try {
-          // Load file system modules
-          const modules = loadFileSystemModules();
-          if (!modules.RNFS) {
-            throw new Error('File system not available');
-          }
-
-          const downloadsPath = modules.RNFS.DownloadDirectoryPath;
-          const filePath = `${downloadsPath}/${fileName}`;
-
-          await modules.RNFS.writeFile(filePath, jsonData, 'utf8');
-
-          // Show success message
-          showToast({
-            message: `Data exported to Downloads/${fileName}`,
-            type: 'success',
-          });
-
-          // Show success message
-          Alert.alert(
-            'Export Successful! ✅',
-            `Your data has been saved to:
-📁 Downloads/${fileName}
-
-To use this file:
-• Import it back into StackMap using the Import button
-• Share it via your file manager app
-• Transfer it to another device via email or cloud storage
-
-The file will remain in your Downloads folder until you delete it.`,
-            [
-              {
-                text: 'Got it!',
-                style: 'default',
-                onPress: () => {
-                  showToast({ message: '✅ Export saved to Downloads' });
-                },
-              },
-            ],
-          );
-        } catch (error) {
-          Alert.alert('Export Error', 'Failed to save file: ' + error.message);
-        }
-      } else if (Platform.OS === 'web') {
-        const blob = new Blob([jsonData], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        showToast({ message: 'Export downloaded successfully!' });
-      } else {
-        // iOS - use share sheet
-
-        try {
-          const { Share } = require('react-native');
-          // Load file system modules
-          const modules = loadFileSystemModules();
-          if (!modules.RNFS) {
-            throw new Error('File system not available');
-          }
-
-          const documentsPath = modules.RNFS.DocumentDirectoryPath;
-          const filePath = `${documentsPath}/${fileName}`;
-
-          await modules.RNFS.writeFile(filePath, jsonData, 'utf8');
-
-          // Verify file was written
-          const fileExists = await modules.RNFS.exists(filePath);
-
-          if (!fileExists) {
-            throw new Error('File was not created successfully');
-          }
-
-          const shareResult = await Share.share({
-            url: `file://${filePath}`,
-            title: fileName,
-          });
-
-          // Show feedback based on share result
-          if (shareResult.action === Share.sharedAction) {
-            showToast({ message: 'Export shared successfully!' });
-          } else if (shareResult.action === Share.dismissedAction) {
-            showToast({ message: 'Export cancelled' });
-          }
-
-          // Clean up the temp file after a delay to ensure it was used
-          setTimeout(async () => {
-            try {
-              await modules.RNFS.unlink(filePath);
-            } catch (err) {}
-          }, 5000);
-        } catch (iosError) {
-          showToast({
-            message: `Failed to export: ${iosError.message}`,
-            type: 'error',
-          });
-        }
-      }
-    } catch (error) {
-      if (Platform.OS === 'web') {
-        showToast({
-          message: `Failed to export: ${error.message}`,
-          type: 'error',
-        });
-      } else {
-        Alert.alert('Export Error', 'Failed to export data. Please try again.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Handle file selection
   const handleSelectFile = async () => {
@@ -1544,132 +1322,17 @@ The file will remain in your Downloads folder until you delete it.`,
       contentContainerStyle={[styles.scrollContainer, { flexGrow: 1 }]}
       style={{ flex: 1 }}
     >
-      <View style={styles.section}>
-        <View style={styles.standardTabContainer}>
-          <Icon name="file-upload" size={48} color={theme.primary} />
-          <Text style={styles.standardTabTitle}>Export Data</Text>
-          <Text style={styles.standardTabDescription}>
-            Select data to save as a backup file
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          style={styles.selectionCard}
-          onPress={() => toggleExportSelection('users')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.checkboxContainer}>
-            <Icon
-              name={
-                exportSelections.users ? 'check-box' : 'check-box-outline-blank'
-              }
-              size={24}
-              color={exportSelections.users ? theme.primary : '#999'}
-            />
-          </View>
-          <View style={styles.selectionContent}>
-            <Text style={styles.selectionTitle}>Users</Text>
-            <Text style={styles.selectionDescription}>
-              All user profiles and their assigned activities
-            </Text>
-          </View>
-          <View style={styles.selectionCount}>
-            <Text style={styles.countText}>
-              {users ? Object.keys(users).length : 0}
-            </Text>
-            <Icon name="person" size={16} color="#666" />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.selectionCard}
-          onPress={() => toggleExportSelection('activityCards')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.checkboxContainer}>
-            <Icon
-              name={
-                exportSelections.activityCards
-                  ? 'check-box'
-                  : 'check-box-outline-blank'
-              }
-              size={24}
-              color={exportSelections.activityCards ? theme.primary : '#999'}
-            />
-          </View>
-          <View style={styles.selectionContent}>
-            <Text style={styles.selectionTitle}>Activity Cards</Text>
-            <Text style={styles.selectionDescription}>
-              All current activity cards from all users
-            </Text>
-          </View>
-          <View style={styles.selectionCount}>
-            <Text style={styles.countText}>
-              {users
-                ? Object.values(users).reduce(
-                    (count, user) =>
-                      count +
-                      (user.days?.today?.activities?.length || 0) +
-                      (user.days?.tomorrow?.activities?.length || 0),
-                    0,
-                  )
-                : 0}
-            </Text>
-            <Icon name="dashboard" size={16} color="#666" />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.selectionCard}
-          onPress={() => toggleExportSelection('activityLibrary')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.checkboxContainer}>
-            <Icon
-              name={
-                exportSelections.activityLibrary
-                  ? 'check-box'
-                  : 'check-box-outline-blank'
-              }
-              size={24}
-              color={exportSelections.activityLibrary ? theme.primary : '#999'}
-            />
-          </View>
-          <View style={styles.selectionContent}>
-            <Text style={styles.selectionTitle}>Activity Library</Text>
-            <Text style={styles.selectionDescription}>
-              All categories and routine templates
-            </Text>
-          </View>
-          <View style={styles.selectionCount}>
-            <Text style={styles.countText}>
-              {libraryCategories
-                ? libraryCategories.reduce(
-                    (count, category) =>
-                      count + (category.activities?.length || 0),
-                    0,
-                  )
-                : 0}
-            </Text>
-            <Icon name="folder" size={16} color="#666" />
-          </View>
-        </TouchableOpacity>
-
-        <View style={styles.inPanelButtonContainer}>
-          <ModalButton
-            theme={theme}
-            variant="primary"
-            label="Export Selected Data"
-            icon="file-upload"
-            onPress={() => {
-              handleExport();
-            }}
-            disabled={!Object.values(exportSelections).some(v => v) || loading}
-            loading={loading}
-            fullWidth
-          />
-        </View>
-      </View>
+      <DataExport
+        theme={theme}
+        users={users}
+        currentUser={currentUser}
+        currentDay={currentDay}
+        libraryCategories={libraryCategories}
+        currentTheme={currentTheme}
+        bannerPosition={bannerPosition}
+        hasSecurePin={hasSecurePin}
+        showToast={showToast}
+      />
     </ScrollView>
   );
 
