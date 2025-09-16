@@ -141,7 +141,7 @@ const ActivityGrid = ({
 
   // Render filtered activities
   return (
-    <View style={styles.activitiesGrid}>
+    <View>
       {renderNormalActivities({
         activities: filteredActivities,
         onEditActivity,
