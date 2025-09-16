@@ -22,6 +22,10 @@ import DataExport from './DataExport';
 import DataImport from './DataImport';
 import ImportPreview from './ImportPreview';
 import ImportConfirmation from './ImportConfirmation';
+import SyncManagement from './SyncManagement';
+import SyncStatus from './SyncStatus';
+import RecoveryPhrase from './RecoveryPhrase';
+import SyncQRCode from './SyncQRCode';
 // Normalization removed - v3 support discontinued
 
 // Import platform-specific modules moved to DataImport.js
@@ -55,23 +59,74 @@ const DataModal = ({
   const [importMode, setImportMode] = useState('fresh'); // 'fresh' or 'merge'
   const [importSelections, setImportSelections] = useState({});
 
-  // Sync state
-  const [syncEnabled, setSyncEnabled] = useState(false);
-  const [syncId, setSyncId] = useState(null);
-  const [syncRecoveryPhrase, setSyncRecoveryPhrase] = useState('');
-  const [showRecoveryInput, setShowRecoveryInput] = useState(false);
-  const [recoveryInput, setRecoveryInput] = useState('');
+  // Sync state - consolidated
+  const [syncState, setSyncState] = useState({
+    syncEnabled: false,
+    syncId: null,
+    syncRecoveryPhrase: '',
+    syncStatus: 'idle',
+    lastSyncTime: null,
+    syncStatusChecked: false
+  });
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncError, setSyncError] = useState('');
+  const [showRecoveryInput, setShowRecoveryInput] = useState(false);
+  const [recoveryInput, setRecoveryInput] = useState('');
   const [showDisableSyncConfirm, setShowDisableSyncConfirm] = useState(false);
-  const [showDeleteServerDataConfirm, setShowDeleteServerDataConfirm] =
-    useState(false);
+  const [showDeleteServerDataConfirm, setShowDeleteServerDataConfirm] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [syncStatusChecked, setSyncStatusChecked] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState(null);
-  const [syncStatus, setSyncStatus] = useState('idle');
   const [generatedSyncKey, setGeneratedSyncKey] = useState('');
   const [showGeneratedKey, setShowGeneratedKey] = useState(false);
+
+  // Sync state update callback
+  const handleSyncStateUpdate = (updates) => {
+    setSyncState(prev => ({ ...prev, ...updates }));
+  };
+
+  // Initialize sync modules
+  const syncManagement = SyncManagement({
+    theme,
+    showToast,
+    onSyncStatusChange,
+    onSyncStateUpdate: handleSyncStateUpdate,
+    syncEnabled: syncState.syncEnabled,
+    syncLoading,
+    setSyncLoading,
+    syncError,
+    setSyncError,
+    showRecoveryInput,
+    setShowRecoveryInput,
+    recoveryInput,
+    setRecoveryInput,
+    showDisableSyncConfirm,
+    setShowDisableSyncConfirm,
+    showDeleteServerDataConfirm,
+    setShowDeleteServerDataConfirm
+  });
+
+  const syncStatus = SyncStatus({
+    theme,
+    syncEnabled: syncState.syncEnabled,
+    syncStatus: syncState.syncStatus,
+    lastSyncTime: syncState.lastSyncTime,
+    syncError
+  });
+
+  const recoveryPhrase = RecoveryPhrase({
+    theme,
+    showToast,
+    syncRecoveryPhrase: syncState.syncRecoveryPhrase,
+    generatedSyncKey,
+    setGeneratedSyncKey,
+    showGeneratedKey,
+    setShowGeneratedKey,
+    syncLoading,
+    setSyncLoading,
+    setSyncError
+  });
+
+  // SyncQRCode will be used for individual QR code generation as needed
+  // const syncQRCode = SyncQRCode({ theme, showToast });
 
   // Share state
   const [shareLoading, setShareLoading] = useState(false);
@@ -160,11 +215,11 @@ const DataModal = ({
 
   // Listen to sync status updates
   useEffect(() => {
-    if (!syncEnabled) return;
+    if (!syncState.syncEnabled) return;
 
     // Status listener not available in minimal sync service
     // Status updates are handled through the sync store instead
-  }, [syncEnabled]);
+  }, [syncState.syncEnabled]);
 
   const checkSyncStatus = async () => {
     try {
@@ -172,7 +227,7 @@ const DataModal = ({
 
       if (enabled) {
         // If sync is enabled locally, trust that state
-        setSyncEnabled(true);
+        handleSyncStateUpdate({ syncEnabled: true });
         
         const id = await syncService.getSyncId();
         // Got sync ID from service
@@ -229,17 +284,21 @@ const DataModal = ({
             localStorage: typeof window !== 'undefined' ? Object.keys(window.localStorage).filter(k => k.includes('sync')).join(', ') : 'N/A'
           };
           
-          setSyncId(id);
-          setSyncRecoveryPhrase(`ERROR: Recovery phrase not found. Sync ID: ${id.substring(0, 8)}... Please disable and recreate sync.`);
-          setSyncEnabled(false);
+          handleSyncStateUpdate({
+            syncId: id,
+            syncRecoveryPhrase: `ERROR: Recovery phrase not found. Sync ID: ${id.substring(0, 8)}... Please disable and recreate sync.`,
+            syncEnabled: false
+          });
           
           // Also store the debug info in a global variable for inspection
           if (typeof window !== 'undefined') {
             window.__syncDebugInfo = debugInfo;
           }
         } else {
-          setSyncId(id);
-          setSyncRecoveryPhrase(phrase || '');
+          handleSyncStateUpdate({
+            syncId: id,
+            syncRecoveryPhrase: phrase || ''
+          });
         }
         
         // Optionally verify it exists on server in the background
@@ -252,14 +311,16 @@ const DataModal = ({
           }
         });
       } else {
-        setSyncEnabled(false);
-        setSyncId('');
-        setSyncRecoveryPhrase('');
+        handleSyncStateUpdate({
+          syncEnabled: false,
+          syncId: '',
+          syncRecoveryPhrase: ''
+        });
       }
 
-      setSyncStatusChecked(true);
+      handleSyncStateUpdate({ syncStatusChecked: true });
     } catch (error) {
-      setSyncStatusChecked(true);
+      handleSyncStateUpdate({ syncStatusChecked: true });
     }
   };
 
@@ -382,206 +443,6 @@ const DataModal = ({
     }
   };
 
-  // Handle sync enable
-  const handleEnableSync = async () => {
-    // Set loading immediately to give instant feedback
-    setSyncLoading(true);
-    setSyncError('');
-
-    // Use setTimeout to ensure the UI updates before the async operation
-    setTimeout(async () => {
-      try {
-        // CRITICAL: Use create() for "Create New Sync" button
-        // This ensures we get the right sync ID and recovery phrase
-        const result = await syncService.create();
-        
-        // Immediately capture the frozen values to prevent any modification
-        const finalSyncId = result.syncId;
-        const finalRecoveryPhrase = result.recoveryPhrase;
-        
-
-        // Set state with captured values from the frozen result
-        // CRITICAL: Make sure we're not swapping these!
-        setSyncEnabled(true);
-        setSyncId(finalSyncId);  // This sets the sync ID state
-        setSyncRecoveryPhrase(finalRecoveryPhrase);  // This sets what gets DISPLAYED
-        
-
-        if (onSyncStatusChange) {
-          onSyncStatusChange(true);
-        }
-
-        // Show appropriate message based on whether sync was new or restored
-        if (result.isNewSync) {
-          showToast({ message: 'Sync enabled successfully!' });
-        } else {
-          showToast({ message: 'Sync restored - displaying recovery phrase' });
-        }
-        
-        // DON'T call checkSyncStatus here - it will overwrite the correct recovery phrase!
-        // The result from create() is the source of truth
-      } catch (error) {
-        setSyncError(error.message || 'Failed to enable sync');
-        // CRITICAL: Clear all sync state if there's an error
-        setSyncEnabled(false);
-        setSyncId('');
-        setSyncRecoveryPhrase('');
-        showToast({
-          message: error.message || 'Failed to enable sync',
-          type: 'error',
-        });
-      } finally {
-        setSyncLoading(false);
-      }
-    }, 0);
-  };
-
-  // Handle sync restore
-  const handleRestoreSync = async () => {
-    // Set loading immediately to give instant feedback
-    setSyncLoading(true);
-    setSyncError('');
-
-    // Use setTimeout to ensure the UI updates before the async operation
-    setTimeout(async () => {
-      try {
-        if (!recoveryInput.trim()) {
-          setSyncError('Please enter your sync key');
-          setSyncLoading(false);
-          return;
-        }
-
-        // Use joinSync method to join existing sync
-        const result = await syncService.joinSync(recoveryInput.trim());
-
-        setSyncId((typeof result === 'object' && result.syncId) || syncService.syncId);
-        setSyncRecoveryPhrase(recoveryInput.trim());
-        setSyncEnabled(true);
-        setShowRecoveryInput(false);
-        setRecoveryInput('');
-
-        if (onSyncStatusChange) {
-          onSyncStatusChange(true);
-        }
-
-        const message = (typeof result === 'object' && result.isNewSync)
-          ? 'New sync created successfully!'
-          : 'Joined existing sync successfully!';
-        showToast({ message });
-      } catch (error) {
-        setSyncError(error.message || 'Failed to restore sync');
-      } finally {
-        setSyncLoading(false);
-      }
-    }, 0);
-  };
-
-  // Handle manual sync
-  const handleManualSync = async () => {
-    try {
-      setSyncStatus('syncing');
-      setSyncError('');
-      
-      const result = await syncService.performManualSync();
-      
-      if (result.success) {
-        setLastSyncTime(Date.now());
-        setSyncStatus('idle');
-        showToast({ 
-          message: 'Sync completed successfully',
-          type: 'success'
-        });
-      } else {
-        setSyncStatus('idle');
-        setSyncError(result.message || 'Sync failed');
-        showToast({ 
-          message: result.message || 'Sync failed',
-          type: 'error'
-        });
-      }
-    } catch (error) {
-      setSyncStatus('idle');
-      setSyncError(error.message);
-      showToast({ 
-        message: `Sync failed: ${error.message}`,
-        type: 'error'
-      });
-    }
-  };
-
-  // Handle sync disable
-  const handleDisableSync = async () => {
-    try {
-      setSyncLoading(true);
-
-      await syncService.disable();
-
-      setSyncEnabled(false);
-      setSyncId(null);
-      setSyncRecoveryPhrase('');
-      setShowDisableSyncConfirm(false);
-
-      if (onSyncStatusChange) {
-        onSyncStatusChange(false);
-      }
-
-      showToast({ message: 'Sync disabled' });
-    } catch (error) {
-      Alert.alert('Error', 'Failed to disable sync');
-    } finally {
-      setSyncLoading(false);
-    }
-  };
-
-  // Handle delete server data
-  const handleDeleteServerData = async () => {
-    
-    // Close the modal immediately
-    setShowDeleteServerDataConfirm(false);
-    
-    try {
-      setSyncLoading(true);
-      
-      const currentSyncId = syncService.getSyncId ? syncService.getSyncId() :
-                           syncService.syncId;
-      
-      if (!currentSyncId) {
-        throw new Error('No sync ID available - sync may not be enabled');
-      }
-      
-      
-      // Delete all server data for this sync ID - checks both environments
-      const deleteResult = await syncService.deleteFromServer();
-      
-      if (deleteResult && deleteResult.success) {
-      }
-
-      
-      // Disable sync after deleting server data
-      await syncService.disable();
-
-      setSyncEnabled(false);
-      setSyncId(null);
-      setSyncRecoveryPhrase('');
-
-      if (onSyncStatusChange) {
-        onSyncStatusChange(false);
-      }
-
-      showToast({ message: 'Server data deleted and sync disabled', type: 'success' });
-    } catch (error) {
-      
-      showToast({
-        message: 'Unable to delete server data. Please contact support if this persists.',
-        type: 'error',
-      });
-      
-      // Re-check sync status in case of error
-      checkSyncStatus();
-    } finally {
-      setSyncLoading(false);
-    }
-  };
 
   // Handle app reset
   const handleReset = async () => {
@@ -825,405 +686,23 @@ const DataModal = ({
     </ScrollView>
   );
 
-  // Render sync tab content
+  // Render sync tab content using modular components
   const renderSyncContent = () => (
     <ScrollView
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[styles.scrollContainer, { flexGrow: 1 }]}
       style={{ flex: 1 }}
     >
-      {!syncEnabled ? (
-        <View style={styles.section}>
-          <View style={styles.standardTabContainer}>
-            <Icon name="sync" size={48} color={theme.primary} />
-            <Text style={styles.standardTabTitle}>Sync Your Data</Text>
-            <Text style={styles.standardTabDescription}>
-              Keep your data synchronized across devices with end-to-end
-              encryption
-            </Text>
-
-            <View style={styles.syncFeatures}>
-              <View style={styles.syncFeature}>
-                <Icon name="security" size={20} color={theme.primary} />
-                <Text style={styles.syncFeatureText}>End-to-end encrypted</Text>
-              </View>
-              <View style={styles.syncFeature}>
-                <Icon name="devices" size={20} color={theme.primary} />
-                <Text style={styles.syncFeatureText}>Multi-device support</Text>
-              </View>
-              <View style={styles.syncFeature}>
-                <Icon name="cloud-off" size={20} color={theme.primary} />
-                <Text style={styles.syncFeatureText}>Works offline</Text>
-              </View>
-            </View>
-
-            {!!syncError && (
-              <View style={styles.errorContainer}>
-                <Icon name="error-outline" size={16} color="#d32f2f" />
-                <Text style={styles.errorText}>{syncError}</Text>
-              </View>
-            )}
-
-            {!!showRecoveryInput && (
-              <>
-                <View style={styles.recoveryInputContainer}>
-                  <Text style={styles.inputLabel}>Enter your sync key:</Text>
-                  <Text style={styles.inputHelperText}>
-                    Your sync key is a 32-character code that looks like:
-                    a1b2c3d4e5f6789012345678901234567
-                  </Text>
-                  <FormInput
-                    value={recoveryInput}
-                    onChangeText={setRecoveryInput}
-                    placeholder="Paste sync key"
-                    multiline
-                    numberOfLines={2}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    inputStyle={styles.recoveryInput}
-                    theme={theme}
-                  />
-                </View>
-              </>
-            )}
-
-            {!showRecoveryInput ? (
-              <View style={styles.inPanelButtonContainer}>
-                <ModalButton
-                  theme={theme}
-                  variant="primary"
-                  label="Create New Sync"
-                  icon="add-circle"
-                  onPress={() => {
-                    handleEnableSync();
-                  }}
-                  disabled={syncLoading}
-                  loading={syncLoading}
-                  fullWidth
-                />
-
-                <ModalButton
-                  theme={theme}
-                  variant="secondary"
-                  label="Restore from Sync Key"
-                  icon="restore"
-                  onPress={() => setShowRecoveryInput(true)}
-                  fullWidth
-                />
-              </View>
-            ) : (
-              <View style={styles.inPanelButtonContainer}>
-                <View style={styles.buttonRow}>
-                  <ModalButton
-                    theme={theme}
-                    variant="secondary"
-                    label="Cancel"
-                    onPress={() => {
-                      setShowRecoveryInput(false);
-                      setRecoveryInput('');
-                      setSyncError('');
-                    }}
-                    compact
-                  />
-
-                  <ModalButton
-                    theme={theme}
-                    variant="primary"
-                    label="Restore"
-                    onPress={() => {
-                      handleRestoreSync();
-                    }}
-                    disabled={syncLoading || !recoveryInput.trim()}
-                    loading={syncLoading}
-                  />
-                </View>
-              </View>
-            )}
-          </View>
-        </View>
+      {!syncState.syncEnabled ? (
+        syncManagement.renderSyncDisabled()
       ) : (
         <View style={styles.section}>
-          <View style={styles.standardTabContainer}>
-            <Icon name="cloud-done" size={48} color={theme.primary} />
-            <Text style={styles.standardTabTitle}>Sync Enabled</Text>
-            <Text style={styles.standardTabDescription}>
-              Your data is syncing across devices
-            </Text>
-          </View>
-
-          {/* Add Device Section */}
-          <View style={styles.shareSection}>
-            {!showGeneratedKey ? (
-              <ModalButton
-                theme={theme}
-                variant="primary"
-                label="Add Device"
-                icon="add-circle"
-                onPress={() => {
-                  (async () => {
-                    try {
-                      setSyncLoading(true);
-                      setSyncError('');
-
-                      // Try to get recovery phrase from multiple sources
-                      let currentPhrase = syncRecoveryPhrase;
-
-                      if (!currentPhrase) {
-                        currentPhrase = syncService.getRecoveryPhrase();
-                      }
-
-                      if (!currentPhrase) {
-                        throw new Error('Recovery phrase not available. Please disable and re-enable sync.');
-                      }
-
-                      const result = await syncService.createInviteCode(24, 5, 'Manual invite');
-
-                      if (result && result.inviteCode) {
-                        // The inviteUrl already includes the recovery phrase as a fragment
-                        const fullSyncKey = result.inviteUrl;
-                        setGeneratedSyncKey(fullSyncKey);
-                        setShowGeneratedKey(true);
-                        showToast({
-                          message: 'Sync key generated! Valid for 24 hours.',
-                          type: 'success'
-                        });
-                      } else {
-                        throw new Error('Failed to generate invite code');
-                      }
-                    } catch (error) {
-                      showToast({
-                        message: error.message || 'Failed to generate sync key',
-                        type: 'error'
-                      });
-                    } finally {
-                      setSyncLoading(false);
-                    }
-                  })();
-                }}
-                disabled={syncLoading}
-                loading={syncLoading}
-                fullWidth
-              />
-            ) : (
-              <>
-                {/* Generated Sync Key Display */}
-                <View style={styles.syncKeyDisplay}>
-                  <View style={[styles.shareField, { alignItems: 'center' }]}>
-                    <Text style={[styles.shareFieldLabel, { textAlign: 'center', fontSize: 16 }]}>Device Invite</Text>
-                  </View>
-                  <Text style={[styles.syncKeyText, { textAlign: 'center', marginTop: 8, marginBottom: 4, fontWeight: 'bold' }]} selectable>
-                    {(() => {
-                      // Display just the key part (not the full URL)
-                      const urlParts = generatedSyncKey.split('#');
-                      const recoveryPhrase = urlParts[1];
-                      const inviteCode = urlParts[0].split('/').pop();
-                      return `${inviteCode}#${recoveryPhrase}`;
-                    })()}
-                  </Text>
-                  <Text style={[styles.shareFieldHelper, { textAlign: 'center', marginBottom: 16 }]}>Valid for 24 hours • Max 5 uses</Text>
-                  
-                  {/* All Instructions Grouped Together */}
-                  <View style={[styles.shareInstructions, { alignItems: 'center' }]}>
-                    <View style={[styles.shareInstructionItem, { justifyContent: 'center' }]}>
-                      <Icon name="language" size={16} color="#000" />
-                      <Text style={styles.shareInstructionText}>Use the URL for browser access</Text>
-                    </View>
-                    <View style={[styles.shareInstructionItem, { justifyContent: 'center' }]}>
-                      <Icon name="smartphone" size={16} color="#000" />
-                      <Text style={styles.shareInstructionText}>Copy sync key for mobile apps</Text>
-                    </View>
-                    <View style={[styles.shareInstructionItem, { justifyContent: 'center' }]}>
-                      <Icon name="refresh" size={16} color="#000" />
-                      <Text style={styles.shareInstructionText}>Regenerate key if key above has expired</Text>
-                    </View>
-                  </View>
-                  
-                  {/* Action Buttons - Centered with wrapping */}
-                  <View style={[styles.syncKeyActions, { justifyContent: 'center', flexWrap: 'wrap' }]}>
-                    <ModalButton
-                      theme={theme}
-                      variant="primary"
-                      label="Copy Key"
-                      icon="content-copy"
-                      onPress={() => {
-                        // Extract just the invite code and recovery phrase (without the URL part)
-                        const urlParts = generatedSyncKey.split('#');
-                        const recoveryPhrase = urlParts[1];
-                        const inviteCode = urlParts[0].split('/').pop();
-                        const keyOnly = `${inviteCode}#${recoveryPhrase}`;
-                        copyToClipboard(keyOnly, 'Sync key copied!');
-                        showToast({ 
-                          message: 'Sync key copied to clipboard!', 
-                          type: 'success' 
-                        });
-                      }}
-                      compact
-                    />
-                    
-                    <ModalButton
-                      theme={theme}
-                      variant="secondary"
-                      label="Copy URL"
-                      icon="link"
-                      onPress={() => {
-                        // generatedSyncKey already contains the full URL with fragment
-                        copyToClipboard(generatedSyncKey, 'Sync URL copied!');
-                        showToast({ 
-                          message: 'Sync URL copied to clipboard!', 
-                          type: 'success' 
-                        });
-                      }}
-                      compact
-                    />
-                    
-                    <ModalButton
-                      theme={theme}
-                      variant="secondary"
-                      label="Regenerate Key"
-                      icon="refresh"
-                      onPress={() => {
-                        (async () => {
-                          try {
-                            setSyncLoading(true);
-
-                            // Get recovery phrase - extract from current key if needed
-                            let currentPhrase = syncRecoveryPhrase || syncService.getRecoveryPhrase();
-                            if (!currentPhrase && generatedSyncKey) {
-                              // Extract recovery phrase from the URL format
-                              const parts = generatedSyncKey.split('#');
-                              currentPhrase = parts[1]; // Recovery phrase is after the #
-                            }
-
-                            const result = await syncService.createInviteCode(24, 5, 'Manual invite');
-
-                            if (result && result.inviteCode) {
-                              // The inviteUrl already includes the recovery phrase as a fragment
-                              const fullSyncKey = result.inviteUrl;
-                              setGeneratedSyncKey(fullSyncKey);
-                              showToast({
-                                message: 'New sync key generated!',
-                                type: 'success'
-                              });
-                            }
-                          } catch (error) {
-                            showToast({
-                              message: 'Failed to generate new key',
-                              type: 'error'
-                            });
-                          } finally {
-                            setSyncLoading(false);
-                          }
-                        })();
-                      }}
-                      disabled={syncLoading}
-                      loading={syncLoading}
-                    />
-                  </View>
-                  
-                </View>
-              </>
-            )}
-          </View>
-
-          <View style={styles.inPanelButtonContainer}>
-            {/* Manual Sync Button - Secondary since it should rarely be needed */}
-            <ModalButton
-              theme={theme}
-              variant="secondary"
-              label="Sync Now"
-              icon="sync"
-              onPress={() => {
-                handleManualSync();
-              }}
-              disabled={syncLoading || syncStatus === 'syncing'}
-              loading={syncStatus === 'syncing'}
-              fullWidth
-            />
-            
-            <ModalButton
-              theme={theme}
-              variant="danger"
-              label="Disable Sync"
-              icon="sync-disabled"
-              onPress={() => {
-                // iOS: Use Alert.alert instead of nested modal
-                if (Platform.OS === 'ios') {
-                  Alert.alert(
-                    'Disable Sync',
-                    'This will stop syncing your data. Your local data will remain unchanged. You can re-enable sync later with your sync key.',
-                    [
-                      {
-                        text: 'Cancel',
-                        style: 'cancel',
-                      },
-                      {
-                        text: 'Disable',
-                        style: 'destructive',
-                        onPress: () => {
-                          handleDisableSync();
-                        },
-                      },
-                    ],
-                  );
-                } else {
-                  // Android and Web: Use ConfirmModal
-                  setShowDisableSyncConfirm(true);
-                }
-              }}
-              fullWidth
-            />
-
-            <ModalButton
-              theme={theme}
-              variant="danger"
-              label="Delete Server Data"
-              icon="delete-forever"
-              onPress={() => {
-                // iOS: Use Alert.alert instead of nested modal
-                if (Platform.OS === 'ios') {
-                  Alert.alert(
-                    'Delete Server Data',
-                    'This will permanently delete all your data from the server and disable sync. Your local data will remain unchanged. This action cannot be undone.',
-                    [
-                      {
-                        text: 'Cancel',
-                        style: 'cancel',
-                      },
-                      {
-                        text: 'Delete Server Data',
-                        style: 'destructive',
-                        onPress: () => {
-                          handleDeleteServerData();
-                        },
-                      },
-                    ],
-                  );
-                } else {
-                  // Android and Web: Use ConfirmModal
-                  setShowDeleteServerDataConfirm(true);
-                }
-              }}
-              fullWidth
-            />
-          </View>
-
-          {/* Sync Status Info at bottom */}
-          <View style={styles.syncStatusInfo}>
-            <View style={styles.syncStatusRow}>
-              <Icon
-                name={syncStatus === 'syncing' ? 'sync' : 'cloud-done'}
-                size={20}
-                color={syncStatus === 'syncing' ? theme.primary : '#4caf50'}
-              />
-              <Text style={styles.syncStatusText}>
-                {syncStatus === 'syncing'
-                  ? 'Syncing...'
-                  : lastSyncTime
-                  ? `Last synced ${formatTimeAgo(lastSyncTime)}`
-                  : 'Sync active'}
-              </Text>
-            </View>
-          </View>
+          {syncStatus.renderSyncEnabledHeader()}
+          {recoveryPhrase.renderRecoveryPhraseDisplay()}
+          {recoveryPhrase.renderAddDeviceSection()}
+          {syncManagement.renderSyncControls()}
+          {syncStatus.renderSyncStatusInfo()}
+          {recoveryPhrase.renderSecurityWarnings()}
         </View>
       )}
     </ScrollView>
@@ -1236,7 +715,7 @@ const DataModal = ({
       contentContainerStyle={[styles.scrollContainer, { flexGrow: 1 }]}
       style={{ flex: 1 }}
     >
-      {!syncEnabled ? (
+      {!syncState.syncEnabled ? (
         <View style={styles.section}>
           <View style={styles.standardTabContainer}>
             <Icon name="sync-disabled" size={48} color="#ff9800" />
@@ -1679,7 +1158,7 @@ const DataModal = ({
       <ConfirmModal
         visible={showDisableSyncConfirm}
         onClose={() => setShowDisableSyncConfirm(false)}
-        onConfirm={handleDisableSync}
+        onConfirm={syncManagement.handleDisableSync}
         theme={theme}
         title="Disable Sync"
         message="This will stop syncing your data. Your local data will remain unchanged. You can re-enable sync later with your sync key."
@@ -1692,7 +1171,7 @@ const DataModal = ({
       <ConfirmModal
         visible={showDeleteServerDataConfirm}
         onClose={() => setShowDeleteServerDataConfirm(false)}
-        onConfirm={handleDeleteServerData}
+        onConfirm={syncManagement.handleDeleteServerData}
         theme={theme}
         title="Delete Server Data"
         message="This will permanently delete all your data from the server and disable sync. Your local data will remain unchanged. This action cannot be undone."
