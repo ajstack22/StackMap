@@ -454,6 +454,342 @@ describe('useCategoryActions Hook', () => {
       });
     });
   });
+
+  describe('handleUpdateActivity', () => {
+    it('rejects empty activity names', () => {
+      let updateResult;
+
+      act(() => {
+        updateResult = result.current.handleUpdateActivity('act-1', { name: '   ' });
+      });
+
+      expect(updateResult).toBe(false);
+      expect(Alert.alert).toHaveBeenCalledWith('Error', 'Activity name cannot be empty');
+      expect(setCategories).not.toHaveBeenCalled();
+    });
+
+    it('updates activity with valid data', () => {
+      const activityData = {
+        name: 'Updated Activity',
+        icon: '⭐',
+        description: 'Updated description',
+      };
+      let updateResult;
+
+      act(() => {
+        updateResult = result.current.handleUpdateActivity('act-1', activityData);
+      });
+
+      expect(updateResult).toBe(true);
+      expect(setCategories).toHaveBeenCalledTimes(1);
+      const calledCategories = setCategories.mock.calls[0][0];
+      const targetCategory = calledCategories.find(cat => cat.id === 'cat-1');
+      const updatedActivity = targetCategory.activities.find(act => act.id === 'act-1');
+      expect(updatedActivity.name).toBe('Updated Activity');
+      expect(updatedActivity.icon).toBe('⭐');
+      expect(updatedActivity.description).toBe('Updated description');
+      expect(onSaveCategories).toHaveBeenCalledWith(calledCategories);
+    });
+
+    it('trims whitespace from activity name and description', () => {
+      const activityData = {
+        name: '  Trimmed Activity  ',
+        icon: '⭐',
+        description: '  Trimmed description  ',
+      };
+
+      act(() => {
+        result.current.handleUpdateActivity('act-1', activityData);
+      });
+
+      const calledCategories = setCategories.mock.calls[0][0];
+      const targetCategory = calledCategories.find(cat => cat.id === 'cat-1');
+      const updatedActivity = targetCategory.activities.find(act => act.id === 'act-1');
+      expect(updatedActivity.name).toBe('Trimmed Activity');
+      expect(updatedActivity.description).toBe('Trimmed description');
+    });
+
+    it('uses default emoji when icon not provided', () => {
+      const activityData = {
+        name: 'Activity without icon',
+      };
+
+      act(() => {
+        result.current.handleUpdateActivity('act-1', activityData);
+      });
+
+      const calledCategories = setCategories.mock.calls[0][0];
+      const targetCategory = calledCategories.find(cat => cat.id === 'cat-1');
+      const updatedActivity = targetCategory.activities.find(act => act.id === 'act-1');
+      expect(updatedActivity.icon).toBe(DEFAULT_ACTIVITY_EMOJI);
+    });
+
+    it('preserves other activities when updating one', () => {
+      // Create fresh categories with multiple activities
+      const categoriesWithMultipleActivities = [
+        {
+          id: 'my-templates',
+          name: 'My Templates',
+          activities: [],
+        },
+        {
+          id: 'cat-1',
+          name: 'Category 1',
+          activities: [
+            {
+              id: 'act-1',
+              name: 'Activity 1',
+              icon: '🎯',
+              description: 'Test activity',
+            },
+            {
+              id: 'act-2',
+              name: 'Activity 2',
+              icon: '⚽',
+              description: 'Second activity',
+            },
+          ],
+        },
+        {
+          id: 'cat-2',
+          name: 'Category 2',
+          activities: [],
+        },
+      ];
+
+      const newSetCategories = jest.fn();
+      const { result: newResult } = renderHook(() =>
+        useCategoryActions(categoriesWithMultipleActivities, newSetCategories, onSaveCategories)
+      );
+
+      act(() => {
+        newResult.current.handleUpdateActivity('act-1', {
+          name: 'Updated Activity 1',
+          icon: '⭐',
+        });
+      });
+
+      const calledCategories = newSetCategories.mock.calls[0][0];
+      const targetCategory = calledCategories.find(cat => cat.id === 'cat-1');
+      expect(targetCategory.activities).toHaveLength(2);
+      expect(targetCategory.activities.find(act => act.id === 'act-2').name).toBe('Activity 2');
+    });
+  });
+
+  describe('handleReorderCategories', () => {
+    it('updates categories with new order', () => {
+      const reorderedCategories = [...mockCategories].reverse();
+
+      act(() => {
+        result.current.handleReorderCategories(reorderedCategories);
+      });
+
+      expect(setCategories).toHaveBeenCalledTimes(1);
+      expect(setCategories).toHaveBeenCalledWith(reorderedCategories);
+      expect(onSaveCategories).toHaveBeenCalledWith(reorderedCategories);
+    });
+
+    it('calls save callback if provided', () => {
+      const mockSaveCallback = jest.fn();
+      const { result: newResult } = renderHook(() =>
+        useCategoryActions(mockCategories, setCategories, mockSaveCallback)
+      );
+      const reorderedCategories = [mockCategories[1], mockCategories[0], mockCategories[2]];
+
+      act(() => {
+        newResult.current.handleReorderCategories(reorderedCategories);
+      });
+
+      expect(mockSaveCallback).toHaveBeenCalledWith(reorderedCategories);
+    });
+  });
+
+  describe('copyGroupToMyLibrary', () => {
+    let mockOnSaveMyLibrary;
+    let myLibraryCategories;
+
+    beforeEach(() => {
+      mockOnSaveMyLibrary = jest.fn();
+      myLibraryCategories = [
+        {
+          id: 'my-templates',
+          name: 'My Templates',
+          activities: [],
+        },
+        {
+          id: 'existing-group',
+          name: 'Existing Group',
+          activities: [
+            {
+              id: 'existing-act-1',
+              name: 'Existing Activity',
+              icon: '🎯',
+            },
+          ],
+        },
+      ];
+    });
+
+    it('rejects empty groups', () => {
+      const emptyGroup = { name: 'Empty Group', activities: [] };
+
+      act(() => {
+        result.current.copyGroupToMyLibrary(emptyGroup, myLibraryCategories, mockOnSaveMyLibrary);
+      });
+
+      expect(Alert.alert).toHaveBeenCalledWith('Error', 'No activities to copy');
+      expect(mockOnSaveMyLibrary).not.toHaveBeenCalled();
+    });
+
+    it('rejects null or undefined groups', () => {
+      act(() => {
+        result.current.copyGroupToMyLibrary(null, myLibraryCategories, mockOnSaveMyLibrary);
+      });
+
+      expect(Alert.alert).toHaveBeenCalledWith('Error', 'No activities to copy');
+      expect(mockOnSaveMyLibrary).not.toHaveBeenCalled();
+    });
+
+    it('rejects groups without activities property', () => {
+      const invalidGroup = { name: 'Invalid Group' };
+
+      act(() => {
+        result.current.copyGroupToMyLibrary(invalidGroup, myLibraryCategories, mockOnSaveMyLibrary);
+      });
+
+      expect(Alert.alert).toHaveBeenCalledWith('Error', 'No activities to copy');
+      expect(mockOnSaveMyLibrary).not.toHaveBeenCalled();
+    });
+
+    it('copies new group successfully', () => {
+      const newGroup = {
+        name: 'New Group',
+        activities: [
+          {
+            id: 'source-act-1',
+            name: 'Source Activity',
+            icon: '🌟',
+            description: 'Source description',
+          },
+        ],
+      };
+
+      act(() => {
+        result.current.copyGroupToMyLibrary(newGroup, myLibraryCategories, mockOnSaveMyLibrary);
+      });
+
+      expect(mockOnSaveMyLibrary).toHaveBeenCalledTimes(1);
+      const savedCategories = mockOnSaveMyLibrary.mock.calls[0][0];
+      const copiedGroup = savedCategories.find(cat => cat.name === 'New Group');
+      expect(copiedGroup).toBeDefined();
+      expect(copiedGroup.activities).toHaveLength(1);
+      expect(copiedGroup.activities[0].name).toBe('Source Activity');
+      expect(copiedGroup.activities[0].icon).toBe('🌟');
+      expect(copiedGroup.activities[0].description).toBe('Source description');
+      expect(Alert.alert).toHaveBeenCalledWith('Success', '"New Group" copied to your library!');
+    });
+
+    it('prompts for merge when group already exists', () => {
+      const existingGroup = {
+        name: 'Existing Group',
+        activities: [
+          {
+            id: 'new-act-1',
+            name: 'New Activity',
+            icon: '🌟',
+          },
+        ],
+      };
+
+      act(() => {
+        result.current.copyGroupToMyLibrary(existingGroup, myLibraryCategories, mockOnSaveMyLibrary);
+      });
+
+      expect(Alert.alert).toHaveBeenCalledWith(
+        'Group Already Exists',
+        'A group named "Existing Group" already exists in your library. Do you want to merge the activities?',
+        expect.arrayContaining([
+          { text: 'Cancel', style: 'cancel' },
+          expect.objectContaining({ text: 'Merge' }),
+        ])
+      );
+      expect(mockOnSaveMyLibrary).not.toHaveBeenCalled();
+    });
+
+    it('merges activities when user confirms merge', () => {
+      const existingGroup = {
+        name: 'Existing Group',
+        activities: [
+          {
+            id: 'new-act-1',
+            name: 'New Activity',
+            icon: '🌟',
+          },
+        ],
+      };
+
+      act(() => {
+        result.current.copyGroupToMyLibrary(existingGroup, myLibraryCategories, mockOnSaveMyLibrary);
+      });
+
+      // Get the merge callback and call it
+      const alertCall = Alert.alert.mock.calls.find(
+        call => call[0] === 'Group Already Exists'
+      );
+      const mergeButton = alertCall[2].find(button => button.text === 'Merge');
+
+      act(() => {
+        mergeButton.onPress();
+      });
+
+      expect(mockOnSaveMyLibrary).toHaveBeenCalledTimes(1);
+      const savedCategories = mockOnSaveMyLibrary.mock.calls[0][0];
+      const mergedGroup = savedCategories.find(cat => cat.name === 'Existing Group');
+      expect(mergedGroup.activities).toHaveLength(2); // Original + new activity
+      expect(mergedGroup.activities.some(act => act.name === 'Existing Activity')).toBe(true);
+      expect(mergedGroup.activities.some(act => act.name === 'New Activity')).toBe(true);
+      expect(Alert.alert).toHaveBeenCalledWith('Success', 'Activities merged successfully!');
+    });
+
+    it('prevents duplicate activities during merge', () => {
+      const existingGroup = {
+        name: 'Existing Group',
+        activities: [
+          {
+            id: 'duplicate-act',
+            name: 'Existing Activity', // Same name as existing
+            icon: '🌟',
+          },
+          {
+            id: 'new-act',
+            name: 'Truly New Activity',
+            icon: '⭐',
+          },
+        ],
+      };
+
+      act(() => {
+        result.current.copyGroupToMyLibrary(existingGroup, myLibraryCategories, mockOnSaveMyLibrary);
+      });
+
+      // Get the merge callback and call it
+      const alertCall = Alert.alert.mock.calls.find(
+        call => call[0] === 'Group Already Exists'
+      );
+      const mergeButton = alertCall[2].find(button => button.text === 'Merge');
+
+      act(() => {
+        mergeButton.onPress();
+      });
+
+      const savedCategories = mockOnSaveMyLibrary.mock.calls[0][0];
+      const mergedGroup = savedCategories.find(cat => cat.name === 'Existing Group');
+      expect(mergedGroup.activities).toHaveLength(2); // Original + only truly new activity
+      const activityNames = mergedGroup.activities.map(act => act.name);
+      expect(activityNames.filter(name => name === 'Existing Activity')).toHaveLength(1); // No duplicate
+      expect(activityNames).toContain('Truly New Activity');
+    });
+  });
 });
 
 describe('useCategorySaveHandler Hook', () => {
@@ -548,13 +884,25 @@ describe('handleCategoryDragOperations', () => {
 
     it('prevents duplicate initialization for same item', () => {
       const itemId = 'cat-1';
-      // Set activeDragId to simulate already being in drag state
+
+      // First call to set activeDragId
+      dragOperations.handleCategoryDragStart(itemId);
+
+      // Update mockRefs to simulate the state change
       mockRefs.activeDragId = itemId;
 
-      // Clear the mock after setting activeDragId but before calling the function
+      // Clear mocks after first call
       jest.clearAllMocks();
 
-      dragOperations.handleCategoryDragStart(itemId);
+      // Create new drag operations with updated activeDragId
+      const updatedDragOperations = handleCategoryDragOperations({
+        categories: mockCategories,
+        activeDragId: itemId, // Now set to itemId
+        ...mockRefs,
+      });
+
+      // Second call with same itemId should not call setActiveDragId
+      updatedDragOperations.handleCategoryDragStart(itemId);
 
       // Should not call setActiveDragId again
       expect(mockRefs.setActiveDragId).not.toHaveBeenCalled();
