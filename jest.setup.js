@@ -80,6 +80,16 @@ jest.mock('react-native', () => {
           if (callback) callback();
         }),
       })),
+      parallel: jest.fn((animations) => ({
+        start: jest.fn((callback) => {
+          animations.forEach(anim => {
+            if (anim && anim.start) {
+              anim.start();
+            }
+          });
+          if (callback) callback();
+        }),
+      })),
     },
     StyleSheet: {
       create: jest.fn((styles) => styles),
