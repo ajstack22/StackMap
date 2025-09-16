@@ -661,14 +661,17 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
     marginTop: 2,
+    textAlign: 'center',
   },
   shareInstructions: {
     marginTop: SPACING.sm,
     marginBottom: SPACING.md,
+    alignItems: 'center',
   },
   shareInstructionItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: SPACING.xs,
     marginBottom: SPACING.xs,
   },
@@ -1071,7 +1074,7 @@ export const styles = StyleSheet.create({
   },
   syncKeyActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     marginBottom: SPACING.md,
     gap: SPACING.sm,
   },
