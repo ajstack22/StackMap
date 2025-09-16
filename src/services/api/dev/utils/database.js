@@ -430,7 +430,7 @@ class DatabaseQuery {
     static sanitizeQuery(query) {
         // Remove potential passwords and sensitive data from logs
         return query
-            .replace(/password\s*=\s*'[^']*'/gi, "password='[REDACTED]'")
+            .replace(/password\s*=\s*'[^']*'/gi, "password='[REDACTED]'") // NOSONAR - Security feature: sanitizes passwords in logs
             .replace(/secret\s*=\s*'[^']*'/gi, "secret='[REDACTED]'")
             .replace(/token\s*=\s*'[^']*'/gi, "token='[REDACTED]'");
     }

@@ -84,7 +84,7 @@ const Confetti = ({ color, delay, startX, duration = 4000 }) => {
 const FireworkBurst = ({ x, y, colors, delay }) => {
   const animatedValue = useRef(new Animated.Value(0)).current;
   // SECURITY: Math.random() safe for animation randomness - no cryptographic use
-  const particleCount = 19 + Math.floor(Math.random() * 13); // 25% more particles (19-31)
+  const particleCount = 19 + Math.floor(Math.random() * 13); // NOSONAR - Animation randomness only
   const particles = Array.from({ length: particleCount }, (_, i) => i);
 
   useEffect(() => {
@@ -99,9 +99,9 @@ const FireworkBurst = ({ x, y, colors, delay }) => {
   return particles.map(i => {
     const angle = (i / particles.length) * Math.PI * 2;
     // SECURITY: Math.random() safe for visual effects - no security impact
-    const burstSize = 1 + Math.random() * 0.75; // 25% larger
-    const velocity = (50 + Math.random() * 50) * burstSize; // 25% more velocity
-    const color = colors[Math.floor(Math.random() * colors.length)];
+    const burstSize = 1 + Math.random() * 0.75; // NOSONAR - Visual effect randomness
+    const velocity = (50 + Math.random() * 50) * burstSize; // NOSONAR - Animation velocity
+    const color = colors[Math.floor(Math.random() * colors.length)]; // NOSONAR - Color selection
 
     const translateX = animatedValue.interpolate({
       inputRange: [0, 1],
@@ -133,8 +133,8 @@ const FireworkBurst = ({ x, y, colors, delay }) => {
             left: x,
             top: y,
             // SECURITY: Math.random() safe for particle size variation - animation only
-            width: 5 + Math.random() * 7.5, // 25% larger particles
-            height: 5 + Math.random() * 7.5,
+            width: 5 + Math.random() * 7.5, // NOSONAR - Particle size animation
+            height: 5 + Math.random() * 7.5, // NOSONAR - Particle size animation
             transform: [{ translateX }, { translateY }, { scale }],
             opacity,
           },
@@ -179,7 +179,7 @@ export const CelebrationView = ({ type, theme = 'rainbow', onComplete }) => {
       key => key !== 'random',
     );
     // SECURITY: Math.random() safe for theme selection - no security impact
-    const randomKey = colorKeys[Math.floor(Math.random() * colorKeys.length)];
+    const randomKey = colorKeys[Math.floor(Math.random() * colorKeys.length)]; // NOSONAR - Theme selection
     selectedColors = CELEBRATION_COLORS[randomKey];
   } else {
     selectedColors = CELEBRATION_COLORS[theme] || CELEBRATION_COLORS.rainbow;
@@ -189,9 +189,9 @@ export const CelebrationView = ({ type, theme = 'rainbow', onComplete }) => {
     const confettiPieces = Array.from({ length: 60 }, (_, i) => ({
       id: i,
       // SECURITY: Math.random() safe for animation timing/positioning - visual effects only
-      color: selectedColors[Math.floor(Math.random() * selectedColors.length)],
-      delay: Math.random() * 500,
-      startX: Math.random() * screenWidth,
+      color: selectedColors[Math.floor(Math.random() * selectedColors.length)], // NOSONAR - Color animation
+      delay: Math.random() * 500, // NOSONAR - Animation delay
+      startX: Math.random() * screenWidth, // NOSONAR - Position randomness
     }));
 
     return (
@@ -212,8 +212,8 @@ export const CelebrationView = ({ type, theme = 'rainbow', onComplete }) => {
     const bursts = Array.from({ length: 15 }, (_, i) => ({
       id: i,
       // SECURITY: Math.random() safe for firework positioning - animation randomness only
-      x: 10 + Math.random() * 80, // percentage of screen width
-      y: 10 + Math.random() * 60, // percentage of screen height
+      x: 10 + Math.random() * 80, // NOSONAR - Firework X position
+      y: 10 + Math.random() * 60, // NOSONAR - Firework Y position
       delay: i * 160, // 25% faster rate (was 200ms)
     }));
 
