@@ -42,6 +42,9 @@ import {
   getCustomImageSource,
 } from '../../constants';
 import EmojiPicker from '../EmojiPicker';
+import LibraryHeader from './LibraryHeader';
+import TabSelector from './TabSelector';
+import LibraryActions from './LibraryActions';
 
 // Empty template for new users - no pre-loaded activities
 // Users can create their own activity groups in My Library
@@ -1357,164 +1360,8 @@ const handleSortModeOperations = ({
   return { toggleSortMode };
 };
 
-// Helper function to render header
-const renderHeader = (theme, onClose) => (
-  <SafeAreaView style={{ backgroundColor: theme.primary }}>
-    <View style={[styles.header, { backgroundColor: theme.primary }]}>
-      <View style={styles.headerLeft}>
-        <Icon
-          name="collections-bookmark"
-          size={24}
-          color="white"
-          style={styles.headerIcon}
-        />
-        <Text style={styles.headerTitle}>Activity Library</Text>
-      </View>
-      <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-        <View
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Icon name="close" size={20} color="white" />
-        </View>
-      </TouchableOpacity>
-    </View>
-  </SafeAreaView>
-);
 
-// Helper function to render tab selector
-const renderTabSelector = (activeTab, setActiveTab, theme) => (
-  <View style={styles.tabContainer}>
-    <TouchableOpacity
-      style={[
-        styles.tab,
-        activeTab === 'stackmap' && [
-          styles.activeTab,
-          { backgroundColor: theme.primary },
-        ],
-      ]}
-      onPress={() => setActiveTab('stackmap')}
-    >
-      <Icon
-        name="auto-awesome"
-        size={20}
-        color={activeTab === 'stackmap' ? 'white' : theme.primary}
-      />
-      <Text
-        style={[
-          styles.tabText,
-          activeTab === 'stackmap' && styles.activeTabText,
-        ]}
-      >
-        StackMap Library
-      </Text>
-    </TouchableOpacity>
 
-    <TouchableOpacity
-      style={[
-        styles.tab,
-        activeTab === 'mylibrary' && [
-          styles.activeTab,
-          { backgroundColor: theme.primary },
-        ],
-      ]}
-      onPress={() => setActiveTab('mylibrary')}
-    >
-      <Icon
-        name="folder"
-        size={20}
-        color={activeTab === 'mylibrary' ? 'white' : theme.primary}
-      />
-      <Text
-        style={[
-          styles.tabText,
-          activeTab === 'mylibrary' && styles.activeTabText,
-        ]}
-      >
-        My Library
-      </Text>
-    </TouchableOpacity>
-  </View>
-);
-
-// Helper function to render search and sort bar
-const renderSearchAndSortBar = (
-  searchQuery,
-  setSearchQuery,
-  isSortMode,
-  setIsSortMode,
-  setSavedExpandedStates,
-  setCategoryExpandedStates,
-  categoryExpandedStates,
-  savedExpandedStates,
-  categories,
-  theme
-) => (
-  <View style={styles.controlsBar}>
-    <View
-      style={[styles.searchContainer, { backgroundColor: 'white' }]}
-    >
-      <Icon name="search" size={20} color={COLORS.gray[400]} />
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search activities..."
-        placeholderTextColor={COLORS.gray[400]}
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        autoCapitalize="none"
-        autoCorrect={false}
-      />
-      {searchQuery.length > 0 && (
-        <TouchableOpacity onPress={() => setSearchQuery('')}>
-          <Icon name="close" size={20} color={COLORS.gray[400]} />
-        </TouchableOpacity>
-      )}
-    </View>
-
-    <TouchableOpacity
-      style={[
-        styles.sortButton,
-        { backgroundColor: isSortMode ? theme.primary : 'white' },
-      ]}
-      onPress={() => {
-        if (!isSortMode) {
-          // Entering sort mode - save current states and collapse all
-          const currentStates = {};
-          categories.forEach(cat => {
-            currentStates[cat.id] =
-              categoryExpandedStates[cat.id] !== undefined
-                ? categoryExpandedStates[cat.id]
-                : true;
-          });
-          setSavedExpandedStates(currentStates);
-
-          // Collapse all categories
-          const collapsedStates = {};
-          categories.forEach(cat => {
-            collapsedStates[cat.id] = false;
-          });
-          setCategoryExpandedStates(collapsedStates);
-        } else {
-          // Exiting sort mode - restore saved states
-          setCategoryExpandedStates(savedExpandedStates);
-        }
-        setIsSortMode(!isSortMode);
-      }}
-    >
-      <Icon
-        name="swap-vert"
-        size={24}
-        color={isSortMode ? 'white' : theme.primary}
-      />
-    </TouchableOpacity>
-  </View>
-);
 
 // Helper function to filter categories based on search
 const getFilteredCategories = (categories, stackMapLibrary, activeTab, searchQuery) => {
@@ -2016,22 +1863,45 @@ const ActivityLibrary = ({
             }}
           />
         )}
-        {renderHeader(theme, onClose)}
+        <LibraryHeader theme={theme} onClose={onClose} />
 
         <View style={[styles.contentWrapper, { backgroundColor: theme.light }]}>
-          {renderTabSelector(activeTab, setActiveTab, theme)}
-          {renderSearchAndSortBar(
-            searchQuery,
-            setSearchQuery,
-            isSortMode,
-            setIsSortMode,
-            setSavedExpandedStates,
-            setCategoryExpandedStates,
-            categoryExpandedStates,
-            savedExpandedStates,
-            categories,
-            theme
-          )}
+          <TabSelector
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            theme={theme}
+          />
+          <LibraryActions
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onSearchClear={() => setSearchQuery('')}
+            isSortMode={isSortMode}
+            onSortToggle={() => {
+              if (!isSortMode) {
+                // Entering sort mode - save current states and collapse all
+                const currentStates = {};
+                categories.forEach(cat => {
+                  currentStates[cat.id] =
+                    categoryExpandedStates[cat.id] !== undefined
+                      ? categoryExpandedStates[cat.id]
+                      : true;
+                });
+                setSavedExpandedStates(currentStates);
+
+                // Collapse all categories
+                const collapsedStates = {};
+                categories.forEach(cat => {
+                  collapsedStates[cat.id] = false;
+                });
+                setCategoryExpandedStates(collapsedStates);
+              } else {
+                // Exiting sort mode - restore saved states
+                setCategoryExpandedStates(savedExpandedStates);
+              }
+              setIsSortMode(!isSortMode);
+            }}
+            theme={theme}
+          />
           <DraggableFlatList
             data={filteredCategories}
             onDragBegin={dragHandlers.onDragBegin}
@@ -2159,89 +2029,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingTop: SPACING.md,
     paddingBottom: 0,
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    marginBottom: SPACING.md,
-    backgroundColor: 'white',
-    borderRadius: RADIUS.lg,
-    padding: 4,
-    ...SHADOWS.level1,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.md,
-    gap: SPACING.xs,
-  },
-  activeTab: {
-    ...SHADOWS.level1,
-  },
-  tabText: {
-    fontSize: isTablet() ? 15 : 13,
-    fontWeight: '600',
-    color: '#000',
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
-  },
-  activeTabText: {
-    color: 'white',
-  },
-  controlsBar: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    marginBottom: SPACING.md,
-  },
-  searchContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    height: 44,
-    borderRadius: RADIUS.lg,
-    ...SHADOWS.level1,
-    gap: SPACING.sm,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: isTablet() ? 16 : 14,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: COLORS.gray[900],
-  },
-  sortButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: RADIUS.lg,
-    ...SHADOWS.level1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  headerIcon: {
-    marginRight: 12,
-  },
-  headerTitle: {
-    fontSize: isTablet() ? 22 : 20,
-    fontWeight: Platform.OS === 'ios' ? 'bold' : 'normal', // Android uses bold font file
-    color: 'white',
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
-  },
-  closeButton: {
-    padding: SPACING.xs,
   },
   content: {
     flex: 1,
