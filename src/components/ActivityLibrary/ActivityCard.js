@@ -214,8 +214,12 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACING.xs / 2,
     borderRadius: RADIUS.lg,
     ...SHADOWS.level1,
-    // Card width for grid layout - 48% on mobile for 2 columns
-    width: Platform.OS === 'android' ? '48%' : (isTablet() ? '31%' : '48%'),
+    // Card width for grid layout - 48% on mobile for 2 columns, 31% on tablets for 3 columns
+    width: Platform.select({
+      android: '48%',
+      ios: isTablet() ? '31%' : '48%',
+      web: isTablet() ? '31%' : '48%',
+    }),
   },
   activityInfo: {
     flexDirection: 'row',

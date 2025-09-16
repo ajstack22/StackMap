@@ -167,8 +167,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginHorizontal: -SPACING.xs / 2,
-    // Android requires alignContent for proper grid alignment with flexWrap
-    ...(Platform.OS === 'android' && { alignContent: 'flex-start' }),
+    // Platform-specific alignment for proper grid layout
+    ...Platform.select({
+      android: { alignContent: 'flex-start' },
+      ios: {},
+      web: { alignContent: 'flex-start' },
+    }),
   },
   activityRow: {
     flexDirection: 'row',
