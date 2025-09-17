@@ -11,18 +11,23 @@ jest.mock('../../../../services/sync', () => ({
 }));
 
 // Mock clipboard
+const mockClipboard = {
+  setString: jest.fn(),
+};
+
 jest.mock('@react-native-clipboard/clipboard', () => ({
-  default: {
-    setString: jest.fn(),
-  },
+  default: mockClipboard,
 }));
 
 // Mock Platform
+const mockPlatform = {
+  OS: 'ios',
+  select: jest.fn((obj) => obj.ios || obj.default),
+};
+
 jest.mock('react-native', () => ({
   ...jest.requireActual('react-native'),
-  Platform: {
-    OS: 'ios',
-  },
+  Platform: mockPlatform,
 }));
 
 const mockTheme = {
@@ -46,6 +51,12 @@ const defaultProps = {
 describe('RecoveryPhrase', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockClipboard.setString.mockClear();
+    mockPlatform.OS = 'ios'; // Reset to iOS for each test
+
+    // Also directly modify the react-native Platform object
+    const ReactNative = require('react-native');
+    ReactNative.Platform.OS = 'ios';
   });
 
   describe('copyToClipboard', () => {
@@ -54,16 +65,14 @@ describe('RecoveryPhrase', () => {
 
       await recoveryPhrase.copyToClipboard('test text', 'Success message');
 
-      const Clipboard = require('@react-native-clipboard/clipboard').default;
-      expect(Clipboard.setString).toHaveBeenCalledWith('test text');
+      expect(mockClipboard.setString).toHaveBeenCalledWith('test text');
       expect(defaultProps.showToast).toHaveBeenCalledWith({
         message: 'Success message',
       });
     });
 
     it('should handle clipboard error', async () => {
-      const Clipboard = require('@react-native-clipboard/clipboard').default;
-      Clipboard.setString.mockImplementation(() => {
+      mockClipboard.setString.mockImplementation(() => {
         throw new Error('Clipboard error');
       });
 
@@ -274,8 +283,7 @@ describe('RecoveryPhrase', () => {
       fireEvent.press(copyKeyButton);
 
       await waitFor(() => {
-        const Clipboard = require('@react-native-clipboard/clipboard').default;
-        expect(Clipboard.setString).toHaveBeenCalledWith('abc123#test-phrase');
+        expect(mockClipboard.setString).toHaveBeenCalledWith('abc123#test-phrase');
       });
     });
 
@@ -292,8 +300,7 @@ describe('RecoveryPhrase', () => {
       fireEvent.press(copyUrlButton);
 
       await waitFor(() => {
-        const Clipboard = require('@react-native-clipboard/clipboard').default;
-        expect(Clipboard.setString).toHaveBeenCalledWith('https://stackmap.app/sync/abc123#test-phrase');
+        expect(mockClipboard.setString).toHaveBeenCalledWith('https://stackmap.app/sync/abc123#test-phrase');
       });
     });
   });

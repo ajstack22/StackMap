@@ -141,6 +141,9 @@ TextInput.displayName = 'StyledTextInput';
 // Export the original React Native components if needed
 export { Text as RNText, TextInput as RNTextInput } from 'react-native';
 
+// Export getFontFamily as named export
+export { getFontFamily };
+
 // Default export for convenience
 export default {
   Text,

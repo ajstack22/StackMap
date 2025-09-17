@@ -101,7 +101,7 @@ class ConflictResolver {
         this.log(`User ${userId}: Kept local (not in remote)`);
       } else if (localUser && remoteUser) {
         // User exists in both - merge based on modification
-        merged[userId] = this.mergeIndividualUser(localUser, remoteUser, userId);
+        merged[userId] = this.mergeIndividualUser(localUser, remoteUser, userId, localMeta, remoteMeta);
       }
     });
     
@@ -111,7 +111,7 @@ class ConflictResolver {
   /**
    * Merge individual user with activity preservation
    */
-  mergeIndividualUser(localUser, remoteUser, userId) {
+  mergeIndividualUser(localUser, remoteUser, userId, localMeta, remoteMeta) {
     // Check if users have modification timestamps
     const localModified = localUser.lastModified || 0;
     const remoteModified = remoteUser.lastModified || 0;
@@ -131,7 +131,9 @@ class ConflictResolver {
       // Preserve name/icon from the one with more recent change
       if (remoteUser.name !== localUser.name || remoteUser.icon !== localUser.icon) {
         // Can't determine which is newer without timestamps, use device ID tiebreaker
-        const winner = this.tiebreaker(localUser.deviceId, remoteUser.deviceId);
+        const localDeviceId = localUser.deviceId || localMeta?.deviceId;
+        const remoteDeviceId = remoteUser.deviceId || remoteMeta?.deviceId;
+        const winner = this.tiebreaker(localDeviceId, remoteDeviceId);
         if (winner === 'remote') {
           mergedUser.name = remoteUser.name;
           mergedUser.icon = remoteUser.icon;

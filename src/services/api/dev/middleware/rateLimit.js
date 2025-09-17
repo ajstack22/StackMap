@@ -10,7 +10,7 @@
  * - Detailed metrics and logging
  */
 
-const rateLimit = require('express-rate-limit');
+const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
 const { RATE_LIMIT_CONFIG } = require('../config/security');
 const { rateLimiter, RedisCache, CACHE_KEYS } = require('../utils/redis');
 const { logger } = require('../utils/logger');
@@ -109,7 +109,7 @@ const rateLimitStore = new RedisRateLimitStore();
  */
 const keyGenerators = {
     /**
-     * IP-based rate limiting with proper IP validation
+     * IP-based rate limiting with proper IPv6 support using ipKeyGenerator helper
      */
     ip: (req) => {
         // Get IP from various sources, with validation
@@ -121,23 +121,33 @@ const keyGenerators = {
         // Validate IP format to prevent injection
         if (!ip || ip === 'unknown') {
             ip = 'unknown';
-        } else {
-            // Remove IPv6 prefix if present
-            if (ip.startsWith('::ffff:')) {
-                ip = ip.substring(7);
-            }
-
-            // Validate IP format (IPv4 or IPv6)
-            const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-            const ipv6Regex = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
-
-            if (!ipv4Regex.test(ip) && !ipv6Regex.test(ip)) {
-                logger.warn('Invalid IP format detected:', { ip: ip.substring(0, 20) });
-                ip = 'invalid';
-            }
+            return `ip:${ip}`;
         }
 
-        return `ip:${ip}`;
+        // Basic IP format validation with improved IPv6 regex
+        const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        const ipv6Regex = /^(?:[0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/;
+        const ipv6MappedRegex = /^::ffff:[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/;
+
+        if (!ipv4Regex.test(ip) && !ipv6Regex.test(ip) && !ipv6MappedRegex.test(ip)) {
+            logger.warn('Invalid IP format detected:', { ip: ip.substring(0, 20) });
+            ip = 'invalid';
+            return `ip:${ip}`;
+        }
+
+        try {
+            // Use ipKeyGenerator helper for proper IPv6 handling
+            // IPv6 subnet of 64 bits is commonly used for rate limiting to balance
+            // security and preventing excessive blocking
+            const ipv6Subnet = 64;
+            const processedIp = ipKeyGenerator(ip, ipv6Subnet);
+
+            return `ip:${processedIp}`;
+        } catch (error) {
+            // Fallback to original IP if ipKeyGenerator fails
+            logger.warn('ipKeyGenerator failed, using original IP:', { error: error.message, ip: ip.substring(0, 20) });
+            return `ip:${ip}`;
+        }
     },
 
     /**
@@ -199,9 +209,10 @@ const skipRateLimit = (req) => {
 };
 
 /**
- * Rate limit exceeded handler
+ * Rate limit exceeded handler (modern v7+ syntax)
+ * Handles both logging and response when rate limit is exceeded
  */
-const onLimitReached = (req, res, options) => {
+const handleRateLimitExceeded = (req, res, next, options) => {
     const identifier = req.user ? req.user.id : req.ip;
 
     logger.warn('Rate limit exceeded', {
@@ -226,6 +237,9 @@ const onLimitReached = (req, res, options) => {
             userAgent: req.get('User-Agent')
         });
     }
+
+    // Send the rate limit exceeded response
+    res.status(429).json(options.message);
 };
 
 /**
@@ -246,11 +260,7 @@ const createRateLimiter = (config) => {
         store: rateLimitStore,
         keyGenerator: config.keyGenerator || keyGenerators.ip,
         skip: skipRateLimit,
-        onLimitReached,
-        handler: (req, res, next, options) => {
-            onLimitReached(req, res, options);
-            res.status(429).json(options.message);
-        }
+        handler: handleRateLimitExceeded
     });
 };
 

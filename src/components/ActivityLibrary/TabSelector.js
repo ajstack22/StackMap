@@ -9,42 +9,42 @@ import {
   isTablet,
 } from '../../constants';
 
-const TabSelector = ({ activeTab, onTabChange, theme }) => {
+const TabSelector = ({ activeTab, onTabChange, theme, tabs }) => {
+  // Default tabs if none provided
+  const defaultTabs = [
+    { id: 'stackmap', label: 'StackMap Library', icon: null },
+    { id: 'mylibrary', label: 'My Library', icon: null },
+  ];
+
+  const tabsToRender = tabs && tabs.length > 0 ? tabs : defaultTabs;
+
+  const handleTabPress = (tabId) => {
+    if (onTabChange && activeTab !== tabId) {
+      onTabChange(tabId);
+    }
+  };
+
   return (
     <View style={styles.tabContainer}>
-      <TouchableOpacity
-        style={[
-          styles.tab,
-          activeTab === 'stackmap' && [styles.activeTab, { backgroundColor: theme.primary }],
-        ]}
-        onPress={() => onTabChange('stackmap')}
-      >
-        <Text
+      {tabsToRender.map((tab) => (
+        <TouchableOpacity
+          key={tab.id}
           style={[
-            styles.tabText,
-            activeTab === 'stackmap' && styles.activeTabText,
+            styles.tab,
+            activeTab === tab.id && [styles.activeTab, { backgroundColor: theme.primary }],
           ]}
+          onPress={() => handleTabPress(tab.id)}
         >
-          TEST CHANGE VISIBLE
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[
-          styles.tab,
-          activeTab === 'mylibrary' && [styles.activeTab, { backgroundColor: theme.primary }],
-        ]}
-        onPress={() => onTabChange('mylibrary')}
-      >
-        <Text
-          style={[
-            styles.tabText,
-            activeTab === 'mylibrary' && styles.activeTabText,
-          ]}
-        >
-          My Library
-        </Text>
-      </TouchableOpacity>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === tab.id && styles.activeTabText,
+            ]}
+          >
+            {tab.label}
+          </Text>
+        </TouchableOpacity>
+      ))}
     </View>
   );
 };

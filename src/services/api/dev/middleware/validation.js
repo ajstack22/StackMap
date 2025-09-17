@@ -24,8 +24,7 @@ const customValidators = {
      */
     syncId: Joi.string()
         .pattern(VALIDATION_PATTERNS.syncId)
-        .length(32)
-        .message('Sync ID must be a 32 character hexadecimal string'),
+        .length(32),
 
     /**
      * Validate user ID format
@@ -33,8 +32,7 @@ const customValidators = {
     userId: Joi.string()
         .pattern(VALIDATION_PATTERNS.userId)
         .min(1)
-        .max(50)
-        .message('User ID must be 1-50 characters, alphanumeric with hyphens and underscores only'),
+        .max(50),
 
     /**
      * Validate device ID format
@@ -42,8 +40,7 @@ const customValidators = {
     deviceId: Joi.string()
         .pattern(VALIDATION_PATTERNS.deviceId)
         .min(1)
-        .max(100)
-        .message('Device ID must be 1-100 characters, alphanumeric with hyphens and underscores only'),
+        .max(100),
 
     /**
      * Validate timestamp format
@@ -51,7 +48,7 @@ const customValidators = {
     timestamp: Joi.alternatives().try(
         Joi.date().iso(),
         Joi.string().pattern(VALIDATION_PATTERNS.timestamp)
-    ).message('Timestamp must be a valid ISO 8601 date string'),
+    ),
 
     /**
      * Validate metric name format
@@ -59,8 +56,7 @@ const customValidators = {
     metricName: Joi.string()
         .pattern(VALIDATION_PATTERNS.metricName)
         .min(1)
-        .max(100)
-        .message('Metric name must be 1-100 characters, start with letter, contain only letters, numbers, dots, and underscores'),
+        .max(100),
 
     /**
      * Validate IP address
@@ -68,7 +64,7 @@ const customValidators = {
     ipAddress: Joi.alternatives().try(
         Joi.string().pattern(VALIDATION_PATTERNS.ipv4),
         Joi.string().pattern(VALIDATION_PATTERNS.ipv6)
-    ).message('Must be a valid IPv4 or IPv6 address'),
+    ),
 
     /**
      * Validate endpoint path
@@ -76,8 +72,7 @@ const customValidators = {
     endpointPath: Joi.string()
         .pattern(VALIDATION_PATTERNS.apiEndpoint)
         .min(1)
-        .max(200)
-        .message('Endpoint path must be 1-200 characters, alphanumeric with forward slashes, hyphens, and underscores only'),
+        .max(200),
 
     /**
      * Validate pagination parameters
@@ -89,15 +84,6 @@ const customValidators = {
     }),
 
     /**
-     * Validate time range parameters
-     */
-    timeRange: Joi.object({
-        start: customValidators.timestamp.optional(),
-        end: customValidators.timestamp.optional(),
-        period: Joi.string().valid('1h', '6h', '24h', '7d', '30d').optional()
-    }).or('period', 'start'),
-
-    /**
      * Validate labels object (for metrics)
      */
     labels: Joi.object().pattern(
@@ -107,8 +93,28 @@ const customValidators = {
             Joi.number(),
             Joi.boolean()
         )
-    ).max(10).message('Labels must be an object with up to 10 key-value pairs, keys must be valid identifiers')
+    ).max(10)
 };
+
+/**
+ * Helper functions to get schemas without circular references
+ */
+const getTimestampSchema = () => Joi.alternatives().try(
+    Joi.date().iso(),
+    Joi.string().pattern(VALIDATION_PATTERNS.timestamp)
+);
+
+const getTimeRangeSchema = () => Joi.object({
+    start: getTimestampSchema().optional(),
+    end: getTimestampSchema().optional(),
+    period: Joi.string().valid('1h', '6h', '24h', '7d', '30d').optional()
+}).or('period', 'start');
+
+const getPaginationSchema = () => Joi.object({
+    page: Joi.number().integer().min(1).max(1000).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(20),
+    offset: Joi.number().integer().min(0).max(10000).optional()
+});
 
 /**
  * Common validation schemas
@@ -128,7 +134,6 @@ const commonSchemas = {
         authorization: Joi.string()
             .pattern(/^Bearer\s+[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/)
             .required()
-            .message('Authorization header must contain a valid Bearer token')
     }).unknown(true),
 
     /**
@@ -166,8 +171,11 @@ const endpointSchemas = {
 
         getStats: {
             query: Joi.object({
-                ...customValidators.timeRange.extract(['start', 'end', 'period']),
-                ...customValidators.pagination.extract(['page', 'limit'])
+                start: getTimestampSchema().optional(),
+                end: getTimestampSchema().optional(),
+                period: Joi.string().valid('1h', '6h', '24h', '7d', '30d').optional(),
+                page: Joi.number().integer().min(1).max(1000).default(1),
+                limit: Joi.number().integer().min(1).max(100).default(20)
             })
         },
 
@@ -183,8 +191,11 @@ const endpointSchemas = {
 
         getAuditLog: {
             query: Joi.object({
-                ...customValidators.timeRange.extract(['start', 'end', 'period']),
-                ...customValidators.pagination.extract(['page', 'limit']),
+                start: getTimestampSchema().optional(),
+                end: getTimestampSchema().optional(),
+                period: Joi.string().valid('1h', '6h', '24h', '7d', '30d').optional(),
+                page: Joi.number().integer().min(1).max(1000).default(1),
+                limit: Joi.number().integer().min(1).max(100).default(20),
                 syncId: customValidators.syncId.optional(),
                 action: Joi.string().valid('create', 'update', 'delete', 'read').optional(),
                 userId: customValidators.userId.optional()
@@ -195,7 +206,9 @@ const endpointSchemas = {
     analytics: {
         getUsage: {
             query: Joi.object({
-                ...customValidators.timeRange.extract(['start', 'end', 'period']),
+                start: getTimestampSchema().optional(),
+                end: getTimestampSchema().optional(),
+                period: Joi.string().valid('1h', '6h', '24h', '7d', '30d').optional(),
                 metric: Joi.string().valid('requests', 'errors', 'users', 'sync_operations').optional(),
                 groupBy: Joi.string().valid('hour', 'day', 'week', 'month').default('day')
             })
@@ -203,7 +216,9 @@ const endpointSchemas = {
 
         getPerformance: {
             query: Joi.object({
-                ...customValidators.timeRange.extract(['start', 'end', 'period']),
+                start: getTimestampSchema().optional(),
+                end: getTimestampSchema().optional(),
+                period: Joi.string().valid('1h', '6h', '24h', '7d', '30d').optional(),
                 metric: Joi.string().valid(
                     'response_time', 'error_rate', 'throughput', 'db_performance'
                 ).optional(),
@@ -216,7 +231,9 @@ const endpointSchemas = {
                 userId: customValidators.userId.required()
             }),
             query: Joi.object({
-                ...customValidators.timeRange.extract(['start', 'end', 'period']),
+                start: getTimestampSchema().optional(),
+                end: getTimestampSchema().optional(),
+                period: Joi.string().valid('1h', '6h', '24h', '7d', '30d').optional(),
                 includeDetails: Joi.boolean().default(false)
             })
         }
@@ -257,7 +274,9 @@ const endpointSchemas = {
     admin: {
         getMetrics: {
             query: Joi.object({
-                ...customValidators.timeRange.extract(['start', 'end', 'period']),
+                start: getTimestampSchema().optional(),
+                end: getTimestampSchema().optional(),
+                period: Joi.string().valid('1h', '6h', '24h', '7d', '30d').optional(),
                 type: Joi.string().valid('counter', 'gauge', 'histogram', 'summary').optional(),
                 name: customValidators.metricName.optional(),
                 format: Joi.string().valid('json', 'prometheus').default('json')

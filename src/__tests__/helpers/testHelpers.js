@@ -14,45 +14,47 @@ import useSyncStore from '../../stores/useSyncStore';
  * Call this in beforeEach for clean test isolation
  */
 export const resetAllStores = () => {
-  // Reset user store
-  useUserStore.setState({
-    users: {},
-    currentUser: null,
-    currentDay: 'today'
-  });
+  act(() => {
+    // Reset user store
+    useUserStore.setState({
+      users: {},
+      currentUser: null,
+      currentDay: 'today'
+    });
 
-  // Reset library store
-  useLibraryStore.setState({
-    library: {
-      categories: [],
-      userActivityIds: []
-    }
-  });
+    // Reset library store
+    useLibraryStore.setState({
+      library: {
+        categories: [],
+        userActivityIds: []
+      }
+    });
 
-  // Reset settings store
-  useSettingsStore.setState({
-    currentTheme: 'stackBlue',
-    soundEnabled: true,
-    hasCompletedOnboarding: false,
-    taskCelebration: 'rainbow',
-    routineCelebration: 'rainbow',
-    displayMode: 'numbers',
-    bannerPosition: 'top',
-    dayMode: 'today',
-    syncSkipped: false,
-    toolbarOrder: null,
-    moreButtonPosition: 'left'
-  });
+    // Reset settings store
+    useSettingsStore.setState({
+      currentTheme: 'stackBlue',
+      soundEnabled: true,
+      hasCompletedOnboarding: false,
+      taskCelebration: 'rainbow',
+      routineCelebration: 'rainbow',
+      displayMode: 'numbers',
+      bannerPosition: 'top',
+      dayMode: 'today',
+      syncSkipped: false,
+      toolbarOrder: null,
+      moreButtonPosition: 'left'
+    });
 
-  // Reset sync store
-  useSyncStore.setState({
-    syncEnabled: false,
-    syncId: null,
-    lastSyncTime: null,
-    isConnected: true,
-    isSyncing: false,
-    syncError: null,
-    autoSyncEnabled: false
+    // Reset sync store
+    useSyncStore.setState({
+      syncEnabled: false,
+      syncId: null,
+      lastSyncTime: null,
+      isConnected: true,
+      isSyncing: false,
+      syncError: null,
+      autoSyncEnabled: false
+    });
   });
 };
 
@@ -159,36 +161,38 @@ export const setupTestEnvironment = (config = {}) => {
     sync = {}
   } = config;
 
-  // Set up users (single user or multiple users)
-  if (users) {
-    // Multiple users case (for family/multi-user scenarios)
-    const userStore = useUserStore.getState();
-    userStore.setUsers(users);
-    const firstUserId = Object.keys(users)[0];
-    if (firstUserId) {
-      userStore.setCurrentUser(firstUserId);
+  act(() => {
+    // Set up users (single user or multiple users)
+    if (users) {
+      // Multiple users case (for family/multi-user scenarios)
+      const userStore = useUserStore.getState();
+      userStore.setUsers(users);
+      const firstUserId = Object.keys(users)[0];
+      if (firstUserId) {
+        userStore.setCurrentUser(firstUserId);
+      }
+    } else if (user) {
+      // Single user case
+      const userStore = useUserStore.getState();
+      userStore.setUsers({ [user.id]: user });
+      userStore.setCurrentUser(user.id);
     }
-  } else if (user) {
-    // Single user case
-    const userStore = useUserStore.getState();
-    userStore.setUsers({ [user.id]: user });
-    userStore.setCurrentUser(user.id);
-  }
 
-  // Set up library
-  if (library) {
-    useLibraryStore.getState().setLibrary(library);
-  }
+    // Set up library
+    if (library) {
+      useLibraryStore.getState().setLibrary(library);
+    }
 
-  // Set up settings
-  if (Object.keys(settings).length > 0) {
-    useSettingsStore.getState().updateSettings(settings);
-  }
+    // Set up settings
+    if (Object.keys(settings).length > 0) {
+      useSettingsStore.getState().updateSettings(settings);
+    }
 
-  // Set up sync
-  if (Object.keys(sync).length > 0) {
-    useSyncStore.getState().updateSyncState(sync);
-  }
+    // Set up sync
+    if (Object.keys(sync).length > 0) {
+      useSyncStore.getState().updateSyncState(sync);
+    }
+  });
 
   return { user: users ? Object.values(users)[0] : user, users, library, settings, sync };
 };
@@ -201,19 +205,21 @@ export const userInteractions = {
    * Add an activity to a user's day
    */
   addActivityToDay: (userId, day, activity) => {
-    const userStore = useUserStore.getState();
-    const user = userStore.users[userId];
-    if (!user) throw new Error(`User ${userId} not found`);
+    act(() => {
+      const userStore = useUserStore.getState();
+      const user = userStore.users[userId];
+      if (!user) throw new Error(`User ${userId} not found`);
 
-    const updatedActivities = [
-      ...(user.days?.[day]?.activities || []),
-      activity
-    ];
+      const updatedActivities = [
+        ...(user.days?.[day]?.activities || []),
+        activity
+      ];
 
-    userStore.updateUser(userId, {
-      days: {
-        [day]: { activities: updatedActivities }
-      }
+      userStore.updateUser(userId, {
+        days: {
+          [day]: { activities: updatedActivities }
+        }
+      });
     });
   },
 
@@ -221,21 +227,23 @@ export const userInteractions = {
    * Complete an activity for a user
    */
   completeActivity: (userId, day, activityId) => {
-    const userStore = useUserStore.getState();
-    const user = userStore.users[userId];
-    if (!user) throw new Error(`User ${userId} not found`);
+    act(() => {
+      const userStore = useUserStore.getState();
+      const user = userStore.users[userId];
+      if (!user) throw new Error(`User ${userId} not found`);
 
-    const activities = user.days?.[day]?.activities || [];
-    const updatedActivities = activities.map(activity =>
-      activity.id === activityId
-        ? { ...activity, completed: true, timestamp: Date.now() }
-        : activity
-    );
+      const activities = user.days?.[day]?.activities || [];
+      const updatedActivities = activities.map(activity =>
+        activity.id === activityId
+          ? { ...activity, completed: true, timestamp: Date.now() }
+          : activity
+      );
 
-    userStore.updateUser(userId, {
-      days: {
-        [day]: { activities: updatedActivities }
-      }
+      userStore.updateUser(userId, {
+        days: {
+          [day]: { activities: updatedActivities }
+        }
+      });
     });
   },
 
@@ -243,16 +251,20 @@ export const userInteractions = {
    * Change user theme
    */
   changeTheme: (themeName) => {
-    useSettingsStore.getState().updateSettings({ currentTheme: themeName });
+    act(() => {
+      useSettingsStore.getState().updateSettings({ currentTheme: themeName });
+    });
   },
 
   /**
    * Enable sync for user
    */
   enableSync: (syncId = 'test-sync-id') => {
-    useSyncStore.getState().updateSyncState({
-      syncEnabled: true,
-      syncId
+    act(() => {
+      useSyncStore.getState().updateSyncState({
+        syncEnabled: true,
+        syncId
+      });
     });
   }
 };

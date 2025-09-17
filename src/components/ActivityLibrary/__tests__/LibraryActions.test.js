@@ -2,13 +2,41 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import LibraryActions from '../LibraryActions';
 
-// Mock the Typography component
-jest.mock('../../Typography', () => ({
-  TextInput: ({ children, ...props }) => {
-    const MockTextInput = require('react-native').TextInput;
-    return <MockTextInput {...props}>{children}</MockTextInput>;
-  },
-}));
+// Mock SearchBar and SortControls components
+jest.mock('../SearchBar', () => {
+  const React = require('react');
+  const { View, TextInput } = require('react-native');
+  return function SearchBar({ searchQuery, onSearchChange, placeholder = 'Search activities...', ...props }) {
+    return (
+      <View>
+        <TextInput
+          value={searchQuery}
+          onChangeText={onSearchChange}
+          placeholder={placeholder}
+          {...props}
+        />
+      </View>
+    );
+  };
+});
+
+jest.mock('../SortControls', () => {
+  const React = require('react');
+  const { TouchableOpacity, View } = require('react-native');
+  return function SortControls({ isSortMode, onSortToggle, theme }) {
+    return (
+      <View>
+        <TouchableOpacity
+          onPress={onSortToggle}
+          testID="sort-toggle-button"
+          style={{ opacity: isSortMode ? 1 : 0.7 }}
+        >
+          <View testID={isSortMode ? 'sort-active' : 'sort-inactive'} />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+});
 
 // Mock react-native-vector-icons
 jest.mock('react-native-vector-icons/MaterialIcons', () => 'Icon');
@@ -59,23 +87,23 @@ describe('LibraryActions', () => {
     expect(component).toBeTruthy();
   });
 
-  it('calls onSearchClear when clear button is pressed', () => {
+  it('displays search query in input', () => {
     const props = {
       ...defaultProps,
       searchQuery: 'test query',
     };
 
-    const { getByPlaceholderText } = render(<LibraryActions {...props} />);
-
-    // Since clear button is conditionally rendered, we need to test through the component
-    expect(props.searchQuery).toBeTruthy();
+    const { getByDisplayValue } = render(<LibraryActions {...props} />);
+    expect(getByDisplayValue('test query')).toBeTruthy();
   });
 
   it('calls onSortToggle when sort button is pressed', () => {
-    const component = render(<LibraryActions {...defaultProps} />);
+    const { getByTestId } = render(<LibraryActions {...defaultProps} />);
 
-    // Test that component renders
-    expect(component).toBeTruthy();
+    const sortButton = getByTestId('sort-toggle-button');
+    fireEvent.press(sortButton);
+
+    expect(defaultProps.onSortToggle).toHaveBeenCalled();
   });
 
   it('shows sort button in active state when isSortMode is true', () => {
@@ -84,29 +112,23 @@ describe('LibraryActions', () => {
       isSortMode: true,
     };
 
-    const component = render(<LibraryActions {...props} />);
-    expect(component).toBeTruthy();
+    const { getByTestId } = render(<LibraryActions {...props} />);
+    expect(getByTestId('sort-active')).toBeTruthy();
   });
 
-  it('hides sort button when showSortButton is false', () => {
+  it('shows sort button in inactive state when isSortMode is false', () => {
     const props = {
       ...defaultProps,
-      showSortButton: false,
+      isSortMode: false,
     };
 
-    const component = render(<LibraryActions {...props} />);
-    expect(component).toBeTruthy();
+    const { getByTestId } = render(<LibraryActions {...props} />);
+    expect(getByTestId('sort-inactive')).toBeTruthy();
   });
 
-  it('uses custom search placeholder', () => {
-    const customPlaceholder = 'Custom search placeholder';
-    const props = {
-      ...defaultProps,
-      searchPlaceholder: customPlaceholder,
-    };
-
-    const { getByPlaceholderText } = render(<LibraryActions {...props} />);
-    expect(getByPlaceholderText(customPlaceholder)).toBeTruthy();
+  it('renders search bar with default placeholder', () => {
+    const { getByPlaceholderText } = render(<LibraryActions {...defaultProps} />);
+    expect(getByPlaceholderText('Search activities...')).toBeTruthy();
   });
 
   it('handles missing callback functions gracefully', () => {

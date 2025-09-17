@@ -1091,14 +1091,14 @@ describe('MinimalSyncService', () => {
 
     test('pullData handles JSON parse errors with detailed error info', async () => {
       global.fetch.mockResolvedValueOnce({
-        text: () => Promise.resolve('Invalid JSON {malformed}')
+        text: () => Promise.resolve('{malformed json without closing brace')
       });
 
       const result = await service.pullData();
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('JSON parse error');
-      expect(result.rawResponse).toContain('Invalid JSON');
+      expect(result.rawResponse).toContain('malformed json');
     });
 
     test('pullData handles missing encrypted blob in records', async () => {
@@ -1375,13 +1375,13 @@ describe('MinimalSyncService', () => {
         })
         .mockResolvedValueOnce({
           ok: true,
-          text: () => Promise.resolve(JSON.stringify({
+          json: () => Promise.resolve({
             success: true,
             records: [{
               encrypted_blob: 'encrypted-data',
               timestamp: Date.now()
             }]
-          }))
+          })
         });
 
       const result = await service.joinSync('test-phrase');
@@ -1391,6 +1391,9 @@ describe('MinimalSyncService', () => {
     });
 
     test('pullData handles empty records array', async () => {
+      service.syncId = 'test-sync-id';
+      service.deviceId = 'test-device-id';
+
       global.fetch.mockResolvedValueOnce({
         text: () => Promise.resolve(JSON.stringify({
           success: true,
@@ -1440,10 +1443,17 @@ describe('MinimalSyncService', () => {
       service.deviceId = null;
       mockEncryptionService.getDeviceId.mockResolvedValue('fallback-device-id');
 
+      // Mock initDeviceId to fail so it falls back to encryptionService
+      const originalInitDeviceId = service.initDeviceId;
+      service.initDeviceId = jest.fn().mockResolvedValue();
+
       await service.initializeEncryption('test-phrase', 'test-sync-id');
 
       expect(service.deviceId).toBe('fallback-device-id');
       expect(mockEncryptionService.getDeviceId).toHaveBeenCalled();
+
+      // Restore original method
+      service.initDeviceId = originalInitDeviceId;
     });
   });
 });

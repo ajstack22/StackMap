@@ -20,7 +20,7 @@ export const getEmptyStateMessage = (type, hasActivities, hasSearch, searchQuery
     return "No activities yet. Tap + to add one.";
   }
 
-  if (hasSearch && !searchQuery) {
+  if (hasSearch) {
     return "No activities match your search.";
   }
 

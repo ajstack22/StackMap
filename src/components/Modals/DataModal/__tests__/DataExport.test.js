@@ -14,26 +14,30 @@ jest.mock('../../../ModalUtilities', () => ({
     );
   }),
 }));
-jest.mock('../exportUtils', () => ({
-  handleExport: jest.fn(() => Promise.resolve()),
-}));
+// Don't mock exportUtils - we want to test the real functionality
+// jest.mock('../exportUtils', () => ({
+//   handleExport: jest.fn(() => Promise.resolve()),
+// }));
 jest.mock('../../../../stores/useAppStore', () => ({
-  getState: jest.fn(() => ({
-    library: {
-      categories: [
-        {
-          id: 'my-templates',
-          name: 'My Templates',
-          icon: '⭐',
-          activities: [{ id: '1', text: 'Test Activity', icon: '🏃' }],
-        },
+  __esModule: true,
+  default: {
+    getState: jest.fn(() => ({
+      library: {
+        categories: [
+          {
+            id: 'my-templates',
+            name: 'My Templates',
+            icon: '⭐',
+            activities: [{ id: '1', text: 'Test Activity', icon: '🏃' }],
+          },
+        ],
+        userAddedActivityIds: ['1'],
+      },
+      libraryTemplates: [
+        { id: 'template1', name: 'Morning Routine', activities: ['1'] },
       ],
-      userAddedActivityIds: ['1'],
-    },
-    libraryTemplates: [
-      { id: 'template1', name: 'Morning Routine', activities: ['1'] },
-    ],
-  })),
+    })),
+  },
 }));
 
 // Mock react-native-fs
@@ -62,6 +66,11 @@ jest.mock('../../../../utils/platformHelpers.web', () => ({
 // Mock React Native modules
 jest.mock('react-native', () => {
   const RN = jest.requireActual('react-native');
+  const MockShare = {
+    share: jest.fn(() => Promise.resolve({ action: 'sharedAction' })),
+    sharedAction: 'sharedAction',
+    dismissedAction: 'dismissedAction',
+  };
   return {
     ...RN,
     Alert: {
@@ -70,18 +79,21 @@ jest.mock('react-native', () => {
     Platform: {
       OS: 'web',
     },
-    Share: {
-      share: jest.fn(() => Promise.resolve({ action: 'sharedAction' })),
-      sharedAction: 'sharedAction',
-      dismissedAction: 'dismissedAction',
-    },
+    Share: MockShare,
   };
 });
 
 // Mock global objects for web platform testing
+const mockElement = {
+  href: '',
+  download: '',
+  click: jest.fn(),
+};
+
 global.Blob = jest.fn().mockImplementation((content, options) => ({
   content,
   options,
+  type: options?.type || 'application/json',
 }));
 
 global.URL = {
@@ -90,11 +102,7 @@ global.URL = {
 };
 
 global.document = {
-  createElement: jest.fn(() => ({
-    href: '',
-    download: '',
-    click: jest.fn(),
-  })),
+  createElement: jest.fn(() => mockElement),
   body: {
     appendChild: jest.fn(),
     removeChild: jest.fn(),
@@ -176,6 +184,14 @@ describe('DataExport Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     Platform.OS = 'web';
+    // Reset global mocks
+    global.Blob.mockClear();
+    global.URL.createObjectURL.mockClear();
+    global.URL.revokeObjectURL.mockClear();
+    global.document.createElement.mockClear();
+    global.document.body.appendChild.mockClear();
+    global.document.body.removeChild.mockClear();
+    mockElement.click.mockClear();
   });
 
   describe('Rendering', () => {

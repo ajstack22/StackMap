@@ -13,6 +13,11 @@ jest.mock('../../Typography', () => ({
 // Mock react-native-vector-icons
 jest.mock('react-native-vector-icons/MaterialIcons', () => 'Icon');
 
+// Mock react-native-safe-area-context
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 })
+}));
+
 describe('LibraryHeader', () => {
   const mockTheme = {
     primary: '#007AFF',
@@ -34,56 +39,50 @@ describe('LibraryHeader', () => {
     expect(getByText('Activity Library')).toBeTruthy();
   });
 
-  it('renders with custom title', () => {
-    const customTitle = 'Custom Library Title';
+  it('renders with fixed title', () => {
     const { getByText } = render(
       <LibraryHeader
         theme={mockTheme}
         onClose={mockOnClose}
-        title={customTitle}
       />
     );
 
-    expect(getByText(customTitle)).toBeTruthy();
+    expect(getByText('Activity Library')).toBeTruthy();
   });
 
   it('calls onClose when close button is pressed', () => {
-    const { getByTestId } = render(
+    const { getByLabelText } = render(
       <LibraryHeader theme={mockTheme} onClose={mockOnClose} />
     );
 
-    // Find the close button by looking for the TouchableOpacity
-    const closeButton = getByTestId ? getByTestId('close-button') : null;
+    const closeButton = getByLabelText('Close Activity Library');
+    fireEvent.press(closeButton);
 
-    // Since we don't have testID in the component, let's test the structure
-    const component = render(
-      <LibraryHeader theme={mockTheme} onClose={mockOnClose} />
-    );
-
-    expect(component).toBeTruthy();
-    expect(mockOnClose).toHaveBeenCalledTimes(0);
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
   it('applies theme colors correctly', () => {
-    const { getByTestId } = render(
-      <LibraryHeader theme={mockTheme} onClose={mockOnClose} />
+    const customTheme = {
+      primary: '#FF0000',
+    };
+
+    const { getByText } = render(
+      <LibraryHeader theme={customTheme} onClose={mockOnClose} />
     );
 
-    // Test that the component renders without throwing
-    expect(true).toBe(true);
+    // Component should render with theme without throwing
+    expect(getByText('Activity Library')).toBeTruthy();
   });
 
-  it('renders with custom icon', () => {
-    const customIcon = 'custom-icon';
-    const component = render(
+  it('renders close icon', () => {
+    const { getByLabelText } = render(
       <LibraryHeader
         theme={mockTheme}
         onClose={mockOnClose}
-        icon={customIcon}
       />
     );
 
-    expect(component).toBeTruthy();
+    expect(getByLabelText('Close Activity Library')).toBeTruthy();
   });
 
   it('has proper component structure', () => {

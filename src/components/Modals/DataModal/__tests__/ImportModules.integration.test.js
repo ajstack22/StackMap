@@ -13,16 +13,74 @@ jest.mock('react-native', () => ({
   Alert: { alert: jest.fn() },
 }));
 
-jest.mock('react-native-document-picker', () => ({
+// Mock ModalButton to avoid import issues
+jest.mock('../../../ModalUtilities', () => ({
+  ModalButton: ({ label, onPress, children, disabled, loading, ...props }) => {
+    const React = require('react');
+    const { TouchableOpacity, Text } = require('react-native');
+    return React.createElement(
+      TouchableOpacity,
+      {
+        onPress,
+        testID: `modal-button-${label}`,
+        accessibilityState: { disabled: disabled || loading }
+      },
+      React.createElement(Text, {}, label || children)
+    );
+  },
+  FormInput: ({ value, onChangeText, placeholder, ...props }) => {
+    const React = require('react');
+    const { TextInput } = require('react-native');
+    return React.createElement(TextInput, {
+      value,
+      onChangeText,
+      placeholder,
+      testID: `form-input-${placeholder}`,
+      ...props
+    });
+  },
+}));
+
+// Mock Typography
+jest.mock('../../../Typography', () => ({
+  Text: ({ children, style, ...props }) => {
+    const React = require('react');
+    const { Text: RNText } = require('react-native');
+    return React.createElement(RNText, { style, ...props }, children);
+  },
+}));
+
+// Mock react-native-vector-icons
+jest.mock('react-native-vector-icons/MaterialIcons', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return React.forwardRef((props, ref) => {
+    return React.createElement(Text, {
+      ref,
+      testID: `icon-${props.name}`,
+      ...props
+    }, props.name || 'icon');
+  });
+});
+
+// Create mock modules that will be available for dynamic require() calls
+const mockDocumentPicker = {
   pick: jest.fn(),
   types: { json: 'application/json' },
   errorCodes: { cancelled: 'cancelled' },
-}));
+};
 
-jest.mock('react-native-fs', () => ({
+const mockRNFS = {
   readFile: jest.fn(),
+  readDir: jest.fn(),
   unlink: jest.fn(),
-}));
+  DownloadDirectoryPath: '/downloads',
+  ExternalDirectoryPath: '/external',
+  DocumentDirectoryPath: '/documents',
+};
+
+jest.mock('react-native-document-picker', () => mockDocumentPicker);
+jest.mock('react-native-fs', () => mockRNFS);
 
 const mockTheme = {
   primary: '#007AFF',
@@ -65,11 +123,15 @@ describe('Import Modules Integration', () => {
     jest.clearAllMocks();
   });
 
-  it('completes full import workflow', async () => {
-    // Mock file selection
-    const mockDocumentPicker = require('react-native-document-picker');
-    const mockRNFS = require('react-native-fs');
 
+  it('completes full import workflow', async () => {
+    // Set Platform.OS inside the test like the working DataImport test
+    Platform.OS = 'ios';
+
+    // Clear all previous mock calls and set up fresh mocks
+    jest.clearAllMocks();
+
+    // Use the exact same pattern as the working DataImport test
     mockDocumentPicker.pick.mockResolvedValue([{
       name: 'test.json',
       fileCopyUri: '/temp/test.json',
@@ -87,11 +149,13 @@ describe('Import Modules Integration', () => {
       selectedData = data;
     };
 
-    const { getByText: getImportText, rerender: rerenderImport } = render(
+    const handleError = jest.fn();
+
+    const { getByText: getImportText } = render(
       <DataImport
         theme={mockTheme}
         onFileSelected={handleFileSelected}
-        onError={jest.fn()}
+        onError={handleError}
       />
     );
 
@@ -190,7 +254,6 @@ describe('Import Modules Integration', () => {
 
   it('handles error propagation between modules', async () => {
     // Mock file selection error
-    const mockDocumentPicker = require('react-native-document-picker');
     mockDocumentPicker.pick.mockRejectedValue(new Error('File selection failed'));
 
     const handleError = jest.fn();
@@ -226,9 +289,8 @@ describe('Import Modules Integration', () => {
       />
     );
 
-    // Find and press the close button
-    const closeButton = getByTestId('close-file-button') ||
-                       getByText('close').parent; // Fallback
+    // Find and press the close button (icon)
+    const closeButton = getByTestId('icon-close');
 
     fireEvent.press(closeButton);
     expect(handleRemoveFile).toHaveBeenCalled();

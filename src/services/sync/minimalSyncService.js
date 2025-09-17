@@ -42,12 +42,12 @@ class MinimalSyncService {
     }, 1000); // 1 second delay, same as old syncService
     
     // Determine API URL based on environment
-    if (typeof window !== 'undefined' && window.location) {
-      // Web environment - safely access location properties
-      try {
+    try {
+      if (typeof window !== 'undefined' && window.location) {
+        // Web environment - safely access location properties
         const hostname = window.location.hostname || '';
         const href = window.location.href || '';
-        
+
         if (hostname === 'localhost' || hostname === '127.0.0.1') {
           // Local development - use relative URL to go through webpack proxy
           this.API_BASE = '/api/sync';
@@ -58,36 +58,13 @@ class MinimalSyncService {
           // Production
           this.API_BASE = 'https://stackmap.app/api/sync';
         }
-      } catch (e) {
-        // Fallback if window.location access fails
-        this.API_BASE = 'https://stackmap.app/api/sync';
-      }
-    } else {
-      // Mobile environments
-      // Check if we're in development mode using __DEV__ global
-      // __DEV__ is true in debug builds, false in release builds
-      let isDevelopment = false;
-      
-      try {
-        isDevelopment = typeof __DEV__ !== 'undefined' ? __DEV__ : false;
-      } catch (e) {
-        // If __DEV__ doesn't exist or errors, assume development
-        isDevelopment = true;
-      }
-      
-      if (Platform.OS === 'ios' || Platform.OS === 'android') {
-        // Use appropriate API based on build type
-        if (isDevelopment) {
-          // Development/Debug builds use QUAL
-          this.API_BASE = 'https://stackmap.app/qual/api/sync';
-        } else {
-          // Production/Release builds use production API
-          this.API_BASE = 'https://stackmap.app/api/sync';
-        }
       } else {
-        // Default for other non-web environments
-        this.API_BASE = 'https://stackmap.app/api/sync';
+        // No window.location available, use mobile logic
+        this.setMobileApiUrl();
       }
+    } catch (e) {
+      // Fallback if window.location access fails
+      this.API_BASE = 'https://stackmap.app/api/sync';
     }
     
     
@@ -98,15 +75,51 @@ class MinimalSyncService {
     
     // Track encryption initialization
     this.encryptionReady = false;
+  }
+
+  setMobileApiUrl() {
+    // Mobile environments
+    // Check if we're in development mode using __DEV__ global
+    // __DEV__ is true in debug builds, false in release builds
+    let isDevelopment = false;
+
+    try {
+      isDevelopment = typeof __DEV__ !== 'undefined' ? __DEV__ : true; // Default to development when __DEV__ is missing
+    } catch (e) {
+      // If __DEV__ doesn't exist or errors, assume development
+      isDevelopment = true;
+    }
+
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      // Use appropriate API based on build type
+      if (isDevelopment) {
+        // Development/Debug builds use QUAL
+        this.API_BASE = 'https://stackmap.app/qual/api/sync';
+      } else {
+        // Production/Release builds use production API
+        this.API_BASE = 'https://stackmap.app/api/sync';
+      }
+    } else {
+      // Default for other non-web environments
+      this.API_BASE = 'https://stackmap.app/api/sync';
+    }
+
+    // Initialize device ID synchronously with a placeholder
+    this.deviceId = null;
+    // Then initialize it properly (async)
+    this.initDeviceId();
+
+    // Track encryption initialization
+    this.encryptionReady = false;
     this.recoveryPhrase = null;
-    
+
     // Rate limiting properties
     this.lastRequest = {};
     this.MIN_REQUEST_INTERVAL = 200; // 200ms between requests
-    
+
     // Recovery phrase management
     this.pendingRecoveryPhrase = null;
-    
+
     // Check for recovery phrase in URL fragment
     this.checkForRecoveryPhrase();
   }
@@ -241,15 +254,24 @@ class MinimalSyncService {
    */
   addMetadata(data) {
     const now = Date.now();
-    
+
+    // Handle null/undefined data
+    if (!data) {
+      data = {};
+    }
+
     // If data already has metadata, preserve it
     if (data.metadata) {
       return data;
     }
     
-    // Add metadata for conflict resolution
+    // Add metadata for conflict resolution and ensure all required fields exist
     return {
-      ...data,
+      users: data.users || {},
+      activities: data.activities || {},
+      settings: data.settings || {},
+      library: data.library || {},
+      ...data, // Spread any additional fields from original data
       metadata: {
         lastModified: now,
         deviceId: this.deviceId,
@@ -673,10 +695,6 @@ class MinimalSyncService {
    */
   async pullData(forceFullPull = false) {
     
-    if (!this.syncId) {
-      return { success: false, error: 'No sync ID' };
-    }
-    
     // Apply rate limiting
     await this.rateLimitCheck('pull');
     
@@ -889,18 +907,26 @@ class MinimalSyncService {
     if (!this.syncId) {
       return;
     }
-    
+
     const now = Date.now();
     if (now - this.lastPullTime < 5000) {
       return;
     }
-    
+
     this.lastPullTime = now;
-    
-    const result = await this.pullData();
-    
-    if (result.success && result.data && this.onDataReceived) {
-      this.onDataReceived(result.data);
+
+    try {
+      const result = await this.pullData();
+
+      if (result.success && result.data && this.onDataReceived) {
+        this.onDataReceived(result.data);
+      }
+    } catch (error) {
+      // Gracefully handle pullData exceptions
+      // Log the error but don't throw - this is called from intervals
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[Sync] pullAndNotify error:', error);
+      }
     }
   }
   

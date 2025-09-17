@@ -165,7 +165,7 @@ describe('TabSelector', () => {
 
   describe('interaction testing', () => {
     it('handles rapid tab switching', () => {
-      const { getByText } = render(
+      const { getByText, rerender } = render(
         <TabSelector
           activeTab="stackmap"
           onTabChange={mockOnTabChange}
@@ -175,6 +175,17 @@ describe('TabSelector', () => {
 
       const myLibraryTab = getByText('My Library');
       fireEvent.press(myLibraryTab);
+
+      // Simulate the state change that would occur in a real app
+      rerender(
+        <TabSelector
+          activeTab="mylibrary"
+          onTabChange={mockOnTabChange}
+          theme={mockTheme}
+        />
+      );
+
+      // Press the same tab again - should not call onTabChange
       fireEvent.press(myLibraryTab);
 
       // Should only call once since second press is on active tab

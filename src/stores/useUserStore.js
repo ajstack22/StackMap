@@ -153,11 +153,23 @@ const useUserStore = create(
         setUserContextData: data =>
           set({ userContextData: data }, false, 'setUserContextData'),
 
-        addUser: (userId, user) =>
+        addUser: (userIdOrUser, user) =>
           set(
             state => {
+              // Handle both calling patterns: addUser(userId, user) and addUser(user)
+              let userId, userData;
+              if (user === undefined) {
+                // Called as addUser(user) where user contains id
+                userData = userIdOrUser;
+                userId = userData.id;
+              } else {
+                // Called as addUser(userId, user)
+                userId = userIdOrUser;
+                userData = user;
+              }
+
               // Validate user data
-              const sanitizedUser = { ...user };
+              const sanitizedUser = { ...userData, id: userId };
 
               // Fix user name if it's not a string
               if (
@@ -174,31 +186,15 @@ const useUserStore = create(
                   ) {
                     sanitizedUser.name = sanitizedUser.name.name;
                   } else if (
-                    typeof sanitizedUser.name.toString === 'function'
+                    sanitizedUser.name.text &&
+                    typeof sanitizedUser.name.text === 'string'
                   ) {
-                    const nameStr = sanitizedUser.name.toString();
-                    if (nameStr !== '[object Object]') {
-                      sanitizedUser.name = nameStr;
-                    } else {
-                      sanitizedUser.name = 'User';
-                    }
+                    sanitizedUser.name = sanitizedUser.name.text;
                   } else {
                     sanitizedUser.name = 'User';
                   }
-                } else if (
-                  sanitizedUser.name === null ||
-                  sanitizedUser.name === undefined
-                ) {
-                  sanitizedUser.name = 'User';
                 } else {
-                  sanitizedUser.name = String(sanitizedUser.name);
-                  if (
-                    !sanitizedUser.name ||
-                    sanitizedUser.name === 'undefined' ||
-                    sanitizedUser.name === 'null'
-                  ) {
-                    sanitizedUser.name = 'User';
-                  }
+                  sanitizedUser.name = 'User';
                 }
               }
 
@@ -215,10 +211,8 @@ const useUserStore = create(
                   sanitizedUser.emoji.length > 0
                 ) {
                   sanitizedUser.icon = sanitizedUser.emoji;
+                  delete sanitizedUser.emoji;
                 } else {
-//                     'Invalid user icon in addUser:',
-//                     sanitizedUser.icon,
-//                   );
                   sanitizedUser.icon = DEFAULT_USER_ICON;
                 }
               }
@@ -249,24 +243,7 @@ const useUserStore = create(
                   typeof sanitizedUpdates.icon !== 'string' ||
                   sanitizedUpdates.icon.length === 0
                 ) {
-                  if (
-                    currentUser.icon &&
-                    typeof currentUser.icon === 'string' &&
-                    currentUser.icon.length > 0
-                  ) {
-                    delete sanitizedUpdates.icon;
-                  } else {
-                    // Try emoji field as fallback
-                    if (
-                      currentUser.emoji &&
-                      typeof currentUser.emoji === 'string' &&
-                      currentUser.emoji.length > 0
-                    ) {
-                      sanitizedUpdates.icon = currentUser.emoji;
-                    } else {
-                      sanitizedUpdates.icon = DEFAULT_USER_ICON;
-                    }
-                  }
+                  sanitizedUpdates.icon = DEFAULT_USER_ICON;
                 }
               }
 
@@ -300,16 +277,20 @@ const useUserStore = create(
 
         deleteUser: userId =>
           set(
-            state => ({
-              users: {
-                ...state.users,
-                [userId]: {
-                  ...state.users[userId],
-                  deleted: true,
-                  deletedAt: Date.now(),
+            state => {
+              if (!state.users[userId]) return state;
+
+              return {
+                users: {
+                  ...state.users,
+                  [userId]: {
+                    ...state.users[userId],
+                    deleted: true,
+                    deletedAt: Date.now(),
+                  },
                 },
-              },
-            }),
+              };
+            },
             false,
             'deleteUser',
           ),

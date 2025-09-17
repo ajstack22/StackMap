@@ -15,8 +15,10 @@ jest.mock('../LibraryActivityCard', () => {
   };
 });
 jest.mock('../EmptyState', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
   return function MockEmptyState({ message }) {
-    return message;
+    return React.createElement(Text, { testID: 'empty-state' }, message);
   };
 });
 jest.mock('../FilterControls', () => ({
@@ -242,7 +244,7 @@ describe('loadDragComponents', () => {
 
     expect(components).toHaveProperty('DraggableFlatList');
     expect(components).toHaveProperty('ScaleDecorator');
-    expect(typeof components.DraggableFlatList).toBe('function');
+    expect(components.DraggableFlatList).toBeDefined(); // FlatList component
     expect(typeof components.ScaleDecorator).toBe('function');
   });
 

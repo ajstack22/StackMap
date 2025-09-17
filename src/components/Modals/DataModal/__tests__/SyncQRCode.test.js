@@ -1,7 +1,6 @@
 // @ts-check
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import SyncQRCode from '../SyncQRCode';
 
 // Mock react-native-qrcode-svg
 jest.mock('react-native-qrcode-svg', () => {
@@ -17,22 +16,36 @@ jest.mock('react-native-qrcode-svg', () => {
 });
 
 // Mock clipboard
+const mockClipboard = {
+  setString: jest.fn(),
+};
+
 jest.mock('@react-native-clipboard/clipboard', () => ({
-  default: {
-    setString: jest.fn(),
-  },
+  default: mockClipboard,
 }));
 
-// Mock react-native Share
-jest.mock('react-native', () => ({
-  ...jest.requireActual('react-native'),
-  Share: {
-    share: jest.fn(),
-  },
-  Platform: {
-    OS: 'ios',
-  },
-}));
+// Mock react-native Share and Platform
+const mockShare = {
+  share: jest.fn(),
+};
+
+const mockPlatform = {
+  OS: 'ios',
+  select: jest.fn((obj) => obj.ios || obj.default),
+};
+
+// Override the jest.setup.js mock for react-native to set Platform.OS to 'ios'
+jest.doMock('react-native', () => {
+  const actualReactNative = jest.requireActual('react-native');
+  return {
+    ...actualReactNative,
+    Share: mockShare,
+    Platform: mockPlatform,
+  };
+});
+
+// Import after mocking to ensure mock takes effect
+import SyncQRCode from '../SyncQRCode';
 
 const mockTheme = {
   primary: '#007AFF',
@@ -49,11 +62,21 @@ const defaultProps = {
   showCopyButton: true,
   showShareButton: true,
   customActions: [],
+  qrError: false,
+  setQrError: jest.fn(),
 };
 
 describe('SyncQRCode', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockClipboard.setString.mockClear();
+    mockShare.share.mockClear();
+    mockPlatform.OS = 'ios'; // Reset to iOS for each test
+
+    // Also directly modify the react-native Platform object
+    const ReactNative = require('react-native');
+    ReactNative.Platform.OS = 'ios';
+    ReactNative.Share = mockShare;
   });
 
   describe('copyToClipboard', () => {
@@ -62,16 +85,14 @@ describe('SyncQRCode', () => {
 
       await syncQRCode.copyToClipboard('test text', 'Success message');
 
-      const Clipboard = require('@react-native-clipboard/clipboard').default;
-      expect(Clipboard.setString).toHaveBeenCalledWith('test text');
+      expect(mockClipboard.setString).toHaveBeenCalledWith('test text');
       expect(defaultProps.showToast).toHaveBeenCalledWith({
         message: 'Success message',
       });
     });
 
     it('should handle clipboard error', async () => {
-      const Clipboard = require('@react-native-clipboard/clipboard').default;
-      Clipboard.setString.mockImplementation(() => {
+      mockClipboard.setString.mockImplementation(() => {
         throw new Error('Clipboard error');
       });
 
@@ -88,23 +109,21 @@ describe('SyncQRCode', () => {
 
   describe('handleNativeShare', () => {
     it('should use native share on mobile', async () => {
-      const { Share } = require('react-native');
-      Share.share.mockResolvedValue({ action: 'sharedAction' });
+      mockShare.share.mockResolvedValue({ action: 'sharedAction' });
 
       const syncQRCode = SyncQRCode(defaultProps);
 
       await syncQRCode.handleNativeShare();
 
-      expect(Share.share).toHaveBeenCalledWith({
+      expect(mockShare.share).toHaveBeenCalledWith({
         message: 'Test description',
         url: 'https://stackmap.app/share/abc123',
-        title: 'Test Share',
+        title: 'Test Share'
       });
     });
 
     it('should handle share error and fallback to clipboard', async () => {
-      const { Share } = require('react-native');
-      Share.share.mockRejectedValue(new Error('Share failed'));
+      mockShare.share.mockRejectedValue(new Error('Share failed'));
 
       const syncQRCode = SyncQRCode(defaultProps);
 
@@ -115,13 +134,11 @@ describe('SyncQRCode', () => {
         type: 'warning',
       });
 
-      const Clipboard = require('@react-native-clipboard/clipboard').default;
-      expect(Clipboard.setString).toHaveBeenCalledWith('https://stackmap.app/share/abc123');
+      expect(mockClipboard.setString).toHaveBeenCalledWith('https://stackmap.app/share/abc123');
     });
 
     it('should not show error for user cancelled share', async () => {
-      const { Share } = require('react-native');
-      Share.share.mockRejectedValue(new Error('User did not share'));
+      mockShare.share.mockRejectedValue(new Error('User did not share'));
 
       const syncQRCode = SyncQRCode(defaultProps);
 
@@ -146,6 +163,24 @@ describe('SyncQRCode', () => {
       const { getByText } = render(syncQRCode.renderMinimalQRCode());
 
       expect(getByText('QR code unavailable')).toBeTruthy();
+    });
+
+    it('should show error message when qrError is true', () => {
+      const props = { ...defaultProps, qrError: true };
+      const syncQRCode = SyncQRCode(props);
+      const { getByText } = render(syncQRCode.renderMinimalQRCode());
+
+      expect(getByText('QR code unavailable')).toBeTruthy();
+    });
+
+    it('should use default qrError when not provided', () => {
+      const props = { ...defaultProps };
+      delete props.qrError; // Remove the prop entirely
+      const syncQRCode = SyncQRCode(props);
+      const { getByTestId } = render(syncQRCode.renderMinimalQRCode());
+
+      // Should render QR code successfully with default qrError=false
+      expect(getByTestId('qr-code')).toBeTruthy();
     });
   });
 
@@ -177,17 +212,19 @@ describe('SyncQRCode', () => {
     });
 
     it('should not render share button on web', () => {
-      // Mock Platform OS to web
-      jest.doMock('react-native', () => ({
-        ...jest.requireActual('react-native'),
-        Platform: { OS: 'web' },
-      }));
+      // Temporarily override Platform.OS for this test
+      const ReactNative = require('react-native');
+      const originalOS = ReactNative.Platform.OS;
+      ReactNative.Platform.OS = 'web';
 
       const syncQRCode = SyncQRCode(defaultProps);
       const { getByText, queryByText } = render(syncQRCode.renderActionButtons());
 
       expect(getByText('Copy Link')).toBeTruthy();
       expect(queryByText('Share')).toBeNull();
+
+      // Restore original platform
+      ReactNative.Platform.OS = originalOS;
     });
 
     it('should not render buttons when disabled', () => {
@@ -277,8 +314,7 @@ describe('SyncQRCode', () => {
       fireEvent.press(copyButton);
 
       await waitFor(() => {
-        const Clipboard = require('@react-native-clipboard/clipboard').default;
-        expect(Clipboard.setString).toHaveBeenCalledWith('https://stackmap.app/share/abc123');
+        expect(mockClipboard.setString).toHaveBeenCalledWith('https://stackmap.app/share/abc123');
       });
     });
 
@@ -290,8 +326,7 @@ describe('SyncQRCode', () => {
       fireEvent.press(shareButton);
 
       await waitFor(() => {
-        const { Share } = require('react-native');
-        expect(Share.share).toHaveBeenCalled();
+        expect(mockShare.share).toHaveBeenCalled();
       });
     });
 

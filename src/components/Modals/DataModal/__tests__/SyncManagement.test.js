@@ -102,6 +102,9 @@ describe('SyncManagement', () => {
 
       await syncManagement.handleEnableSync();
 
+      // Wait for the setTimeout to complete
+      await new Promise(resolve => setTimeout(resolve, 10));
+
       expect(syncService.create).toHaveBeenCalled();
       expect(props.onSyncStateUpdate).toHaveBeenCalledWith({
         syncEnabled: true,
@@ -122,6 +125,9 @@ describe('SyncManagement', () => {
       const syncManagement = SyncManagement(props);
 
       await syncManagement.handleEnableSync();
+
+      // Wait for the setTimeout to complete
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       expect(props.setSyncError).toHaveBeenCalledWith(errorMessage);
       expect(props.onSyncStateUpdate).toHaveBeenCalledWith({
@@ -152,6 +158,9 @@ describe('SyncManagement', () => {
 
       await syncManagement.handleRestoreSync();
 
+      // Wait for the setTimeout to complete
+      await new Promise(resolve => setTimeout(resolve, 10));
+
       expect(syncService.joinSync).toHaveBeenCalledWith('test-recovery-phrase');
       expect(props.onSyncStateUpdate).toHaveBeenCalledWith({
         syncEnabled: true,
@@ -170,6 +179,9 @@ describe('SyncManagement', () => {
 
       await syncManagement.handleRestoreSync();
 
+      // Wait for the setTimeout to complete
+      await new Promise(resolve => setTimeout(resolve, 10));
+
       expect(props.setSyncError).toHaveBeenCalledWith('Please enter your sync key');
       expect(syncService.joinSync).not.toHaveBeenCalled();
     });
@@ -185,6 +197,9 @@ describe('SyncManagement', () => {
       const syncManagement = SyncManagement(props);
 
       await syncManagement.handleRestoreSync();
+
+      // Wait for the setTimeout to complete
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       expect(props.setSyncError).toHaveBeenCalledWith(errorMessage);
     });

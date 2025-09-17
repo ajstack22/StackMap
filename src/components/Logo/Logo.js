@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
 
-const Logo = ({ size = 32, theme, color }) => {
+const Logo = ({ size = 32, theme, color, ...restProps }) => {
   const primaryColor = theme?.primary || '#667eea';
   const logoColor = color || 'white'; // Default to white if no color specified
 
@@ -11,7 +11,7 @@ const Logo = ({ size = 32, theme, color }) => {
   const logoWidth = size; // keep width proportional
 
   return (
-    <View style={{ width: logoWidth, height: logoHeight }}>
+    <View style={{ width: logoWidth, height: logoHeight }} {...restProps}>
       <Svg width={logoWidth} height={logoHeight} viewBox={`0 0 32 20`}>
         {/* Top rectangle - 10% shorter */}
         <Rect

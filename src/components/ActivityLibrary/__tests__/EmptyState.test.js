@@ -56,7 +56,7 @@ describe('getEmptyStateMessage', () => {
   });
 
   it('returns general message as fallback', () => {
-    const message = getEmptyStateMessage('UNKNOWN', true, true, 'test');
+    const message = getEmptyStateMessage('UNKNOWN', true, false, '');
     expect(message).toBe('No activities found.');
   });
 });

@@ -393,7 +393,10 @@
             entry.textContent = `[${timestamp}] ${message}`;
             logsDiv.appendChild(entry);
             logsDiv.scrollTop = logsDiv.scrollHeight;
-            console.log(`[MinimalSync] ${message}`);
+            // Only log to console in development/test environment
+            if (typeof process === 'undefined' || !process.env || process.env.NODE_ENV !== 'production') {
+                console.log(`[MinimalSync] ${message}`);
+            }
         }
 
         function updateUI() {

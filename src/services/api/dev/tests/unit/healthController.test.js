@@ -9,13 +9,15 @@
  */
 
 const { jest } = require('@jest/globals');
-const healthController = require('../../controllers/healthController');
 
 // Mock dependencies
 jest.mock('../../utils/database');
 jest.mock('../../utils/redis');
 jest.mock('../../utils/metrics');
 jest.mock('../../utils/logger');
+
+const healthController = require('../../controllers/healthController');
+const os = require('os');
 
 const { isDatabaseHealthy, queryStats } = require('../../utils/database');
 const { isRedisHealthy, RedisCache } = require('../../utils/redis');
@@ -39,6 +41,45 @@ describe('Health Controller', () => {
 
         // Reset mocks
         jest.clearAllMocks();
+
+        // Clear mock call history but preserve mock implementations
+        isDatabaseHealthy.mockClear();
+        isRedisHealthy.mockClear();
+        queryStats.mockClear();
+        RedisCache.getStats.mockClear();
+        getAllMetrics.mockClear();
+
+        // Mock process.memoryUsage to control memory stats
+        jest.spyOn(process, 'memoryUsage').mockReturnValue({
+            rss: 100000000,
+            heapTotal: 50000000,
+            heapUsed: 30000000,
+            external: 5000000
+        });
+
+        // Mock process.cpuUsage to control CPU stats
+        jest.spyOn(process, 'cpuUsage').mockReturnValue({
+            user: 100000,
+            system: 50000
+        });
+
+        // Mock process.uptime to control uptime
+        jest.spyOn(process, 'uptime').mockReturnValue(3600);
+
+        // Mock os methods to control system health
+        jest.spyOn(os, 'loadavg').mockReturnValue([1.0, 1.0, 1.0]);
+        jest.spyOn(os, 'totalmem').mockReturnValue(8000000000);
+        jest.spyOn(os, 'freemem').mockReturnValue(4000000000);
+        jest.spyOn(os, 'cpus').mockReturnValue(new Array(4));
+        jest.spyOn(os, 'type').mockReturnValue('Linux');
+        jest.spyOn(os, 'platform').mockReturnValue('linux');
+        jest.spyOn(os, 'arch').mockReturnValue('x64');
+        jest.spyOn(os, 'release').mockReturnValue('5.4.0');
+    });
+
+    afterEach(() => {
+        // Restore all spies
+        jest.restoreAllMocks();
     });
 
     describe('basicHealthCheck', () => {
@@ -73,7 +114,9 @@ describe('Health Controller', () => {
             queryStats.mockReturnValue({
                 totalQueries: 100,
                 errorQueries: 2,
-                avgResponseTime: 150
+                avgResponseTime: 150,
+                slowQueries: 1,
+                slowQueryThreshold: 1000
             });
             RedisCache.getStats.mockResolvedValue({
                 connected: true,
@@ -82,6 +125,8 @@ describe('Health Controller', () => {
             getAllMetrics.mockReturnValue({
                 counters: {},
                 gauges: {},
+                histograms: {},
+                summaries: {},
                 uptime: 3600
             });
         });
@@ -140,7 +185,12 @@ describe('Health Controller', () => {
             expect(res.json).toHaveBeenCalledWith(
                 expect.objectContaining({
                     status: 'unhealthy',
-                    error: 'Health check system error'
+                    components: expect.objectContaining({
+                        database: expect.objectContaining({
+                            status: 'unhealthy',
+                            error: 'Database health check failed'
+                        })
+                    })
                 })
             );
         });
@@ -152,7 +202,9 @@ describe('Health Controller', () => {
             queryStats.mockReturnValue({
                 totalQueries: 100,
                 errorQueries: 1,
-                avgResponseTime: 50
+                avgResponseTime: 50,
+                slowQueries: 0,
+                slowQueryThreshold: 1000
             });
 
             await healthController.getDatabaseHealth(req, res);
@@ -220,7 +272,24 @@ describe('Health Controller', () => {
         it('should return metrics in Prometheus format', async () => {
             isDatabaseHealthy.mockResolvedValue(true);
             isRedisHealthy.mockResolvedValue(true);
-            getAllMetrics.mockReturnValue({ uptime: 3600 });
+            queryStats.mockReturnValue({
+                totalQueries: 100,
+                errorQueries: 1,
+                avgResponseTime: 50,
+                slowQueries: 0,
+                slowQueryThreshold: 1000
+            });
+            RedisCache.getStats.mockResolvedValue({
+                connected: true,
+                stats: { hits: 1000, misses: 100 }
+            });
+            getAllMetrics.mockReturnValue({
+                counters: {},
+                gauges: {},
+                histograms: {},
+                summaries: {},
+                uptime: 3600
+            });
 
             await healthController.getPrometheusMetrics(req, res);
 
@@ -231,7 +300,8 @@ describe('Health Controller', () => {
         });
 
         it('should handle errors and return unavailable message', async () => {
-            isDatabaseHealthy.mockRejectedValue(new Error('Test error'));
+            // Mock process.uptime to throw an error, which will cause formatPrometheusHealth to fail
+            process.uptime.mockImplementation(() => { throw new Error('Test error'); });
 
             await healthController.getPrometheusMetrics(req, res);
 
@@ -265,7 +335,24 @@ describe('Performance Requirements', () => {
     it('system health check should respond within 500ms', async () => {
         isDatabaseHealthy.mockResolvedValue(true);
         isRedisHealthy.mockResolvedValue(true);
-        getAllMetrics.mockReturnValue({});
+        queryStats.mockReturnValue({
+            totalQueries: 100,
+            errorQueries: 1,
+            avgResponseTime: 50,
+            slowQueries: 0,
+            slowQueryThreshold: 1000
+        });
+        RedisCache.getStats.mockResolvedValue({
+            connected: true,
+            stats: { hits: 1000, misses: 100 }
+        });
+        getAllMetrics.mockReturnValue({
+            counters: {},
+            gauges: {},
+            histograms: {},
+            summaries: {},
+            uptime: 3600
+        });
 
         const start = Date.now();
         await healthController.getSystemHealth(req, res);

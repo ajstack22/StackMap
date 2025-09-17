@@ -168,7 +168,10 @@ describe('useAppStore', () => {
         result.current.addUser('newUser', newUser);
       });
 
-      expect(result.current.users['newUser']).toEqual(newUser);
+      expect(result.current.users['newUser']).toEqual({
+        ...newUser,
+        id: 'newUser'
+      });
 
       act(() => {
         result.current.updateUser('newUser', {

@@ -48,6 +48,8 @@ jest.mock('react-native', () => {
     Image: 'Image',
     SafeAreaView: 'SafeAreaView',
     KeyboardAvoidingView: 'KeyboardAvoidingView',
+    ActivityIndicator: 'ActivityIndicator',
+    StatusBar: 'StatusBar',
     Dimensions: {
       get: jest.fn(() => ({
         width: 375,
@@ -119,6 +121,15 @@ jest.mock('react-native-keychain', () => ({
   resetInternetCredentials: jest.fn(() => Promise.resolve(true)),
 }));
 
+// Mock react-native-safe-area-context
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaProvider: ({ children }) => children,
+  SafeAreaView: ({ children }) => children,
+  useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
+  useSafeAreaFrame: () => ({ x: 0, y: 0, width: 375, height: 812 }),
+  withSafeAreaInsets: (Component) => Component,
+}));
+
 // Mock console methods to reduce noise in test output
 const originalWarn = console.warn;
 const originalError = console.error;
@@ -138,7 +149,9 @@ beforeAll(() => {
   console.error = (...args) => {
     if (
       args[0]?.includes?.('Warning:') ||
-      args[0]?.includes?.('ReactTestRenderer')
+      args[0]?.includes?.('ReactTestRenderer') ||
+      args[0]?.includes?.('An update to TestComponent inside a test was not wrapped in act(') ||
+      args[0]?.includes?.('act(...)')
     ) {
       return;
     }

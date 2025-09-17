@@ -89,8 +89,8 @@ describe('useSettingsStore', () => {
       // Test all valid themes from constants/theme.js
       const validThemes = [
         'stackBlue', 'crimson', 'cherry', 'scarlet', 'rust', 'tangerine', 'amber', 'gold',
-        'olive', 'emerald', 'sage', 'teal', 'aqua', 'sapphire', 'periwinkle', 'lavender',
-        'mauve', 'dustyBlue', 'terracotta', 'sandstone'
+        'olive', 'emerald', 'forest', 'ocean', 'sapphire', 'navy', 'indigo', 'plum',
+        'sage', 'dustyBlue', 'terracotta', 'lavender', 'slate'
       ];
 
       validThemes.forEach(theme => {

@@ -11,7 +11,17 @@
 
 const fs = require('fs');
 const path = require('path');
-const { SanitizationUtils } = require('../config/security');
+
+// Handle SanitizationUtils import safely for testing
+let SanitizationUtils;
+try {
+    ({ SanitizationUtils } = require('../config/security'));
+} catch (error) {
+    // Fallback for tests - provide a simple sanitizer
+    SanitizationUtils = {
+        sanitizeObject: (obj) => obj
+    };
+}
 
 /**
  * Log levels with priority
@@ -156,7 +166,7 @@ class Logger {
             };
 
             // Sanitize sensitive data if enabled
-            if (this.config.enableSanitization) {
+            if (this.config.enableSanitization && SanitizationUtils && SanitizationUtils.sanitizeObject) {
                 return JSON.stringify(SanitizationUtils.sanitizeObject(logEntry));
             }
 

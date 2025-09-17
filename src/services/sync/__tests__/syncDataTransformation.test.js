@@ -13,32 +13,57 @@
  * Focus: Pure business logic functions with mocked dependencies
  */
 
-// Mock dependencies
+// Mock the encryption service - it's exported as a singleton instance
 const mockEncryptionService = {
   deriveKeyFromPhrase: jest.fn(() => Promise.resolve({
     key: new Uint8Array(32).fill(0), // Deterministic key for testing
     salt: 'test-salt'
   })),
-  generateRecoveryPhrase: jest.fn(() => 'test-recovery-phrase-32-characters')
+  generateRecoveryPhrase: jest.fn(() => 'test-recovery-phrase-32-characters'),
+  getDeviceId: jest.fn(() => Promise.resolve('test-device-id')),
+  initialize: jest.fn(() => Promise.resolve()),
+  encryptData: jest.fn((data) => `encrypted-${JSON.stringify(data)}`),
+  decryptData: jest.fn((encrypted) => {
+    const match = encrypted.match(/^encrypted-(.+)$/);
+    return match ? JSON.parse(match[1]) : null;
+  }),
+  masterKey: null,
+  syncId: null,
+  keyCache: {},
+  encryptionReady: false
 };
 
-jest.mock('../encryptionServiceFixed', () => mockEncryptionService);
-
-// Import MinimalSyncService class
-import MinimalSyncService from '../minimalSyncService';
+// Mock dependencies first, before any imports
+jest.mock('../encryptionServiceFixed', () => ({
+  __esModule: true,
+  default: mockEncryptionService
+}));
 
 describe('Sync Data Transformation Functions', () => {
   let service;
+  let MinimalSyncServiceInstance;
   const FIXED_TIME = 1705123200000;
 
-  beforeEach(() => {
-    // Create fresh instance
-    service = new MinimalSyncService.constructor();
+  beforeAll(() => {
+    // Clear module cache and import after mocking
+    jest.resetModules();
+    MinimalSyncServiceInstance = require('../minimalSyncService').default;
+  });
+
+  beforeEach(async () => {
+    // Create fresh instance using the constructor from the exported instance
+    service = new MinimalSyncServiceInstance.constructor();
 
     // Mock Date.now for deterministic tests
     jest.spyOn(Date, 'now').mockReturnValue(FIXED_TIME);
 
-    // Set up device ID after initialization
+    // Clear any async initialization timers
+    jest.clearAllTimers();
+
+    // Mock generateId to return deterministic value
+    service.generateId = jest.fn(() => 'test-device-id');
+
+    // Set up device ID after initialization (force it after async operations)
     service.deviceId = 'test-device-id';
 
     // Reset mock implementations
@@ -339,6 +364,19 @@ describe('Sync Data Transformation Functions', () => {
   });
 
   describe('Device ID Generation', () => {
+    let originalGenerateId;
+
+    beforeEach(() => {
+      // Store and restore the original generateId method for these tests
+      originalGenerateId = MinimalSyncServiceInstance.constructor.prototype.generateId;
+      service.generateId = originalGenerateId.bind(service);
+    });
+
+    afterEach(() => {
+      // Restore the mock for other tests
+      service.generateId = jest.fn(() => 'test-device-id');
+    });
+
     test('generateId produces valid format', () => {
       // Mock crypto for deterministic results
       global.crypto = {

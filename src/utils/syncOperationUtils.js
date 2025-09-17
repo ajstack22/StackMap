@@ -427,6 +427,11 @@ export const checkSyncOperationRateLimit = (params) => {
   const now = Date.now();
   const timeSinceLastOp = now - lastOperationTime;
 
+  // Handle time anomalies (clock going backwards) gracefully
+  if (timeSinceLastOp < 0) {
+    return { isRateLimited: false };
+  }
+
   if (timeSinceLastOp < interval) {
     return {
       isRateLimited: true,

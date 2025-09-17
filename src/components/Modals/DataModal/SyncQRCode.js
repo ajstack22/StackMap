@@ -1,5 +1,5 @@
 // @ts-check
-import React, { useState } from 'react';
+import React from 'react';
 import { Text } from '../../Typography';
 import { View, TouchableOpacity, Platform, Share } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -8,7 +8,7 @@ import { styles } from './styles';
 import { ModalButton } from '../../ModalUtilities';
 
 /**
- * SyncQRCode component handles QR code functionality including:
+ * SyncQRCode utility handles QR code functionality including:
  * - QR code generation for sync keys and share URLs
  * - Share URL display and management
  * - Copy link functionality with platform detection
@@ -24,10 +24,10 @@ const SyncQRCode = ({
   qrSize = 200,
   showCopyButton = true,
   showShareButton = true,
-  customActions = []
+  customActions = [],
+  qrError = false,
+  setQrError = () => {}
 }) => {
-
-  const [qrError, setQrError] = useState(false);
 
   // Safe clipboard copy helper
   const copyToClipboard = async (text, successMessage) => {
