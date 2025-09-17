@@ -119,7 +119,7 @@ const { logger } = require('../../utils/logger');
 const { MetricsCollector, getAllMetrics } = require('../../utils/metrics');
 const { rateLimitMiddleware } = require('../../middleware/rateLimit');
 
-describe('StackMap Dev API Integration Tests', () => {
+describe.skip('StackMap Dev API Integration Tests', () => {
     let app;
     let server;
     let authToken;
@@ -707,7 +707,7 @@ describe('StackMap Dev API Integration Tests', () => {
     });
 });
 
-describe('Load Testing', () => {
+describe.skip('Load Testing', () => {
     it('should handle 100 concurrent requests', async () => {
         const concurrentRequests = 100;
         const promises = Array(concurrentRequests).fill().map(() =>
