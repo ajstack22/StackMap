@@ -114,7 +114,13 @@ if (typeof window !== 'undefined') {
   window.showDebugSyncLogs = () => {
     const div = document.createElement('div');
     div.style.cssText = 'position:fixed;top:10px;right:10px;background:white;border:2px solid red;padding:10px;z-index:9999;max-width:400px;max-height:300px;overflow:auto;';
-    div.innerHTML = '<h3>Debug Sync Logs</h3><pre>' + debugSync.logs.join('\n') + '</pre>';
+    // Create elements safely without innerHTML
+    const heading = document.createElement('h3');
+    heading.textContent = 'Debug Sync Logs';
+    const pre = document.createElement('pre');
+    pre.textContent = debugSync.logs.join('\n');
+    div.appendChild(heading);
+    div.appendChild(pre);
     document.body.appendChild(div);
     setTimeout(() => div.remove(), 10000); // Remove after 10 seconds
   };

@@ -368,12 +368,12 @@ export const sanitizeClipboardContent = (content) => {
   let sanitized = content
     // Sanitize invite codes in URLs
     .replace(
-      /(https?:\/\/[^\/]+\/[^\/]*?)([a-zA-Z0-9]{6,})(#[a-fA-F0-9]{32})/g,
+      /(https?:\/\/[^\/]+\/[^\/]*?)([a-zA-Z0-9]{6,20})(#[a-fA-F0-9]{32})/g,
       '$1[INVITE_CODE]$3'
     )
     // Sanitize invite codes in keys
     .replace(
-      /\b([a-zA-Z0-9]{6,})#([a-fA-F0-9]{32})\b/g,
+      /\b([a-zA-Z0-9]{6,20})#([a-fA-F0-9]{32})\b/g,
       '[INVITE_CODE]#$2'
     )
     // Then sanitize recovery phrases

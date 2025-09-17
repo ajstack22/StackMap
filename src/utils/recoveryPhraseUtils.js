@@ -15,7 +15,7 @@ export const generateRecoveryPhrase = () => {
   const chars = '0123456789abcdef';
   let result = '';
 
-  // Use crypto.getRandomValues if available, fallback to Math.random
+  // Require crypto.getRandomValues for security
   if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
     const array = new Uint8Array(16); // 16 bytes = 32 hex chars
     crypto.getRandomValues(array);
@@ -25,10 +25,8 @@ export const generateRecoveryPhrase = () => {
       result += chars[array[i] % 16];
     }
   } else {
-    // Fallback for environments without crypto API
-    for (let i = 0; i < 32; i++) {
-      result += chars[Math.floor(Math.random() * 16)];
-    }
+    // No fallback - crypto is required for secure recovery phrases
+    throw new Error('Crypto API not available. Recovery phrase generation requires a secure random number generator.');
   }
 
   return result;
@@ -271,10 +269,8 @@ export const generateInviteCode = (length = 8) => {
       result += chars[array[i] % chars.length];
     }
   } else {
-    // Fallback for environments without crypto API
-    for (let i = 0; i < length; i++) {
-      result += chars[Math.floor(Math.random() * chars.length)];
-    }
+    // No fallback - crypto is required for secure invite codes
+    throw new Error('Crypto API not available. Invite code generation requires a secure random number generator.');
   }
 
   return result;

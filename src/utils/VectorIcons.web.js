@@ -95,7 +95,8 @@ const Icon = ({ name, size = 24, color = '#000', style }) => {
       // First try local font file (avoids CSP issues)
       const styleElement = document.createElement('style');
       styleElement.id = 'material-icons-font';
-      styleElement.innerHTML = `
+      // Use textContent for CSS to avoid innerHTML security warnings
+      styleElement.textContent = `
         @font-face {
           font-family: 'Material Icons';
           font-style: normal;

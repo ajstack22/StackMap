@@ -388,7 +388,7 @@ export const sanitizeFilename = (filename, defaultName = 'export') => {
     .replace(/[<>:"/\\|?*]/g, '-') // Replace invalid chars with dash
     .replace(/\s+/g, '-') // Replace spaces with dash
     .replace(/-+/g, '-') // Replace multiple dashes with single dash
-    .replace(/^-|-$/g, ''); // Remove leading/trailing dashes
+    .replace(/^-|(-$)/g, ''); // Remove leading/trailing dashes (grouped for clarity)
 
   // Ensure it has valid length
   if (sanitized.length === 0) {

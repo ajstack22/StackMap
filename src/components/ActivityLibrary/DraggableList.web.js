@@ -26,7 +26,8 @@ export const DraggableList = ({
   const handleDragStart = (e, item, index) => {
     if (e.dataTransfer) {
       e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/html', e.target.innerHTML);
+      // Use plain text for drag data to avoid innerHTML security warnings
+      e.dataTransfer.setData('text/plain', keyExtractor(item));
     }
     setDraggedItem({ item, index });
   };

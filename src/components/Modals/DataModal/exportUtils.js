@@ -244,7 +244,10 @@ export const handleIosExport = async (jsonData, fileName, showToast) => {
     setTimeout(async () => {
       try {
         await modules.RNFS.unlink(filePath);
-      } catch (err) {}
+      } catch (err) {
+        // Silently ignore file cleanup errors as they're non-critical
+        // File will be cleaned up by the OS if needed
+      }
     }, 5000);
   } catch (iosError) {
     showToast({

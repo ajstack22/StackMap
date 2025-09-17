@@ -57,18 +57,14 @@ describe('recoveryPhraseUtils', () => {
       global.crypto = originalCrypto;
     });
 
-    it('works without crypto API (fallback)', () => {
+    it('throws error without crypto API', () => {
       const originalCrypto = global.crypto;
       global.crypto = undefined;
 
-      const originalMathRandom = Math.random;
-      Math.random = jest.fn(() => 0.5); // Predictable random
+      expect(() => generateRecoveryPhrase()).toThrow(
+        'Crypto API not available. Recovery phrase generation requires a secure random number generator.'
+      );
 
-      const phrase = generateRecoveryPhrase();
-      expect(phrase).toHaveLength(32);
-      expect(phrase).toBe('88888888888888888888888888888888'); // 0.5 * 16 = 8
-
-      Math.random = originalMathRandom;
       global.crypto = originalCrypto;
     });
   });
@@ -370,17 +366,14 @@ describe('recoveryPhraseUtils', () => {
       global.crypto = originalCrypto;
     });
 
-    it('works without crypto API (fallback)', () => {
+    it('throws error without crypto API', () => {
       const originalCrypto = global.crypto;
       global.crypto = undefined;
 
-      const originalMathRandom = Math.random;
-      Math.random = jest.fn(() => 0.0); // Always return 'A'
+      expect(() => generateInviteCode(3)).toThrow(
+        'Crypto API not available. Invite code generation requires a secure random number generator.'
+      );
 
-      const code = generateInviteCode(3);
-      expect(code).toBe('AAA');
-
-      Math.random = originalMathRandom;
       global.crypto = originalCrypto;
     });
   });
