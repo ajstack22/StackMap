@@ -11,7 +11,7 @@
 ### 1. Deployment Issues
 
 **For all deployment procedures and troubleshooting:**
-- Use `./scripts/deploy-all.sh` for automated deployment to all platforms
+- Use `./scripts/qual_deploy.sh or prod_deploy.sh` for automated deployment to all platforms
 - See [deployment/README.md](./deployment/README.md) for complete guide
 - Build files are managed automatically by deployment scripts
 - Branch strategy: `main` (source), `deploy-qual` (qual builds), `deploy-prod` (production builds)
@@ -181,7 +181,7 @@ git push
 ```
 
 ### Deployment Process
-- Use `./scripts/deploy-all.sh` for all deployments
+- Use `./scripts/qual_deploy.sh or prod_deploy.sh` for all deployments
 - Automated version incrementing and multi-platform deployment
 - See [deployment/README.md](./deployment/README.md) for details
 
@@ -371,7 +371,7 @@ When reporting issues, include:
 # Nuclear option - full rebuild and deploy
 rm -rf node_modules web/build
 npm install
-./scripts/deploy-all.sh --skip-tests
+./scripts/qual_deploy.sh or prod_deploy.sh --skip-tests
 ```
 
 Remember: Most issues are caused by caching or missing files. When in doubt, clear caches and verify files exist!

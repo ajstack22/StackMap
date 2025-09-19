@@ -244,7 +244,7 @@ npm run ios          # iOS development
 npm run web          # Web development
 
 # Master deployment (all platforms)
-./scripts/deploy-all.sh
+./scripts/qual_deploy.sh or prod_deploy.sh
 ```
 
 ### Version Management

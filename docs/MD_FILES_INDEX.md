@@ -87,7 +87,7 @@
 ### "I need to deploy"
 1. Start with [CLAUDE.md](../CLAUDE.md)
 2. Follow [/docs/deployment/README.md](./deployment/README.md)
-3. Use `./scripts/deploy-all.sh` for automated deployment
+3. Use `./scripts/qual_deploy.sh or prod_deploy.sh` for automated deployment
 
 ### "I need to add a feature"
 1. Check [DATA_STRUCTURE.md](./DATA_STRUCTURE.md) for data model

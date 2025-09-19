@@ -10,12 +10,12 @@ We don't do complex testing. We do **smoke tests** - simple checks that catch re
 ### Automatic Testing
 Every deployment automatically runs essential tests:
 ```bash
-./scripts/deploy-all.sh  # Tests run automatically
+./scripts/qual_deploy.sh or prod_deploy.sh  # Tests run automatically
 ```
 
 ### Skip Tests (Emergency Deploy)
 ```bash
-./scripts/deploy-all.sh --skip-tests  # Bypass tests when needed
+./scripts/qual_deploy.sh or prod_deploy.sh --skip-tests  # Bypass tests when needed
 ```
 
 ## What We Test
@@ -47,7 +47,7 @@ Only add a test if you've been burned by something multiple times.
 
 Example: If bundle size keeps breaking the app, add:
 ```bash
-# In deploy-all.sh, add to test section:
+# In qual_deploy.sh or prod_deploy.sh, add to test section:
 if [ -f "bundle.js" ]; then
     BUNDLE_SIZE=$(stat -f%z bundle.js)
     if [ $BUNDLE_SIZE -gt 4194304 ]; then  # 4MB
@@ -76,7 +76,7 @@ These are great for big teams but add friction for solo developers.
 
 ### When You Need to Deploy NOW
 ```bash
-./scripts/deploy-all.sh --skip-tests
+./scripts/qual_deploy.sh or prod_deploy.sh --skip-tests
 ```
 Use sparingly - tests exist for a reason.
 

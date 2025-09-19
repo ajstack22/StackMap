@@ -61,7 +61,7 @@ users: {
 
 **Code Reality:**
 - Scripts directory has completely different structure
-- Modern scripts like `deploy-all.sh`, `deploy-android-all.sh`
+- Modern scripts like `qual_deploy.sh or prod_deploy.sh`, `deploy-android-all.sh`
 - No mention of current deployment automation
 
 **Impact:** MEDIUM - Confusion about available scripts

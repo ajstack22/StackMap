@@ -145,7 +145,7 @@ User Action → Store Update → AsyncStorage (debounced) → Sync Queue
 ## Deployment Architecture
 
 ### Build Process
-- `./scripts/deploy-all.sh` - Main deployment script
+- `./scripts/qual_deploy.sh or prod_deploy.sh` - Main deployment script
 - Automatic version incrementing
 - Platform-specific builds
 - Test suite integration

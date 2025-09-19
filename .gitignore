@@ -124,6 +124,11 @@ icon-color-preview.html
 /debug-*.html
 /show-*.php
 /clear-cache.html
+/test_*.js
+/test_*.log
+/testSync.js
+/ios_*.png
+/ios_*.log
 
 # Web build should be in web/build/, not root
 # Files should be deployed from web/build/, not copied to root

@@ -354,7 +354,7 @@ src/
 
 ### Deployment Scripts
 Always use automated scripts in `/scripts/`:
-- `deploy-all.sh` - Master deployment for all platforms
+- `qual_deploy.sh or prod_deploy.sh` - Master deployment for all platforms
 - `deploy-android-all.sh` - Android standalone + Metro
 - `deploy-ios.sh` - iOS simulator/device
 - `deploy-web.sh` - Web qual/production

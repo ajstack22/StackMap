@@ -18,13 +18,6 @@ import {
   Modal,
 } from 'react-native';
 
-// DEBUG: Check screen dimensions
-if (Platform.OS === 'web') {
-  console.log('=== GRID DEBUG FROM APP.JS ===');
-  console.log('Window width:', window.innerWidth);
-  console.log('Dimensions.get("window").width:', Dimensions.get('window').width);
-  console.log('Should have columns:', window.innerWidth >= 1200 ? 3 : window.innerWidth >= 768 ? 2 : 1);
-}
 
 // Capture sync URL data immediately before React renders
 if (Platform.OS === 'web' && typeof window !== 'undefined') {

@@ -8,7 +8,7 @@ Welcome to the StackMap documentation. This guide will help you navigate our com
 
 **For deployment:** See [Deployment Guide](./deployment/README.md) or just run:
 ```bash
-./scripts/deploy-all.sh
+./scripts/qual_deploy.sh or prod_deploy.sh
 ```
 
 ## 📚 Documentation Structure
@@ -18,7 +18,7 @@ Welcome to the StackMap documentation. This guide will help you navigate our com
 #### [🚢 Deployment](./deployment/)
 Everything you need to deploy StackMap to all platforms.
 - **Start here:** [Deployment Guide](./deployment/README.md)
-- Quick command: `./scripts/deploy-all.sh`
+- Quick command: `./scripts/qual_deploy.sh or prod_deploy.sh`
 
 #### [🔄 Sync System](./sync/)
 Complete documentation for the zero-knowledge sync system.
@@ -103,7 +103,7 @@ Always use store-specific methods:
 ### Quick Commands
 ```bash
 # Deploy everything
-./scripts/deploy-all.sh
+./scripts/qual_deploy.sh or prod_deploy.sh
 
 # Run tests
 npm run test:simple

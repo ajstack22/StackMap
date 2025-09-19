@@ -30,7 +30,7 @@
   sync/             # Sync system documentation
   
 /scripts/           # All automation scripts
-  deploy-all.sh     # Main deployment script
+  qual_deploy.sh or prod_deploy.sh     # Main deployment script
   
 /src/
   components/       # React Native components
@@ -162,10 +162,10 @@ npm run lint           # ESLint checks
 ### Deployment
 ```bash
 # Deploy to all platforms with tests
-./scripts/deploy-all.sh
+./scripts/qual_deploy.sh or prod_deploy.sh
 
 # Emergency deploy without tests
-./scripts/deploy-all.sh --skip-tests
+./scripts/qual_deploy.sh or prod_deploy.sh --skip-tests
 ```
 
 ---

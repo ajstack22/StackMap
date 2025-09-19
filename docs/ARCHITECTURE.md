@@ -146,5 +146,5 @@ See [ZERO_KNOWLEDGE_SYNC_ARCHITECTURE.md](./ZERO_KNOWLEDGE_SYNC_ARCHITECTURE.md)
 
 ### CI/CD
 - GitHub Actions for automated builds
-- Script-based deployment via `deploy-all.sh`
+- Script-based deployment via `qual_deploy.sh or prod_deploy.sh`
 - Version auto-increment on deploy

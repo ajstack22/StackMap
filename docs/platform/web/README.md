@@ -15,7 +15,7 @@ NODE_ENV=production npm run build:web  # Build optimized bundle
 # Deployment (automated)
 ./scripts/deploy-web.sh qual    # Deploy to qual with version increment
 ./scripts/deploy-web.sh prod    # Deploy to production
-./scripts/deploy-all.sh --web   # Master deployment (all platforms)
+./scripts/qual_deploy.sh or prod_deploy.sh --web   # Master deployment (all platforms)
 ```
 
 ### Project Requirements

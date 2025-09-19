@@ -43,7 +43,7 @@ npm run web  # Development
 NODE_ENV=production npm run build:web  # Production
 
 # Deploy all platforms
-./scripts/deploy-all.sh
+./scripts/qual_deploy.sh or prod_deploy.sh
 ```
 
 ### Critical Platform-Specific Rules
@@ -148,7 +148,7 @@ Platform.OS === 'android' ? {
 ### Build Scripts
 - `/scripts/react-native/` - Android build scripts (Java 17)
 - `/scripts/deploy-*.sh` - Platform deployment automation
-- `/scripts/deploy-all.sh` - Master deployment script
+- `/scripts/qual_deploy.sh or prod_deploy.sh` - Master deployment script
 
 ### Critical Files
 - `src/components/Typography/index.js` - Cross-platform font handling
