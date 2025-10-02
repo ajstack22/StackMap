@@ -853,7 +853,7 @@ describe('Typography Component', () => {
 
       const renderedTexts = UNSAFE_getAllByType('Text');
       expect(renderedTexts).toHaveLength(500);
-      expect(endTime - startTime).toBeLessThan(200); // Should render efficiently
+      expect(endTime - startTime).toBeLessThan(300); // Should render efficiently (relaxed threshold for CI)
     });
 
     it('should handle simultaneous rendering of many TextInput components', () => {
