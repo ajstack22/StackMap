@@ -12,6 +12,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { ModalFooter } from '../../ModalUtilities';
 import ConfirmModal from '../../Modals/ConfirmModal';
 import { styles } from './styles';
+import { getActivityIcon, getActivityText } from '../../../utils/fieldAccessors';
 
 const CompleteTabContent = ({
   theme,
@@ -163,13 +164,13 @@ const CompleteTabContent = ({
     const CardContent = (
       <>
         <Text style={styles.completeActivityEmoji}>
-          {activity.icon || activity.emoji || '🎯'}
+          {getActivityIcon(activity)}
         </Text>
         <Text
           style={[styles.completeActivityTitle, { flex: 1 }]}
           numberOfLines={2}
         >
-          {activity.text || activity.name || activity.title || ''}
+          {getActivityText(activity)}
         </Text>
         {showActions && category !== 'newTomorrow' && (
           <Icon

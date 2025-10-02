@@ -5,6 +5,8 @@
  * Extracted from DataImport and DataExport modal components
  */
 
+import { getUserIcon } from './fieldAccessors';
+
 /**
  * Format file display name from StackMap export file name
  * Extracts date/time information and file size for user-friendly display
@@ -126,7 +128,7 @@ export const extractImportPreview = (data) => {
       preview.users.push({
         id: userId,
         name: user.name || 'Unnamed User',
-        icon: user.icon || user.emoji || '👤',
+        icon: getUserIcon(user),
         activityCount,
       });
 

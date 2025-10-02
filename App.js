@@ -17,6 +17,7 @@ import {
   AppState,
   Modal,
 } from 'react-native';
+import { ANIMATION_DURATION } from './src/constants/animations';
 
 
 // Capture sync URL data immediately before React renders
@@ -536,13 +537,13 @@ const App = () => {
       // On iOS, skip the direct AsyncStorage check to prevent freeze
       if (Platform.OS === 'ios') {
         // Just wait a bit for Zustand to hydrate naturally
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, ANIMATION_DURATION.NORMAL));
         setIsHydrated(true);
         return;
       }
 
       // Give Zustand time to load persisted state
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, ANIMATION_DURATION.FAST));
 
       // Check Zustand persisted data directly (skip on iOS)
       const zustandData = await AsyncStorage.getItem('stackmap-storage');
@@ -2580,7 +2581,7 @@ const App = () => {
 
       // Small delay to ensure async operations complete on Android
       if (Platform.OS === 'android') {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, ANIMATION_DURATION.FAST));
       }
 
       // Always check if PIN was actually removed
@@ -3489,7 +3490,7 @@ This will replace all your current data.`,
         setDayMode('today');
 
         // Allow state to settle before importing new data
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise(resolve => setTimeout(resolve, ANIMATION_DURATION.MICRO));
 
         // Use imported data directly (migration no longer needed)
         const migratedData = importData;
@@ -5086,11 +5087,11 @@ Users: ${userNames} (${userCount} total)
         onSaveTheme={saveThemePreference}
         onPrivacyPress={() => {
           setShowUserModal(false);
-          setTimeout(() => setShowPrivacyModal(true), 300);
+          setTimeout(() => setShowPrivacyModal(true), ANIMATION_DURATION.MODAL_DELAY);
         }}
         onSupportPress={() => {
           setShowUserModal(false);
-          setTimeout(() => setShowSupportModal(true), 300);
+          setTimeout(() => setShowSupportModal(true), ANIMATION_DURATION.MODAL_DELAY);
         }}
         // Android specific
         getAndroidModalBottomHeight={getAndroidModalBottomHeight}
@@ -5226,7 +5227,7 @@ Users: ${userNames} (${userCount} total)
         insets={insets}
         onShowSupport={() => {
           setShowPrivacyModal(false);
-          setTimeout(() => setShowSupportModal(true), 300);
+          setTimeout(() => setShowSupportModal(true), ANIMATION_DURATION.MODAL_DELAY);
         }}
       />
 
@@ -5335,7 +5336,7 @@ Users: ${userNames} (${userCount} total)
         onSyncStatusChange={enabled => useSyncStore.getState().setSyncEnabled(enabled)}
         onShowSupport={() => {
           setShowDataModal(false);
-          setTimeout(() => setShowSupportModal(true), 300);
+          setTimeout(() => setShowSupportModal(true), ANIMATION_DURATION.MODAL_DELAY);
         }}
         onReset={resetApp}
         isOnboarding={showOnboardingImport}
@@ -5657,7 +5658,7 @@ Users: ${userNames} (${userCount} total)
           insets={insets}
           onShowSupport={() => {
             setShowPrivacyModal(false);
-            setTimeout(() => setShowSupportModal(true), 300);
+            setTimeout(() => setShowSupportModal(true), ANIMATION_DURATION.MODAL_DELAY);
           }}
         />
 
@@ -5700,7 +5701,7 @@ Users: ${userNames} (${userCount} total)
           onSyncStatusChange={enabled => useSyncStore.getState().setSyncEnabled(enabled)}
           onShowSupport={() => {
             setShowDataModal(false);
-            setTimeout(() => setShowSupportModal(true), 300);
+            setTimeout(() => setShowSupportModal(true), ANIMATION_DURATION.MODAL_DELAY);
           }}
           onReset={resetApp}
           isOnboarding={showOnboardingImport}

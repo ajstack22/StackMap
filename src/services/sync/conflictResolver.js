@@ -1,9 +1,11 @@
 /**
  * Simple Conflict Resolution for Minimal Sync
- * 
+ *
  * Strategy: Last-Write-Wins (LWW) per field with clear logging
  * No complex CRDT structures, just timestamps and merge logic
  */
+
+import { getActivityText } from '../../utils/fieldAccessors';
 
 class ConflictResolver {
   constructor() {
@@ -197,17 +199,17 @@ class ConflictResolver {
     remoteActivities.forEach(activity => {
       if (!existingIds.has(activity.id)) {
         merged.push(activity);
-        this.log(`  Added activity: ${activity.text || activity.name}`);
+        this.log(`  Added activity: ${getActivityText(activity)}`);
       } else {
         // Activity exists - check if remote is newer
         const localActivity = localActivities.find(a => a.id === activity.id);
         const localTime = localActivity?.modifiedAt || localActivity?.createdAt || 0;
         const remoteTime = activity.modifiedAt || activity.createdAt || 0;
-        
+
         if (remoteTime > localTime) {
           const index = merged.findIndex(a => a.id === activity.id);
           merged[index] = activity;
-          this.log(`  Updated activity: ${activity.text || activity.name}`);
+          this.log(`  Updated activity: ${getActivityText(activity)}`);
         }
       }
     });
@@ -437,7 +439,7 @@ class ConflictResolver {
     remoteActivities.forEach(activity => {
       if (!existingIds.has(activity.id)) {
         merged.push(activity);
-        this.log(`  Added library activity: ${activity.text || activity.name}`);
+        this.log(`  Added library activity: ${getActivityText(activity)}`);
       }
     });
     

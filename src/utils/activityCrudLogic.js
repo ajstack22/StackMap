@@ -6,6 +6,7 @@
 
 import { DEFAULT_ACTIVITY_EMOJI } from '../constants';
 import { generateSecureId } from './secureId';
+import { getActivityIcon, getActivityText } from './fieldAccessors';
 
 /**
  * Validates activity data before creation or update
@@ -197,8 +198,8 @@ export const transformActivityForDisplay = (activity) => {
   if (!activity) return null;
 
   return {
-    icon: activity.icon || activity.emoji || DEFAULT_ACTIVITY_EMOJI,
-    text: activity.text || activity.name || activity.title || '',
+    icon: getActivityIcon(activity),
+    text: getActivityText(activity),
     description: activity.description || '',
     id: activity.id,
   };

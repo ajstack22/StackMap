@@ -17,6 +17,7 @@ import createStyles from './styles';
 import { CUSTOM_IMAGE_SOURCES, getCustomImageSource, THEMES } from '../../constants';
 import PreferencesModal from '../Modals/PreferencesModal';
 import { BUILD_VERSION } from '../../utils/version';
+import { getActivityIcon } from '../../utils/fieldAccessors';
 
 const ShareView = ({ shareToken, shareId, shareKey }) => {
   const [loading, setLoading] = useState(true);
@@ -272,7 +273,7 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
     if (activity.deleted) return null;
 
     const renderActivityEmoji = () => {
-      const activityIcon = activity.icon || activity.emoji || '🎯';
+      const activityIcon = getActivityIcon(activity);
       if (activityIcon && activityIcon.includes('.png')) {
         const imageSource = getCustomImageSource(activityIcon);
         if (imageSource) {

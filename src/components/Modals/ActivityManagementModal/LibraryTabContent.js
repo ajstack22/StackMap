@@ -12,6 +12,7 @@ import ConfirmModal from '../../Modals/ConfirmModal';
 import { FormInput } from '../../ModalUtilities';
 import Logo from '../../Logo';
 import { styles } from './styles';
+import { getActivityIcon } from '../../../utils/fieldAccessors';
 
 
 const LibraryTabContent = ({
@@ -129,7 +130,7 @@ const LibraryTabContent = ({
       <View style={styles.activityItem}>
         <View style={styles.activityContent}>
           <Text style={styles.activityEmoji}>
-            {activity.icon || activity.emoji}
+            {getActivityIcon(activity)}
           </Text>
           <Text style={styles.activityName}>{activity.text}</Text>
         </View>
@@ -349,9 +350,7 @@ const LibraryTabContent = ({
                     category.activities?.filter(
                       activity =>
                         (activity.text || '').toLowerCase().includes(query) ||
-                        (activity.icon || activity.emoji || '')?.includes(
-                          query,
-                        ),
+                        getActivityIcon(activity).includes(query),
                     ) || [];
 
                   // Check if category name matches
@@ -403,9 +402,7 @@ const LibraryTabContent = ({
                       category.activities?.filter(
                         activity =>
                           (activity.text || '').toLowerCase().includes(query) ||
-                          (activity.icon || activity.emoji || '')?.includes(
-                            query,
-                          ),
+                          getActivityIcon(activity).includes(query),
                       ) || [];
 
                     // Check if category name matches
