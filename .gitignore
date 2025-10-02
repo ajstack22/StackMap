@@ -157,3 +157,5 @@ tsconfig.tsbuildinfo
 *.env
 .stackmap-env
 .manylla-env
+atlas/
+.claude/

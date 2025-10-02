@@ -5,6 +5,37 @@
 - Current Feature: Edit Mode List Refactor (converting cards to list view)
 - NOT working on: Sync fixes, documentation cleanup, or old issues
 
+## 🤖 ATLAS WORKFLOW SYSTEM
+StackMap uses the **Atlas Framework** for structured development workflows. Choose the right tier:
+
+### Quick Workflow (5-15 min) - Trivial Changes
+```
+"Quick change: [DESCRIPTION]. Use Atlas Quick workflow."
+```
+**Use for:** Color changes, text updates, typo fixes, single-line changes
+**Phases:** Make change → Deploy
+
+### Standard Workflow (30-60 min) - Most Tasks ⭐ **DEFAULT**
+```
+"[TASK DESCRIPTION]. Use Atlas Standard workflow."
+```
+**Use for:** Bug fixes, small features (1-5 files), refactoring, test additions
+**Phases:** Research → Plan → Implement → Review → Deploy
+
+### Full Workflow (2-4 hours) - Complex Features
+```
+"[TASK DESCRIPTION]. Use Atlas Full workflow."
+```
+**Use for:** New modules, cross-platform features, security changes, major refactors
+**Phases:** Research → Story → Plan → Adversarial Review → Implement → Test → Validate → Cleanup → Deploy
+
+**📖 Quick Reference:** See [docs/ATLAS_QUICK_REFERENCE.md](./docs/ATLAS_QUICK_REFERENCE.md) ⭐ **START HERE**
+**📖 Detailed Tiers:** See [atlas/docs/WORKFLOW_TIERS.md](./atlas/docs/WORKFLOW_TIERS.md)
+**📖 Integration Guide:** See [docs/ATLAS_INTEGRATION.md](./docs/ATLAS_INTEGRATION.md)
+**🔧 Agent Specs:** See [.claude/agents/](../.claude/agents/)
+
+---
+
 ## 🚀 DEPLOYMENT - ALWAYS USE THIS
 ```bash
 # First, update PENDING_CHANGES.md with your changes:
@@ -164,18 +195,46 @@ cd android && ./gradlew clean
 ---
 
 ## 📝 BEFORE ANY CHANGES
-1. Check `/docs/` directory for existing documentation
-2. Check git history: `git log -p --grep="<feature>"`
-3. Test on ALL platforms if changing shared code
-4. Document WHY, not just what
+1. **Choose Atlas Workflow Tier** (Quick/Standard/Full) - see [Workflow Tiers](./atlas/docs/WORKFLOW_TIERS.md)
+2. Check `/docs/` directory for existing documentation
+3. Check git history: `git log -p --grep="<feature>"`
+4. Test on ALL platforms if changing shared code
+5. Document WHY, not just what
+
+---
+
+## 🤖 ATLAS AGENT SYSTEM
+StackMap has specialized agents in `.claude/agents/`:
+- **developer** - Implementation and troubleshooting
+- **product-manager** - Story creation, validation, roadmaps
+- **peer-reviewer** - Quality gates, edge case analysis (uses Opus for deeper review)
+- **devops** - Deployment, CI/CD, infrastructure
+- **security** - Security audits and vulnerability analysis
+
+**When to use agents:** For complex tasks (Standard/Full workflow), agents work in sequence or parallel:
+```
+"Implement dark mode. Use Atlas Standard workflow with developer and peer-reviewer agents."
+```
 
 ---
 
 ## 🔗 QUICK LINKS
+
+### Core Documentation
 - [New Developer Guide](./docs/onboarding/new-developer-guide.md)
 - [Full Deployment Guide](./docs/deployment/README.md)
-- [Feature Documentation](./docs/features/README.md)
 - [Testing Guides](./docs/testing/README.md)
+- [Troubleshooting](./TROUBLESHOOTING.md)
+
+### Feature Documentation
+- [Feature Documentation](./docs/features/README.md)
 - [Field Conventions](./docs/features/field-conventions.md)
 - [Edit Mode Specs](./docs/features/edit-mode-refactor.md)
-- [Troubleshooting](./TROUBLESHOOTING.md)
+
+### Atlas Workflow System ⭐
+- **[Atlas Quick Reference](./docs/ATLAS_QUICK_REFERENCE.md)** - Cheat sheet (START HERE!)
+- [Atlas Integration Guide](./docs/ATLAS_INTEGRATION.md) - StackMap-specific workflows
+- [Workflow Tiers](./atlas/docs/WORKFLOW_TIERS.md) - Quick/Standard/Full detailed guide
+- [Agent Workflow Guide](./atlas/docs/AGENT_WORKFLOW.md) - Complete 9-phase workflow
+- [Atlas README](./atlas/README.md) - Framework overview
+- [Agent Definitions](./.claude/agents/) - Specialized agent specs
