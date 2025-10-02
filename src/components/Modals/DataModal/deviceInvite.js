@@ -74,14 +74,6 @@ export const regenerateDeviceInvite = async ({
   try {
     setSyncLoading(true);
 
-    // Get recovery phrase - extract from current key if needed
-    let currentPhrase = syncRecoveryPhrase || syncService.getRecoveryPhrase();
-    if (!currentPhrase && generatedSyncKey) {
-      // Extract recovery phrase from the URL format
-      const parts = generatedSyncKey.split('#');
-      currentPhrase = parts[1]; // Recovery phrase is after the #
-    }
-
     const result = await syncService.createInviteCode(24, 5, 'Manual invite');
 
     if (result && result.inviteCode) {

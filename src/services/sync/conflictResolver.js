@@ -281,7 +281,7 @@ class ConflictResolver {
     }
     if (!remoteSettings) {
       this.log('No remote settings, using local');
-      return localSettings || {};
+      return localSettings ?? {};
     }
 
     const localTimestamp = (localMeta.fieldTimestamps?.settings) || 0;
@@ -384,7 +384,7 @@ class ConflictResolver {
    */
   mergeLibraryCategories(localCategories, remoteCategories) {
     if (!localCategories) return remoteCategories || [];
-    if (!remoteCategories) return localCategories || [];
+    if (!remoteCategories) return localCategories;
     
     // Handle both array and object formats
     const localArray = Array.isArray(localCategories) ? localCategories : [];
@@ -409,7 +409,7 @@ class ConflictResolver {
    */
   mergeLibraryTemplates(localTemplates, remoteTemplates) {
     if (!localTemplates) return remoteTemplates || [];
-    if (!remoteTemplates) return localTemplates || [];
+    if (!remoteTemplates) return localTemplates;
     
     const merged = [...localTemplates];
     const existingIds = new Set(localTemplates.map(t => t.id));
@@ -429,7 +429,7 @@ class ConflictResolver {
    */
   mergeLibraryActivities(localActivities, remoteActivities) {
     if (!localActivities) return remoteActivities || [];
-    if (!remoteActivities) return localActivities || [];
+    if (!remoteActivities) return localActivities;
     
     const merged = [...localActivities];
     const existingIds = new Set(localActivities.map(a => a.id));

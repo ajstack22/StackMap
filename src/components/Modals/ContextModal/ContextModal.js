@@ -513,13 +513,7 @@ const ContextModal = ({
           />
         </TouchableOpacity>
 
-        {Platform.OS !== 'web' && PanGestureHandler ? (
-          <PanGestureHandler onHandlerStateChange={handleWeatherSwipe}>
-            {carouselContent}
-          </PanGestureHandler>
-        ) : (
-          carouselContent
-        )}
+        {carouselContent}
 
         <TouchableOpacity
           style={styles.carouselArrow}
@@ -577,13 +571,7 @@ const ContextModal = ({
           />
         </TouchableOpacity>
 
-        {Platform.OS !== 'web' && PanGestureHandler ? (
-          <PanGestureHandler onHandlerStateChange={handleDaySwipe}>
-            {carouselContent}
-          </PanGestureHandler>
-        ) : (
-          carouselContent
-        )}
+        {carouselContent}
 
         <TouchableOpacity
           style={styles.carouselArrow}
@@ -643,13 +631,7 @@ const ContextModal = ({
           />
         </TouchableOpacity>
 
-        {Platform.OS !== 'web' && PanGestureHandler ? (
-          <PanGestureHandler onHandlerStateChange={handleTempSwipe}>
-            {carouselContent}
-          </PanGestureHandler>
-        ) : (
-          carouselContent
-        )}
+        {carouselContent}
 
         <TouchableOpacity
           style={styles.carouselArrow}
@@ -709,13 +691,7 @@ const ContextModal = ({
           />
         </TouchableOpacity>
 
-        {Platform.OS !== 'web' && PanGestureHandler ? (
-          <PanGestureHandler onHandlerStateChange={handleMoodSwipe}>
-            {carouselContent}
-          </PanGestureHandler>
-        ) : (
-          carouselContent
-        )}
+        {carouselContent}
 
         <TouchableOpacity
           style={styles.carouselArrow}
@@ -782,13 +758,7 @@ const ContextModal = ({
           <View style={styles.carouselArrow} />
         )}
 
-        {Platform.OS !== 'web' && hasMultipleUsers && PanGestureHandler ? (
-          <PanGestureHandler onHandlerStateChange={handleUserSwipe}>
-            {carouselContent}
-          </PanGestureHandler>
-        ) : (
-          carouselContent
-        )}
+        {carouselContent}
 
         {hasMultipleUsers ? (
           <TouchableOpacity

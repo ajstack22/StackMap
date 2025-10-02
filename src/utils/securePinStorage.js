@@ -7,25 +7,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // iOS 18.5 may have issues with MMKV encryption, so we handle it specially
 let pinStorage = null;
 
-// iOS 18.5 workaround: Force AsyncStorage on iOS if needed
-const FORCE_ASYNC_STORAGE_ON_IOS = false; // Set to true if MMKV issues persist
-
 // Initialize MMKV for native platforms
-if (
-  Platform.OS !== 'web' &&
-  !(Platform.OS === 'ios' && FORCE_ASYNC_STORAGE_ON_IOS)
-) {
+// iOS: Uses AsyncStorage (pinStorage = null) due to MMKV encryption issues on iOS 18.5
+// Android: Uses MMKV with encryption
+if (Platform.OS === 'android') {
   try {
-    if (Platform.OS === 'ios') {
-      // iOS: Force AsyncStorage fallback for now
-      pinStorage = null; // Force AsyncStorage on iOS
-    } else {
-      // Android: Keep working configuration with encryption
-      pinStorage = new MMKV({
-        id: 'stackmap-pin-storage',
-        encryptionKey: 'StackMap-PIN-2025-Secure-Key',
-      });
-    }
+    pinStorage = new MMKV({
+      id: 'stackmap-pin-storage',
+      encryptionKey: 'StackMap-PIN-2025-Secure-Key',
+    });
   } catch (e) {
     pinStorage = null;
     // MMKV initialization failed, will fallback to AsyncStorage
