@@ -74,6 +74,7 @@ const SyncPreviewModal = ({
 
       // Initialize encryption to decrypt the data
       // Use the same fixed salt as syncService for consistency
+      // eslint-disable-next-line no-secrets/no-secrets -- Public salt for client-side KDF, not a secret
       const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
       await encryptionService.initialize(decodedPhrase, syncId, fixedSalt);
 

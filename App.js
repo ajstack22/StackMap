@@ -2961,6 +2961,7 @@ The file will remain in your Downloads folder until you delete it.`,
             const fileOptions = uniqueFiles.slice(0, 5).map(f => {
               // Parse the filename to get date and time
               const match = f.name.match(
+                // eslint-disable-next-line security/detect-unsafe-regex -- Simple date/time pattern on bounded filename input
                 /stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/,
               );
               let displayName = f.name;
@@ -3213,6 +3214,7 @@ To use an older backup, delete some recent exports first.`,
             const fileOptions = filesToShow.map(f => {
               // Parse the filename to get date and time
               const match = f.name.match(
+                // eslint-disable-next-line security/detect-unsafe-regex -- Simple date/time pattern on bounded filename input
                 /stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/,
               );
               let displayName = f.name;
@@ -3276,6 +3278,7 @@ To use an older backup, delete some recent exports first.`,
           // Single file found - show confirmation
           const f = uniqueFiles[0];
           const match = f.name.match(
+            // eslint-disable-next-line security/detect-unsafe-regex -- Simple date/time pattern on bounded filename input
             /stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/,
           );
           let fileInfo = f.name;
@@ -3833,6 +3836,7 @@ This will replace all your current data.`,
       // Parse file info for better display
       let fileDisplayName = fileName;
       const match = fileName.match(
+        // eslint-disable-next-line security/detect-unsafe-regex -- Simple date/time pattern on bounded filename input
         /stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/,
       );
       if (match) {

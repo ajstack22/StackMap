@@ -34,6 +34,7 @@ const loadFileSystemModules = () => {
 // Helper function to format file display name
 const formatFileDisplayName = (file) => {
   const match = file.name.match(
+    // eslint-disable-next-line security/detect-unsafe-regex -- Simple date/time pattern on bounded filename input
     /stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/,
   );
   let displayName = file.name;

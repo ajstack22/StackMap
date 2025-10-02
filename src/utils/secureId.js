@@ -43,6 +43,7 @@ export function generateSecureId(prefix = '') {
 export function generateSecureRandomString(length = 9) {
   try {
     if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      // eslint-disable-next-line no-secrets/no-secrets -- Base36 alphabet for ID generation, not a secret
       const chars = '0123456789abcdefghijklmnopqrstuvwxyz';
       const bytes = new Uint8Array(length);
       crypto.getRandomValues(bytes);

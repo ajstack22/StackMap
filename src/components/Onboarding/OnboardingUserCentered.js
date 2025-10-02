@@ -455,7 +455,8 @@ const OnboardingUserCentered = ({
       if (phraseToUse === '8b993a49ebf42aaf3d06e63ae8aee6c8') {
         syncId = '12e8a92bf426e20b1c28c7d6b3acd7bc';
       }
-      
+
+      // eslint-disable-next-line no-secrets/no-secrets -- Public salt for client-side KDF, not a secret
       const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
       
       

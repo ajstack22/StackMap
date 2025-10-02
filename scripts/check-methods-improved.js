@@ -49,30 +49,35 @@ function extractMethods(filePath) {
   
   // Pattern 1: Class methods (async methodName() or methodName())
   // Updated to handle TypeScript return types: methodName(): ReturnType {
+  // eslint-disable-next-line security/detect-unsafe-regex -- Dev tool for code analysis, not user input
   const classMethodRegex = /^\s*(async\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\s*\([^)]*\)\s*(:.*?)?\s*{/gm;
   let match;
   while ((match = classMethodRegex.exec(content)) !== null) {
     methods.add(match[2]);
   }
-  
+
   // Pattern 2: Object methods (methodName: function() or methodName: async function())
+  // eslint-disable-next-line security/detect-unsafe-regex -- Dev tool for code analysis, not user input
   const objectMethodRegex = /^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*(async\s+)?function\s*\(/gm;
   while ((match = objectMethodRegex.exec(content)) !== null) {
     methods.add(match[1]);
   }
-  
+
   // Pattern 3: Arrow function properties (methodName: () => or methodName: async () =>)
+  // eslint-disable-next-line security/detect-unsafe-regex -- Dev tool for code analysis, not user input
   const arrowMethodRegex = /^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*(async\s*)?\([^)]*\)\s*=>/gm;
   while ((match = arrowMethodRegex.exec(content)) !== null) {
     methods.add(match[1]);
   }
-  
+
   // Pattern 4: Exported functions (export function methodName or export const methodName = )
+  // eslint-disable-next-line security/detect-unsafe-regex -- Dev tool for code analysis, not user input
   const exportFunctionRegex = /export\s+(async\s+)?function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/gm;
   while ((match = exportFunctionRegex.exec(content)) !== null) {
     methods.add(match[2]);
   }
-  
+
+  // eslint-disable-next-line security/detect-unsafe-regex -- Dev tool for code analysis, not user input
   const exportConstRegex = /export\s+const\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(async\s*)?\(/gm;
   while ((match = exportConstRegex.exec(content)) !== null) {
     methods.add(match[1]);

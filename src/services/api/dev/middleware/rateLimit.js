@@ -125,7 +125,9 @@ const keyGenerators = {
         }
 
         // Basic IP format validation with improved IPv6 regex
+        // eslint-disable-next-line security/detect-unsafe-regex -- IPv4 validation with bounded octet ranges
         const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        // eslint-disable-next-line security/detect-unsafe-regex -- IPv6 validation with bounded segment count
         const ipv6Regex = /^(?:[0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/;
         const ipv6MappedRegex = /^::ffff:[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/;
 

@@ -289,7 +289,8 @@ class MinimalSyncService {
    * Generate sync ID from recovery phrase (same as existing sync)
    */
   async generateSyncId(recoveryPhrase) {
-    
+
+    // eslint-disable-next-line no-secrets/no-secrets -- Public salt for sync ID derivation, not a secret
     const fixedSalt = 'U3luY0lkU2FsdDEyMzQ1Njc4OTAxMjM0NQ==';
     
     const { key } = await encryptionService.deriveKeyFromPhrase(recoveryPhrase, fixedSalt);
@@ -308,6 +309,7 @@ class MinimalSyncService {
    * Initialize encryption for sync
    */
   async initializeEncryption(recoveryPhrase, syncId) {
+    // eslint-disable-next-line no-secrets/no-secrets -- Public salt for client-side KDF, not a secret
     const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
     await encryptionService.initialize(recoveryPhrase, syncId, fixedSalt);
     this.encryptionReady = true;

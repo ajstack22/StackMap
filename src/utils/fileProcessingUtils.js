@@ -99,6 +99,7 @@ export const parseStackMapFilename = (filename) => {
   const nameWithoutExt = filename.replace(/\.[^.]+$/, '');
 
   // Match pattern: prefix-YYYY-MM-DD[-HH-MM-SS]
+  // eslint-disable-next-line security/detect-unsafe-regex -- Simple date/time pattern on bounded filename input
   const match = nameWithoutExt.match(/^(.+)-(\d{4}-\d{2}-\d{2})(?:-(\d{2}-\d{2}-\d{2}))?$/);
 
   if (!match) {

@@ -270,6 +270,7 @@ export const extractRecoveryPhrase = (content) => {
  * @returns {string} Random invite code
  */
 export const generateInviteCode = (length = 8) => {
+  // eslint-disable-next-line no-secrets/no-secrets -- Base62 alphabet for invite code generation, not a secret
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
 

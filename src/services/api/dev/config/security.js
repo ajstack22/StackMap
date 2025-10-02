@@ -201,13 +201,16 @@ const VALIDATION_PATTERNS = {
 
     // API parameters
     apiEndpoint: /^[a-zA-Z0-9/_-]{1,200}$/,
+    // eslint-disable-next-line security/detect-unsafe-regex -- ISO 8601 timestamp pattern with bounded length
     timestamp: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/,
 
     // Metric names
     metricName: /^[a-zA-Z][a-zA-Z0-9_\.]{1,100}$/,
 
     // IP addresses
+    // eslint-disable-next-line security/detect-unsafe-regex -- IPv4 validation with bounded octet ranges
     ipv4: /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
+    // eslint-disable-next-line security/detect-unsafe-regex -- IPv6 validation with fixed segment count
     ipv6: /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/
 };
 
@@ -305,6 +308,7 @@ const PasswordUtils = {
      */
     generateSecurePassword: (length = 16) => {
         const crypto = require('crypto');
+        // eslint-disable-next-line no-secrets/no-secrets -- Character set for random password generation, not a secret
         const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
         let password = '';
 
