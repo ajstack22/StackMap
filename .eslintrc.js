@@ -1,6 +1,13 @@
 module.exports = {
   root: true,
-  extends: '@react-native',
+  extends: [
+    '@react-native',
+  ],
+  plugins: [
+    'security',
+    'no-secrets',
+    'react-hooks',
+  ],
   ignorePatterns: [
     'tests/**/*',
     '*.test.js',
@@ -29,9 +36,32 @@ module.exports = {
   rules: {
     // Allow .web.js files to use browser APIs
     'no-restricted-globals': 'off',
-    // Common React Native patterns
+
+    // Security rules
+    'security/detect-object-injection': 'warn',
+    'security/detect-non-literal-regexp': 'warn',
+    'security/detect-unsafe-regex': 'error',
+    'security/detect-buffer-noassert': 'error',
+    'security/detect-eval-with-expression': 'error',
+    'security/detect-no-csrf-before-method-override': 'error',
+    'security/detect-possible-timing-attacks': 'warn',
+
+    // Prevent secrets in code
+    'no-secrets/no-secrets': ['error', {
+      'tolerance': 4.5,
+      'ignoreContent': ['^REACT_APP_', '^PUBLIC_'],
+    }],
+
+    // React hooks rules
+    'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': ['warn', {
       additionalHooks: '(useAnimatedStyle|useAnimatedProps|useDerivedValue|useAnimatedGestureHandler)',
     }],
+
+    // Additional security
+    'no-eval': 'error',
+    'no-implied-eval': 'error',
+    'no-new-func': 'error',
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
   },
 };

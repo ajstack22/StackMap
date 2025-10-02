@@ -1,16 +1,27 @@
 version: 2
 updates:
-  # Enable version updates for npm
+  # Enable npm dependency updates with security focus
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "10:00"
+      time: "09:00"
     open-pull-requests-limit: 5
+    reviewers:
+      - "ajstack22"
     labels:
       - "dependencies"
-      - "automated"
+      - "security"
+    # Group patch updates together to reduce PR noise
+    groups:
+      patch-updates:
+        update-types:
+          - "patch"
+    # Ignore major version bumps (requires manual review)
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     commit-message:
-      prefix: "chore"
+      prefix: "deps"
       include: "scope"
