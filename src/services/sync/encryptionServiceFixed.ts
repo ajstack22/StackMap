@@ -246,6 +246,75 @@ class FixedEncryptionService {
   }
 
   /**
+   * Extract and parse metadata from decrypted data
+   */
+  private extractMetadata(decrypted: Uint8Array): { metadata: EncryptionMetadata; dataBytes: Uint8Array } | null {
+    if (decrypted.length <= 4) {
+      return null;
+    }
+
+    const metadataLength =
+      (decrypted[0] << 24) |
+      (decrypted[1] << 16) |
+      (decrypted[2] << 8) |
+      decrypted[3];
+
+    if (metadataLength <= 0 || metadataLength >= decrypted.length - 4) {
+      return null;
+    }
+
+    try {
+      const metadataBytes = decrypted.slice(4, 4 + metadataLength);
+      const metadataStr = decodeUTF8(metadataBytes);
+      const metadata: EncryptionMetadata = JSON.parse(metadataStr);
+      const dataBytes = decrypted.slice(4 + metadataLength);
+      return { metadata, dataBytes };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Parse data with metadata (version 2+)
+   */
+  private parseWithMetadata(decrypted: Uint8Array): any {
+    const result = this.extractMetadata(decrypted);
+    if (!result) {
+      return null;
+    }
+
+    const { metadata, dataBytes } = result;
+    let finalDataBytes = dataBytes;
+
+    // Handle decompression if needed
+    if (metadata.version === 2 && metadata.compressed) {
+      try {
+        finalDataBytes = pako.inflate(dataBytes);
+      } catch {
+        throw new Error('Failed to decompress data');
+      }
+    }
+
+    const dataStr = decodeUTF8(finalDataBytes);
+    return JSON.parse(dataStr);
+  }
+
+  /**
+   * Parse data in legacy format (no metadata)
+   */
+  private parseLegacyFormat(decrypted: Uint8Array): any {
+    try {
+      const decryptedStr = decodeUTF8(decrypted);
+      return JSON.parse(decryptedStr);
+    } catch {
+      // Try decompressing
+      const decompressed = pako.inflate(decrypted);
+      const decompressedStr = decodeUTF8(decompressed);
+      return JSON.parse(decompressedStr);
+    }
+  }
+
+  /**
    * Decrypt data using nacl secretbox
    */
   decryptData(encryptedData: string): any {
@@ -253,80 +322,34 @@ class FixedEncryptionService {
       throw new Error('Encryption not initialized');
     }
 
-    try {
-      
-      // Validate input
-      if (typeof encryptedData !== 'string') {
-        throw new Error(`Expected string but got ${typeof encryptedData}`);
-      }
-      
-      if (!encryptedData) {
-        throw new Error('Empty encrypted data');
-      }
-      
-      const combined = decodeBase64(encryptedData);
-
-      // Extract nonce and encrypted data
-      const nonce = combined.slice(0, nacl.secretbox.nonceLength);
-      const encrypted = combined.slice(nacl.secretbox.nonceLength);
-
-      // Decrypt
-      const decrypted = nacl.secretbox.open(encrypted, nonce, this.masterKey);
-      if (!decrypted) {
-        throw new Error('Decryption failed - invalid key or corrupted data');
-      }
-
-      // Check for metadata (version 2+)
-      if (decrypted.length > 4) {
-        // Read metadata length using manual byte unpacking
-        const metadataLength = 
-          (decrypted[0] << 24) | 
-          (decrypted[1] << 16) | 
-          (decrypted[2] << 8) | 
-          decrypted[3];
-        
-        
-        if (metadataLength > 0 && metadataLength < decrypted.length - 4) {
-          try {
-            const metadataBytes = decrypted.slice(4, 4 + metadataLength);
-            const metadataStr = decodeUTF8(metadataBytes);
-            const metadata: EncryptionMetadata = JSON.parse(metadataStr);
-            let dataBytes = decrypted.slice(4 + metadataLength);
-
-            // Handle decompression if needed
-            if (metadata.version === 2 && metadata.compressed) {
-              try {
-                dataBytes = pako.inflate(dataBytes);
-              } catch (error) {
-                throw new Error('Failed to decompress data');
-              }
-            }
-
-            const dataStr = decodeUTF8(dataBytes);
-            return JSON.parse(dataStr);
-          } catch (metadataError) {
-            // Try legacy format
-          }
-        }
-      }
-
-      // Legacy format (no metadata)
-      try {
-        const decryptedStr = decodeUTF8(decrypted);
-        return JSON.parse(decryptedStr);
-      } catch (legacyError) {
-        // Try decompressing
-        try {
-          const decompressed = pako.inflate(decrypted);
-          const decompressedStr = decodeUTF8(decompressed);
-          return JSON.parse(decompressedStr);
-        } catch (decompressionError) {
-          throw new Error('Failed to decrypt data - invalid format');
-        }
-      }
-    } catch (error) {
-      throw error;
+    // Validate input
+    if (typeof encryptedData !== 'string' || !encryptedData) {
+      throw new Error(`Invalid encrypted data: ${typeof encryptedData}`);
     }
+
+    const combined = decodeBase64(encryptedData);
+
+    // Extract nonce and encrypted data
+    const nonce = combined.slice(0, nacl.secretbox.nonceLength);
+    const encrypted = combined.slice(nacl.secretbox.nonceLength);
+
+    // Decrypt
+    const decrypted = nacl.secretbox.open(encrypted, nonce, this.masterKey);
+    if (!decrypted) {
+      throw new Error('Decryption failed - invalid key or corrupted data');
+    }
+
+    // Try metadata format first, then legacy
+    try {
+      const result = this.parseWithMetadata(decrypted);
+      if (result !== null) {
+        return result;
+      }
+    } catch {
+      // Continue to legacy format
+    }
+
+    return this.parseLegacyFormat(decrypted);
   }
 
   /**

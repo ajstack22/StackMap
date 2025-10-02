@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Text } from '../Typography';
 import {
   View,
@@ -164,5 +165,31 @@ const styles = StyleSheet.create({
     marginRight: SPACING.xs,
   },
 });
+
+ModalFooter.propTypes = {
+  primaryButton: PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    onPress: PropTypes.func.isRequired,
+    icon: PropTypes.string,
+    disabled: PropTypes.bool,
+  }),
+  secondaryButton: PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    onPress: PropTypes.func.isRequired,
+    icon: PropTypes.string,
+    disabled: PropTypes.bool,
+  }),
+  tertiaryButton: PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    onPress: PropTypes.func.isRequired,
+    icon: PropTypes.string,
+    disabled: PropTypes.bool,
+  }),
+  theme: PropTypes.object.isRequired,
+  loading: PropTypes.bool,
+  insets: PropTypes.object,
+  getAndroidModalBottomHeight: PropTypes.func,
+  showOnDesktop: PropTypes.bool,
+};
 
 export default ModalFooter;

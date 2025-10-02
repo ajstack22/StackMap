@@ -1,5 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
+import PropTypes from 'prop-types';
 import Svg, { Rect } from 'react-native-svg';
 
 const Logo = ({ size = 32, theme, color, ...restProps }) => {
@@ -48,6 +49,12 @@ const Logo = ({ size = 32, theme, color, ...restProps }) => {
       </Svg>
     </View>
   );
+};
+
+Logo.propTypes = {
+  size: PropTypes.number,
+  theme: PropTypes.object,
+  color: PropTypes.string,
 };
 
 export default Logo;

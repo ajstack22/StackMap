@@ -22,7 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Logo from '../Logo/Logo';
 import syncService from '../../services/sync';
 import minimalSync from '../../services/sync/minimalSyncService';
-import encryptionService from '../../services/sync/encryptionService';
+import encryptionService from '../../services/sync/encryptionServiceFixed';
 import { BUILD_VERSION } from '../../utils/version';
 import { useAppStore, useUserStore, useSettingsStore } from '../../stores';
 import { generateSecureRandomString } from '../../utils/secureId';

@@ -178,7 +178,7 @@ import { useAppStore } from './src/stores';
 import useSyncStore from './src/stores/useSyncStore';
 
 // Import services
-import encryptionService from './src/services/sync/encryptionService';
+import encryptionService from './src/services/sync/encryptionServiceFixed';
 import syncService from './src/services/sync';
 // State debugger removed - no longer needed
 
@@ -3115,9 +3115,10 @@ To use an older backup, delete some recent exports first.`,
       setShowDataModal(true);
 
       // Return a promise that will resolve when the modal completes
-      return new Promise(resolve => {
-        // Store the resolve function to be called when import completes
+      return new Promise((resolve, reject) => {
+        // Store the resolve/reject functions to be called when import completes
         window.__onboardingImportResolve = resolve;
+        window.__onboardingImportReject = reject;
       });
     } catch (error) {
       if (__DEV__) {

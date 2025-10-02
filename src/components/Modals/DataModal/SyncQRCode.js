@@ -26,7 +26,7 @@ const SyncQRCode = ({
   showShareButton = true,
   customActions = [],
   qrError = false,
-  setQrError = () => {}
+  setQrError = (/** @type {boolean} */ value) => {}
 }) => {
 
   // Safe clipboard copy helper
@@ -108,7 +108,7 @@ const SyncQRCode = ({
   };
 
   // Handle QR code error
-  const handleQRError = () => {
+  const handleQRError = (/** @type {any} */ error) => {
     setQrError(true);
   };
 

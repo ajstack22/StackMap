@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import { Text } from '../Typography';
 import { View, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { SHADOWS, TYPOGRAPHY, RADIUS, SPACING } from '../../constants';
@@ -110,5 +111,17 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
 });
+
+Toast.propTypes = {
+  toast: PropTypes.shape({
+    visible: PropTypes.bool,
+    message: PropTypes.string,
+    action: PropTypes.object,
+    backgroundColor: PropTypes.string,
+    duration: PropTypes.number,
+  }),
+  onDismiss: PropTypes.func.isRequired,
+  theme: PropTypes.object.isRequired,
+};
 
 export default React.memo(Toast);

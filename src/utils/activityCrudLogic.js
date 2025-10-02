@@ -22,7 +22,7 @@ export const validateActivityData = (activityData) => {
 
   const { name, icon } = activityData;
 
-  if (!name || !name.trim()) {
+  if (!name?.trim()) {
     return { success: false, error: 'Activity name cannot be empty' };
   }
 

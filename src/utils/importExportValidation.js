@@ -15,7 +15,7 @@
  * @returns {string} Formatted display name
  */
 export const formatFileDisplayName = (file) => {
-  if (!file || !file.name) {
+  if (!file?.name) {
     return 'Unknown file';
   }
 

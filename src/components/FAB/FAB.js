@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import PropTypes from 'prop-types';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { SHADOWS, FAB_DIMENSIONS, isTablet } from '../../constants';
 
@@ -78,5 +79,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+FAB.propTypes = {
+  onPress: PropTypes.func.isRequired,
+  icon: PropTypes.string.isRequired,
+  position: PropTypes.object,
+  theme: PropTypes.object.isRequired,
+  style: PropTypes.object,
+};
 
 export default FAB;

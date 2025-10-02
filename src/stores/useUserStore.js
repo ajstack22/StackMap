@@ -300,7 +300,7 @@ const useUserStore = create(
           set(
             state => {
               const userId = state.currentUser;
-              if (!userId || !state.users[userId]) return state;
+              if (!userId || !state.users?.[userId]) return state;
 
               const user = state.users[userId];
               const userAddedIds = user.userAddedActivityIds || [];

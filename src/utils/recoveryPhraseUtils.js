@@ -177,6 +177,38 @@ export const createInviteUrl = (recoveryPhrase, inviteCode, baseUrl = 'https://s
 };
 
 /**
+ * Validate URL format clipboard content
+ * @returns {{isValid: boolean, type: 'url' | 'invalid', error?: string}}
+ */
+const validateUrlContent = (trimmed) => {
+  const parsed = parseSyncKey(trimmed);
+  if (!parsed?.recoveryPhrase) {
+    return /** @type {{isValid: boolean, type: 'invalid', error: string}} */ ({ isValid: false, type: 'invalid', error: 'Invalid invite URL format' });
+  }
+
+  const phraseValidation = isValidRecoveryPhrase(parsed.recoveryPhrase);
+  return phraseValidation.isValid
+    ? /** @type {{isValid: boolean, type: 'url'}} */ ({ isValid: true, type: 'url' })
+    : /** @type {{isValid: boolean, type: 'invalid', error: string}} */ ({ isValid: false, type: 'invalid', error: phraseValidation.error });
+};
+
+/**
+ * Validate key format clipboard content
+ * @returns {{isValid: boolean, type: 'key' | 'invalid', error?: string}}
+ */
+const validateKeyContent = (trimmed) => {
+  const parsed = parseSyncKey(trimmed);
+  if (!parsed?.recoveryPhrase) {
+    return /** @type {{isValid: boolean, type: 'invalid', error: string}} */ ({ isValid: false, type: 'invalid', error: 'Invalid key format' });
+  }
+
+  const phraseValidation = isValidRecoveryPhrase(parsed.recoveryPhrase);
+  return phraseValidation.isValid
+    ? /** @type {{isValid: boolean, type: 'key'}} */ ({ isValid: true, type: 'key' })
+    : /** @type {{isValid: boolean, type: 'invalid', error: string}} */ ({ isValid: false, type: 'invalid', error: phraseValidation.error });
+};
+
+/**
  * Validate clipboard content for sync operations
  * Checks if clipboard content is a valid sync key or URL
  *
@@ -192,32 +224,12 @@ export const validateClipboardSyncContent = (content) => {
 
   // Check if it's a URL
   if (trimmed.startsWith('http')) {
-    const parsed = parseSyncKey(trimmed);
-    if (parsed && parsed.recoveryPhrase) {
-      const phraseValidation = isValidRecoveryPhrase(parsed.recoveryPhrase);
-      if (phraseValidation.isValid) {
-        return { isValid: true, type: 'url' };
-      } else {
-        return { isValid: false, type: 'invalid', error: phraseValidation.error };
-      }
-    } else {
-      return { isValid: false, type: 'invalid', error: 'Invalid invite URL format' };
-    }
+    return validateUrlContent(trimmed);
   }
 
   // Check if it's a key format (inviteCode#phrase)
   if (trimmed.includes('#')) {
-    const parsed = parseSyncKey(trimmed);
-    if (parsed && parsed.recoveryPhrase) {
-      const phraseValidation = isValidRecoveryPhrase(parsed.recoveryPhrase);
-      if (phraseValidation.isValid) {
-        return { isValid: true, type: 'key' };
-      } else {
-        return { isValid: false, type: 'invalid', error: phraseValidation.error };
-      }
-    } else {
-      return { isValid: false, type: 'invalid', error: 'Invalid key format' };
-    }
+    return validateKeyContent(trimmed);
   }
 
   // Check if it's just a recovery phrase

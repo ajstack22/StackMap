@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Text, TextInput } from '../Typography';
 import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -167,5 +168,30 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
 });
+
+FormInput.propTypes = {
+  label: PropTypes.string,
+  value: PropTypes.string,
+  onChangeText: PropTypes.func,
+  placeholder: PropTypes.string,
+  error: PropTypes.string,
+  multiline: PropTypes.bool,
+  numberOfLines: PropTypes.number,
+  secureTextEntry: PropTypes.bool,
+  showPasswordToggle: PropTypes.bool,
+  onTogglePassword: PropTypes.func,
+  editable: PropTypes.bool,
+  keyboardType: PropTypes.string,
+  autoCapitalize: PropTypes.string,
+  autoCorrect: PropTypes.bool,
+  maxLength: PropTypes.number,
+  leftIcon: PropTypes.string,
+  rightIcon: PropTypes.string,
+  onRightIconPress: PropTypes.func,
+  theme: PropTypes.object,
+  style: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+  inputStyle: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+  required: PropTypes.bool,
+};
 
 export default FormInput;

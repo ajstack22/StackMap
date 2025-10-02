@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import PropTypes from 'prop-types';
 import { Text } from '../Typography';
 import {
   TYPOGRAPHY,
@@ -86,5 +87,18 @@ const styles = StyleSheet.create({
     color: 'white',
   },
 });
+
+TabSelector.propTypes = {
+  activeTab: PropTypes.string.isRequired,
+  onTabChange: PropTypes.func.isRequired,
+  theme: PropTypes.object.isRequired,
+  tabs: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+      icon: PropTypes.any,
+    })
+  ),
+};
 
 export default TabSelector;

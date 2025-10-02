@@ -227,7 +227,7 @@ const isRecoveryPhrase = (text) => {
  * @returns {{recoveryPhrase?: string, inviteCode?: string, url?: string, data?: Object} | null}
  */
 export const extractClipboardData = (validationResult) => {
-  if (!validationResult || !validationResult.isValid || !validationResult.metadata) {
+  if (!validationResult?.isValid || !validationResult?.metadata) {
     return null;
   }
 

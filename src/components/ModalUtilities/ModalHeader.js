@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Text } from '../Typography';
 import {
   View,
@@ -113,5 +114,15 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
   },
 });
+
+ModalHeader.propTypes = {
+  title: PropTypes.string.isRequired,
+  icon: PropTypes.string,
+  onClose: PropTypes.func.isRequired,
+  theme: PropTypes.object.isRequired,
+  leftAction: PropTypes.node,
+  rightAction: PropTypes.node,
+  subtitle: PropTypes.string,
+};
 
 export default ModalHeader;

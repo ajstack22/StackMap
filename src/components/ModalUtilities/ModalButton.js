@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Text } from '../Typography';
 import {
   TouchableOpacity,
@@ -198,5 +199,20 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
 });
+
+ModalButton.propTypes = {
+  onPress: PropTypes.func,
+  label: PropTypes.string.isRequired,
+  icon: PropTypes.string,
+  variant: PropTypes.oneOf(['primary', 'secondary', 'danger']),
+  disabled: PropTypes.bool,
+  loading: PropTypes.bool,
+  theme: PropTypes.object.isRequired,
+  style: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+  textStyle: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+  fullWidth: PropTypes.bool,
+  compact: PropTypes.bool,
+  hideOnDesktop: PropTypes.bool,
+};
 
 export default ModalButton;
