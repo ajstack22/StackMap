@@ -7,19 +7,8 @@
 // Import the new integrated sync service with conflict resolution
 import syncStoreIntegration from './syncStoreIntegration';
 
-// DEBUG: Import minimal test sync
-import debugSync from './debugSync';
-
 // Use the new sync store integration as the default
 const syncService = syncStoreIntegration;
-if (__DEV__) {
-}
-
-// DEBUG: Test if basic sync works at all
-if (typeof window !== 'undefined') {
-  setTimeout(() => {
-  }, 2000);
-}
 
 // All old sync implementations have been removed (12,500+ lines deleted)
 
