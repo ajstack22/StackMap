@@ -200,6 +200,17 @@ npm run security:audit || {
 }
 echo "✅ Security audit passed!"
 
+# Additional npm audit check for production dependencies
+echo "- Checking production dependencies for vulnerabilities..."
+if ! npm audit --audit-level=high --production 2>/dev/null; then
+    echo "⚠️  Found high/critical vulnerabilities in production dependencies"
+    echo "   Review with: npm audit"
+    echo "   Fix with: npm audit fix"
+    echo "   Continuing deployment (production check is non-blocking but should be reviewed)..."
+else
+    echo "✅ Production dependencies clean!"
+fi
+
 # SonarCloud Code Quality Analysis (non-blocking)
 echo "- Running SonarCloud analysis..."
 # Load SonarCloud token if available
