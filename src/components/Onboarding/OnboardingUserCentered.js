@@ -390,7 +390,7 @@ const OnboardingUserCentered = ({
           name: u.name,
           icon: u.icon || u.emoji || DEFAULT_USER_ICON,
         })),
-        hasLibrary: decryptedData.library && decryptedData.library.categories?.length > 0,
+        hasLibrary: decryptedData.library && decryptedData.library.categories?.length,
       });
     } catch (error) {
       
@@ -512,7 +512,7 @@ const OnboardingUserCentered = ({
     
     try {
       // First, create users in the store before setting up sync
-      if (users.length > 0) {
+      if (users.length) {
         const timestamp = Date.now();
         const randomId = generateSecureRandomString(9);
         const usersObj = {};
@@ -982,7 +982,7 @@ const OnboardingUserCentered = ({
     return (
       <View style={styles.stepContainer}>
         <Text style={styles.title}>
-          {users.length === 0 ? 'Create Your First User' : 'Add Another User?'}
+          {!users.length ? 'Create Your First User' : 'Add Another User?'}
         </Text>
         <Text style={styles.subtitle}>
           {userJourney.userType === 'helper' 
@@ -990,7 +990,7 @@ const OnboardingUserCentered = ({
             : 'Set up your profile'}
         </Text>
         
-        {users.length > 0 && (
+        {users.length && (
           <View style={styles.usersList}>
             {users.map(user => (
               <View key={user.id} style={styles.userPill}>
@@ -1033,11 +1033,11 @@ const OnboardingUserCentered = ({
             disabled={!userName.trim()}
           >
             <Text style={styles.buttonText}>
-              {users.length === 0 ? 'Add User' : 'Add Another'}
+              {!users.length ? 'Add User' : 'Add Another'}
             </Text>
           </TouchableOpacity>
           
-          {users.length > 0 && (
+          {users.length && (
             <TouchableOpacity
               style={styles.secondaryButton}
               onPress={() => {
@@ -1350,7 +1350,7 @@ const OnboardingUserCentered = ({
             autoCorrect={false}
           />
           
-          {recoveryPhrase.length > 0 && (
+          {recoveryPhrase.length && (
             <Text style={styles.charCount}>
               {parsed.isInviteFormat && parsed.inviteCode ? (
                 <>Invite: {parsed.inviteCode} • Key: {displayCharCount}/32 chars</>

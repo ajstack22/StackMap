@@ -90,7 +90,7 @@ export const useEditMode = (initialActivities, onUpdate) => {
   }, [initialActivities, selectedItems, updateActivities]);
 
   const handleUndo = useCallback(() => {
-    if (undoStack.length === 0) return;
+    if (!undoStack.length) return;
 
     triggerHaptic('success');
     const previousState = undoStack[undoStack.length - 1];
@@ -123,7 +123,7 @@ export const useEditMode = (initialActivities, onUpdate) => {
 
   return {
     selectedItems,
-    canUndo: undoStack.length > 0,
+    canUndo: !!undoStack.length,
 
     // Actions
     handleMoveUp,

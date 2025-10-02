@@ -202,13 +202,13 @@ const useUserStore = create(
               if (
                 !sanitizedUser.icon ||
                 typeof sanitizedUser.icon !== 'string' ||
-                sanitizedUser.icon.length === 0
+                !sanitizedUser.icon.length
               ) {
                 // Try to use emoji field as fallback
                 if (
                   sanitizedUser.emoji &&
                   typeof sanitizedUser.emoji === 'string' &&
-                  sanitizedUser.emoji.length > 0
+                  sanitizedUser.emoji.length
                 ) {
                   sanitizedUser.icon = sanitizedUser.emoji;
                   delete sanitizedUser.emoji;
@@ -241,7 +241,7 @@ const useUserStore = create(
                 if (
                   !sanitizedUpdates.icon ||
                   typeof sanitizedUpdates.icon !== 'string' ||
-                  sanitizedUpdates.icon.length === 0
+                  !sanitizedUpdates.icon.length
                 ) {
                   sanitizedUpdates.icon = DEFAULT_USER_ICON;
                 }

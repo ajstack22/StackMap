@@ -104,7 +104,7 @@ const ActivityGrid = ({
 
   // Handle edit mode with drag-and-drop
   if (isEditingCategory) {
-    if (orderedActivities.length > 0) {
+    if (orderedActivities.length) {
       return (
         <DraggableFlatList
           data={orderedActivities}
@@ -131,11 +131,11 @@ const ActivityGrid = ({
   // Handle normal display mode
   const filteredActivities = getFilteredActivities(category.activities, searchQuery);
 
-  if (category.activities.length === 0) {
+  if (!category.activities.length) {
     return <EmptyState message="No activities yet. Tap + to add one." />;
   }
 
-  if (category.activities.length > 0 && filteredActivities.length === 0) {
+  if (category.activities.length && !filteredActivities.length) {
     return <EmptyState message="No activities match your search." />;
   }
 

@@ -228,7 +228,7 @@ const getVisibleAndOverflowActions = (
   }
 
   const overflowActions = [...regularOverflowActions, ...alwaysOverflowActions];
-  const showMore = overflowActions.length > 0;
+  const showMore = !!overflowActions.length;
 
   return { visibleActions, overflowActions, showMore };
 };

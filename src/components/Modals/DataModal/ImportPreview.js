@@ -54,7 +54,7 @@ const ImportPreview = ({
 
   // Initialize selections when data changes
   useEffect(() => {
-    if (importData && Object.keys(importSelections).length === 0) {
+    if (importData && !Object.keys(importSelections).length) {
       const initialSelections = initializeImportSelections(importData);
       onSelectionChange(initialSelections);
     }
@@ -181,7 +181,7 @@ const ImportPreview = ({
         <Text style={styles.sectionTitle}>Select Items to Import</Text>
 
         {/* Users */}
-        {!!importData.users && Object.keys(importData.users).length > 0 && (
+        {!!importData.users && Object.keys(importData.users).length && (
           <View style={styles.importCategory}>
             <Text style={styles.importCategoryTitle}>Users</Text>
             {Object.entries(importData.users).map(([userId, user]) => (
@@ -214,7 +214,7 @@ const ImportPreview = ({
         )}
 
         {/* Activity Cards */}
-        {importData.activityCards && importData.activityCards.length > 0 && (
+        {importData.activityCards && importData.activityCards.length && (
           <View style={styles.importCategory}>
             <Text style={styles.importCategoryTitle}>
               Activity Cards ({importData.activityCards.length})
@@ -246,7 +246,7 @@ const ImportPreview = ({
         {/* Activity Library */}
         {importData.library &&
           importData.library.categories &&
-          importData.library.categories.length > 0 && (
+          importData.library.categories.length && (
             <View style={styles.importCategory}>
               <Text style={styles.importCategoryTitle}>
                 Activity Library

@@ -52,11 +52,11 @@ const SettingsModal = ({
 
   const insets = useSafeAreaInsets();
   const [buttonOrder, setButtonOrder] = useState(() => {
-    if (currentOrder && currentOrder.length > 0) {
+    if (currentOrder && currentOrder.length) {
       const filtered = currentOrder.filter(
         id => id !== 'settings' && id !== 'more' && TOOLBAR_BUTTONS[id],
       );
-      return filtered.length > 0 ? filtered : DEFAULT_TOOLBAR_ORDER;
+      return filtered.length ? filtered : DEFAULT_TOOLBAR_ORDER;
     }
     return DEFAULT_TOOLBAR_ORDER;
   });
@@ -106,7 +106,7 @@ const SettingsModal = ({
   }, []);
 
   useEffect(() => {
-    if (currentOrder && currentOrder.length > 0) {
+    if (currentOrder && currentOrder.length) {
       // Map old IDs to new ones if needed
       const idMap = {
         users: 'access',
@@ -133,7 +133,7 @@ const SettingsModal = ({
         setButtonOrder(DEFAULT_TOOLBAR_ORDER);
       } else {
         setButtonOrder(
-          filteredOrder.length > 0 ? filteredOrder : DEFAULT_TOOLBAR_ORDER,
+          filteredOrder.length ? filteredOrder : DEFAULT_TOOLBAR_ORDER,
         );
       }
     } else {
@@ -164,9 +164,9 @@ const SettingsModal = ({
 
   // Auto-save button order when it changes
   useEffect(() => {
-    if (buttonOrder && buttonOrder.length > 0) {
+    if (buttonOrder && buttonOrder.length) {
       const orderToSave =
-        Array.isArray(buttonOrder) && buttonOrder.length > 0
+        Array.isArray(buttonOrder) && buttonOrder.length
           ? [...buttonOrder] // Create a new array reference
           : DEFAULT_TOOLBAR_ORDER;
 
@@ -448,7 +448,7 @@ const SettingsModal = ({
                 // Web and Android use arrow controls instead of drag-and-drop
                 <View style={styles.buttonsList}>
                   {buttonOrder &&
-                    buttonOrder.length > 0 &&
+                    buttonOrder.length &&
                     buttonOrder.map((buttonId, index) => {
                       const button = TOOLBAR_BUTTONS[buttonId];
                       const isInOverflow =

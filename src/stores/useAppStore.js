@@ -196,7 +196,7 @@ const useAppStore = create(
           settingsUpdates.toolbarOrder = toolbarOrder;
         if (moreButtonPosition !== undefined)
           settingsUpdates.moreButtonPosition = moreButtonPosition;
-        if (Object.keys(settingsUpdates).length > 0) {
+        if (Object.keys(settingsUpdates).length) {
           useSettingsStore.setState(settingsUpdates);
         }
 
@@ -212,7 +212,7 @@ const useAppStore = create(
         if (syncId !== undefined) syncUpdates.syncId = syncId;
         if (lastSync !== undefined) syncUpdates.lastSync = lastSync;
         if (syncError !== undefined) syncUpdates.syncError = syncError;
-        if (Object.keys(syncUpdates).length > 0) {
+        if (Object.keys(syncUpdates).length) {
           useSyncStore.setState(syncUpdates);
         }
 
@@ -232,7 +232,7 @@ const useAppStore = create(
         }
 
         // Log unhandled properties
-        if (Object.keys(rest).length > 0) {
+        if (Object.keys(rest).length) {
 //           
         }
       },

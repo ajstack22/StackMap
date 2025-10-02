@@ -487,7 +487,7 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
         style={styles.activitiesContainer}
         showsVerticalScrollIndicator={false}
       >
-        {activities.length > 0 ? (
+        {activities.length ? (
           activities.map((activity, index) => renderActivity(activity, index))
         ) : (
           <View style={styles.emptyState}>

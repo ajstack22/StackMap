@@ -16,7 +16,7 @@ import { styles } from './styles';
 import { BuyMeCoffeeButton, Logo } from '../..';
 import { getAndroidModalBottomHeight } from '../../../utils/modalHelpers';
 // Import team photo
-const TeamPhoto = require('../../../../image_library/StackMapTeam.jpg');
+import TeamPhoto from '../../../../image_library/StackMapTeam.jpg';
 
 
 // Support option component

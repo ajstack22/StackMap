@@ -330,7 +330,7 @@ const DataModal = ({
       const userShares = {};
 
       // Group shares by user
-      if (shares && shares.length > 0) {
+      if (shares && shares.length) {
         // If shares don't have proper userId, group them under a generic "All Shares" category
         const hasUserIds = shares.some(share => share.userId && share.userId !== 'unknown');
         
@@ -340,7 +340,7 @@ const DataModal = ({
             const userActiveShares = shares.filter(
               share => share.userId === userId,
             );
-            if (userActiveShares.length > 0) {
+            if (userActiveShares.length) {
               userShares[userId] = {
                 user,
                 shares: userActiveShares,
@@ -993,7 +993,7 @@ const DataModal = ({
       )}
       
       {/* Active Shares - Show at bottom regardless of state */}
-      {Object.keys(activeShares).length > 0 ? (
+      {Object.keys(activeShares).length ? (
         <View style={[styles.shareSection, { marginTop: 20 }]}>
           <TouchableOpacity
             style={styles.shareSectionHeader}

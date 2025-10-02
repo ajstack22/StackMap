@@ -266,9 +266,9 @@ export const validateJsonFileContent = (content) => {
   }
 
   // Check for importable data
-  const hasUsers = parsedData.users && Object.keys(parsedData.users).length > 0;
+  const hasUsers = parsedData.users && Object.keys(parsedData.users).length;
   const hasLibrary = !!(parsedData.library && parsedData.library.categories);
-  const hasActivityCards = parsedData.activityCards && parsedData.activityCards.length > 0;
+  const hasActivityCards = parsedData.activityCards && parsedData.activityCards.length;
 
   if (!hasUsers && !hasLibrary && !hasActivityCards) {
     return {
@@ -391,7 +391,7 @@ export const sanitizeFilename = (filename, defaultName = 'export') => {
     .replace(/(^-)|(-$)/g, ''); // Remove leading/trailing dashes (fully grouped)
 
   // Ensure it has valid length
-  if (sanitized.length === 0) {
+  if (!sanitized.length) {
     sanitized = defaultName;
   } else if (sanitized.length > 200) {
     sanitized = sanitized.slice(0, 200);
@@ -419,7 +419,7 @@ export const generateUniqueFilename = (baseFilename, existingFilenames = []) => 
   }
 
   const ext = getFileExtension(baseFilename);
-  const nameWithoutExt = ext.length > 0
+  const nameWithoutExt = ext.length
     ? baseFilename.slice(0, -(ext.length + 1))
     : baseFilename;
 
@@ -427,7 +427,7 @@ export const generateUniqueFilename = (baseFilename, existingFilenames = []) => 
   let uniqueName;
 
   do {
-    uniqueName = ext.length > 0
+    uniqueName = ext.length
       ? `${nameWithoutExt} (${counter}).${ext}`
       : `${nameWithoutExt} (${counter}).`;
     counter++;

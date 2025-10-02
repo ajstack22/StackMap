@@ -26,7 +26,7 @@ const SyncStatusIndicator = ({
   });
 
   const [isExpanded, setIsExpanded] = useState(false);
-  const pulseAnim = new Animated.Value(1);
+  const [pulseAnim] = useState(() => new Animated.Value(1));
 
   useEffect(() => {
     // Subscribe to sync status updates
@@ -130,7 +130,12 @@ const SyncStatusIndicator = ({
   const handleRetry = async () => {
     try {
       await syncService.retryFailed();
-    } catch (error) {}
+    } catch (error) {
+      // Retry failures are handled internally by sync service
+      if (__DEV__) {
+        console.warn('[SyncStatus] Retry failed:', error.message);
+      }
+    }
   };
 
   const { name: iconName, color: iconColor } = getStatusIcon();

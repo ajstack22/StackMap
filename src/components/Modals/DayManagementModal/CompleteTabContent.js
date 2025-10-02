@@ -70,10 +70,10 @@ const CompleteTabContent = ({
       const tomorrowActivities =
         users?.[currentUser]?.days?.tomorrow?.activities || [];
       setTomorrowToToday(tomorrowActivities);
-      setHasTomorrowActivities(tomorrowActivities.length > 0);
+      setHasTomorrowActivities(!!tomorrowActivities.length);
 
       // Only create tomorrow activities if tomorrow mode is active (has activities)
-      if (tomorrowActivities.length > 0) {
+      if (tomorrowActivities.length) {
         setPinnedForTomorrow(
           pinned.map(a => ({
             ...a,
@@ -233,7 +233,7 @@ const CompleteTabContent = ({
             <Text style={styles.completeSectionDescription}>{description}</Text>
           )}
           <View style={styles.completeActivitiesContainer}>
-            {activities.length > 0 ? (
+            {activities.length ? (
               activities.map(activity =>
                 renderActivityCard(
                   activity,

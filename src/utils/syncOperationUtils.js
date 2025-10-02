@@ -43,7 +43,7 @@ export const validateSyncOperationParams = (params) => {
     }
 
     const trimmed = recoveryPhrase.trim();
-    if (trimmed.length === 0) {
+    if (!trimmed.length) {
       return {
         isValid: false,
         error: 'Recovery phrase cannot be empty'
@@ -172,7 +172,7 @@ export const validateSyncStateUpdate = (stateUpdate) => {
     }
   }
 
-  if (errors.length > 0) {
+  if (errors.length) {
     return {
       isValid: false,
       error: errors.join('; ')
@@ -267,7 +267,7 @@ export const validateSyncPreviewData = (previewData) => {
   // Determine if structure is valid
   summary.hasValidStructure = summary.totalUsers > 0 || summary.totalLibraryItems > 0;
 
-  if (errors.length > 0) {
+  if (errors.length) {
     return {
       isValid: false,
       error: errors.join('; '),
@@ -301,7 +301,7 @@ export const sanitizeSyncErrorMessage = (errorMessage) => {
     return 'Unknown sync error';
   }
 
-  if (errorMessage.trim().length === 0) {
+  if (!errorMessage.trim().length) {
     return 'Sync operation failed';
   }
 
@@ -326,7 +326,7 @@ export const sanitizeSyncErrorMessage = (errorMessage) => {
     .replace(/\bnot-a-valid-url\b/g, '[REDACTED_URL]');
 
   // Ensure message isn't empty after sanitization
-  if (sanitized.trim().length === 0 || sanitized.trim() === '[REDACTED_PHRASE]') {
+  if (!sanitized.trim().length || sanitized.trim() === '[REDACTED_PHRASE]') {
     return 'Sync operation failed';
   }
 
@@ -384,7 +384,7 @@ export const validateDeviceInviteParams = (params = {}) => {
     }
   }
 
-  if (errors.length > 0) {
+  if (errors.length) {
     return {
       isValid: false,
       error: errors.join('; ')

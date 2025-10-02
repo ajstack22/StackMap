@@ -228,7 +228,7 @@ const LibraryTabContent = ({
           <Text style={styles.activityCount}>
             ({category.activities?.length || 0})
           </Text>
-          {category.activities && category.activities.length > 0 && (
+          {category.activities && category.activities.length && (
             <TouchableOpacity
               onPress={() => {
                 // Add all activities from this category
@@ -333,7 +333,7 @@ const LibraryTabContent = ({
             />
           </View>
           {/* My Library Section */}
-          {localCategories.length > 0 && (
+          {localCategories.length && (
             <>
               <View style={styles.sectionHeader}>
                 <Icon name="bookmark" size={20} color="#000" />
@@ -360,7 +360,7 @@ const LibraryTabContent = ({
                     .includes(query);
 
                   // Include category if name matches or has matching activities
-                  if (categoryMatches || filteredActivities.length > 0) {
+                  if (categoryMatches || filteredActivities.length) {
                     return {
                       ...category,
                       activities: categoryMatches
@@ -382,12 +382,12 @@ const LibraryTabContent = ({
 
           {/* StackMap Library Section */}
           {stackMapLibrary?.activityGroups &&
-            stackMapLibrary.activityGroups.length > 0 && (
+            stackMapLibrary.activityGroups.length && (
               <>
                 <View
                   style={[
                     styles.sectionHeader,
-                    { marginTop: localCategories.length > 0 ? 20 : 0 },
+                    { marginTop: localCategories.length ? 20 : 0 },
                   ]}
                 >
                   <Logo size={20} color="#000" theme={theme} />
@@ -414,7 +414,7 @@ const LibraryTabContent = ({
                       .includes(query);
 
                     // Include category if name matches or has matching activities
-                    if (categoryMatches || filteredActivities.length > 0) {
+                    if (categoryMatches || filteredActivities.length) {
                       return {
                         ...category,
                         activities: categoryMatches

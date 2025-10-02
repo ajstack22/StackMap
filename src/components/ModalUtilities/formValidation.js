@@ -93,7 +93,7 @@ export const validateForm = (formData, validationRules) => {
   });
 
   return {
-    isValid: Object.keys(errors).length === 0,
+    isValid: !Object.keys(errors).length,
     errors,
   };
 };

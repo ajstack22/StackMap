@@ -294,8 +294,8 @@ class SyncStoreIntegration {
         
         // Check if stores are empty
         const currentState = this.getCurrentState();
-        const isEmpty = (!currentState.users || Object.keys(currentState.users).length === 0) &&
-                       (!currentState.library || !currentState.library.activities || currentState.library.activities.length === 0);
+        const isEmpty = (!currentState.users || !Object.keys(currentState.users).length) &&
+                       (!currentState.library || !currentState.library.activities || !currentState.library.activities.length);
         
         if (isEmpty && data) {
           await this.applyState(data);
@@ -320,7 +320,7 @@ class SyncStoreIntegration {
     
     // Check if there were conflicts
     const mergeLog = conflictResolver.getMergeLog();
-    if (mergeLog.length > 0) {
+    if (mergeLog.length) {
       mergeLog.slice(-5).forEach(entry => {
       });
     }
@@ -1064,7 +1064,7 @@ class SyncStoreIntegration {
       }
       
       // If all attempts resulted in 404 (not found), that's okay - data is gone
-      if (errors.length === 0) {
+      if (!errors.length) {
         return { success: true, message: 'Data already deleted or never existed on server' };
       }
       

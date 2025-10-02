@@ -514,7 +514,7 @@ class MinimalSyncService {
           const pullResponse = await fetch(pullUrl);
           const pullResult = await pullResponse.json();
           
-          if (pullResult.success && pullResult.records && pullResult.records.length > 0) {
+          if (pullResult.success && pullResult.records && pullResult.records.length) {
             // Process the pulled records
             let latestTimestamp = 0;
             let latestData = null;
@@ -802,7 +802,7 @@ class MinimalSyncService {
       if (result.success && result.records && Array.isArray(result.records)) {
       }
       
-      if (result.success && result.records && result.records.length > 0) {
+      if (result.success && result.records && result.records.length) {
         // Get the latest record
         const latest = result.records[result.records.length - 1];
         

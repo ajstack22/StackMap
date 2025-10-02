@@ -1,4 +1,4 @@
-const { MMKV } = require('react-native-mmkv');
+import { MMKV } from 'react-native-mmkv';
 
 // Create MMKV instance - 30x faster than AsyncStorage!
 const storage = new MMKV({
@@ -32,5 +32,10 @@ export const migrateFromAsyncStorage = async () => {
       storage.set('migrated', true);
       await AsyncStorage.removeItem('stackmap-storage');
     }
-  } catch (error) {}
+  } catch (error) {
+    // Migration is optional - silently fail if AsyncStorage not available
+    if (__DEV__) {
+      console.warn('[MMKV] Migration skipped:', error.message);
+    }
+  }
 };
