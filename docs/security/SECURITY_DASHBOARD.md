@@ -11,7 +11,7 @@
 | Scanner | Status | Last Run | Findings | Rating |
 |---------|--------|----------|----------|--------|
 | **SonarCloud** | ✅ Active | 2025-10-02 | 0 bugs, 0 vulnerabilities | A |
-| **CodeQL** | ✅ Configured | Pending first push | [Pending] | - |
+| **CodeQL** | ✅ Active | 2025-10-02 | 30 alerts (13 warning, 17 note) | ✅ |
 | **Snyk** | ⚠️ Configured | Requires SNYK_TOKEN | [Pending] | - |
 | **npm audit** | ✅ Active | 2025-10-02 | 0 vulnerabilities | ✅ |
 
@@ -51,20 +51,30 @@ These issues are tracked but don't require action:
 - **Coverage:** 36.5% ✅
 - **Link:** https://sonarcloud.io/project/overview?id=AdamStacked_StackMap
 
-### CodeQL (Status: Configured)
-- **Status:** Workflow created, pending first push
+### CodeQL (Updated: 2025-10-02) ✅
+- **Status:** ✅ Active and scanning
+- **Total Alerts:** 30
+- **Breakdown:**
+  - Critical: 0 ✅
+  - High: 0 ✅
+  - Warning: 13 ⚠️
+  - Note: 17 📝
 - **Configuration:**
   - Triggers: Push to main/deploy branches, PRs, weekly Monday 6am UTC
   - Query suites: security-extended, security-and-quality
   - Language: JavaScript/TypeScript
-- **Critical:** [TBD after first run]
-- **High:** [TBD after first run]
-- **Medium:** [TBD after first run]
+  - Scan time: 1m 41s
 
-**Next Steps:**
-1. Push changes to trigger first scan
-2. Review results in GitHub Security tab
-3. Update dashboard with findings
+**Alert Types:**
+- **Useless conditionals** (12): Redundant type checks in conditional statements
+- **Useless assignments** (1): Assignment to variable that's never used
+- **Unused variables/imports** (17): Dead code in tests and sync services
+
+**Security Impact:** ✅ LOW - No critical security vulnerabilities
+- All findings are code quality issues, not security risks
+- No SQL injection, XSS, or authentication issues detected
+
+**View Results:** [GitHub Security Tab](https://github.com/ajstack22/StackMap/security/code-scanning)
 
 ### Snyk (Status: Configured, Pending Token)
 - **Status:** Workflow created, requires SNYK_TOKEN secret
