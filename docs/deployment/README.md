@@ -59,6 +59,8 @@ cd android && ./gradlew assembleRelease
 cd android && ./gradlew bundleRelease
 ```
 
+**⚠️ Build Time:** Android Gradle builds take 2-3 minutes. When using automated tools, ensure timeout is set to at least 10 minutes (600000ms) to allow builds to complete.
+
 ### Web Deployment
 
 #### Stage 1: Deploy to Qual (Staging)

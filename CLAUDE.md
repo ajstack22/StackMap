@@ -50,6 +50,7 @@ StackMap uses the **Atlas Framework** for structured development workflows. Choo
 **Commit Messages:** Update `PENDING_CHANGES.md` before deploying for descriptive commit messages
 **For all deployment details:** See `docs/deployment/README.md`
 **Testing approach:** See `docs/testing/simple-testing-guide.md`
+**⚠️ Timeout:** Android builds take 2-3 minutes - use 600000ms (10 min) timeout when automating
 
 ---
 
