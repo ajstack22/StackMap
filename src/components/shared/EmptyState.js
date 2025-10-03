@@ -42,12 +42,12 @@ const EmptyState = ({
       <Text style={styles.title}>
         {title}
       </Text>
-      {subtitle && (
+      {Boolean(subtitle) && (
         <Text style={styles.subtitle}>
           {subtitle}
         </Text>
       )}
-      {actionText && onAction && (
+      {Boolean(actionText && onAction) && (
         <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: theme?.primary || '#5C7E9D' }]}
           onPress={onAction}

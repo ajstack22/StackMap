@@ -111,7 +111,7 @@ const PrimaryButton = ({
         />
       ) : (
         <View style={styles.content}>
-          {icon && (
+          {Boolean(icon) && (
             <Icon
               name={icon}
               size={20}

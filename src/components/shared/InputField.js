@@ -76,7 +76,7 @@ const InputField = ({
 
   return (
     <View style={[styles.container, style]}>
-      {label && (
+      {Boolean(label) && (
         <Text style={styles.label}>
           {label}
         </Text>
@@ -96,7 +96,7 @@ const InputField = ({
         maxLength={maxLength}
         textAlignVertical={multiline ? 'top' : 'center'}
       />
-      {error && (
+      {Boolean(error) && (
         <Text style={styles.errorText}>
           {error}
         </Text>

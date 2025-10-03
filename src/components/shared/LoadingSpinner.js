@@ -62,7 +62,7 @@ const LoadingSpinner = ({
           size={size}
           color={spinnerColor}
         />
-        {message && (
+        {Boolean(message) && (
           <Text style={styles.message}>
             {message}
           </Text>

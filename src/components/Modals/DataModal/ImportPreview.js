@@ -181,7 +181,7 @@ const ImportPreview = ({
         <Text style={styles.sectionTitle}>Select Items to Import</Text>
 
         {/* Users */}
-        {!!importData.users && Object.keys(importData.users).length && (
+        {Boolean(importData.users && Object.keys(importData.users).length) && (
           <View style={styles.importCategory}>
             <Text style={styles.importCategoryTitle}>Users</Text>
             {Object.entries(importData.users).map(([userId, user]) => (

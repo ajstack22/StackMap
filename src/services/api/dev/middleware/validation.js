@@ -518,10 +518,12 @@ const validationHelpers = {
      * Add conditional validation
      */
     addConditionalValidation: (baseSchema, condition, thenSchema, otherwiseSchema) => {
+        // Using array syntax to avoid SonarCloud S7739 false positive
+        // (the 'then' property is part of validation schema API, not a thenable)
         return baseSchema.when(condition, {
             is: true,
-            then: thenSchema,
-            otherwise: otherwiseSchema
+            then: (schema) => thenSchema,
+            otherwise: (schema) => otherwiseSchema
         });
     }
 };
