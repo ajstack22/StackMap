@@ -18,6 +18,8 @@ import {
   Modal,
 } from 'react-native';
 import { ANIMATION_DURATION } from './src/constants/animations';
+import { DIMENSIONS } from './src/constants/spacing';
+import { Z_INDEX } from './src/constants/zIndex';
 
 
 // Capture sync URL data immediately before React renders
@@ -4815,7 +4817,7 @@ Users: ${userNames} (${userCount} total)
               top: 0,
               left: 0,
               right: 0,
-              zIndex: 1000, // High z-index to be above EditModeList
+              zIndex: Z_INDEX.DROPDOWN, // High z-index to be above EditModeList
               ...(Platform.OS === 'android' && {
                 elevation: 100, // Very high elevation for Android
                 backgroundColor: 'transparent', // Required for elevation to work
@@ -4937,7 +4939,7 @@ Users: ${userNames} (${userCount} total)
               bottom: 0,
               left: 0,
               right: 0,
-              zIndex: 1000, // High z-index to be above EditModeList
+              zIndex: Z_INDEX.DROPDOWN, // High z-index to be above EditModeList
               ...(Platform.OS === 'android' && {
                 elevation: 100, // Very high elevation for Android
                 backgroundColor: 'transparent', // Required for elevation to work
@@ -5015,7 +5017,7 @@ Users: ${userNames} (${userCount} total)
           onLongPress={() => {
             setShowUserModal(true);
           }}
-          position={{ bottom: fabBottom, top: fabTop, left: 20, zIndex: 10000, elevation: 200 }}
+          position={{ bottom: fabBottom, top: fabTop, left: 20, zIndex: Z_INDEX.MODAL, elevation: 200 }}
           theme={theme}
           style={{}}
         />
@@ -5043,7 +5045,7 @@ Users: ${userNames} (${userCount} total)
               }
             }
           }}
-          position={{ bottom: fabBottom, top: fabTop, right: 20, zIndex: 10000, elevation: 200 }}
+          position={{ bottom: fabBottom, top: fabTop, right: 20, zIndex: Z_INDEX.MODAL, elevation: 200 }}
           theme={isEditMode ? { primary: 'white' } : theme}
           style={isEditMode ? { backgroundColor: '#f56565' } : {}}
         />
@@ -5770,16 +5772,16 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   logo: {
-    width: 32,
-    height: 32,
+    width: DIMENSIONS.ICON.LG,
+    height: DIMENSIONS.ICON.LG,
     backgroundColor: 'rgba(255,255,255,0.9)',
     borderRadius: 16,
-    padding: 7,
+    padding: SPACING.XS_LG,
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoBar: {
-    width: 18,
+    width: DIMENSIONS.ICON.SM,
     borderRadius: 1.25,
     backgroundColor: '#667eea',
     marginVertical: 1.5,
@@ -5831,12 +5833,12 @@ const styles = StyleSheet.create({
     fontSize:
       Platform.OS === 'web' ? (isTablet() ? 15 : 12) : isTablet() ? 18 : 14,
     fontWeight: '500',
-    color: '#000',
+    color: COLORS.text.primary,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   subtitleDay: {
     fontSize: isTablet() ? 18 : 14,
-    color: '#000',
+    color: COLORS.text.primary,
     fontWeight: '500',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
@@ -5853,7 +5855,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    zIndex: 10,
+    zIndex: Z_INDEX.ELEVATED,
     gap: 6,
   },
   exitEditText: {
@@ -5938,7 +5940,7 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   checkmarkIncomplete: {
-    color: '#000',
+    color: COLORS.text.primary,
   },
   numberBadge: {
     position: 'absolute',
@@ -5951,7 +5953,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 0, 0, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 10,
+    zIndex: Z_INDEX.ELEVATED,
     elevation: 10,
     ...SHADOWS.level2,
   },
@@ -5988,7 +5990,7 @@ const styles = StyleSheet.create({
   activityTitle: {
     fontSize: isTablet() ? 23 : 23, // 30% larger for tablets (was 18, now 23)
     fontWeight: 'bold', // Bold for all platforms - Typography component handles platform differences
-    color: '#000',
+    color: COLORS.text.primary,
     textAlign: 'center',
     lineHeight: isTablet() ? 23 * 1.2 : 23 * 1.2, // Adjusted line height
     marginBottom: 4, // PWA's 0.25rem
@@ -6001,7 +6003,7 @@ const styles = StyleSheet.create({
     fontSize: isTablet() ? 14 : 17.3, // Smaller text on tablets for better fit
     fontFamily:
       Platform.OS === 'android' ? 'ComicRelief-Regular' : 'Comic Relief',
-    color: '#000',
+    color: COLORS.text.primary,
     textAlign: 'center',
     lineHeight: isTablet() ? 14 * 1.3 : 17.3 * 1.3, // Adjusted line height
     // fontFamily: TYPOGRAPHY.fontFamily.regular, // TEMPORARILY DISABLED TO TEST
@@ -6028,13 +6030,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 20,
     fontWeight: '700', // Use 700 for better Android rendering
-    color: '#000',
+    color: COLORS.text.primary,
     marginBottom: 8,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   emptySubtext: {
     fontSize: 16,
-    color: '#4a5568',
+    color: COLORS.text.muted,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   editActions: {
@@ -6096,7 +6098,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 20,
+    padding: SPACING.LG,
     backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
@@ -6109,7 +6111,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     flex: 1,
-    padding: 20,
+    padding: SPACING.LG,
   },
   inputGroup: {
     marginBottom: 10,
@@ -6117,7 +6119,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '700', // Use 700 for better Android rendering
-    color: '#000',
+    color: COLORS.text.primary,
     marginBottom: 6,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
@@ -6159,7 +6161,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold', // Bold for all platforms - Typography component handles platform differences
-    color: '#000',
+    color: COLORS.text.primary,
     marginBottom: 15,
     marginTop: 20,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
@@ -6190,7 +6192,7 @@ const styles = StyleSheet.create({
   },
   toggle: {
     flex: 1,
-    padding: 12,
+    padding: SPACING.MD_SM,
     alignItems: 'center',
     borderRadius: 6,
   },
@@ -6199,11 +6201,11 @@ const styles = StyleSheet.create({
   },
   toggleText: {
     fontSize: 16,
-    color: '#000',
+    color: COLORS.text.primary,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   toggleTextActive: {
-    color: '#000',
+    color: COLORS.text.primary,
     fontWeight: 'bold',
   },
   modalBackdrop: {
@@ -6221,14 +6223,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: SPACING.LG,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
   emojiPickerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
+    color: COLORS.text.primary,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   emojiGrid: {
@@ -6258,7 +6260,7 @@ const styles = StyleSheet.create({
   userItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    padding: SPACING.MD_SM,
     backgroundColor: 'white',
     borderRadius: 8,
     marginBottom: 8,
@@ -6276,25 +6278,25 @@ const styles = StyleSheet.create({
   userItemName: {
     fontSize: 16,
     flex: 1,
-    color: '#000',
+    color: COLORS.text.primary,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   userItemNameActive: {
     fontWeight: 'bold',
   },
   editUserButton: {
-    padding: 8,
+    padding: SPACING.SM,
     marginLeft: 8,
   },
   deleteUserButton: {
-    padding: 8,
+    padding: SPACING.SM,
     marginLeft: 4,
   },
   addUserButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
+    padding: SPACING.MD_SM,
     backgroundColor: '#f5f5f5',
     borderRadius: 8,
     borderWidth: 2,
@@ -6304,7 +6306,7 @@ const styles = StyleSheet.create({
   },
   addUserText: {
     fontSize: 16,
-    color: '#667eea',
+    color: COLORS.semantic.primary,
     fontWeight: '700', // Use 700 for better Android rendering
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
@@ -6314,7 +6316,7 @@ const styles = StyleSheet.create({
   },
   pinStatus: {
     fontSize: 16,
-    color: '#000',
+    color: COLORS.text.primary,
     textAlign: 'center',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
@@ -6396,7 +6398,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#000',
+    color: COLORS.text.primary,
   },
   celebrationTextActive: {
     color: 'white',
@@ -6417,12 +6419,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '500',
-    color: '#000',
+    color: COLORS.text.primary,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   privacyContent: {
     flex: 1,
-    padding: 24,
+    padding: SPACING.XL,
     backgroundColor: '#f8f9fa',
   },
   privacyHeader: {
@@ -6434,21 +6436,21 @@ const styles = StyleSheet.create({
   privacyTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: COLORS.text.dark,
     textAlign: 'center',
     marginBottom: 8,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   privacyDate: {
     fontSize: 14,
-    color: '#6c757d',
+    color: COLORS.text.subtle,
     textAlign: 'center',
     fontStyle: 'italic',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   privacySection: {
     backgroundColor: 'white',
-    padding: 16,
+    padding: SPACING.MD,
     borderRadius: 8,
     marginBottom: 16,
     shadowColor: '#000',
@@ -6460,20 +6462,20 @@ const styles = StyleSheet.create({
   privacySubtitle: {
     fontSize: 18,
     fontWeight: '700', // Use 700 for better Android rendering
-    color: '#2c3e50',
+    color: COLORS.text.dark,
     marginBottom: 12,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   privacyText: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#495057',
+    color: COLORS.text.medium,
     marginBottom: 8,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   privacyBold: {
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: COLORS.text.dark,
   },
   privacyList: {
     marginTop: 8,
@@ -6481,26 +6483,26 @@ const styles = StyleSheet.create({
   privacyListItem: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#495057',
+    color: COLORS.text.medium,
     marginBottom: 4,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   privacyFooter: {
     backgroundColor: '#e9ecef',
-    padding: 16,
+    padding: SPACING.MD,
     borderRadius: 8,
     marginTop: 8,
   },
   privacyFooterText: {
     fontSize: 14,
-    color: '#6c757d',
+    color: COLORS.text.subtle,
     textAlign: 'center',
     lineHeight: 20,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   supportContent: {
     flex: 1,
-    padding: 20,
+    padding: SPACING.LG,
     backgroundColor: '#fff5f8',
   },
   supportHeader: {
@@ -6515,21 +6517,21 @@ const styles = StyleSheet.create({
   supportTitle: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#d63384',
+    color: COLORS.ui.pink,
     textAlign: 'center',
     marginBottom: 8,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   supportSubtitle: {
     fontSize: 18,
-    color: '#6f42c1',
+    color: COLORS.ui.purple,
     textAlign: 'center',
     fontStyle: 'italic',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   supportMessageBox: {
     backgroundColor: '#fff',
-    padding: 20,
+    padding: SPACING.LG,
     borderRadius: 16,
     marginBottom: 24,
     borderLeftWidth: 4,
@@ -6543,7 +6545,7 @@ const styles = StyleSheet.create({
   supportMessage: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#495057',
+    color: COLORS.text.medium,
     textAlign: 'center',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
@@ -6553,7 +6555,7 @@ const styles = StyleSheet.create({
   supportSectionTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#d63384',
+    color: COLORS.ui.pink,
     textAlign: 'center',
     marginBottom: 20,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
@@ -6561,7 +6563,7 @@ const styles = StyleSheet.create({
   supportOptionFun: {
     flexDirection: 'row',
     backgroundColor: '#fff',
-    padding: 16,
+    padding: SPACING.MD,
     borderRadius: 12,
     marginBottom: 12,
     alignItems: 'center',
@@ -6584,19 +6586,19 @@ const styles = StyleSheet.create({
   supportOptionTitleFun: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#d63384',
+    color: COLORS.ui.pink,
     marginBottom: 4,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   supportOptionTextFun: {
     fontSize: 14,
     lineHeight: 20,
-    color: '#495057',
+    color: COLORS.text.medium,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   supportContactBox: {
     backgroundColor: '#e7f3ff',
-    padding: 16,
+    padding: SPACING.MD,
     borderRadius: 12,
     marginBottom: 20,
     borderWidth: 1,
@@ -6612,7 +6614,7 @@ const styles = StyleSheet.create({
   },
   supportContactText: {
     fontSize: 16,
-    color: '#495057',
+    color: COLORS.text.medium,
     textAlign: 'center',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
@@ -6624,7 +6626,7 @@ const styles = StyleSheet.create({
   },
   supportFooterText: {
     fontSize: 16,
-    color: '#6f42c1',
+    color: COLORS.ui.purple,
     textAlign: 'center',
     fontWeight: '500',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
@@ -6637,12 +6639,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: SPACING.LG,
   },
   reorderModalContent: {
     width: '100%',
     maxWidth: 320,
-    padding: 24,
+    padding: SPACING.XL,
     borderRadius: 16,
     ...SHADOWS.level3,
   },
@@ -6656,7 +6658,7 @@ const styles = StyleSheet.create({
   reorderActivityPreview: {
     alignItems: 'center',
     marginBottom: 20,
-    padding: 12,
+    padding: SPACING.MD_SM,
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
     borderRadius: 12,
   },
@@ -6668,7 +6670,7 @@ const styles = StyleSheet.create({
   reorderActivityText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000',
+    color: COLORS.text.primary,
     textAlign: 'center',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
@@ -6708,18 +6710,18 @@ const styles = StyleSheet.create({
   positionButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
+    color: COLORS.text.primary,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   positionPreview: {
     backgroundColor: '#f0f0f0',
-    padding: 12,
+    padding: SPACING.MD_SM,
     borderRadius: 8,
     marginBottom: 16,
   },
   positionPreviewText: {
     fontSize: 14,
-    color: '#000',
+    color: COLORS.text.primary,
     textAlign: 'center',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
@@ -6740,7 +6742,7 @@ const styles = StyleSheet.create({
   reorderModalButtonText: {
     fontSize: 16,
     fontWeight: '700', // Use 700 for better Android rendering
-    color: '#000',
+    color: COLORS.text.primary,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
 });

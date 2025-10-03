@@ -11,7 +11,6 @@ jest.mock('react-native', () => ({
 import { Platform } from 'react-native';
 import {
   THEMES,
-  COLORS,
   SHADOWS,
   BORDERS,
   SPACING,
@@ -19,6 +18,7 @@ import {
   ANIMATION,
   TYPOGRAPHY
 } from '../theme';
+// COLORS has been moved to ../colors.js
 
 describe('constants/theme', () => {
   beforeEach(() => {
@@ -79,37 +79,8 @@ describe('constants/theme', () => {
     });
   });
 
-  describe('COLORS', () => {
-    it('should have basic colors', () => {
-      expect(COLORS.white).toBe('#ffffff');
-      expect(COLORS.black).toBe('#000000');
-    });
-
-    it('should have semantic colors', () => {
-      expect(COLORS).toHaveProperty('error');
-      expect(COLORS).toHaveProperty('success');
-      expect(COLORS).toHaveProperty('warning');
-      expect(COLORS).toHaveProperty('info');
-    });
-
-    it('should have complete gray scale', () => {
-      expect(COLORS).toHaveProperty('gray');
-      const grayLevels = ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900'];
-      grayLevels.forEach(level => {
-        expect(COLORS.gray).toHaveProperty(level);
-        expect(typeof COLORS.gray[level]).toBe('string');
-        expect(COLORS.gray[level]).toMatch(/^#[0-9a-f]{6}$/i);
-      });
-    });
-
-    it('should have semantic colors as valid hex values', () => {
-      const hexColorRegex = /^#[0-9A-F]{6}$/i;
-      expect(COLORS.error).toMatch(hexColorRegex);
-      expect(COLORS.success).toMatch(hexColorRegex);
-      expect(COLORS.warning).toMatch(hexColorRegex);
-      expect(COLORS.info).toMatch(hexColorRegex);
-    });
-  });
+  // COLORS tests deprecated - COLORS moved to ../colors.js
+  // See src/constants/__tests__/colors.test.js for color constant tests
 
   describe('SHADOWS', () => {
     it('should have 4 shadow levels', () => {
@@ -384,7 +355,7 @@ describe('constants/theme', () => {
     it('should export all expected constants', () => {
       const themeModule = require('../theme');
       expect(themeModule).toHaveProperty('THEMES');
-      expect(themeModule).toHaveProperty('COLORS');
+      // COLORS moved to ../colors.js
       expect(themeModule).toHaveProperty('SHADOWS');
       expect(themeModule).toHaveProperty('BORDERS');
       expect(themeModule).toHaveProperty('SPACING');
@@ -395,7 +366,7 @@ describe('constants/theme', () => {
 
     it('should have constants that are objects', () => {
       expect(typeof THEMES).toBe('object');
-      expect(typeof COLORS).toBe('object');
+      // COLORS moved to ../colors.js
       expect(typeof SHADOWS).toBe('object');
       expect(typeof BORDERS).toBe('object');
       expect(typeof SPACING).toBe('object');

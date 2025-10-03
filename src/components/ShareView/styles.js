@@ -1,22 +1,23 @@
 import { StyleSheet, Platform } from 'react-native';
 import { TYPOGRAPHY } from '../../constants';
+import { COLORS } from '../../constants/colors';
 
 const createStyles = themeColor =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: themeColor || '#5C7E9D', // StackMap blue background
+      backgroundColor: themeColor || COLORS.brand.stackBlue, // StackMap blue background
     },
     loadingContainer: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: themeColor || '#5C7E9D',
+      backgroundColor: themeColor || COLORS.brand.stackBlue,
     },
     loadingText: {
       marginTop: 16,
       fontSize: 16,
-      color: '#ffffff',
+      color: COLORS.white,
       fontFamily: Platform.select({
         ios: 'Comic Relief',
         android: 'ComicRelief-Regular',

@@ -8,6 +8,14 @@ import {
   configureReorderAnimation,
 } from '../components/EditModeList/utils';
 
+/**
+ * Custom hook for managing edit mode operations on activities
+ * @description Provides handlers for reordering, deleting, and undoing operations on activities
+ * with haptic feedback and smooth animations
+ * @param {Array} initialActivities - Initial array of activity objects
+ * @param {Function} onUpdate - Callback function called when activities are updated
+ * @returns {Object} Object containing handlers and state for edit mode operations
+ */
 export const useEditMode = (initialActivities, onUpdate) => {
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [undoStack, setUndoStack] = useState([]);

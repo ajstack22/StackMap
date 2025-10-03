@@ -1,6 +1,7 @@
 // Re-export all constants for easy importing
 export * from './layout';
 export * from './theme';
+export * from './colors';
 export * from './featureFlags';
 
 // Common emojis used in the app

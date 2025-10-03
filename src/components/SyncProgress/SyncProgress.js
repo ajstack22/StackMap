@@ -3,6 +3,7 @@ import { Text } from '../Typography';
 import { View, Animated, StyleSheet, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { TYPOGRAPHY } from '../../constants';
+import { COLORS } from '../../constants/colors';
 import syncService from '../../services/sync';
 
 const SyncProgress = ({ theme }) => {
@@ -107,10 +108,10 @@ const SyncProgress = ({ theme }) => {
 
   const getStatusColor = () => {
     if (syncStatus?.phase === 'complete') {
-      return '#4caf50';
+      return COLORS.semantic.success;
     }
     if (syncStatus?.phase === 'error') {
-      return '#f44336';
+      return COLORS.semantic.error;
     }
     return theme?.primary || '#2196F3';
   };
@@ -126,7 +127,7 @@ const SyncProgress = ({ theme }) => {
       ]}
       pointerEvents="none"
     >
-      <View style={[styles.progressCard, { backgroundColor: '#fff' }]}>
+      <View style={[styles.progressCard, { backgroundColor: COLORS.white }]}>
         <View style={styles.iconContainer}>
           <Icon
             name={getStatusIcon()}
@@ -180,7 +181,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: COLORS.shadows.default,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -189,7 +190,7 @@ const styles = StyleSheet.create({
         elevation: 4,
       },
       web: {
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        boxShadow: `0 2px 4px ${COLORS.opacity.blackOverlay10}`,
       },
     }),
     minWidth: 200,
@@ -208,12 +209,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '500',
-    color: '#333',
+    color: COLORS.text.emphasis,
   },
   detailsText: {
     fontSize: 12,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#666',
+    color: COLORS.text.secondary,
     marginTop: 2,
   },
   progressBarContainer: {
@@ -222,7 +223,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 2,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: COLORS.gray[400],
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
     overflow: 'hidden',

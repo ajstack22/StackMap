@@ -101,8 +101,18 @@ export { default as Linking } from './Linking';
 export { default as NativeModules } from './NativeModules';
 export { default as UIManager } from './UIManager';
 
-// Custom Alert and PixelRatio to override RNW's if needed, or to provide a default
+/**
+ * Custom Alert implementation for web
+ * @description Provides web-compatible alert dialogs using native browser APIs
+ */
 export const Alert = {
+  /**
+   * Display an alert dialog
+   * @param {string} title - Alert title
+   * @param {string} message - Alert message
+   * @param {Array<{text: string, onPress: Function, style?: string}>} buttons - Button configurations
+   * @returns {void}
+   */
   alert: (title, message, buttons) => {
     if (buttons && buttons.length > 0) {
       const confirmButton = buttons.find(b => b.style !== 'cancel');
@@ -118,11 +128,33 @@ export const Alert = {
   },
 };
 
+/**
+ * PixelRatio utility for web
+ * @description Provides device pixel ratio calculations for responsive layouts
+ */
 export const PixelRatio = {
+  /**
+   * Get the device pixel ratio
+   * @returns {number} Device pixel ratio (default: 1)
+   */
   get: () => window.devicePixelRatio || 1,
+  /**
+   * Get the font scale factor
+   * @returns {number} Font scale factor (always 1 on web)
+   */
   getFontScale: () => 1,
+  /**
+   * Convert layout size to pixel size
+   * @param {number} size - Layout size
+   * @returns {number} Pixel size adjusted for device pixel ratio
+   */
   getPixelSizeForLayoutSize: size =>
     Math.round(size * (window.devicePixelRatio || 1)),
+  /**
+   * Round to nearest pixel for crisp rendering
+   * @param {number} size - Size in pixels
+   * @returns {number} Size rounded to nearest pixel
+   */
   roundToNearestPixel: size =>
     Math.round(size * (window.devicePixelRatio || 1)) /
     (window.devicePixelRatio || 1),

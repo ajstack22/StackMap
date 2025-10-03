@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Text } from '../Typography';
 import { View, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { SHADOWS, TYPOGRAPHY, RADIUS, SPACING } from '../../constants';
+import { Z_INDEX } from '../../constants/zIndex';
 
 const Toast = ({ toast, onDismiss, theme }) => {
   const [translateY] = useState(() => new Animated.Value(100));
@@ -80,8 +81,8 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
-    zIndex: 99999,
-    elevation: 99999, // For Android
+    zIndex: Z_INDEX.NOTIFICATION,
+    elevation: Z_INDEX.NOTIFICATION, // For Android
   },
   toast: {
     flexDirection: 'row',

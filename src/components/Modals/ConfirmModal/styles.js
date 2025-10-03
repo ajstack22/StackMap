@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../../constants';
+import { Z_INDEX } from '../../../constants/zIndex';
 
 export const styles = StyleSheet.create({
   overlay: {
@@ -7,8 +8,8 @@ export const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 999999,
-    elevation: 999999,
+    zIndex: Z_INDEX.CRITICAL,
+    elevation: Z_INDEX.CRITICAL,
   },
   modalContent: {
     backgroundColor: 'white',
@@ -17,8 +18,8 @@ export const styles = StyleSheet.create({
     width: '90%',
     maxWidth: 400,
     alignItems: 'center',
-    zIndex: 1000000,
-    elevation: 1000000,
+    zIndex: Z_INDEX.MAX,
+    elevation: Z_INDEX.MAX,
     ...SHADOWS.level3,
   },
   iconContainer: {

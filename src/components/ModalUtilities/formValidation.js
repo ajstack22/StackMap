@@ -1,7 +1,19 @@
-// Form validation helpers for consistent validation across modals
+/**
+ * Form validation helpers for consistent validation across modals
+ * @description Provides reusable validators and form validation utilities
+ */
 
+/**
+ * Collection of reusable field validators
+ * @type {Object}
+ */
 export const validators = {
-  // Check if a value is not empty
+  /**
+   * Check if a value is not empty
+   * @param {any} value - Value to validate
+   * @param {string} fieldName - Name of the field for error messages
+   * @returns {string|null} Error message or null if valid
+   */
   required: (value, fieldName = 'Field') => {
     if (!value || (typeof value === 'string' && !value.trim())) {
       return `${fieldName} is required`;
@@ -78,7 +90,12 @@ export const validators = {
     },
 };
 
-// Validate a form object with multiple fields
+/**
+ * Validate a form object with multiple fields
+ * @param {Object} formData - Form data object with field values
+ * @param {Object} validationRules - Object mapping field names to validator functions
+ * @returns {{isValid: boolean, errors: Object}} Validation result with errors object
+ */
 export const validateForm = (formData, validationRules) => {
   const errors = {};
 
@@ -98,7 +115,12 @@ export const validateForm = (formData, validationRules) => {
   };
 };
 
-// Hook-like function to manage form state and validation
+/**
+ * Hook-like function to manage form state and validation
+ * @param {Object} initialValues - Initial form field values
+ * @param {Object} validationRules - Object mapping field names to validator functions
+ * @returns {{validate: Function, validateField: Function}} Validation helper functions
+ */
 export const useFormValidation = (initialValues, validationRules) => {
   const validate = (values = initialValues) => {
     return validateForm(values, validationRules);

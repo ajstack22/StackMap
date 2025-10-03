@@ -16,7 +16,7 @@ import {
   Modal,
 } from 'react-native';
 import DeferredStorage from '../../utils/deferredStorage';
-import { DEFAULT_USER_ICON } from '../../constants';
+import { DEFAULT_USER_ICON, COLORS } from '../../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Logo from '../Logo/Logo';
@@ -1549,7 +1549,7 @@ const SafeAreaView = ({ children, style }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
   },
   scrollContent: {
     flexGrow: 1,
@@ -1686,7 +1686,7 @@ const styles = StyleSheet.create({
   userPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: COLORS.gray[200],
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
     borderRadius: RADIUS.round,
@@ -1715,7 +1715,7 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   syncCodeContainer: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.gray[100],
     padding: SPACING.lg,
     borderRadius: RADIUS.lg,
     marginVertical: SPACING.lg,
@@ -1772,7 +1772,7 @@ const styles = StyleSheet.create({
   toast: {
     position: 'absolute',
     bottom: 100,
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    backgroundColor: COLORS.opacity.blackOverlay80,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
     borderRadius: RADIUS.md,
@@ -1790,7 +1790,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   previewContainer: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.gray[100],
     padding: SPACING.md,
     borderRadius: RADIUS.md,
     marginBottom: SPACING.lg,
@@ -1810,7 +1810,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   successInfo: {
-    backgroundColor: '#e8f5e9',
+    backgroundColor: COLORS.ui.bgGreenTint,
     padding: SPACING.md,
     borderRadius: RADIUS.md,
     marginVertical: SPACING.lg,
@@ -1823,7 +1823,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   summaryContainer: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.gray[100],
     padding: SPACING.lg,
     borderRadius: RADIUS.md,
     marginVertical: SPACING.lg,

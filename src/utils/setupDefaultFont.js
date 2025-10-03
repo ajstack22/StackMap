@@ -1,8 +1,13 @@
 import React from 'react';
 import { Text, Platform } from 'react-native';
 
-// Set Comic Relief as the default font for ALL Text components on Android
-// This ensures that even inline styles without fontFamily will use Comic Relief
+/**
+ * Set Comic Relief as the default font for ALL Text components on Android
+ * @description This ensures that even inline styles without fontFamily will use Comic Relief.
+ * Modifies the Text component's render method to automatically apply the correct font variant
+ * based on fontWeight property.
+ * @returns {void}
+ */
 export const setupDefaultFont = () => {
   if (Platform.OS === 'android') {
     const oldTextRender = Text.render;

@@ -12,6 +12,7 @@ import {
   Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Z_INDEX } from '../../constants/zIndex';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   SHADOWS,
@@ -503,7 +504,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    zIndex: 100,
+    zIndex: Z_INDEX.STICKY,
     elevation: Platform.OS === 'android' ? 10 : 0, // Android elevation for proper layering
   },
   topPosition: {
@@ -529,7 +530,7 @@ const styles = StyleSheet.create({
     paddingBottom:
       Platform.OS === 'web' ? 12 : Platform.OS === 'android' ? 16 : 20,
     position: 'relative',
-    zIndex: 1,
+    zIndex: Z_INDEX.BASE,
   },
   editModeLabelContainer: {
     marginBottom: 1,

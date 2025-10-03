@@ -30,27 +30,9 @@ export const THEMES = {
   slate: { primary: '#64748B', dark: '#475569', light: '#8B95A6' }, // Neutral slate - low stimulation
 };
 
-// Common colors
-export const COLORS = {
-  white: '#ffffff',
-  black: '#000000',
-  gray: {
-    50: '#f5f5f5',
-    100: '#f0f0f0',
-    200: '#e8e8e8',
-    300: '#e0e0e0',
-    400: '#bdbdbd',
-    500: '#9e9e9e',
-    600: '#757575',
-    700: '#616161',
-    800: '#424242',
-    900: '#212121',
-  },
-  error: '#f56565',
-  success: '#48bb78',
-  warning: '#ed8936',
-  info: '#4299e1',
-};
+// Common colors - moved to colors.js for better organization
+// Import COLORS from './colors' instead
+// export const COLORS = { ... } - deprecated, use import from colors.js
 
 // Shadow system
 export const SHADOWS = {

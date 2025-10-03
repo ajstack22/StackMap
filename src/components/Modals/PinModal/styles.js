@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { TYPOGRAPHY, SPACING, RADIUS } from '../../../constants';
+import { Z_INDEX } from '../../../constants/zIndex';
 
 export const styles = StyleSheet.create({
   pinModalOverlay: {
@@ -7,8 +8,8 @@ export const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 9999,
-    elevation: 9999,
+    zIndex: Z_INDEX.MODAL_BACKDROP,
+    elevation: Z_INDEX.MODAL_BACKDROP,
   },
   pinModalContent: {
     backgroundColor: 'white',
@@ -17,8 +18,8 @@ export const styles = StyleSheet.create({
     width: '90%',
     maxWidth: 400,
     alignItems: 'center',
-    zIndex: 10000,
-    elevation: 10000,
+    zIndex: Z_INDEX.MODAL,
+    elevation: Z_INDEX.MODAL,
   },
   pinModalTitle: {
     fontSize: 20,

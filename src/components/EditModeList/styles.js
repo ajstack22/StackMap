@@ -1,4 +1,5 @@
 import { StyleSheet, Platform } from 'react-native';
+import { COLORS } from '../../constants/colors';
 
 // Base styles used on all platforms
 const baseStyles = {
@@ -11,7 +12,7 @@ const baseStyles = {
   },
 
   listItem: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
     marginHorizontal: 8,
     marginVertical: 4,
     borderRadius: 8,
@@ -21,7 +22,7 @@ const baseStyles = {
     alignSelf: 'center',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: COLORS.shadows.default,
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
@@ -30,7 +31,7 @@ const baseStyles = {
         elevation: 2,
       },
       web: {
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        boxShadow: `0 1px 3px ${COLORS.opacity.blackOverlay10}`,
         // Smooth transitions for web
         transition: 'all 0.25s ease-in-out',
         willChange: 'transform',
@@ -59,7 +60,7 @@ const baseStyles = {
   title: {
     fontSize: 16,
     fontFamily: 'ComicRelief',
-    color: '#000',
+    color: COLORS.text.primary,
     fontWeight: Platform.select({
       ios: '700',
       android: '800',
@@ -70,7 +71,7 @@ const baseStyles = {
   description: {
     fontSize: 14,
     fontFamily: 'ComicRelief',
-    color: '#666',
+    color: COLORS.text.secondary,
     marginTop: 2,
   },
 
@@ -91,7 +92,7 @@ const baseStyles = {
     justifyContent: 'center',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: COLORS.shadows.default,
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.15,
         shadowRadius: 4,
@@ -100,7 +101,7 @@ const baseStyles = {
         elevation: 4,
       },
       web: {
-        boxShadow: '0 3px 6px rgba(0,0,0,0.15)',
+        boxShadow: `0 3px 6px ${COLORS.opacity.blackOverlay15}`,
       },
     }),
   },
@@ -157,14 +158,14 @@ const baseStyles = {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
     borderWidth: 2,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
+    borderColor: COLORS.borders.subtle,
     alignItems: 'center',
     justifyContent: 'center',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: COLORS.shadows.default,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3,
@@ -173,7 +174,7 @@ const baseStyles = {
         elevation: 2,
       },
       web: {
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        boxShadow: `0 2px 4px ${COLORS.opacity.blackOverlay10}`,
       },
     }),
   },
@@ -191,14 +192,14 @@ const baseStyles = {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
     borderWidth: 2,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
+    borderColor: COLORS.borders.subtle,
     alignItems: 'center',
     justifyContent: 'center',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: COLORS.shadows.default,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3,
@@ -207,7 +208,7 @@ const baseStyles = {
         elevation: 2,
       },
       web: {
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        boxShadow: `0 2px 4px ${COLORS.opacity.blackOverlay10}`,
       },
     }),
   },
