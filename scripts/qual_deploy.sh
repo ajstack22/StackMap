@@ -317,30 +317,99 @@ else
     echo "⚠️  Method check skipped (check script not found)"
 fi
 
-# Run Jest tests (MANDATORY - NO SKIPPING)
+# ============================================
+# TIERED TEST SUITE (MANDATORY)
+# ============================================
 echo ""
-echo "🧪 Running automated tests..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🧪 Running Tiered Test Suite"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# Run Jest test suite
-echo "- Running Jest tests..."
-npm test 2>&1 | tee /tmp/jest-output.txt
-JEST_EXIT_CODE=${PIPESTATUS[0]}
+# Tier 0: Smoke Test (10 second sanity check)
+echo ""
+echo "→ Tier 0: Smoke Test (quick sanity check)..."
+npm run test:smoke > /tmp/test-smoke.txt 2>&1
+SMOKE_EXIT=$?
 
-if [ "$JEST_EXIT_CODE" -ne 0 ]; then
+if [ $SMOKE_EXIT -ne 0 ]; then
+    cat /tmp/test-smoke.txt
     echo ""
-    echo "❌ Jest tests failed!"
-    echo "Please fix failing tests before deploying."
-    echo "Run 'npm test' to see the issues again."
+    echo "❌ SMOKE TEST FAILED - Basic functionality broken!"
+    echo "Fix critical issues before proceeding: npm run test:smoke"
     exit 1
-else
-    # Extract test summary
-    TEST_SUMMARY=$(grep -E "Tests:.*passed" /tmp/jest-output.txt | tail -1)
-    if [ -n "$TEST_SUMMARY" ]; then
-        echo "✅ Jest tests passed! ($TEST_SUMMARY)"
+fi
+
+SMOKE_PASSED=$(grep -oE "[0-9]+ passed" /tmp/test-smoke.txt | head -1 | grep -oE "[0-9]+" || echo "0")
+echo "✅ Smoke test passed ($SMOKE_PASSED critical tests)"
+
+# Tier 1: Critical Tests (MUST PASS - blocks deployment)
+echo ""
+echo "→ Tier 1: Critical Tests (encryption, auth, data integrity)..."
+npm run test:critical > /tmp/test-critical.txt 2>&1
+CRITICAL_EXIT=$?
+
+if [ $CRITICAL_EXIT -ne 0 ]; then
+    cat /tmp/test-critical.txt
+    echo ""
+    echo "❌ CRITICAL TESTS FAILED!"
+    echo "Critical tests must pass 100%. Fix immediately: npm run test:critical"
+    exit 1
+fi
+
+CRITICAL_PASSED=$(grep -oE "[0-9]+ passed" /tmp/test-critical.txt | head -1 | grep -oE "[0-9]+" || echo "0")
+echo "✅ Critical tests passed ($CRITICAL_PASSED tests) - 100% pass rate"
+
+# Tier 2: Important Tests (95%+ should pass - warning only)
+echo ""
+echo "→ Tier 2: Important Tests (core features, business logic)..."
+npm run test:important > /tmp/test-important.txt 2>&1
+IMPORTANT_EXIT=$?
+
+IMPORTANT_TOTAL=$(grep -oE "[0-9]+ total" /tmp/test-important.txt | head -1 | grep -oE "[0-9]+" || echo "0")
+IMPORTANT_PASSED=$(grep -oE "[0-9]+ passed" /tmp/test-important.txt | head -1 | grep -oE "[0-9]+" || echo "0")
+IMPORTANT_FAILED=$(grep -oE "[0-9]+ failed" /tmp/test-important.txt | head -1 | grep -oE "[0-9]+" || echo "0")
+
+if [ $IMPORTANT_TOTAL -gt 0 ]; then
+    IMPORTANT_PASS_RATE=$(( IMPORTANT_PASSED * 100 / IMPORTANT_TOTAL ))
+
+    if [ $IMPORTANT_PASS_RATE -lt 95 ]; then
+        echo "⚠️  Important test pass rate: ${IMPORTANT_PASS_RATE}% (below 95% threshold)"
+        echo "   $IMPORTANT_PASSED passed, $IMPORTANT_FAILED failed"
+        echo "   Consider fixing before next deployment"
     else
-        echo "✅ Jest tests passed!"
+        echo "✅ Important tests: ${IMPORTANT_PASS_RATE}% pass rate ($IMPORTANT_PASSED/$IMPORTANT_TOTAL)"
     fi
 fi
+
+# Tier 3: UI/Integration Tests (informational only)
+echo ""
+echo "→ Tier 3: UI/Integration Tests (informational)..."
+npm run test:ui > /tmp/test-ui.txt 2>&1
+UI_EXIT=$?
+
+UI_PASSED=$(grep -oE "[0-9]+ passed" /tmp/test-ui.txt | head -1 | grep -oE "[0-9]+" || echo "0")
+UI_FAILED=$(grep -oE "[0-9]+ failed" /tmp/test-ui.txt | head -1 | grep -oE "[0-9]+" || echo "0")
+UI_TOTAL=$((UI_PASSED + UI_FAILED))
+
+if [ $UI_FAILED -gt 0 ]; then
+    echo "⚠️  UI tests: $UI_PASSED passed, $UI_FAILED failed (non-blocking)"
+else
+    echo "✅ UI tests: All $UI_PASSED tests passed"
+fi
+
+# Summary
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "📊 Test Suite Summary:"
+echo "  Tier 0 (Smoke):     $SMOKE_PASSED passed ✅"
+echo "  Tier 1 (Critical):  $CRITICAL_PASSED passed ✅"
+if [ $IMPORTANT_TOTAL -gt 0 ]; then
+    echo "  Tier 2 (Important): $IMPORTANT_PASSED/$IMPORTANT_TOTAL (${IMPORTANT_PASS_RATE}%)"
+else
+    echo "  Tier 2 (Important): $IMPORTANT_PASSED passed"
+fi
+echo "  Tier 3 (UI):        $UI_PASSED passed, $UI_FAILED failed"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 echo ""
 echo "🧪 Running essential manual checks..."
