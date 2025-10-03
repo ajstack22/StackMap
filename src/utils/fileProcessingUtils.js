@@ -296,6 +296,77 @@ export const validateJsonFileContent = (content) => {
 };
 
 /**
+ * Add version information to preview
+ * @private
+ */
+const addVersionInfo = (fileData, details, warnings) => {
+  if (fileData.version) {
+    details.push(`Version: ${fileData.version}`);
+  } else {
+    warnings.push('Missing version information');
+  }
+};
+
+/**
+ * Add user count to preview
+ * @private
+ */
+const addUserInfo = (fileData, details, warnings) => {
+  if (fileData.users) {
+    const userCount = Object.keys(fileData.users).length;
+    details.push(`Users: ${userCount}`);
+
+    if (userCount === 0) {
+      warnings.push('No users in export');
+    }
+  }
+};
+
+/**
+ * Add library information to preview
+ * @private
+ */
+const addLibraryInfo = (fileData, details) => {
+  if (fileData.library && fileData.library.categories) {
+    const categoryCount = Array.isArray(fileData.library.categories)
+      ? fileData.library.categories.length
+      : Object.keys(fileData.library.categories).length;
+
+    details.push(`Library categories: ${categoryCount}`);
+  }
+};
+
+/**
+ * Add activity cards and settings to preview
+ * @private
+ */
+const addActivityAndSettingsInfo = (fileData, details) => {
+  if (fileData.activityCards) {
+    details.push(`Activity cards: ${fileData.activityCards.length}`);
+  }
+
+  if (fileData.settings || fileData.currentTheme || fileData.bannerPosition) {
+    details.push('Includes app settings');
+  }
+};
+
+/**
+ * Generate summary text for preview
+ * @private
+ */
+const generatePreviewSummary = (fileData) => {
+  const userCount = fileData.users ? Object.keys(fileData.users).length : 0;
+  const hasLibrary = !!(fileData.library && fileData.library.categories);
+  const hasSettings = !!(fileData.settings || fileData.currentTheme);
+
+  let summary = `StackMap export with ${userCount} user${userCount !== 1 ? 's' : ''}`;
+  if (hasLibrary) summary += ', activity library';
+  if (hasSettings) summary += ', app settings';
+
+  return summary;
+};
+
+/**
  * Generate file preview information
  * Creates display-friendly preview of file contents
  *
@@ -314,58 +385,18 @@ export const generateFilePreview = (fileData) => {
   const details = [];
   const warnings = [];
 
-  // Version info
-  if (fileData.version) {
-    details.push(`Version: ${fileData.version}`);
-  } else {
-    warnings.push('Missing version information');
-  }
+  addVersionInfo(fileData, details, warnings);
 
-  // Export date
   if (fileData.exportDate) {
     details.push(`Exported: ${fileData.exportDate}`);
   }
 
-  // User count
-  if (fileData.users) {
-    const userCount = Object.keys(fileData.users).length;
-    details.push(`Users: ${userCount}`);
-
-    if (userCount === 0) {
-      warnings.push('No users in export');
-    }
-  }
-
-  // Library info
-  if (fileData.library && fileData.library.categories) {
-    const categoryCount = Array.isArray(fileData.library.categories)
-      ? fileData.library.categories.length
-      : Object.keys(fileData.library.categories).length;
-
-    details.push(`Library categories: ${categoryCount}`);
-  }
-
-  // Activity cards
-  if (fileData.activityCards) {
-    details.push(`Activity cards: ${fileData.activityCards.length}`);
-  }
-
-  // Settings
-  if (fileData.settings || fileData.currentTheme || fileData.bannerPosition) {
-    details.push('Includes app settings');
-  }
-
-  // Generate summary
-  const userCount = fileData.users ? Object.keys(fileData.users).length : 0;
-  const hasLibrary = !!(fileData.library && fileData.library.categories);
-  const hasSettings = !!(fileData.settings || fileData.currentTheme);
-
-  let summary = `StackMap export with ${userCount} user${userCount !== 1 ? 's' : ''}`;
-  if (hasLibrary) summary += ', activity library';
-  if (hasSettings) summary += ', app settings';
+  addUserInfo(fileData, details, warnings);
+  addLibraryInfo(fileData, details);
+  addActivityAndSettingsInfo(fileData, details);
 
   return {
-    summary,
+    summary: generatePreviewSummary(fileData),
     details,
     warnings
   };

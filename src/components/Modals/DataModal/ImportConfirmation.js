@@ -22,105 +22,116 @@ const ImportConfirmation = ({
   const [loading, setLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
+  // Validate and normalize user name
+  const normalizeUserName = (user) => {
+    if (!user.name || typeof user.name !== 'string') {
+      if (typeof user.name === 'object' && user.name !== null) {
+        return user.name.name || user.name.text || 'User';
+      }
+      return 'User';
+    }
+    return user.name;
+  };
+
+  // Validate and normalize user icon
+  const normalizeUserIcon = (user) => {
+    if (!user.icon || typeof user.icon !== 'string') {
+      if (user.emoji && typeof user.emoji === 'string') {
+        return user.emoji;
+      }
+      return '👤';
+    }
+    return user.icon;
+  };
+
+  // Validate user data before import
+  const validateUserData = (user) => {
+    const validatedUser = { ...user };
+    validatedUser.name = normalizeUserName(user);
+    validatedUser.icon = normalizeUserIcon(user);
+
+    // Remove redundant emoji field
+    if (validatedUser.emoji) {
+      delete validatedUser.emoji;
+    }
+
+    return validatedUser;
+  };
+
+  // Process selected users
+  const processSelectedUsers = (importData, importSelections) => {
+    const users = {};
+
+    if (importData.users) {
+      Object.entries(importData.users).forEach(([userId, user]) => {
+        if (importSelections[`user_${userId}`]) {
+          users[userId] = validateUserData(user);
+        }
+      });
+    }
+
+    return users;
+  };
+
+  // Process selected activity cards
+  const processSelectedActivities = (importData, importSelections) => {
+    const activityCards = [];
+
+    if (importData.activityCards) {
+      importData.activityCards.forEach(activity => {
+        if (importSelections[`activity_${activity.id}`]) {
+          activityCards.push(activity);
+        }
+      });
+    }
+
+    return activityCards;
+  };
+
+  // Process selected library categories
+  const processSelectedLibrary = (importData, importSelections) => {
+    if (!importData.library || !importData.library.categories) {
+      return null;
+    }
+
+    const selectedCategories = [];
+
+    importData.library.categories.forEach(category => {
+      if (importSelections[`category_${category.id}`]) {
+        const categoryToImport = { ...category, activities: [] };
+
+        if (category.activities) {
+          category.activities.forEach(activity => {
+            if (importSelections[`template_${category.id}_${activity.id}`]) {
+              categoryToImport.activities.push(activity);
+            }
+          });
+        }
+
+        selectedCategories.push(categoryToImport);
+      }
+    });
+
+    return {
+      categories: selectedCategories,
+      userAddedActivityIds: importData.library.userAddedActivityIds || [],
+    };
+  };
+
   // Process import data based on selections
   const processImportData = async () => {
     try {
       setLoading(true);
 
-      // Prepare imported data based on selections
       const dataToImport = {
         mode: importMode,
-        users: {},
-        activityCards: [],
-        library: null,
-        libraryTemplates: [],
+        users: processSelectedUsers(importData, importSelections),
+        activityCards: processSelectedActivities(importData, importSelections),
+        library: processSelectedLibrary(importData, importSelections),
+        libraryTemplates: importData.libraryTemplates || [],
         globalSettings: importData.globalSettings || {},
       };
 
-      // Process selected users with validation
-      if (importData.users) {
-        Object.entries(importData.users).forEach(([userId, user]) => {
-          if (importSelections[`user_${userId}`]) {
-            // Validate user data before adding to import
-            const validatedUser = { ...user };
-
-            // Ensure name is a string
-            if (!validatedUser.name || typeof validatedUser.name !== 'string') {
-              if (
-                typeof validatedUser.name === 'object' &&
-                validatedUser.name !== null
-              ) {
-                // Try to extract name from object
-                validatedUser.name =
-                  validatedUser.name.name || validatedUser.name.text || 'User';
-              } else {
-                validatedUser.name = 'User';
-              }
-            }
-
-            // Normalize icon field - always use 'icon', not 'emoji'
-            if (!validatedUser.icon || typeof validatedUser.icon !== 'string') {
-              if (
-                validatedUser.emoji &&
-                typeof validatedUser.emoji === 'string'
-              ) {
-                // Legacy support - migrate emoji to icon
-                validatedUser.icon = validatedUser.emoji;
-              } else {
-                validatedUser.icon = '👤';
-              }
-            }
-
-            // Remove redundant emoji field to prevent confusion
-            if (validatedUser.emoji) {
-              delete validatedUser.emoji;
-            }
-
-            dataToImport.users[userId] = validatedUser;
-          }
-        });
-      }
-
-      // Process selected activity cards
-      if (importData.activityCards) {
-        importData.activityCards.forEach(activity => {
-          if (importSelections[`activity_${activity.id}`]) {
-            dataToImport.activityCards.push(activity);
-          }
-        });
-      }
-
-      // Process selected library (v4 only)
-      if (importData.library && importData.library.categories) {
-        const selectedCategories = [];
-        importData.library.categories.forEach(category => {
-          if (importSelections[`category_${category.id}`]) {
-            const categoryToImport = { ...category, activities: [] };
-
-            if (category.activities) {
-              category.activities.forEach(activity => {
-                if (
-                  importSelections[`template_${category.id}_${activity.id}`]
-                ) {
-                  categoryToImport.activities.push(activity);
-                }
-              });
-            }
-
-            selectedCategories.push(categoryToImport);
-          }
-        });
-        dataToImport.library = {
-          categories: selectedCategories,
-          userAddedActivityIds: importData.library.userAddedActivityIds || [],
-        };
-      }
-
-      if (importData.libraryTemplates) {
-        dataToImport.libraryTemplates = importData.libraryTemplates;
-      }
-
-      // Call parent import handler
       await onImportComplete(dataToImport);
 
       if (showToast) {

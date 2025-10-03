@@ -403,6 +403,53 @@ const validateSanitizedMessage = (sanitized) => {
 };
 
 /**
+ * Validate expiration hours parameter
+ * @private
+ */
+const validateExpirationHours = (expirationHours, normalized, errors) => {
+  if (expirationHours !== undefined) {
+    if (typeof expirationHours !== 'number' || expirationHours <= 0 || expirationHours > 8760) {
+      errors.push('Expiration hours must be between 1 and 8760 (1 year)');
+    } else {
+      normalized.expirationHours = expirationHours;
+    }
+  }
+};
+
+/**
+ * Validate max uses parameter
+ * @private
+ */
+const validateMaxUses = (maxUses, normalized, errors) => {
+  if (maxUses !== undefined) {
+    if (typeof maxUses !== 'number' || maxUses < 1 || maxUses > 100) {
+      errors.push('Max uses must be between 1 and 100');
+    } else {
+      normalized.maxUses = Math.floor(maxUses);
+    }
+  }
+};
+
+/**
+ * Validate description parameter
+ * @private
+ */
+const validateDescription = (description, normalized, errors) => {
+  if (description !== undefined) {
+    if (typeof description !== 'string') {
+      errors.push('Description must be a string');
+    } else {
+      const trimmed = description.trim();
+      if (trimmed.length > 100) {
+        errors.push('Description must be 100 characters or less');
+      } else {
+        normalized.description = trimmed || 'Device invite';
+      }
+    }
+  }
+};
+
+/**
  * Validate device invite parameters
  * Checks parameters for device invite creation
  *
@@ -421,37 +468,9 @@ export const validateDeviceInviteParams = (params = {}) => {
 
   const errors = [];
 
-  // Validate expiration hours
-  if (params.expirationHours !== undefined) {
-    if (typeof params.expirationHours !== 'number' || params.expirationHours <= 0 || params.expirationHours > 8760) {
-      errors.push('Expiration hours must be between 1 and 8760 (1 year)');
-    } else {
-      normalized.expirationHours = params.expirationHours;
-    }
-  }
-
-  // Validate max uses
-  if (params.maxUses !== undefined) {
-    if (typeof params.maxUses !== 'number' || params.maxUses < 1 || params.maxUses > 100) {
-      errors.push('Max uses must be between 1 and 100');
-    } else {
-      normalized.maxUses = Math.floor(params.maxUses);
-    }
-  }
-
-  // Validate description
-  if (params.description !== undefined) {
-    if (typeof params.description !== 'string') {
-      errors.push('Description must be a string');
-    } else {
-      const trimmed = params.description.trim();
-      if (trimmed.length > 100) {
-        errors.push('Description must be 100 characters or less');
-      } else {
-        normalized.description = trimmed || 'Device invite';
-      }
-    }
-  }
+  validateExpirationHours(params.expirationHours, normalized, errors);
+  validateMaxUses(params.maxUses, normalized, errors);
+  validateDescription(params.description, normalized, errors);
 
   if (errors.length) {
     return {

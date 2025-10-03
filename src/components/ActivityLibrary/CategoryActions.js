@@ -196,54 +196,41 @@ const useCategoryActions = (categories, setCategories, onSaveCategories) => {
     }
   };
 
-  const copyGroupToMyLibrary = (group, myLibraryCategories, onSaveMyLibrary) => {
-    if (!group || !group.activities || group.activities.length === 0) {
-      Alert.alert('Error', 'No activities to copy');
-      return;
-    }
+  // Merge new activities into existing category
+  const mergeActivitiesIntoCategory = (existingGroup, newActivities) => {
+    const mergedActivities = [...existingGroup.activities];
 
-    // Check if group already exists in My Library
-    const existingGroup = myLibraryCategories.find(cat => cat.name === group.name);
-
-    if (existingGroup) {
-      Alert.alert(
-        'Group Already Exists',
-        `A group named "${group.name}" already exists in your library. Do you want to merge the activities?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Merge',
-            onPress: () => {
-              const mergedActivities = [...existingGroup.activities];
-              group.activities.forEach(newActivity => {
-                // Only add if activity doesn't already exist
-                const exists = mergedActivities.some(
-                  existing => existing.name === newActivity.name
-                );
-                if (!exists) {
-                  mergedActivities.push({
-                    ...newActivity,
-                    id: generateSecureId('activity'),
-                  });
-                }
-              });
-
-              const updatedCategories = myLibraryCategories.map(cat =>
-                cat.id === existingGroup.id
-                  ? { ...cat, activities: mergedActivities }
-                  : cat
-              );
-
-              if (onSaveMyLibrary) onSaveMyLibrary(updatedCategories);
-              Alert.alert('Success', 'Activities merged successfully!');
-            },
-          },
-        ]
+    newActivities.forEach(newActivity => {
+      const exists = mergedActivities.some(
+        existing => existing.name === newActivity.name
       );
-      return;
-    }
+      if (!exists) {
+        mergedActivities.push({
+          ...newActivity,
+          id: generateSecureId('activity'),
+        });
+      }
+    });
 
-    // Create new group
+    return mergedActivities;
+  };
+
+  // Handle merge confirmation for existing group
+  const handleMergeGroup = (existingGroup, group, myLibraryCategories, onSaveMyLibrary) => {
+    const mergedActivities = mergeActivitiesIntoCategory(existingGroup, group.activities);
+
+    const updatedCategories = myLibraryCategories.map(cat =>
+      cat.id === existingGroup.id
+        ? { ...cat, activities: mergedActivities }
+        : cat
+    );
+
+    if (onSaveMyLibrary) onSaveMyLibrary(updatedCategories);
+    Alert.alert('Success', 'Activities merged successfully!');
+  };
+
+  // Create new group with activities
+  const createNewGroupInLibrary = (group, myLibraryCategories, onSaveMyLibrary) => {
     const newGroup = {
       id: `category-${Date.now()}`,
       name: group.name,
@@ -256,6 +243,37 @@ const useCategoryActions = (categories, setCategories, onSaveCategories) => {
     const updatedCategories = [...myLibraryCategories, newGroup];
     if (onSaveMyLibrary) onSaveMyLibrary(updatedCategories);
     Alert.alert('Success', `"${group.name}" copied to your library!`);
+  };
+
+  // Show merge confirmation dialog
+  const showMergeConfirmation = (group, existingGroup, myLibraryCategories, onSaveMyLibrary) => {
+    Alert.alert(
+      'Group Already Exists',
+      `A group named "${group.name}" already exists in your library. Do you want to merge the activities?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Merge',
+          onPress: () => handleMergeGroup(existingGroup, group, myLibraryCategories, onSaveMyLibrary),
+        },
+      ]
+    );
+  };
+
+  const copyGroupToMyLibrary = (group, myLibraryCategories, onSaveMyLibrary) => {
+    if (!group || !group.activities || group.activities.length === 0) {
+      Alert.alert('Error', 'No activities to copy');
+      return;
+    }
+
+    const existingGroup = myLibraryCategories.find(cat => cat.name === group.name);
+
+    if (existingGroup) {
+      showMergeConfirmation(group, existingGroup, myLibraryCategories, onSaveMyLibrary);
+      return;
+    }
+
+    createNewGroupInLibrary(group, myLibraryCategories, onSaveMyLibrary);
   };
 
   return {
