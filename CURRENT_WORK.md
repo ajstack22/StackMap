@@ -1,39 +1,43 @@
 # 🎯 CURRENT WORK - What We're Actually Building
 
-## Active Feature: Edit Mode List Refactor (Jan 2025)
+## Active Feature: Code Smell Reduction - Phase 3 (Oct 2025)
 
 ### What We're Building
-**Converting the edit mode from cards to a clean list interface** - like modern email clients
+**Final push to SonarCloud gold standard (<500 code smells)**
 
-### Why
-- Cards take up too much space
-- Can only see 2-3 activities at once
-- Better visibility and easier management needed
+### Goal
+Reduce from ~700-900 smells → <500 smells via structural improvements
 
-### Current Status
-✅ Component structure created: `/src/components/EditModeList/`
-✅ Basic list rendering implemented
-⚠️ Need to add action buttons per item
-⚠️ Need to implement reordering with up/down arrows
-⚠️ Need smooth animations
+### Strategy (3 Parallel Agents)
+1. **Agent 1**: Split large files (OnboardingUserCentered.js [1,893 lines], EmojiPicker.js [1,482 lines], DataModal.js [1,200 lines])
+2. **Agent 2**: Extract repeated JSX patterns into 5-8 reusable components
+3. **Agent 3**: Reduce cognitive complexity in 20-30 complex functions
 
-### Key Files
-- `/src/components/EditModeList/index.js` - Main component
-- `/src/components/EditModeList/EditModeListItem.js` - List item component  
-- `/src/components/EditModeList/styles.js` - Unified styles
-- `/docs/features/edit-mode-refactor.md` - Full specification
+### Atlas Prompt
+📖 **[atlas/prompts/CODE_SMELL_PHASE3.md](atlas/prompts/CODE_SMELL_PHASE3.md)** - Complete execution guide
 
-### Next Steps
-1. Add action buttons to each list item (edit, delete, add to library, complete)
-2. Implement up/down arrow reordering
-3. Add smooth animations
-4. Test on all platforms
+### Expected Impact
+- **-200 to -400 smells**
+- Achieve <500 code smells (SonarCloud gold standard)
+- No files >1,000 lines
+- 15-20 new reusable components
+- 30% reduction in average cognitive complexity
 
 ---
 
 ## Recently Completed (Archive)
 
-### ✅ Sync Persistence Fix (Aug 29, 2025)
+### ✅ Tiered Testing System (Oct 2025)
+- Smoke/critical tests block deployments
+- UI tests don't block deployments
+- Documented in `/docs/TEST_TIERS.md`
+
+### ✅ Edit Mode List Refactor (Jan 2025)
+- Converted from cards to clean list interface
+- Button-based reordering
+- Smooth animations across all platforms
+
+### ✅ Sync Persistence Fix (Aug 2025)
 - Fixed Device B losing data on refresh
 - Solution: Services now restore state from AsyncStorage on init
 - Docs archived to: `/docs/sync/archive-completed/`
@@ -46,12 +50,11 @@
 ---
 
 ## DO NOT Work On
-- ❌ Sync system refactoring (just fixed, working fine)
+- ❌ Sync system refactoring (working fine)
 - ❌ Creating more sync test components
-- ❌ Documentation cleanup (recently completed Aug 23)
+- ❌ Edit mode (completed)
 
 ---
 
 ## Remember
-**We're building NEW features, not fixing old ones!**
-Current focus: **Edit Mode List Interface**
+**Ready for next feature or improvements!**

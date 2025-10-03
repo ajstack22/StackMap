@@ -7,84 +7,156 @@
 /**
  * Normalize activity fields to use standard naming
  * Activities should use 'text' and 'icon' (not 'name', 'title', or 'emoji')
+ *
+ * @description Normalizes activity fields to standardized names (text/icon)
+ * @param {Object} activity - Activity object to normalize
+ * @returns {Object} Normalized activity with standard field names
  */
 export const normalizeActivity = (activity) => {
   if (!activity) return activity;
-  
+
   const normalized = { ...activity };
-  
-  // Normalize text field (prefer text > name > title)
-  if (!normalized.text) {
-    if (normalized.name) {
-      normalized.text = normalized.name;
-      delete normalized.name;
-    } else if (normalized.title) {
-      normalized.text = normalized.title;
-      delete normalized.title;
-    }
-  }
-  
-  // Normalize icon field (prefer icon > emoji)
-  if (!normalized.icon) {
-    if (normalized.emoji) {
-      normalized.icon = normalized.emoji;
-      delete normalized.emoji;
-    }
-  } else if (normalized.emoji) {
-    // Remove redundant emoji field if icon exists
-    delete normalized.emoji;
-  }
-  
+
+  // Normalize text field using helper function
+  normalizeActivityTextField(normalized);
+
+  // Normalize icon field using helper function
+  normalizeActivityIconField(normalized);
+
   return normalized;
+};
+
+/**
+ * @description Helper to normalize activity text field
+ * @param {Object} activity - Activity object to modify
+ * @private
+ */
+const normalizeActivityTextField = (activity) => {
+  // Early return if text already exists
+  if (activity.text) return;
+
+  // Prefer 'name' over 'title'
+  if (activity.name) {
+    activity.text = activity.name;
+    delete activity.name;
+    return;
+  }
+
+  if (activity.title) {
+    activity.text = activity.title;
+    delete activity.title;
+  }
+};
+
+/**
+ * @description Helper to normalize activity icon field
+ * @param {Object} activity - Activity object to modify
+ * @private
+ */
+const normalizeActivityIconField = (activity) => {
+  // Handle icon field normalization
+  if (!activity.icon && activity.emoji) {
+    activity.icon = activity.emoji;
+  }
+
+  // Remove redundant emoji field if it exists
+  if (activity.emoji) {
+    delete activity.emoji;
+  }
 };
 
 /**
  * Normalize user fields to use standard naming
  * Users should use 'name' (string) and 'icon' (not 'emoji')
+ *
+ * @description Normalizes user fields to standardized format
+ * @param {Object} user - User object to normalize
+ * @returns {Object} Normalized user with standard field names
  */
 export const normalizeUser = (user) => {
   if (!user) return user;
-  
+
   const normalized = { ...user };
-  
-  // Ensure name is a string
-  if (normalized.name && typeof normalized.name === 'object') {
-    // Try to extract string from object
-    if (normalized.name.name && typeof normalized.name.name === 'string') {
-      normalized.name = normalized.name.name;
-    } else if (normalized.name.text && typeof normalized.name.text === 'string') {
-      normalized.name = normalized.name.text;
-    } else {
-      normalized.name = 'User';
-    }
-  } else if (!normalized.name || typeof normalized.name !== 'string') {
-    normalized.name = 'User';
-  }
-  
-  // Normalize icon field (prefer icon > emoji)
-  if (!normalized.icon) {
-    if (normalized.emoji) {
-      normalized.icon = normalized.emoji;
-      delete normalized.emoji;
-    } else {
-      normalized.icon = '👤';
-    }
-  } else if (normalized.emoji) {
-    // Remove redundant emoji field if icon exists
-    delete normalized.emoji;
-  }
-  
+
+  // Normalize name field using helper
+  normalizeUserNameField(normalized);
+
+  // Normalize icon field using helper
+  normalizeUserIconField(normalized);
+
   // Normalize days if present
-  if (normalized.days) {
-    Object.keys(normalized.days).forEach(dayKey => {
-      const day = normalized.days[dayKey];
-      if (day && day.activities && Array.isArray(day.activities)) {
-        day.activities = day.activities.map(normalizeActivity);
-      }
-    });
-  }
-  
+  normalizeUserDays(normalized);
+
   return normalized;
+};
+
+/**
+ * @description Helper to normalize user name field to string
+ * @param {Object} user - User object to modify
+ * @private
+ */
+const normalizeUserNameField = (user) => {
+  // Handle object type name field
+  if (user.name && typeof user.name === 'object') {
+    user.name = extractNameFromObject(user.name);
+    return;
+  }
+
+  // Ensure name is a string
+  if (!user.name || typeof user.name !== 'string') {
+    user.name = 'User';
+  }
+};
+
+/**
+ * @description Extract string name from object
+ * @param {Object} nameObj - Object containing name data
+ * @returns {string} Extracted name or default
+ * @private
+ */
+const extractNameFromObject = (nameObj) => {
+  if (nameObj.name && typeof nameObj.name === 'string') {
+    return nameObj.name;
+  }
+
+  if (nameObj.text && typeof nameObj.text === 'string') {
+    return nameObj.text;
+  }
+
+  return 'User';
+};
+
+/**
+ * @description Helper to normalize user icon field
+ * @param {Object} user - User object to modify
+ * @private
+ */
+const normalizeUserIconField = (user) => {
+  // Set icon from emoji if not present
+  if (!user.icon) {
+    user.icon = user.emoji || '👤';
+  }
+
+  // Clean up redundant emoji field
+  if (user.emoji) {
+    delete user.emoji;
+  }
+};
+
+/**
+ * @description Helper to normalize user days and activities
+ * @param {Object} user - User object to modify
+ * @private
+ */
+const normalizeUserDays = (user) => {
+  if (!user.days) return;
+
+  Object.keys(user.days).forEach(dayKey => {
+    const day = user.days[dayKey];
+    if (!day || !day.activities || !Array.isArray(day.activities)) return;
+
+    day.activities = day.activities.map(normalizeActivity);
+  });
 };
 
 /**
@@ -142,70 +214,150 @@ export const normalizeSyncData = (data) => {
 
 /**
  * Check if data needs normalization
+ *
+ * @description Checks if sync data contains old field names that need normalization
+ * @param {Object} data - Data object to check
+ * @returns {boolean} True if normalization is needed
  */
 export const needsNormalization = (data) => {
   if (!data) return false;
-  
-  // Check users for old field names
-  if (data.users) {
-    for (const userId in data.users) {
-      const user = data.users[userId];
-      if (user.emoji || (user.name && typeof user.name === 'object')) {
-        return true;
-      }
-      
-      // Check user activities
-      if (user.days) {
-        for (const dayKey in user.days) {
-          const day = user.days[dayKey];
-          if (day.activities && Array.isArray(day.activities)) {
-            for (const activity of day.activities) {
-              if (activity.name || activity.title || activity.emoji) {
-                return true;
-              }
-            }
-          }
-        }
-      }
-    }
+
+  // Check users section
+  if (checkUsersNeedNormalization(data.users)) {
+    return true;
   }
-  
-  // Check library activities
-  if (data.library && data.library.categories) {
-    // Handle both array and object formats
-    if (Array.isArray(data.library.categories)) {
-      for (const category of data.library.categories) {
-        if (category.activities && Array.isArray(category.activities)) {
-          for (const activity of category.activities) {
-            if (activity.name || activity.title || activity.emoji) {
-              return true;
-            }
-          }
-        }
-      }
-    } else if (typeof data.library.categories === 'object') {
-      // Categories is an object
-      for (const categoryId in data.library.categories) {
-        const category = data.library.categories[categoryId];
-        if (category && category.activities && Array.isArray(category.activities)) {
-          for (const activity of category.activities) {
-            if (activity.name || activity.title || activity.emoji) {
-              return true;
-            }
-          }
-        }
-      }
-    }
+
+  // Check library section
+  if (checkLibraryNeedsNormalization(data.library)) {
+    return true;
   }
-  
-  // Also check library.activities if it exists
-  if (data.library && data.library.activities && Array.isArray(data.library.activities)) {
-    for (const activity of data.library.activities) {
-      if (activity.name || activity.title || activity.emoji) {
-        return true;
-      }
-    }
-  }
-  
+
   return false;
+};
+
+/**
+ * @description Check if users section needs normalization
+ * @param {Object} users - Users object to check
+ * @returns {boolean} True if normalization needed
+ * @private
+ */
+const checkUsersNeedNormalization = (users) => {
+  if (!users) return false;
+
+  for (const userId in users) {
+    const user = users[userId];
+
+    // Check user fields
+    if (userNeedsNormalization(user)) {
+      return true;
+    }
+
+    // Check user activities
+    if (userActivitiesNeedNormalization(user.days)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+/**
+ * @description Check if individual user needs normalization
+ * @param {Object} user - User object to check
+ * @returns {boolean} True if user has old field names
+ * @private
+ */
+const userNeedsNormalization = (user) => {
+  if (!user) return false;
+  return user.emoji || (user.name && typeof user.name === 'object');
+};
+
+/**
+ * @description Check if user activities need normalization
+ * @param {Object} days - Days object containing activities
+ * @returns {boolean} True if activities have old field names
+ * @private
+ */
+const userActivitiesNeedNormalization = (days) => {
+  if (!days) return false;
+
+  for (const dayKey in days) {
+    const day = days[dayKey];
+    if (!day.activities || !Array.isArray(day.activities)) continue;
+
+    if (activitiesArrayNeedsNormalization(day.activities)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+/**
+ * @description Check if library needs normalization
+ * @param {Object} library - Library object to check
+ * @returns {boolean} True if normalization needed
+ * @private
+ */
+const checkLibraryNeedsNormalization = (library) => {
+  if (!library) return false;
+
+  // Check library.categories
+  if (library.categories) {
+    if (categoriesNeedNormalization(library.categories)) {
+      return true;
+    }
+  }
+
+  // Check library.activities
+  if (library.activities && Array.isArray(library.activities)) {
+    if (activitiesArrayNeedsNormalization(library.activities)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+/**
+ * @description Check if categories need normalization
+ * @param {Object|Array} categories - Categories to check
+ * @returns {boolean} True if normalization needed
+ * @private
+ */
+const categoriesNeedNormalization = (categories) => {
+  // Handle array format
+  if (Array.isArray(categories)) {
+    return categories.some(category =>
+      category.activities &&
+      Array.isArray(category.activities) &&
+      activitiesArrayNeedsNormalization(category.activities)
+    );
+  }
+
+  // Handle object format
+  if (typeof categories === 'object') {
+    for (const categoryId in categories) {
+      const category = categories[categoryId];
+      if (!category || !category.activities || !Array.isArray(category.activities)) continue;
+
+      if (activitiesArrayNeedsNormalization(category.activities)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
+/**
+ * @description Check if activities array needs normalization
+ * @param {Array} activities - Activities array to check
+ * @returns {boolean} True if any activity has old field names
+ * @private
+ */
+const activitiesArrayNeedsNormalization = (activities) => {
+  return activities.some(activity =>
+    activity.name || activity.title || activity.emoji
+  );
 };

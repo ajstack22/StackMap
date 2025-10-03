@@ -8,6 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { LoadingSpinner } from '../shared';
 import syncService from '../../services/sync';
 import { styles } from './styles';
 
@@ -61,52 +62,65 @@ const SyncStatusIndicator = ({
     };
   }, [syncStatus.status]);
 
+  // Status icon configurations
+  const STATUS_ICONS = {
+    'syncing': { name: 'sync', color: theme.primary },
+    'success': { name: 'cloud-done', color: '#4caf50' },
+    'error': { name: 'error-outline', color: '#f44336' },
+    'offline': { name: 'cloud-off', color: '#ff9800' },
+    'queue': { name: 'cloud-queue', color: '#ff9800' },
+    'default': { name: 'cloud', color: '#000' }
+  };
+
+  // Status text mappings
+  const STATUS_TEXTS = {
+    'syncing': 'Syncing...',
+    'success': 'Synced',
+    'offline': 'Offline',
+    'default': 'Sync enabled'
+  };
+
+  /**
+   * @description Get status icon configuration based on sync state
+   * @returns {{name: string, color: string}} Icon configuration
+   */
   const getStatusIcon = () => {
     const { status, isOnline, queueStatus } = syncStatus;
 
     if (!isOnline) {
-      return { name: 'cloud-off', color: '#ff9800' };
+      return STATUS_ICONS.offline;
     }
 
-    switch (status) {
-      case 'syncing':
-        return { name: 'sync', color: theme.primary };
-      case 'success':
-        return { name: 'cloud-done', color: '#4caf50' };
-      case 'error':
-        return { name: 'error-outline', color: '#f44336' };
-      case 'offline':
-        return { name: 'cloud-off', color: '#ff9800' };
-      default:
-        if (queueStatus.pending > 0) {
-          return { name: 'cloud-queue', color: '#ff9800' };
-        }
-        return { name: 'cloud', color: '#000' };
+    // Check for special queue state
+    if (status === 'idle' && queueStatus.pending > 0) {
+      return STATUS_ICONS.queue;
     }
+
+    return STATUS_ICONS[status] || STATUS_ICONS.default;
   };
 
+  /**
+   * @description Get status text based on sync state
+   * @returns {string} Status display text
+   */
   const getStatusText = () => {
     const { status, error, isOnline, queueStatus } = syncStatus;
 
     if (!isOnline) {
-      return 'Offline';
+      return STATUS_TEXTS.offline;
     }
 
-    switch (status) {
-      case 'syncing':
-        return 'Syncing...';
-      case 'success':
-        return 'Synced';
-      case 'error':
-        return compact ? 'Error' : error || 'Sync error';
-      case 'offline':
-        return 'Offline';
-      default:
-        if (queueStatus.pending > 0) {
-          return `${queueStatus.pending} pending`;
-        }
-        return 'Sync enabled';
+    // Handle error state specially
+    if (status === 'error') {
+      return compact ? 'Error' : error || 'Sync error';
     }
+
+    // Handle queue state
+    if (status === 'idle' && queueStatus.pending > 0) {
+      return `${queueStatus.pending} pending`;
+    }
+
+    return STATUS_TEXTS[status] || STATUS_TEXTS.default;
   };
 
   const formatTime = timestamp => {

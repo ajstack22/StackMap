@@ -20,6 +20,7 @@ import {
 import { ANIMATION_DURATION } from './src/constants/animations';
 import { DIMENSIONS } from './src/constants/spacing';
 import { Z_INDEX } from './src/constants/zIndex';
+import { EmptyState, LoadingSpinner } from './src/components/shared';
 
 
 // Capture sync URL data immediately before React renders
@@ -1997,7 +1998,7 @@ const App = () => {
           alignItems: 'center',
         }}
       >
-        <ActivityIndicator size="large" color="#FFFFFF" />
+        <LoadingSpinner size="large" color="#FFFFFF" theme={theme} />
         <Text style={{ color: '#FFFFFF', marginTop: 20 }}>
           Loading theme...
         </Text>
@@ -4620,15 +4621,16 @@ Users: ${userNames} (${userCount} total)
                   ]}
                 >
                   {activities.length === 0 ? (
-                    <View style={styles.emptyState}>
-                      <Text style={styles.emptyIcon}>📋</Text>
-                      <Text style={styles.emptyText}>No activities yet</Text>
-                      <Text style={styles.emptySubtext}>
-                        {isEditMode
+                    <EmptyState
+                      icon="📋"
+                      title="No activities yet"
+                      subtitle={
+                        isEditMode
                           ? 'Tap Add to create an activity'
-                          : 'Tap the edit button to add your first activity'}
-                      </Text>
-                    </View>
+                          : 'Tap the edit button to add your first activity'
+                      }
+                      theme={theme}
+                    />
                   ) : (
                     <View
                       style={[
@@ -4793,15 +4795,16 @@ Users: ${userNames} (${userCount} total)
                   Platform.OS === 'web' && { alignItems: 'center' },
                 ]}
                 ListEmptyComponent={
-                  <View style={styles.emptyState}>
-                    <Text style={styles.emptyIcon}>📋</Text>
-                    <Text style={styles.emptyText}>No activities yet</Text>
-                    <Text style={styles.emptySubtext}>
-                      {isEditMode
+                  <EmptyState
+                    icon="📋"
+                    title="No activities yet"
+                    subtitle={
+                      isEditMode
                         ? 'Tap Add to create an activity'
-                        : 'Tap the edit button to add your first activity'}
-                    </Text>
-                  </View>
+                        : 'Tap the edit button to add your first activity'
+                    }
+                    theme={theme}
+                  />
                 }
               />
             )}
@@ -5624,7 +5627,7 @@ Users: ${userNames} (${userCount} total)
           alignItems: 'center',
         }}
       >
-        <ActivityIndicator size="large" color="#FFFFFF" />
+        <LoadingSpinner size="large" color="#FFFFFF" theme={theme} />
       </View>
     );
   }

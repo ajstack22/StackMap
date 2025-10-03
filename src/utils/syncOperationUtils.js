@@ -105,74 +105,77 @@ export const createSyncOperationResult = (params) => {
   return result;
 };
 
+// Field type validators
+const FIELD_VALIDATORS = {
+  'syncEnabled': (value) => ({ valid: typeof value === 'boolean', error: 'must be a boolean' }),
+  'syncStatusChecked': (value) => ({ valid: typeof value === 'boolean', error: 'must be a boolean' }),
+  'syncId': (value) => ({ valid: value === null || typeof value === 'string', error: 'must be a string or null' }),
+  'syncRecoveryPhrase': (value) => ({ valid: value === null || typeof value === 'string', error: 'must be a string or null' }),
+  'syncStatus': (value) => ({ valid: value === null || typeof value === 'string', error: 'must be a string or null' }),
+  'lastSyncTime': (value) => ({ valid: value === null || (typeof value === 'number' && value >= 0), error: 'must be a positive number or null' })
+};
+
 /**
  * Validate sync state update
  * Ensures sync state updates have valid structure
  *
+ * @description Validates and sanitizes sync state update objects
  * @param {Object} stateUpdate - State update object
  * @returns {{isValid: boolean, error?: string, sanitized?: Object}} Validation result
  */
 export const validateSyncStateUpdate = (stateUpdate) => {
-  if (!stateUpdate || typeof stateUpdate !== 'object' || Array.isArray(stateUpdate)) {
+  // Early return for invalid input
+  if (!isValidStateUpdateObject(stateUpdate)) {
     return {
       isValid: false,
       error: 'State update must be an object'
     };
   }
 
-  const validFields = [
-    'syncEnabled',
-    'syncId',
-    'syncRecoveryPhrase',
-    'syncStatus',
-    'lastSyncTime',
-    'syncStatusChecked'
-  ];
+  return validateAndSanitizeFields(stateUpdate);
+};
 
+/**
+ * @description Check if state update is a valid object
+ * @param {*} stateUpdate - Value to check
+ * @returns {boolean} True if valid object
+ * @private
+ */
+const isValidStateUpdateObject = (stateUpdate) => {
+  return stateUpdate && typeof stateUpdate === 'object' && !Array.isArray(stateUpdate);
+};
+
+/**
+ * @description Validate and sanitize state update fields
+ * @param {Object} stateUpdate - State update to process
+ * @returns {{isValid: boolean, error?: string, sanitized?: Object}} Result
+ * @private
+ */
+const validateAndSanitizeFields = (stateUpdate) => {
   const sanitized = {};
   const errors = [];
+  const validFields = Object.keys(FIELD_VALIDATORS);
 
   for (const [key, value] of Object.entries(stateUpdate)) {
+    // Check if field is valid
     if (!validFields.includes(key)) {
       errors.push(`Invalid field: ${key}`);
       continue;
     }
 
-    // Validate field types
-    switch (key) {
-      case 'syncEnabled':
-      case 'syncStatusChecked':
-        if (typeof value !== 'boolean') {
-          errors.push(`${key} must be a boolean`);
-        } else {
-          sanitized[key] = value;
-        }
-        break;
+    // Validate field value
+    const validator = FIELD_VALIDATORS[key];
+    const validation = validator(value);
 
-      case 'syncId':
-      case 'syncRecoveryPhrase':
-      case 'syncStatus':
-        if (value !== null && typeof value !== 'string') {
-          errors.push(`${key} must be a string or null`);
-        } else {
-          sanitized[key] = value;
-        }
-        break;
-
-      case 'lastSyncTime':
-        if (value !== null && (typeof value !== 'number' || value < 0)) {
-          errors.push(`${key} must be a positive number or null`);
-        } else {
-          sanitized[key] = value;
-        }
-        break;
-
-      default:
-        sanitized[key] = value;
+    if (!validation.valid) {
+      errors.push(`${key} ${validation.error}`);
+    } else {
+      sanitized[key] = value;
     }
   }
 
-  if (errors.length) {
+  // Return result based on errors
+  if (errors.length > 0) {
     return {
       isValid: false,
       error: errors.join('; ')
@@ -289,48 +292,114 @@ export const validateSyncPreviewData = (previewData) => {
   };
 };
 
+// Sanitization patterns for sensitive data
+// NOTE: Order matters! More specific patterns (longer/stricter) must come first
+const SANITIZATION_PATTERNS = [
+  { pattern: /\b[a-fA-F0-9]{32}\b/g, replacement: '[REDACTED_PHRASE]' }, // Recovery phrases (32 chars hex)
+  { pattern: /\b[a-fA-F0-9]{15,16}\b/g, replacement: '[REDACTED_ID]' }, // Sync IDs (15-16 chars hex)
+  { pattern: /\bnot-a-valid-url\b/g, replacement: '[REDACTED_URL]' }, // Malformed URLs
+  { pattern: /\b[A-Za-z0-9]{17,}\b/g, replacement: '[REDACTED_TOKEN]' } // API tokens (17+ alphanumeric) - must be last
+];
+
 /**
  * Sanitize sync error messages
  * Removes sensitive information from error messages
  *
+ * @description Sanitizes error messages by removing sensitive data
  * @param {string} errorMessage - Raw error message
  * @returns {string} Sanitized error message
  */
 export const sanitizeSyncErrorMessage = (errorMessage) => {
+  // Handle invalid input
+  if (!isValidErrorMessage(errorMessage)) {
+    return getDefaultErrorMessage(errorMessage);
+  }
+
+  // Apply sanitization
+  const sanitized = applySanitizationPatterns(errorMessage);
+
+  // Validate result
+  return validateSanitizedMessage(sanitized);
+};
+
+/**
+ * @description Check if error message is valid string
+ * @param {*} errorMessage - Message to validate
+ * @returns {boolean} True if valid string with content
+ * @private
+ */
+const isValidErrorMessage = (errorMessage) => {
+  return typeof errorMessage === 'string' && errorMessage.trim().length > 0;
+};
+
+/**
+ * @description Get default error message based on input type
+ * @param {*} errorMessage - Original message
+ * @returns {string} Default error message
+ * @private
+ */
+const getDefaultErrorMessage = (errorMessage) => {
   if (typeof errorMessage !== 'string') {
     return 'Unknown sync error';
   }
+  return 'Sync operation failed';
+};
 
-  if (!errorMessage.trim().length) {
+/**
+ * @description Apply all sanitization patterns to message
+ * @param {string} message - Message to sanitize
+ * @returns {string} Sanitized message
+ * @private
+ */
+const applySanitizationPatterns = (message) => {
+  let sanitized = message;
+
+  // Apply standard patterns
+  for (const { pattern, replacement } of SANITIZATION_PATTERNS) {
+    sanitized = sanitized.replace(pattern, replacement);
+  }
+
+  // Handle URLs specially
+  sanitized = sanitizeUrls(sanitized);
+
+  return sanitized;
+};
+
+/**
+ * @description Sanitize URLs while preserving domain info
+ * @param {string} message - Message containing URLs
+ * @returns {string} Message with sanitized URLs
+ * @private
+ */
+const sanitizeUrls = (message) => {
+  return message.replace(/https?:\/\/[^\s]+/g, (match) => {
+    try {
+      const url = new URL(match);
+      return `${url.protocol}//${url.hostname}[REDACTED_PATH]`;
+    } catch {
+      return '[REDACTED_URL]';
+    }
+  });
+};
+
+/**
+ * @description Validate sanitized message has content
+ * @param {string} sanitized - Sanitized message
+ * @returns {string} Valid message or default
+ * @private
+ */
+const validateSanitizedMessage = (sanitized) => {
+  const trimmed = sanitized.trim();
+
+  // Check if message is empty or only contains redaction tokens
+  if (!trimmed.length ||
+      trimmed === '[REDACTED_PHRASE]' ||
+      trimmed === '[REDACTED_TOKEN]' ||
+      trimmed === '[REDACTED_ID]') {
     return 'Sync operation failed';
   }
 
-  // Remove potential sensitive information
-  let sanitized = errorMessage
-    // Remove recovery phrases (32-char hex strings)
-    .replace(/\b[a-fA-F0-9]{32}\b/g, '[REDACTED_PHRASE]')
-    // Remove sync IDs (15-16 char hex strings)
-    .replace(/\b[a-fA-F0-9]{15,16}\b/g, '[REDACTED_ID]')
-    // Remove API keys or tokens (longer than 16 chars)
-    .replace(/\b[A-Za-z0-9]{17,}\b/g, '[REDACTED_TOKEN]')
-    // Remove URLs but keep domain info
-    .replace(/https?:\/\/[^\s]+/g, (match) => {
-      try {
-        const url = new URL(match);
-        return `${url.protocol}//${url.hostname}[REDACTED_PATH]`;
-      } catch {
-        return '[REDACTED_URL]';
-      }
-    })
-    // Handle any remaining malformed URLs or protocols
-    .replace(/\bnot-a-valid-url\b/g, '[REDACTED_URL]');
-
-  // Ensure message isn't empty after sanitization
-  if (!sanitized.trim().length || sanitized.trim() === '[REDACTED_PHRASE]') {
-    return 'Sync operation failed';
-  }
-
-  return sanitized.trim();
+  return trimmed;
 };
 
 /**
@@ -397,10 +466,20 @@ export const validateDeviceInviteParams = (params = {}) => {
   };
 };
 
+// Rate limit intervals for different operation types (in milliseconds)
+const RATE_LIMIT_INTERVALS = {
+  manual: 5000,      // 5 seconds between manual syncs
+  enable: 10000,     // 10 seconds between enable attempts
+  restore: 10000,    // 10 seconds between restore attempts
+  disable: 2000,     // 2 seconds between disable attempts
+  default: 5000      // Default interval
+};
+
 /**
  * Check if sync operation is rate limited
  * Implements basic rate limiting for sync operations
  *
+ * @description Checks if sufficient time has passed since last operation
  * @param {Object} params - Rate limit parameters
  * @param {number} params.lastOperationTime - Timestamp of last operation
  * @param {number} [params.minIntervalMs] - Minimum interval between operations (default: 5000ms)
@@ -410,34 +489,72 @@ export const validateDeviceInviteParams = (params = {}) => {
 export const checkSyncOperationRateLimit = (params) => {
   const { lastOperationTime, minIntervalMs = 5000, operationType = 'default' } = params;
 
-  if (typeof lastOperationTime !== 'number' || lastOperationTime <= 0) {
+  // Early return for invalid timestamp
+  if (!isValidTimestamp(lastOperationTime)) {
     return { isRateLimited: false };
   }
 
-  // Different intervals for different operation types
-  const intervals = {
-    manual: 5000,      // 5 seconds between manual syncs
-    enable: 10000,     // 10 seconds between enable attempts
-    restore: 10000,    // 10 seconds between restore attempts
-    disable: 2000,     // 2 seconds between disable attempts
-    default: minIntervalMs
-  };
+  // Calculate time since last operation
+  const timeSinceLastOp = calculateTimeSince(lastOperationTime);
 
-  const interval = intervals[operationType] || intervals.default;
-  const now = Date.now();
-  const timeSinceLastOp = now - lastOperationTime;
-
-  // Handle time anomalies (clock going backwards) gracefully
+  // Handle time anomalies
   if (timeSinceLastOp < 0) {
     return { isRateLimited: false };
   }
 
-  if (timeSinceLastOp < interval) {
+  // Check against interval
+  const interval = getIntervalForOperation(operationType, minIntervalMs);
+  return checkAgainstInterval(timeSinceLastOp, interval);
+};
+
+/**
+ * @description Validate timestamp
+ * @param {*} timestamp - Timestamp to validate
+ * @returns {boolean} True if valid timestamp
+ * @private
+ */
+const isValidTimestamp = (timestamp) => {
+  return typeof timestamp === 'number' && timestamp > 0;
+};
+
+/**
+ * @description Calculate time since given timestamp
+ * @param {number} timestamp - Past timestamp
+ * @returns {number} Milliseconds since timestamp
+ * @private
+ */
+const calculateTimeSince = (timestamp) => {
+  return Date.now() - timestamp;
+};
+
+/**
+ * @description Get interval for operation type
+ * @param {string} operationType - Type of operation
+ * @param {number} customInterval - Custom interval if default not found
+ * @returns {number} Interval in milliseconds
+ * @private
+ */
+const getIntervalForOperation = (operationType, customInterval) => {
+  // Use custom interval for default type if provided
+  if (operationType === 'default' && customInterval) {
+    return customInterval;
+  }
+  return RATE_LIMIT_INTERVALS[operationType] || RATE_LIMIT_INTERVALS.default;
+};
+
+/**
+ * @description Check if time is within rate limit interval
+ * @param {number} timeSince - Time since last operation
+ * @param {number} interval - Required interval
+ * @returns {{isRateLimited: boolean, waitTimeMs?: number}} Result
+ * @private
+ */
+const checkAgainstInterval = (timeSince, interval) => {
+  if (timeSince < interval) {
     return {
       isRateLimited: true,
-      waitTimeMs: interval - timeSinceLastOp
+      waitTimeMs: interval - timeSince
     };
   }
-
   return { isRateLimited: false };
 };

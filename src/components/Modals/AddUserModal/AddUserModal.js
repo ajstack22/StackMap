@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import EmojiPicker from '../../EmojiPicker';
+import { PrimaryButton } from '../../shared';
 import { FEATURE_FLAGS } from '../../../constants';
 import { styles } from './styles';
 
@@ -140,14 +141,12 @@ const AddUserModal = ({
                 autoFocus
               />
 
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: theme.primary }]}
+              <PrimaryButton
+                title={editingUser ? 'Save Changes' : 'Add User'}
                 onPress={handleSave}
-              >
-                <Text style={styles.buttonText}>
-                  {editingUser ? 'Save Changes' : 'Add User'}
-                </Text>
-              </TouchableOpacity>
+                theme={theme}
+                fullWidth={true}
+              />
             </ScrollView>
           </KeyboardAvoidingView>
         </View>

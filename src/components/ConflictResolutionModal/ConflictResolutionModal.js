@@ -11,6 +11,7 @@ import {
   StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { LoadingSpinner, PrimaryButton } from '../shared';
 import { styles } from './styles';
 import conflictResolver from '../../services/sync/conflictResolver';
 
@@ -326,8 +327,12 @@ const ConflictResolutionModal = ({
 
           {resolving && (
             <View style={styles.resolvingOverlay}>
-              <ActivityIndicator size="large" color={theme.primary} />
-              <Text style={styles.resolvingText}>Applying choice...</Text>
+              <LoadingSpinner
+                size="large"
+                color={theme.primary}
+                message="Applying choice..."
+                theme={theme}
+              />
             </View>
           )}
         </ScrollView>

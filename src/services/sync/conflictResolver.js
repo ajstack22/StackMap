@@ -53,102 +53,253 @@ class ConflictResolver {
   }
 
   /**
-   * Merge users - Per-user granular merge
+   * @description Merge users with per-user granular merge
+   * @param {Object} localUsers - Local users object
+   * @param {Object} remoteUsers - Remote users object
+   * @param {Object} localMeta - Local metadata
+   * @param {Object} remoteMeta - Remote metadata
+   * @returns {Object} Merged users object
    */
   mergeUsers(localUsers, remoteUsers, localMeta, remoteMeta) {
+    // Handle edge cases first
+    const edgeResult = this.handleUserEdgeCases(localUsers, remoteUsers);
+    if (edgeResult !== null) return edgeResult;
+
+    // Check for significant time difference
+    const timeBasedResult = this.checkUserTimestamps(
+      localUsers, remoteUsers, localMeta, remoteMeta
+    );
+    if (timeBasedResult !== null) return timeBasedResult;
+
+    // Perform detailed merge
+    return this.performDetailedUserMerge(localUsers, remoteUsers, localMeta, remoteMeta);
+  }
+
+  /**
+   * @description Handle edge cases where one or both user sets are missing
+   * @param {Object} localUsers - Local users
+   * @param {Object} remoteUsers - Remote users
+   * @returns {Object|null} Users object or null to continue
+   * @private
+   */
+  handleUserEdgeCases(localUsers, remoteUsers) {
     if (!localUsers && !remoteUsers) return {};
+
     if (!localUsers) {
       this.log('No local users, using remote users');
       return remoteUsers || {};
     }
+
     if (!remoteUsers) {
       this.log('No remote users, using local users');
       return localUsers || {};
     }
 
-    // Check field-level timestamps first
+    return null; // Continue with normal merge
+  }
+
+  /**
+   * @description Check if timestamps indicate one side should win entirely
+   * @param {Object} localUsers - Local users
+   * @param {Object} remoteUsers - Remote users
+   * @param {Object} localMeta - Local metadata
+   * @param {Object} remoteMeta - Remote metadata
+   * @returns {Object|null} Users object or null to continue
+   * @private
+   */
+  checkUserTimestamps(localUsers, remoteUsers, localMeta, remoteMeta) {
     const localUserTime = localMeta?.fieldTimestamps?.users || 0;
     const remoteUserTime = remoteMeta?.fieldTimestamps?.users || 0;
-    
-    // If one side has significantly newer user data (>3 sec), prefer it entirely
-    // This handles card deletions - the device that deleted will have newer timestamp
-    if (remoteUserTime > localUserTime + 3000) {
-      this.log(`Using remote users (newer by ${(remoteUserTime - localUserTime)/1000}s)`);
+    const TIME_THRESHOLD = 3000; // 3 seconds
+
+    // Check if remote is significantly newer
+    if (remoteUserTime > localUserTime + TIME_THRESHOLD) {
+      const diff = (remoteUserTime - localUserTime) / 1000;
+      this.log(`Using remote users (newer by ${diff}s)`);
       return remoteUsers;
     }
-    if (localUserTime > remoteUserTime + 3000) {
-      this.log(`Using local users (newer by ${(localUserTime - remoteUserTime)/1000}s)`);
+
+    // Check if local is significantly newer
+    if (localUserTime > remoteUserTime + TIME_THRESHOLD) {
+      const diff = (localUserTime - remoteUserTime) / 1000;
+      this.log(`Using local users (newer by ${diff}s)`);
       return localUsers;
     }
 
-    // Timestamps are close - do detailed merge
+    return null; // Continue with detailed merge
+  }
+
+  /**
+   * @description Perform detailed user-by-user merge
+   * @param {Object} localUsers - Local users
+   * @param {Object} remoteUsers - Remote users
+   * @param {Object} localMeta - Local metadata
+   * @param {Object} remoteMeta - Remote metadata
+   * @returns {Object} Merged users
+   * @private
+   */
+  performDetailedUserMerge(localUsers, remoteUsers, localMeta, remoteMeta) {
     const merged = {};
     const allUserIds = new Set([
       ...Object.keys(localUsers),
       ...Object.keys(remoteUsers)
     ]);
 
-    // Merge each user individually
     allUserIds.forEach(userId => {
       const localUser = localUsers[userId];
       const remoteUser = remoteUsers[userId];
-      
-      if (!localUser && remoteUser) {
-        // User only exists remotely
-        merged[userId] = remoteUser;
-        this.log(`User ${userId}: Added from remote`);
-      } else if (localUser && !remoteUser) {
-        // User only exists locally
-        merged[userId] = localUser;
-        this.log(`User ${userId}: Kept local (not in remote)`);
-      } else if (localUser && remoteUser) {
-        // User exists in both - merge based on modification
-        merged[userId] = this.mergeIndividualUser(localUser, remoteUser, userId, localMeta, remoteMeta);
-      }
+
+      merged[userId] = this.mergeUser(
+        localUser, remoteUser, userId, localMeta, remoteMeta
+      );
     });
-    
+
     return merged;
+  }
+
+  /**
+   * @description Merge a single user
+   * @param {Object} localUser - Local user data
+   * @param {Object} remoteUser - Remote user data
+   * @param {string} userId - User ID
+   * @param {Object} localMeta - Local metadata
+   * @param {Object} remoteMeta - Remote metadata
+   * @returns {Object} Merged user
+   * @private
+   */
+  mergeUser(localUser, remoteUser, userId, localMeta, remoteMeta) {
+    // User only exists remotely
+    if (!localUser && remoteUser) {
+      this.log(`User ${userId}: Added from remote`);
+      return remoteUser;
+    }
+
+    // User only exists locally
+    if (localUser && !remoteUser) {
+      this.log(`User ${userId}: Kept local (not in remote)`);
+      return localUser;
+    }
+
+    // User exists in both - merge based on modification
+    if (localUser && remoteUser) {
+      return this.mergeIndividualUser(
+        localUser, remoteUser, userId, localMeta, remoteMeta
+      );
+    }
+
+    // Should not reach here
+    return null;
   }
   
   /**
-   * Merge individual user with activity preservation
+   * @description Merge individual user with activity preservation
+   * @param {Object} localUser - Local user data
+   * @param {Object} remoteUser - Remote user data
+   * @param {string} userId - User ID
+   * @param {Object} localMeta - Local metadata
+   * @param {Object} remoteMeta - Remote metadata
+   * @returns {Object} Merged user data
    */
   mergeIndividualUser(localUser, remoteUser, userId, localMeta, remoteMeta) {
-    // Check if users have modification timestamps
+    // Determine base user from timestamps
+    const mergedUser = this.selectBaseUser(localUser, remoteUser, userId);
+
+    // Handle timestamp equality or missing timestamps
+    if (this.shouldMergeUserProperties(localUser, remoteUser)) {
+      this.mergeUserProperties(
+        mergedUser, localUser, remoteUser, localMeta, remoteMeta
+      );
+    }
+
+    // Merge days/activities additively
+    this.mergeUserActivities(mergedUser, localUser, remoteUser);
+
+    return mergedUser;
+  }
+
+  /**
+   * @description Select base user based on modification timestamps
+   * @param {Object} localUser - Local user
+   * @param {Object} remoteUser - Remote user
+   * @param {string} userId - User ID for logging
+   * @returns {Object} Base user object
+   * @private
+   */
+  selectBaseUser(localUser, remoteUser, userId) {
     const localModified = localUser.lastModified || 0;
     const remoteModified = remoteUser.lastModified || 0;
-    
-    // Start with the more recent base user data
-    let mergedUser;
+
     if (remoteModified > localModified) {
-      mergedUser = { ...remoteUser };
       this.log(`User ${userId}: Using remote as base (${remoteModified} > ${localModified})`);
-    } else if (localModified > remoteModified) {
-      mergedUser = { ...localUser };
+      return { ...remoteUser };
+    }
+
+    if (localModified > remoteModified) {
       this.log(`User ${userId}: Using local as base (${localModified} > ${remoteModified})`);
-    } else {
-      // Same timestamp or no timestamps - merge properties
-      mergedUser = { ...localUser };
-      
-      // Preserve name/icon from the one with more recent change
-      if (remoteUser.name !== localUser.name || remoteUser.icon !== localUser.icon) {
-        // Can't determine which is newer without timestamps, use device ID tiebreaker
-        const localDeviceId = localUser.deviceId || localMeta?.deviceId;
-        const remoteDeviceId = remoteUser.deviceId || remoteMeta?.deviceId;
-        const winner = this.tiebreaker(localDeviceId, remoteDeviceId);
-        if (winner === 'remote') {
-          mergedUser.name = remoteUser.name;
-          mergedUser.icon = remoteUser.icon;
-        }
-      }
+      return { ...localUser };
     }
-    
-    // Merge days/activities additively to prevent data loss
-    if (localUser.days || remoteUser.days) {
-      mergedUser.days = this.mergeUserDays(localUser.days, remoteUser.days);
+
+    // Equal or no timestamps - default to local
+    return { ...localUser };
+  }
+
+  /**
+   * @description Check if user properties need merging
+   * @param {Object} localUser - Local user
+   * @param {Object} remoteUser - Remote user
+   * @returns {boolean} True if properties should be merged
+   * @private
+   */
+  shouldMergeUserProperties(localUser, remoteUser) {
+    const localModified = localUser.lastModified || 0;
+    const remoteModified = remoteUser.lastModified || 0;
+
+    // Only merge properties if timestamps are equal or missing
+    return localModified === remoteModified;
+  }
+
+  /**
+   * @description Merge user name and icon properties
+   * @param {Object} mergedUser - User object to update
+   * @param {Object} localUser - Local user
+   * @param {Object} remoteUser - Remote user
+   * @param {Object} localMeta - Local metadata
+   * @param {Object} remoteMeta - Remote metadata
+   * @private
+   */
+  mergeUserProperties(mergedUser, localUser, remoteUser, localMeta, remoteMeta) {
+    // Check if name or icon differs
+    const hasPropertyDifference =
+      remoteUser.name !== localUser.name ||
+      remoteUser.icon !== localUser.icon;
+
+    if (!hasPropertyDifference) return;
+
+    // Use device ID as tiebreaker
+    const localDeviceId = localUser.deviceId || localMeta?.deviceId;
+    const remoteDeviceId = remoteUser.deviceId || remoteMeta?.deviceId;
+    const winner = this.tiebreaker(localDeviceId, remoteDeviceId);
+
+    if (winner === 'remote') {
+      mergedUser.name = remoteUser.name;
+      mergedUser.icon = remoteUser.icon;
     }
-    
-    return mergedUser;
+  }
+
+  /**
+   * @description Merge user activities from both sources
+   * @param {Object} mergedUser - User object to update
+   * @param {Object} localUser - Local user
+   * @param {Object} remoteUser - Remote user
+   * @private
+   */
+  mergeUserActivities(mergedUser, localUser, remoteUser) {
+    if (!localUser.days && !remoteUser.days) return;
+
+    mergedUser.days = this.mergeUserDays(
+      localUser.days || {},
+      remoteUser.days || {}
+    );
   }
   
   /**

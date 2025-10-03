@@ -21,29 +21,43 @@ import {
   Platform,
 } from 'react-native';
 
-// Centralized font configuration - change font family here to update everywhere
-const getFontFamily = (weight = 'regular') => {
-  if (Platform.OS === 'android') {
-    switch (weight) {
-      case 'bold':
-      case '700':
-      case '800':
-      case '900':
-        return 'ComicRelief-Bold';
-      case 'medium':
-      case '500':
-      case '600':
-        // Fallback to Bold since we don't have Medium variant
-        return 'ComicRelief-Bold';
-      default:
-        return 'ComicRelief-Regular';
+// Font weight mappings for Android
+const ANDROID_FONT_WEIGHTS = {
+  'bold': 'ComicRelief-Bold',
+  '700': 'ComicRelief-Bold',
+  '800': 'ComicRelief-Bold',
+  '900': 'ComicRelief-Bold',
+  'medium': 'ComicRelief-Bold', // Fallback to Bold since we don't have Medium variant
+  '500': 'ComicRelief-Bold',
+  '600': 'ComicRelief-Bold',
+  'regular': 'ComicRelief-Regular',
+  'default': 'ComicRelief-Regular'
+};
+
+// Platform-specific font families
+const PLATFORM_FONTS = {
+  'android': (weight) => {
+    // Handle edge cases for weight parameter
+    try {
+      const weightStr = String(weight);
+      return ANDROID_FONT_WEIGHTS[weightStr] || ANDROID_FONT_WEIGHTS.default;
+    } catch {
+      return ANDROID_FONT_WEIGHTS.default;
     }
-  } else if (Platform.OS === 'ios') {
-    return 'Comic Relief';
-  } else {
-    // Web
-    return "'Comic Relief', 'Comic Sans MS', cursive";
-  }
+  },
+  'ios': () => 'Comic Relief',
+  'web': () => "'Comic Relief', 'Comic Sans MS', cursive"
+};
+
+/**
+ * @description Get platform-specific font family based on weight
+ * @param {string} weight - Font weight (regular, bold, or numeric)
+ * @returns {string} Platform-appropriate font family
+ */
+const getFontFamily = (weight = 'regular') => {
+  const platformKey = Platform.OS === 'android' ? 'android' :
+                      Platform.OS === 'ios' ? 'ios' : 'web';
+  return PLATFORM_FONTS[platformKey](weight);
 };
 
 // Custom Text component that ensures Comic Relief is used everywhere

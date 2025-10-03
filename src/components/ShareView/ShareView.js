@@ -9,6 +9,7 @@ import {
   Platform,
   SafeAreaView,
 } from 'react-native';
+import { LoadingSpinner } from '../shared';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { format } from 'date-fns';
 import nacl from 'tweetnacl';
@@ -325,8 +326,12 @@ const ShareView = ({ shareToken, shareId, shareKey }) => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.primary} />
-        <Text style={styles.loadingText}>Loading shared progress...</Text>
+        <LoadingSpinner
+          size="large"
+          color={theme.primary}
+          message="Loading shared progress..."
+          theme={theme}
+        />
       </View>
     );
   }
