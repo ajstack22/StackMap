@@ -535,8 +535,8 @@ const calculateTimeSince = (timestamp) => {
  * @private
  */
 const getIntervalForOperation = (operationType, customInterval) => {
-  // Use custom interval for default type if provided
-  if (operationType === 'default' && customInterval) {
+  // Use custom interval if provided and operation type is default or unknown
+  if (customInterval && (operationType === 'default' || !RATE_LIMIT_INTERVALS[operationType])) {
     return customInterval;
   }
   return RATE_LIMIT_INTERVALS[operationType] || RATE_LIMIT_INTERVALS.default;

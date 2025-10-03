@@ -8,7 +8,6 @@ import {
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { LoadingSpinner } from '../shared';
 import syncService from '../../services/sync';
 import { styles } from './styles';
 

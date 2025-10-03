@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import DeferredStorage from '../../../utils/deferredStorage';
 import { DEFAULT_USER_ICON } from '../../../constants';
 import syncService from '../../../services/sync';
 import minimalSync from '../../../services/sync/minimalSyncService';

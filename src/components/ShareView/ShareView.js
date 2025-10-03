@@ -3,7 +3,6 @@ import { Text } from '../Typography';
 import {
   View,
   ScrollView,
-  ActivityIndicator,
   TouchableOpacity,
   Image,
   Platform,

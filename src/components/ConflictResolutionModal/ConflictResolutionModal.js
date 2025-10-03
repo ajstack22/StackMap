@@ -7,11 +7,10 @@ import {
   ScrollView,
   SafeAreaView,
   Platform,
-  ActivityIndicator,
   StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { LoadingSpinner, PrimaryButton } from '../shared';
+import { LoadingSpinner } from '../shared';
 import { styles } from './styles';
 import conflictResolver from '../../services/sync/conflictResolver';
 

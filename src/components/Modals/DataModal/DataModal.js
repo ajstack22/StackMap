@@ -349,7 +349,7 @@ const DataModal = ({
           });
         } else {
           // Group all shares together
-          userShares['all'] = {
+          userShares.all = {
             user: { name: 'All Shares', icon: '📤' },
             shares: shares,
           };
