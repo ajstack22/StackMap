@@ -30,6 +30,65 @@ import SyncQRCode from './SyncQRCode';
 
 // Import platform-specific modules moved to DataImport.js
 
+// Extracted component for individual share card to reduce nesting
+const ActiveShareCard = React.memo(({ share, onDelete, styles }) => {
+  return (
+    <View key={share.shareId} style={styles.activeShareCard}>
+      <View style={styles.activeShareInfo}>
+        {!!share.recipientName && (
+          <Text style={styles.activeShareRecipient}>
+            To: {share.recipientName}
+          </Text>
+        )}
+        <Text style={styles.activeShareDate}>
+          Expires:{' '}
+          {share.expiresAt
+            ? new Date(share.expiresAt).toLocaleDateString()
+            : 'N/A'}
+        </Text>
+        {!!share.shareNote && (
+          <Text style={styles.activeShareInfo} numberOfLines={1}>
+            {share.shareNote}
+          </Text>
+        )}
+      </View>
+      <TouchableOpacity
+        onPress={() => onDelete(share.shareId)}
+        style={styles.activeShareDelete}
+      >
+        <Icon name="delete" size={20} color="#d32f2f" />
+      </TouchableOpacity>
+    </View>
+  );
+});
+ActiveShareCard.displayName = 'ActiveShareCard';
+
+// Extracted component for user shares section to reduce nesting
+const UserSharesSection = React.memo(({ userId, user, shares, onDeleteShare, styles }) => {
+  return (
+    <View key={userId} style={styles.userSharesContainer}>
+      <View style={styles.userSharesHeader}>
+        <Text style={styles.userSharesEmoji}>
+          {user.icon || '😀'}
+        </Text>
+        <Text style={styles.userSharesName}>{user.name}</Text>
+        <Text style={styles.userSharesCount}>
+          {shares.length} active
+        </Text>
+      </View>
+      {shares.map(share => (
+        <ActiveShareCard
+          key={share.shareId}
+          share={share}
+          onDelete={onDeleteShare}
+          styles={styles}
+        />
+      ))}
+    </View>
+  );
+});
+UserSharesSection.displayName = 'UserSharesSection';
+
 const DataModal = ({
   visible,
   onClose,
@@ -1008,54 +1067,16 @@ const DataModal = ({
           </TouchableOpacity>
 
           {showActiveShares &&
-            Object.entries(activeShares).map(
-              ([userId, { user, shares }]) => (
-                <View key={userId} style={styles.userSharesContainer}>
-                  <View style={styles.userSharesHeader}>
-                    <Text style={styles.userSharesEmoji}>
-                      {user.icon || '😀'}
-                    </Text>
-                    <Text style={styles.userSharesName}>{user.name}</Text>
-                    <Text style={styles.userSharesCount}>
-                      {shares.length} active
-                    </Text>
-                  </View>
-                  {shares.map(share => (
-                    <View
-                      key={share.shareId}
-                      style={styles.activeShareCard}
-                    >
-                      <View style={styles.activeShareInfo}>
-                        {!!share.recipientName && (
-                          <Text style={styles.activeShareRecipient}>
-                            To: {share.recipientName}
-                          </Text>
-                        )}
-                        <Text style={styles.activeShareDate}>
-                          Expires:{' '}
-                          {share.expiresAt
-                            ? new Date(share.expiresAt).toLocaleDateString()
-                            : 'N/A'}
-                        </Text>
-                        {!!share.shareNote && (
-                          <Text style={styles.activeShareInfo} numberOfLines={1}>
-                            {share.shareNote}
-                          </Text>
-                        )}
-                      </View>
-                      <TouchableOpacity
-                        onPress={() => {
-                          handleDeleteShare(share.shareId);
-                        }}
-                        style={styles.activeShareDelete}
-                      >
-                        <Icon name="delete" size={20} color="#d32f2f" />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </View>
-              ),
-            )}
+            Object.entries(activeShares).map(([userId, { user, shares }]) => (
+              <UserSharesSection
+                key={userId}
+                userId={userId}
+                user={user}
+                shares={shares}
+                onDeleteShare={handleDeleteShare}
+                styles={styles}
+              />
+            ))}
         </View>
       ) : (
         <View style={[styles.shareSection, { marginTop: 20, padding: 15 }]}>

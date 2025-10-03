@@ -692,161 +692,258 @@ class MinimalSyncService {
   }
 
   /**
-   * Pull latest data from server
-   * @param {boolean} forceFullPull - If true, ignores stored data and pulls everything (for initial sync)
+   * Validate pull request prerequisites
+   * @private
    */
-  async pullData(forceFullPull = false) {
-    
-    // Apply rate limiting
-    await this.rateLimitCheck('pull');
-    
+  async validatePullRequest() {
     // Ensure device ID is initialized
     if (!this.deviceId) {
       await this.initDeviceId();
     }
-    
+
     if (!this.deviceId) {
-      return { success: false, error: 'No device ID' };
+      return { valid: false, error: { success: false, error: 'No device ID' } };
     }
-    
+
     // Additional validation to prevent encoding issues
     if (typeof this.syncId !== 'string' || typeof this.deviceId !== 'string') {
-      return { success: false, error: 'Invalid sync ID or device ID format' };
+      return { valid: false, error: { success: false, error: 'Invalid sync ID or device ID format' } };
     }
-    
-    // Get the last timestamp and current local data
+
+    return { valid: true };
+  }
+
+  /**
+   * Get pull context (timestamp and local data)
+   * @private
+   */
+  async getPullContext(forceFullPull) {
     let lastTimestamp = 0;
     let localData = null;
-    
+
     // CRITICAL: For initial sync (onboarding/import), ignore all stored data
     if (forceFullPull) {
       // Initial sync - pull everything from timestamp 0, no merge needed
-      lastTimestamp = 0;
-      localData = null;
-    } else {
-      // Incremental sync - check stored data for timestamp
-      try {
-        const storedData = await AsyncStorage.getItem('@minimal_sync_data');
-        if (storedData) {
-          const parsed = JSON.parse(storedData);
-          
-          // Check if the stored sync ID matches our current sync ID
-          if (parsed.syncId && parsed.syncId === this.syncId) {
-            lastTimestamp = parsed.timestamp || 0;
-            localData = parsed.data;
-          }
-        }
-      } catch (error) {
-      }
+      return { lastTimestamp: 0, localData: null };
     }
-    
+
+    // Incremental sync - check stored data for timestamp
     try {
-      // Use timestamp endpoint - pull changes since last timestamp
-      // Ensure all values are valid strings before URL construction
-      if (!this.syncId || !this.deviceId) {
-        return { success: false, error: 'Missing sync ID or device ID' };
+      const storedData = await AsyncStorage.getItem('@minimal_sync_data');
+      if (storedData) {
+        const parsed = JSON.parse(storedData);
+
+        // Check if the stored sync ID matches our current sync ID
+        if (parsed.syncId && parsed.syncId === this.syncId) {
+          lastTimestamp = parsed.timestamp || 0;
+          localData = parsed.data;
+        }
       }
-      
-      
-      // Simple URL construction without encoding (hex IDs don't need it)
-      const url = `${this.API_BASE}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=${lastTimestamp}`;
-      
-      
-      // Add debugging for fetch call
-      let response;
+    } catch (error) {
+      // Silent fail - use defaults
+    }
+
+    return { lastTimestamp, localData };
+  }
+
+  /**
+   * Fetch data from server
+   * @private
+   */
+  async fetchServerData(lastTimestamp) {
+    // Ensure all values are valid strings before URL construction
+    if (!this.syncId || !this.deviceId) {
+      throw new Error('Missing sync ID or device ID');
+    }
+
+    // Simple URL construction without encoding (hex IDs don't need it)
+    const url = `${this.API_BASE}/pull_timestamp.php?sync_id=${this.syncId}&device_id=${this.deviceId}&since=${lastTimestamp}`;
+
+    // Add debugging for fetch call
+    let response;
+    try {
+      response = await fetch(url);
+    } catch (fetchError) {
+      throw fetchError;
+    }
+
+    return response;
+  }
+
+  /**
+   * Read response text with iOS fallback
+   * @private
+   */
+  async readResponseSafely(response) {
+    let responseText;
+    try {
+      responseText = await response.text();
+    } catch (textError) {
+      // Try to get response as blob then convert to text
       try {
-        response = await fetch(url);
-      } catch (fetchError) {
-        throw fetchError;
-      }
-      
-      // Try to get response text - iOS might have issues with certain encodings
-      let responseText;
-      try {
-        responseText = await response.text();
-      } catch (textError) {
-        
-        // Try to get response as blob then convert to text
-        try {
-          const blob = await response.blob();
-          responseText = await blob.text();
-        } catch (blobError) {
-          return {
+        const blob = await response.blob();
+        responseText = await blob.text();
+      } catch (blobError) {
+        return {
+          success: false,
+          error: {
             success: false,
             error: `Failed to read response: ${textError.message}`,
             responseStatus: response.status
-          };
-        }
-      }
-      
-      // Check if response looks like JSON before parsing
-      if (!responseText || (!responseText.startsWith('{') && !responseText.startsWith('['))) {
-        return { 
-          success: false, 
-          error: `Invalid response format: ${responseText.substring(0, 100)}`,
-          rawResponse: responseText.substring(0, 500)
+          }
         };
       }
-      
-      // Parse the response
-      let result;
-      try {
-        result = JSON.parse(responseText);
-      } catch (parseError) {
-        return {
+    }
+
+    return { success: true, responseText };
+  }
+
+  /**
+   * Parse JSON response safely
+   * @private
+   */
+  parseJsonSafely(responseText) {
+    // Check if response looks like JSON before parsing
+    if (!responseText || (!responseText.startsWith('{') && !responseText.startsWith('['))) {
+      return {
+        success: false,
+        error: {
+          success: false,
+          error: `Invalid response format: ${responseText.substring(0, 100)}`,
+          rawResponse: responseText.substring(0, 500)
+        }
+      };
+    }
+
+    // Parse the response
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      return {
+        success: false,
+        error: {
           success: false,
           error: `JSON parse error: ${parseError.message}`,
           rawResponse: responseText.substring(0, 500)
-        };
-      }
-      
-      // DEBUG: Check what happens with empty records array
-      if (result.success && result.records && Array.isArray(result.records)) {
-      }
-      
-      if (result.success && result.records && result.records.length) {
-        // Get the latest record
-        const latest = result.records[result.records.length - 1];
-        
-        if (!latest.encrypted_blob) {
-          throw new Error('No encrypted blob in record');
         }
-        
-        const remoteData = encryptionService.decryptData(latest.encrypted_blob);
-        
-        // Perform conflict resolution if we have local data AND this isn't a force pull
-        let finalData;
-        if (localData && !forceFullPull) {
-          finalData = conflictResolver.mergeStates(localData, remoteData);
-          
-          // Log merge summary
-          const mergeLog = conflictResolver.getMergeLog();
-        } else {
-          // Initial sync or no local data - use remote directly
-          finalData = remoteData;
-        }
-        
-        // Store the merged result
-        const dataToStore = {
-          syncId: this.syncId,
-          timestamp: latest.timestamp,
-          data: finalData
-        };
-        
-        await AsyncStorage.setItem('@minimal_sync_data', JSON.stringify(dataToStore));
-        
-        // Verify storage
-        const verify = await AsyncStorage.getItem('@minimal_sync_data');
-        
-        return { 
-          success: true, 
-          data: finalData,
-          timestamp: latest.timestamp,
-          hadConflicts: localData !== null,
-          mergeLog: conflictResolver.getMergeLog()
-        };
+      };
+    }
+
+    return { success: true, result };
+  }
+
+  /**
+   * Process server data (decrypt and resolve conflicts)
+   * @private
+   */
+  processServerData(result, localData, forceFullPull) {
+    // DEBUG: Check what happens with empty records array
+    if (result.success && result.records && Array.isArray(result.records)) {
+      // Debug logging preserved
+    }
+
+    if (!result.success || !result.records || !result.records.length) {
+      return null;
+    }
+
+    // Get the latest record
+    const latest = result.records[result.records.length - 1];
+
+    if (!latest.encrypted_blob) {
+      throw new Error('No encrypted blob in record');
+    }
+
+    const remoteData = encryptionService.decryptData(latest.encrypted_blob);
+
+    // Perform conflict resolution if we have local data AND this isn't a force pull
+    let finalData;
+    if (localData && !forceFullPull) {
+      finalData = conflictResolver.mergeStates(localData, remoteData);
+
+      // Log merge summary
+      const mergeLog = conflictResolver.getMergeLog();
+    } else {
+      // Initial sync or no local data - use remote directly
+      finalData = remoteData;
+    }
+
+    return {
+      finalData,
+      timestamp: latest.timestamp,
+      hadConflicts: localData !== null
+    };
+  }
+
+  /**
+   * Store resolved data
+   * @private
+   */
+  async storeResolvedData(finalData, timestamp) {
+    const dataToStore = {
+      syncId: this.syncId,
+      timestamp: timestamp,
+      data: finalData
+    };
+
+    await AsyncStorage.setItem('@minimal_sync_data', JSON.stringify(dataToStore));
+
+    // Verify storage
+    const verify = await AsyncStorage.getItem('@minimal_sync_data');
+  }
+
+  /**
+   * Pull latest data from server
+   * @param {boolean} forceFullPull - If true, ignores stored data and pulls everything (for initial sync)
+   */
+  async pullData(forceFullPull = false) {
+    // Apply rate limiting
+    await this.rateLimitCheck('pull');
+
+    // Step 1: Validate request
+    const validation = await this.validatePullRequest();
+    if (!validation.valid) {
+      return validation.error;
+    }
+
+    // Step 2: Get pull context
+    const { lastTimestamp, localData } = await this.getPullContext(forceFullPull);
+
+    try {
+      // Step 3: Fetch from server
+      const response = await this.fetchServerData(lastTimestamp);
+
+      // Step 4: Read response safely
+      const readResult = await this.readResponseSafely(response);
+      if (!readResult.success) {
+        return readResult.error;
       }
-      return { success: true, data: null };
+
+      // Step 5: Parse JSON
+      const parseResult = this.parseJsonSafely(readResult.responseText);
+      if (!parseResult.success) {
+        return parseResult.error;
+      }
+
+      // Step 6: Process server data
+      const processed = this.processServerData(parseResult.result, localData, forceFullPull);
+
+      if (!processed) {
+        return { success: true, data: null };
+      }
+
+      // Step 7: Store resolved data
+      await this.storeResolvedData(processed.finalData, processed.timestamp);
+
+      // Step 8: Return success response
+      return {
+        success: true,
+        data: processed.finalData,
+        timestamp: processed.timestamp,
+        hadConflicts: processed.hadConflicts,
+        mergeLog: conflictResolver.getMergeLog()
+      };
+
     } catch (error) {
       return { success: false, error: error.message };
     }

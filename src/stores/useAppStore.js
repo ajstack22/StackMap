@@ -139,101 +139,110 @@ const useAppStore = create(
         });
       },
 
-      // Batch state updates (used by sync)
-      setState: updates => {
-        // Split updates into appropriate stores
-        const {
-          users,
-          currentUser,
-          currentDay,
-          userContextData,
-          currentTheme,
-          bannerPosition,
-          soundEnabled,
-          taskCelebration,
-          routineCelebration,
-          displayMode,
-          dayMode,
-          hasCompletedOnboarding,
-          toolbarOrder,
-          moreButtonPosition,
-          libraryTemplates,
-          library,
-          syncEnabled,
-          syncStatus,
-          syncId,
-          lastSync,
-          syncError,
-          activities,
-          ...rest
-        } = updates;
+      // Configuration for mapping fields to stores
+      FIELD_MAPPINGS: {
+        // User store fields
+        users: 'user',
+        currentUser: 'user',
+        currentDay: 'user',
+        userContextData: 'user',
 
-        // Update user store
-        if (users !== undefined) useUserStore.setState({ users });
-        if (currentUser !== undefined) useUserStore.setState({ currentUser });
-        if (currentDay !== undefined) useUserStore.setState({ currentDay });
-        if (userContextData !== undefined)
-          useUserStore.setState({ userContextData });
+        // Settings store fields
+        currentTheme: 'settings',
+        bannerPosition: 'settings',
+        soundEnabled: 'settings',
+        taskCelebration: 'settings',
+        routineCelebration: 'settings',
+        displayMode: 'settings',
+        dayMode: 'settings',
+        hasCompletedOnboarding: 'settings',
+        toolbarOrder: 'settings',
+        moreButtonPosition: 'settings',
 
-        // Update settings store
-        const settingsUpdates = {};
-        if (currentTheme !== undefined)
-          settingsUpdates.currentTheme = currentTheme;
-        if (bannerPosition !== undefined)
-          settingsUpdates.bannerPosition = bannerPosition;
-        if (soundEnabled !== undefined)
-          settingsUpdates.soundEnabled = soundEnabled;
-        if (taskCelebration !== undefined)
-          settingsUpdates.taskCelebration = taskCelebration;
-        if (routineCelebration !== undefined)
-          settingsUpdates.routineCelebration = routineCelebration;
-        if (displayMode !== undefined)
-          settingsUpdates.displayMode = displayMode;
-        if (dayMode !== undefined) settingsUpdates.dayMode = dayMode;
-        if (hasCompletedOnboarding !== undefined)
-          settingsUpdates.hasCompletedOnboarding = hasCompletedOnboarding;
-        if (toolbarOrder !== undefined)
-          settingsUpdates.toolbarOrder = toolbarOrder;
-        if (moreButtonPosition !== undefined)
-          settingsUpdates.moreButtonPosition = moreButtonPosition;
-        if (Object.keys(settingsUpdates).length) {
-          useSettingsStore.setState(settingsUpdates);
-        }
+        // Library store fields
+        libraryTemplates: 'library',
+        library: 'library',
 
-        // Update library store
-        if (libraryTemplates !== undefined)
-          useLibraryStore.setState({ libraryTemplates });
-        if (library !== undefined) useLibraryStore.setState({ library });
+        // Sync store fields
+        syncEnabled: 'sync',
+        syncStatus: 'sync',
+        syncId: 'sync',
+        lastSync: 'sync',
+        syncError: 'sync',
+      },
 
-        // Update sync store
-        const syncUpdates = {};
-        if (syncEnabled !== undefined) syncUpdates.syncEnabled = syncEnabled;
-        if (syncStatus !== undefined) syncUpdates.syncStatus = syncStatus;
-        if (syncId !== undefined) syncUpdates.syncId = syncId;
-        if (lastSync !== undefined) syncUpdates.lastSync = lastSync;
-        if (syncError !== undefined) syncUpdates.syncError = syncError;
-        if (Object.keys(syncUpdates).length) {
-          useSyncStore.setState(syncUpdates);
-        }
-
-        // Handle activities update
-        if (activities !== undefined) {
+      // Special handlers for fields that need custom logic
+      SPECIAL_HANDLERS: {
+        activities: (value) => {
           const userState = useUserStore.getState();
           if (userState.currentUser) {
             useUserStore.getState().updateUser(userState.currentUser, {
               dayToUpdate: userState.currentDay,
               days: {
                 [userState.currentDay]: {
-                  activities,
+                  activities: value,
                 },
               },
             });
           }
+        },
+      },
+
+      // Batch state updates (used by sync) - configuration-driven approach
+      setState: updates => {
+        // Get field mappings and special handlers from the store instance
+        const FIELD_MAPPINGS = get().FIELD_MAPPINGS;
+        const SPECIAL_HANDLERS = get().SPECIAL_HANDLERS;
+
+        // Group updates by target store
+        const storeUpdates = {
+          user: {},
+          settings: {},
+          library: {},
+          sync: {},
+        };
+
+        const unhandledFields = {};
+
+        // Process each update field
+        Object.entries(updates).forEach(([field, value]) => {
+          // Skip undefined values (maintain original behavior)
+          if (value === undefined) {
+            return;
+          }
+
+          // Check for special handler first
+          if (SPECIAL_HANDLERS[field]) {
+            SPECIAL_HANDLERS[field](value);
+          }
+          // Check for field mapping
+          else if (FIELD_MAPPINGS[field]) {
+            const targetStore = FIELD_MAPPINGS[field];
+            storeUpdates[targetStore][field] = value;
+          }
+          // Track unhandled fields
+          else {
+            unhandledFields[field] = value;
+          }
+        });
+
+        // Apply updates to each store
+        if (Object.keys(storeUpdates.user).length) {
+          useUserStore.setState(storeUpdates.user);
+        }
+        if (Object.keys(storeUpdates.settings).length) {
+          useSettingsStore.setState(storeUpdates.settings);
+        }
+        if (Object.keys(storeUpdates.library).length) {
+          useLibraryStore.setState(storeUpdates.library);
+        }
+        if (Object.keys(storeUpdates.sync).length) {
+          useSyncStore.setState(storeUpdates.sync);
         }
 
-        // Log unhandled properties
-        if (Object.keys(rest).length) {
-//           
+        // Log unhandled properties (development warning)
+        if (Object.keys(unhandledFields).length) {
+          // Development warning for unhandled fields
         }
       },
 

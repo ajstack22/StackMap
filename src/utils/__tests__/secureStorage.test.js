@@ -32,6 +32,28 @@ describe('secureStorage (Android focus)', () => {
       expect(AsyncStorage.removeItem).toHaveBeenCalledWith('@stackmap_pin');
     });
 
+    it('should return false when both operations fail on Android', async () => {
+      const { removeSecurePin } = require('../secureStorage');
+
+      // Mock both operations to fail
+      AsyncStorage.setItem.mockRejectedValue(new Error('Failed to set'));
+      AsyncStorage.removeItem.mockRejectedValue(new Error('Failed to remove'));
+
+      const result = await removeSecurePin();
+      expect(result).toBe(false);
+    });
+
+    it('should return true when disabled flag is set even if PIN removal fails', async () => {
+      const { removeSecurePin } = require('../secureStorage');
+
+      // Mock successful disabled flag but failed PIN removal
+      AsyncStorage.setItem.mockResolvedValue(undefined);
+      AsyncStorage.removeItem.mockRejectedValue(new Error('Failed to remove'));
+
+      const result = await removeSecurePin();
+      expect(result).toBe(true); // Should still return true since disabled flag was set
+    });
+
     it('should check if PIN exists', async () => {
       const { hasSecurePin } = require('../secureStorage');
 
@@ -103,6 +125,12 @@ describe('secureStorage (Android focus)', () => {
 
     it('should handle empty PIN by calling removeSecurePin', async () => {
       const { setSecurePin } = require('../secureStorage');
+
+      // Reset mocks to clear previous test's mock rejections
+      AsyncStorage.setItem.mockClear();
+      AsyncStorage.removeItem.mockClear();
+      AsyncStorage.setItem.mockResolvedValue(undefined);
+      AsyncStorage.removeItem.mockResolvedValue(undefined);
 
       const result = await setSecurePin('');
       expect(result).toBe(true);

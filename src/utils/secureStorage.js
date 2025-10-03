@@ -122,26 +122,34 @@ export const getSecurePin = async () => {
  * @returns {Promise<boolean>} Success status
  */
 export const removeSecurePin = async () => {
+  let disabledFlagSet = false;
+  let pinRemoved = false;
+
   try {
     // Starting PIN removal
 
     // First, set the disabled flag to prevent any PIN checks
     try {
       await AsyncStorage.setItem('@stackmap_pin_disabled', 'true');
+      disabledFlagSet = true;
       // Set PIN disabled flag successfully
     } catch (e) {
       // Failed to set disabled flag
+      console.error('[SecureStorage] Failed to set disabled flag:', e);
     }
 
     // Android: Use AsyncStorage
     if (Platform.OS === 'android') {
       try {
         await AsyncStorage.removeItem('@stackmap_pin');
+        pinRemoved = true;
         // Android: Removed PIN from AsyncStorage
       } catch (e) {
         // Android: Failed to remove PIN
+        console.error('[SecureStorage] Android: Failed to remove PIN:', e);
       }
-      return true;
+      // Return true if either operation succeeded (to allow UI update)
+      return disabledFlagSet || pinRemoved;
     }
 
     // iOS: Use Keychain if available, fallback to AsyncStorage
@@ -150,17 +158,21 @@ export const removeSecurePin = async () => {
         // Keychain not available, use AsyncStorage fallback
         try {
           await AsyncStorage.removeItem('@stackmap_pin');
+          pinRemoved = true;
           // iOS: Removed PIN from AsyncStorage fallback
         } catch (e) {
           // iOS: Failed to remove PIN from AsyncStorage
+          console.error('[SecureStorage] iOS: Failed to remove PIN from AsyncStorage:', e);
         }
-        return true;
+        // Return true if either operation succeeded (to allow UI update)
+        return disabledFlagSet || pinRemoved;
       }
 
       // Try to use Keychain
       try {
         if (typeof Keychain.resetInternetCredentials === 'function') {
           await Keychain.resetInternetCredentials(PIN_SERVICE);
+          pinRemoved = true;
           // iOS: Reset credentials successfully
         } else if (typeof Keychain.setInternetCredentials === 'function') {
           await Keychain.setInternetCredentials(
@@ -169,32 +181,45 @@ export const removeSecurePin = async () => {
             'DELETED',
             {},
           );
+          pinRemoved = true;
           // iOS: Set DELETED marker as fallback
         } else {
           // Keychain methods not available, use AsyncStorage fallback
           await AsyncStorage.removeItem('@stackmap_pin');
+          pinRemoved = true;
         }
       } catch (e) {
         // iOS: Keychain failed, use AsyncStorage fallback
+        console.error('[SecureStorage] iOS: Keychain operation failed:', e);
         try {
           await AsyncStorage.removeItem('@stackmap_pin');
+          pinRemoved = true;
         } catch (e2) {
           // iOS: Failed to remove from AsyncStorage
+          console.error('[SecureStorage] iOS: AsyncStorage fallback also failed:', e2);
         }
       }
     }
 
     // PIN removal completed
-    return true;
+    // Return true if either operation succeeded (to allow UI update)
+    return disabledFlagSet || pinRemoved;
   } catch (error) {
     // Critical error in removeSecurePin
-    // Even on error, ensure the disabled flag is set
+    console.error('[SecureStorage] Critical error in removeSecurePin:', error);
+
+    // Even on error, try to ensure the disabled flag is set
     try {
       await AsyncStorage.setItem('@stackmap_pin_disabled', 'true');
+      disabledFlagSet = true;
     } catch (e) {
       // Failed to set disabled flag in catch
+      console.error('[SecureStorage] Failed to set disabled flag in error handler:', e);
     }
-    return true; // Return true to allow UI update
+
+    // Return true if we at least managed to set the disabled flag (to allow UI update)
+    // Return false only if both operations completely failed
+    return disabledFlagSet;
   }
 };
 
