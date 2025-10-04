@@ -17,6 +17,7 @@ import syncService from '../../../services/sync';
 import minimalSync from '../../../services/sync/minimalSyncService';
 import { useAppStore, useUserStore, useSettingsStore } from '../../../stores';
 import { generateSecureRandomString } from '../../../utils/secureId';
+import { sanitizeUsers, sanitizeUser } from '../../../utils/validation';
 
 // Import screens
 import {
@@ -164,21 +165,92 @@ const OnboardingUserCentered = ({
       // First, create users in the store before setting up sync
       if (users.length) {
         const timestamp = Date.now();
-        const randomId = generateSecureRandomString(9);
+        // Each activity now gets its own unique random ID to prevent collisions
         const usersObj = {};
         let firstUserId = null;
 
         // Create starter activities for the first user
         const starterActivities = [
           {
-            id: `${timestamp}_1_${randomId}`,
+            id: `${timestamp}_1_${generateSecureRandomString(9)}`,
             text: 'Welcome to StackMap!',
             icon: '👋',
             description: 'Tap activities to mark them complete',
             pinned: false,
             completed: false
           },
-          // ... (all other starter activities omitted for brevity)
+          {
+            id: `${timestamp}_2_${generateSecureRandomString(9)}`,
+            text: 'Try Edit Mode',
+            icon: '✏️',
+            description: 'Use the edit button to add, remove, and organize activities',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_3_${generateSecureRandomString(9)}`,
+            text: 'Switch Users',
+            icon: '👤',
+            description: 'Tap your user pill to switch users or check-in',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_4_${generateSecureRandomString(9)}`,
+            text: 'Share with Providers',
+            icon: '🔗',
+            description: 'Share your activities with caregivers via QR code or link',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_5_${generateSecureRandomString(9)}`,
+            text: 'Sync Across Devices',
+            icon: '🔄',
+            description: 'Keep your data synced with zero-knowledge encryption',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_6_${generateSecureRandomString(9)}`,
+            text: 'Import & Export',
+            icon: '📦',
+            description: 'Backup your data or transfer between devices',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_7_${generateSecureRandomString(9)}`,
+            text: 'Preferences',
+            icon: '🎨',
+            description: 'Tap the palette icon to customize colors, animations, and display',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_8_${generateSecureRandomString(9)}`,
+            text: 'Activities',
+            icon: '📋',
+            description: 'Tap the + icon to add new activities and build your library',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_9_${generateSecureRandomString(9)}`,
+            text: 'Day',
+            icon: '📅',
+            description: 'Use the calendar icon to plan tomorrow or review past days',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_10_${generateSecureRandomString(9)}`,
+            text: 'Access',
+            icon: '👥',
+            description: 'Add multiple users with the crown icon in preferences',
+            pinned: false,
+            completed: false
+          }
         ];
 
         users.forEach((user, index) => {
@@ -198,9 +270,39 @@ const OnboardingUserCentered = ({
           };
         });
 
-        // Set users in store
-        useUserStore.getState().setUsers(usersObj);
-        useAppStore.getState().setCurrentUser(firstUserId);
+        // Set users in store with error handling and retry
+        let retryCount = 0;
+        const maxRetries = 3;
+        let storeSuccess = false;
+
+        while (retryCount < maxRetries && !storeSuccess) {
+          try {
+            // Attempt to set users in store
+            useUserStore.getState().setUsers(usersObj);
+            useAppStore.getState().setCurrentUser(firstUserId);
+
+            // Verify the store operations succeeded
+            const storedUsers = useUserStore.getState().users;
+            const currentUser = useAppStore.getState().currentUser;
+
+            if (storedUsers && Object.keys(storedUsers).length > 0 && currentUser === firstUserId) {
+              storeSuccess = true;
+            } else {
+              throw new Error('Store update verification failed');
+            }
+          } catch (storeError) {
+            retryCount++;
+            console.error(`Store update attempt ${retryCount} failed:`, storeError);
+
+            if (retryCount < maxRetries) {
+              // Wait before retrying
+              await new Promise(resolve => setTimeout(resolve, 200 * retryCount));
+            } else {
+              // Final attempt failed, throw error
+              throw new Error('Failed to save user data after multiple attempts. Please try again.');
+            }
+          }
+        }
 
         await new Promise(resolve => setTimeout(resolve, 500));
       }
@@ -241,8 +343,38 @@ const OnboardingUserCentered = ({
       const result = await minimalSync.joinSync(recoveryPhrase);
 
       if (result && result.success) {
+        // Extract and sanitize users from synced data if available
+        if (result.data && result.data.users) {
+          // First sanitize the entire users object
+          const sanitizedUsersObj = sanitizeUsers(result.data.users);
+
+          // Then extract and further sanitize individual users
+          const syncedUsers = Object.values(sanitizedUsersObj)
+            .filter(user => !user.deleted)
+            .map(user => sanitizeUser({
+              id: user.id,
+              name: user.name,
+              icon: user.icon || user.emoji || '👤'
+            }))
+            .filter(user => user !== null); // Remove any invalid users
+
+          if (syncedUsers.length > 0) {
+            setUsers(syncedUsers);
+            setImportResult(result);
+            setUserJourney(prev => ({ ...prev, syncEnabled: true }));
+            // Add delay to ensure state is fully updated before navigation
+            await new Promise(resolve => setTimeout(resolve, 100));
+            // Skip to completion since users are already set up
+            animateStepTransition('complete');
+            return;
+          }
+        }
+
+        // No users in sync data, proceed to user setup
         setImportResult(result);
         setUserJourney(prev => ({ ...prev, syncEnabled: true }));
+        // Add delay to ensure state is fully updated before navigation
+        await new Promise(resolve => setTimeout(resolve, 100));
         animateStepTransition('syncSuccess');
       } else {
         throw new Error('Failed to import sync data');

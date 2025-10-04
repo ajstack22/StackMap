@@ -122,6 +122,17 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginBottom: SPACING.md,
   },
+  multilineInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    marginBottom: SPACING.md,
+    maxHeight: 120,
+    textAlignVertical: 'top',
+  },
   emojiSelector: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -164,6 +175,10 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginTop: SPACING.sm,
     textAlign: 'center',
+  },
+  errorContainer: {
+    alignItems: 'center',
+    marginTop: SPACING.sm,
   },
   charCount: {
     fontSize: 12,
