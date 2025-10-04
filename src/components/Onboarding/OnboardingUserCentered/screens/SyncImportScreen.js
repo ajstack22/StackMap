@@ -22,13 +22,12 @@ const SyncImportScreen = ({
 
     <View style={styles.inputGroup}>
       <TextInput
-        style={styles.multilineInput}
+        style={styles.input}
         placeholder="Recovery Phrase (32 characters)"
         value={recoveryPhrase}
         onChangeText={setRecoveryPhrase}
         autoCapitalize="none"
         autoCorrect={false}
-        multiline
       />
     </View>
 

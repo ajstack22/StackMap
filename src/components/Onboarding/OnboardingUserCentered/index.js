@@ -602,14 +602,6 @@ const OnboardingUserCentered = ({
     }
   };
 
-  // SafeAreaView component for web compatibility
-  const SafeAreaView = ({ children, style }) => {
-    if (Platform.OS === 'web') {
-      return <View style={style}>{children}</View>;
-    }
-    return <View style={[style, { paddingTop: insets.top }]}>{children}</View>;
-  };
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -621,7 +613,10 @@ const OnboardingUserCentered = ({
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <SafeAreaView style={styles.safeArea}>
+        <View style={[
+          styles.safeArea,
+          Platform.OS !== 'web' ? { paddingTop: insets.top } : null
+        ]}>
           {currentStep !== 'welcome' && navigationHistory.length > 1 && (
             <TouchableOpacity
               style={styles.backButton}
@@ -640,7 +635,7 @@ const OnboardingUserCentered = ({
           >
             {renderStepContent()}
           </Animated.View>
-        </SafeAreaView>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
