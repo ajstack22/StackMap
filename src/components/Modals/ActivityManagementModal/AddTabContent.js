@@ -62,7 +62,7 @@ const AddTabContent = ({
     const deviceId = await (async () => {
       try {
         const encryptionService = (
-          await import('../../../services/sync/encryptionService')
+          await import('../../../services/sync/encryptionServiceFixed')
         ).default;
         return await encryptionService.getDeviceId();
       } catch (error) {
@@ -104,7 +104,7 @@ const AddTabContent = ({
     const deviceId = await (async () => {
       try {
         const encryptionService = (
-          await import('../../../services/sync/encryptionService')
+          await import('../../../services/sync/encryptionServiceFixed')
         ).default;
         return await encryptionService.getDeviceId();
       } catch (error) {
