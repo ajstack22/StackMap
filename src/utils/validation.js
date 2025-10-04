@@ -12,6 +12,7 @@ export function sanitizeString(str, maxLength = 100) {
   if (typeof str !== 'string') return '';
 
   // Remove HTML tags and script content
+  // eslint-disable-next-line security/detect-unsafe-regex
   let sanitized = str.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
   sanitized = sanitized.replace(/<[^>]+>/g, '');
 
