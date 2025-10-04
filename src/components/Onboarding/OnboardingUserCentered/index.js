@@ -1,5 +1,5 @@
 // @ts-check
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -155,6 +155,26 @@ const OnboardingUserCentered = ({
       setNavigationHistory(newHistory);
     }
   };
+
+  // Memoized handlers to prevent child re-renders and focus loss
+  const handleAddUser = useCallback((newUser) => {
+    setUsers(prevUsers => [...prevUsers, newUser]);
+  }, []);
+
+  const handleUserSetupContinue = useCallback(() => {
+    if (userJourney.userType?.toLowerCase().trim() === 'group' ||
+        userJourney.userType?.toLowerCase().trim() === 'helper') {
+      animateStepTransition('pinSetup');
+    } else if (userJourney.deviceStrategy === 'multi') {
+      animateStepTransition('syncChoice');
+    } else {
+      animateStepTransition('complete');
+    }
+  }, [userJourney.userType, userJourney.deviceStrategy]);
+
+  const handleSyncSuccessContinue = useCallback(() => {
+    animateStepTransition('complete');
+  }, []);
 
   // Create new sync
   const createNewSync = async () => {
@@ -480,17 +500,8 @@ const OnboardingUserCentered = ({
             selectedEmoji={selectedEmoji}
             setSelectedEmoji={setSelectedEmoji}
             userJourney={userJourney}
-            onAddUser={(newUser) => setUsers([...users, newUser])}
-            onContinue={() => {
-              if (userJourney.userType?.toLowerCase().trim() === 'group' ||
-                  userJourney.userType?.toLowerCase().trim() === 'helper') {
-                animateStepTransition('pinSetup');
-              } else if (userJourney.deviceStrategy === 'multi') {
-                animateStepTransition('syncChoice');
-              } else {
-                animateStepTransition('complete');
-              }
-            }}
+            onAddUser={handleAddUser}
+            onContinue={handleUserSetupContinue}
           />
         );
 
@@ -572,7 +583,7 @@ const OnboardingUserCentered = ({
             theme={defaultTheme}
             generatedSyncCode={generatedSyncCode || recoveryPhrase}
             importResult={importResult}
-            onContinue={() => animateStepTransition('complete')}
+            onContinue={handleSyncSuccessContinue}
           />
         );
 
