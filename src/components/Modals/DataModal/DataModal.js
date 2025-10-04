@@ -134,8 +134,6 @@ const DataModal = ({
   const [showDisableSyncConfirm, setShowDisableSyncConfirm] = useState(false);
   const [showDeleteServerDataConfirm, setShowDeleteServerDataConfirm] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [generatedSyncKey, setGeneratedSyncKey] = useState('');
-  const [showGeneratedKey, setShowGeneratedKey] = useState(false);
 
   // Sync state update callback
   const handleSyncStateUpdate = (updates) => {
@@ -174,14 +172,7 @@ const DataModal = ({
   const recoveryPhrase = RecoveryPhrase({
     theme,
     showToast,
-    syncRecoveryPhrase: syncState.syncRecoveryPhrase,
-    generatedSyncKey,
-    setGeneratedSyncKey,
-    showGeneratedKey,
-    setShowGeneratedKey,
-    syncLoading,
-    setSyncLoading,
-    setSyncError
+    syncRecoveryPhrase: syncState.syncRecoveryPhrase
   });
 
   // SyncQRCode will be used for individual QR code generation as needed
@@ -758,7 +749,6 @@ const DataModal = ({
         <View style={styles.section}>
           {syncStatus.renderSyncEnabledHeader()}
           {recoveryPhrase.renderRecoveryPhraseDisplay()}
-          {recoveryPhrase.renderAddDeviceSection()}
           {syncManagement.renderSyncControls()}
           {syncStatus.renderSyncStatusInfo()}
           {recoveryPhrase.renderSecurityWarnings()}

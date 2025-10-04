@@ -8,7 +8,6 @@
  * - pull() operations with conflict handling
  * - Periodic sync management
  * - Error scenarios and recovery
- * - Invite code functionality
  *
  * Critical sync functionality - bugs here could cause data loss.
  */
@@ -621,92 +620,6 @@ describe('MinimalSyncService', () => {
     }, 60000); // 60 second timeout to prevent failures on slow systems
   });
 
-  describe('Invite Code Functionality', () => {
-    beforeEach(() => {
-      service.syncId = 'test-sync-id';
-      service.deviceId = 'test-device-id';
-      service.recoveryPhrase = 'test-recovery-phrase';
-    });
-
-    test('createInviteCode generates valid invite', async () => {
-      const mockResponse = {
-        success: true,
-        invite_code: 'ABC123',
-        invite_url: 'https://stackmap.app/invite/ABC123',
-        expires_at: Date.now() + 24 * 60 * 60 * 1000,
-        max_uses: 1
-      };
-
-      global.fetch.mockResolvedValueOnce({
-        json: () => Promise.resolve(mockResponse)
-      });
-
-      const result = await service.createInviteCode(24, 1, 'Test invite');
-
-      expect(result.inviteCode).toBe('ABC123');
-      expect(result.inviteUrl).toContain('test-recovery-phrase');
-      expect(result.expiresAt).toBeTruthy();
-    });
-
-    test('createInviteCode fails without sync enabled', async () => {
-      service.syncId = null;
-
-      await expect(service.createInviteCode()).rejects.toThrow('Sync must be enabled');
-    });
-
-    test('joinWithInviteCode validates and joins sync', async () => {
-      const inviteCode = 'ABC123';
-      const recoveryPhrase = 'test-phrase';
-
-      // Mock generateSyncId to return matching sync ID
-      jest.spyOn(service, 'generateSyncId').mockResolvedValueOnce('test-sync-id');
-
-      // Mock validate response
-      global.fetch.mockResolvedValueOnce({
-        json: () => Promise.resolve({
-          success: true,
-          sync_id: 'test-sync-id'
-        })
-      });
-
-      // Mock joinSync
-      jest.spyOn(service, 'joinSync').mockResolvedValueOnce({
-        success: true,
-        data: {}
-      });
-
-      // Mock use invite response
-      global.fetch.mockResolvedValueOnce({
-        json: () => Promise.resolve({ success: true })
-      });
-
-      const result = await service.joinWithInviteCode(inviteCode, recoveryPhrase);
-
-      expect(result.success).toBe(true);
-      expect(service.joinSync).toHaveBeenCalledWith(recoveryPhrase);
-    });
-
-    test('validateInviteCode returns validation result', async () => {
-      const mockResponse = {
-        success: true,
-        sync_id: 'test-sync-id',
-        expires_at: Date.now() + 1000,
-        invite_note: 'Test note'
-      };
-
-      global.fetch.mockResolvedValueOnce({
-        json: () => Promise.resolve(mockResponse)
-      });
-
-      const result = await service.validateInviteCode('ABC123');
-
-      expect(result.success).toBe(true);
-      expect(result.valid).toBe(true);
-      expect(result.syncId).toBe('test-sync-id');
-      expect(result.note).toBe('Test note');
-    });
-  });
-
   describe('Error Handling and Edge Cases', () => {
     test('handles AsyncStorage failures gracefully', async () => {
       // Create a fresh mock for this test
@@ -1170,116 +1083,6 @@ describe('MinimalSyncService', () => {
     });
   });
 
-  describe('Invite Code Validation Edge Cases', () => {
-    beforeEach(() => {
-      service.syncId = 'test-sync-id';
-      service.deviceId = 'test-device-id';
-      service.recoveryPhrase = 'test-recovery-phrase';
-    });
-
-    test('joinWithInviteCode handles missing recovery phrase in browser without URL fragment', async () => {
-      const originalWindow = global.window;
-
-      try {
-        // Mock browser environment with no hash
-        global.window = {
-          location: {
-            hash: '',
-            pathname: '/test',
-            search: ''
-          }
-        };
-
-        // Mock validate response
-        global.fetch.mockResolvedValueOnce({
-          json: () => Promise.resolve({
-            success: true,
-            sync_id: 'test-sync-id'
-          })
-        });
-
-        // Clear pending recovery phrase
-        service.pendingRecoveryPhrase = null;
-
-        await expect(service.joinWithInviteCode('ABC123')).rejects.toThrow('Recovery phrase required');
-      } finally {
-        global.window = originalWindow;
-      }
-    });
-
-    test('joinWithInviteCode handles URL fragment reading and clearing', async () => {
-      const originalWindow = global.window;
-      const originalDocument = global.document;
-      const recoveryPhrase = 'test-phrase-from-fragment';
-
-      try {
-        const mockHistory = {
-          replaceState: jest.fn()
-        };
-
-        global.window = {
-          location: {
-            hash: `#${recoveryPhrase}`,
-            pathname: '/test',
-            search: ''
-          },
-          history: mockHistory
-        };
-        global.document = { title: 'Test' };
-
-        // Mock generateSyncId to return matching sync ID
-        jest.spyOn(service, 'generateSyncId').mockResolvedValueOnce('test-sync-id');
-
-        // Mock responses
-        global.fetch
-          .mockResolvedValueOnce({
-            json: () => Promise.resolve({
-              success: true,
-              sync_id: 'test-sync-id'
-            })
-          })
-          .mockResolvedValueOnce({
-            json: () => Promise.resolve({ success: true })
-          });
-
-        jest.spyOn(service, 'joinSync').mockResolvedValueOnce({ success: true });
-
-        const result = await service.joinWithInviteCode('ABC123');
-
-        expect(result.success).toBe(true);
-        expect(mockHistory.replaceState).toHaveBeenCalled();
-        expect(service.joinSync).toHaveBeenCalledWith(recoveryPhrase);
-      } finally {
-        global.window = originalWindow;
-        global.document = originalDocument;
-      }
-    });
-
-    test('joinWithInviteCode handles sync ID mismatch', async () => {
-      jest.spyOn(service, 'generateSyncId').mockResolvedValueOnce('different-sync-id');
-
-      global.fetch.mockResolvedValueOnce({
-        json: () => Promise.resolve({
-          success: true,
-          sync_id: 'test-sync-id'
-        })
-      });
-
-      await expect(service.joinWithInviteCode('ABC123', 'wrong-phrase'))
-        .rejects.toThrow('Recovery phrase does not match this sync group');
-    });
-
-    test('validateInviteCode handles network errors', async () => {
-      global.fetch.mockRejectedValueOnce(new Error('Network error'));
-
-      const result = await service.validateInviteCode('ABC123');
-
-      expect(result.success).toBe(false);
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe('Network error');
-    });
-  });
-
   describe('Additional Edge Cases for 90% Coverage', () => {
     test('loadExistingSyncId handles missing recovery phrase', async () => {
       mockAsyncStorage.storage.set('@minimal_sync_id', 'test-sync-id');
@@ -1347,20 +1150,6 @@ describe('MinimalSyncService', () => {
       await service.pullAndNotify();
 
       expect(service.onDataReceived).not.toHaveBeenCalled();
-    });
-
-    test('createInviteCode handles server error response', async () => {
-      service.syncId = 'test-sync-id';
-      service.recoveryPhrase = 'test-recovery-phrase';
-
-      global.fetch.mockResolvedValueOnce({
-        json: () => Promise.resolve({
-          success: false,
-          error: 'Server error'
-        })
-      });
-
-      await expect(service.createInviteCode()).rejects.toThrow('Server error');
     });
 
     test('joinSync handles decrypt error during record processing', async () => {

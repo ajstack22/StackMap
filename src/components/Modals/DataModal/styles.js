@@ -1014,31 +1014,7 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#666',
   },
-  
-  // Invite code styles
-  inviteSection: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: RADIUS.medium,
-    padding: SPACING.lg,
-    marginVertical: SPACING.md,
-  },
-  sectionDescription: {
-    fontSize: 14,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#666',
-    marginTop: SPACING.xs,
-    marginBottom: SPACING.md,
-  },
-  inviteInput: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: RADIUS.small,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-    fontSize: 16,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-  },
+
   recoveryPhraseLabel: {
     fontSize: 12,
     fontFamily: TYPOGRAPHY.fontFamily.medium,

@@ -69,9 +69,6 @@ const OnboardingUserCentered = ({
   const [generatedSyncCode, setGeneratedSyncCode] = useState('');
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncError, setSyncError] = useState('');
-  const [syncPreviewData, setSyncPreviewData] = useState(null);
-  const [inviteCode, setInviteCode] = useState('');
-  const [generatedInviteCode, setGeneratedInviteCode] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState('');
   const [importResult, setImportResult] = useState(null);
@@ -95,52 +92,19 @@ const OnboardingUserCentered = ({
     }
   }, [userJourney.deviceStrategy]);
 
-  // Auto-fetch sync preview for invite URLs
+  // Auto-load recovery phrase from URL fragment (no invite codes)
   useEffect(() => {
     if (currentStep === 'syncImport') {
-      const fetchSyncPreview = async () => {
-        if (Platform.OS === 'web' && window.syncInviteData) {
-          const { inviteCode, recoveryPhrase } = window.syncInviteData;
-
-          if (inviteCode && recoveryPhrase) {
-            setInviteCode(inviteCode);
-            setRecoveryPhrase(recoveryPhrase);
-            setSyncLoading(true);
-
-            try {
-              const preview = await minimalSync.validateInviteCode(inviteCode);
-              if (preview && preview.users) {
-                setSyncPreviewData(preview);
-              } else {
-                setSyncError('Invalid sync invite link');
-              }
-            } catch (error) {
-              setSyncError(`Could not load sync preview: ${error.message || error}`);
-            } finally {
-              setSyncLoading(false);
-            }
-          }
+      if (Platform.OS === 'web' && window.location && window.location.hash) {
+        const hashPhrase = window.location.hash.substring(1);
+        if (hashPhrase && hashPhrase.length === 32) {
+          setRecoveryPhrase(hashPhrase);
+          // Clear hash from URL
+          window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
         }
-      };
-
-      if (!syncPreviewData) {
-        setTimeout(() => {
-          fetchSyncPreview();
-        }, 500);
       }
     }
   }, [currentStep]);
-
-  // Auto-import sync data when preview is fetched from invite URL
-  useEffect(() => {
-    if (syncPreviewData && currentStep === 'syncImport' && Platform.OS === 'web' && window.syncInviteData) {
-      if (window.syncInviteData.inviteCode && window.syncInviteData.recoveryPhrase) {
-        setTimeout(() => {
-          importSyncData();
-        }, 500);
-      }
-    }
-  }, [syncPreviewData]);
 
   // Fade in animation
   useEffect(() => {
@@ -249,15 +213,6 @@ const OnboardingUserCentered = ({
 
       await syncService.enable(syncCode);
 
-      try {
-        const inviteResult = await syncService.createInviteCode(24, 5, 'Initial setup');
-        if (inviteResult && inviteResult.inviteCode) {
-          setGeneratedInviteCode(inviteResult.inviteCode);
-        }
-      } catch (inviteError) {
-        // Non-critical error - sync still works without invite code
-      }
-
       setUserJourney(prev => ({ ...prev, syncEnabled: true }));
       animateStepTransition('syncSuccess');
     } catch (error) {
@@ -278,22 +233,12 @@ const OnboardingUserCentered = ({
     setImportError('');
 
     try {
-      let actualInviteCode = inviteCode;
-      let actualRecoveryPhrase = recoveryPhrase;
-
-      if (Platform.OS === 'web' && window.syncInviteData) {
-        actualInviteCode = window.syncInviteData.inviteCode || inviteCode;
-        actualRecoveryPhrase = window.syncInviteData.recoveryPhrase || recoveryPhrase;
+      if (!recoveryPhrase || recoveryPhrase.length !== 32) {
+        throw new Error('Valid 32-character recovery phrase is required');
       }
 
-      if (!actualRecoveryPhrase || !actualInviteCode) {
-        throw new Error('Recovery phrase and invite code are required');
-      }
-
-      const result = await minimalSync.joinWithInviteCode(
-        actualInviteCode,
-        actualRecoveryPhrase
-      );
+      // Join sync using recovery phrase only
+      const result = await minimalSync.joinSync(recoveryPhrase);
 
       if (result && result.success) {
         setImportResult(result);
@@ -479,38 +424,13 @@ const OnboardingUserCentered = ({
         return (
           <SyncImportScreen
             theme={defaultTheme}
-            inviteCode={inviteCode}
-            setInviteCode={setInviteCode}
             recoveryPhrase={recoveryPhrase}
             setRecoveryPhrase={setRecoveryPhrase}
-            syncPreviewData={syncPreviewData}
             syncLoading={syncLoading}
             syncError={syncError}
             isImporting={isImporting}
             importError={importError}
             onImport={importSyncData}
-            onFetchPreview={async () => {
-              if (!inviteCode) {
-                setSyncError('Please enter an invite code');
-                return;
-              }
-
-              setSyncLoading(true);
-              setSyncError('');
-
-              try {
-                const preview = await minimalSync.validateInviteCode(inviteCode);
-                if (preview && preview.users) {
-                  setSyncPreviewData(preview);
-                } else {
-                  setSyncError('Invalid invite code');
-                }
-              } catch (error) {
-                setSyncError(`Failed to fetch preview: ${error.message || error}`);
-              } finally {
-                setSyncLoading(false);
-              }
-            }}
           />
         );
 
@@ -519,7 +439,6 @@ const OnboardingUserCentered = ({
           <SyncSuccessScreen
             theme={defaultTheme}
             generatedSyncCode={generatedSyncCode || recoveryPhrase}
-            generatedInviteCode={generatedInviteCode}
             importResult={importResult}
             onContinue={() => animateStepTransition('complete')}
           />

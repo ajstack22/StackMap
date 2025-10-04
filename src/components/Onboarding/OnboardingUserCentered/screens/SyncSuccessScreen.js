@@ -7,7 +7,6 @@ import { styles } from '../styles';
 const SyncSuccessScreen = ({
   theme,
   generatedSyncCode,
-  generatedInviteCode,
   importResult,
   onContinue,
 }) => (
@@ -26,14 +25,6 @@ const SyncSuccessScreen = ({
       <View style={styles.successInfo}>
         <Text style={styles.infoText}>
           Recovery phrase saved. Use it to connect other devices.
-        </Text>
-      </View>
-    )}
-
-    {generatedInviteCode && (
-      <View style={styles.successInfo}>
-        <Text style={styles.infoText}>
-          Invite code created: {generatedInviteCode}
         </Text>
       </View>
     )}

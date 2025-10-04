@@ -139,10 +139,6 @@ export const VALIDATION_MESSAGES = {
   PHRASE_LENGTH: 'Recovery phrase must be 32 characters',
   PHRASE_FORMAT: 'Recovery phrase must contain only letters and numbers',
 
-  // Invite code validation
-  INVITE_INVALID: 'Invalid invite code',
-  INVITE_EXPIRED: 'Invite code has expired',
-
   // File validation
   FILE_REQUIRED: 'Please select a file',
   FILE_TYPE_INVALID: 'Invalid file type',

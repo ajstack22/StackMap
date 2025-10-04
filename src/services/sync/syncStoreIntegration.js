@@ -1347,36 +1347,6 @@ class SyncStoreIntegration {
       return { success: false, error: error.message };
     }
   }
-  
-  /**
-   * Create an invite code for others to join sync
-   * @param {number} expiresHours - Hours until expiration (1-168)
-   * @param {number} maxUses - Maximum number of uses (1-10)
-   * @param {string} note - Optional note about the invite
-   * @returns {Promise<{success: boolean, inviteCode?: string, inviteUrl?: string, error?: string}>}
-   */
-  async createInviteCode(expiresHours = 24, maxUses = 1, note = null) {
-    return minimalSync.createInviteCode(expiresHours, maxUses, note);
-  }
-
-  /**
-   * Join a sync group using an invite code
-   * @param {string} inviteCode - The invite code (XXXX-XXXX format)
-   * @param {string} recoveryPhrase - The recovery phrase for decryption
-   * @returns {Promise<{success: boolean, error?: string}>}
-   */
-  async joinWithInviteCode(inviteCode, recoveryPhrase) {
-    return minimalSync.joinWithInviteCode(inviteCode, recoveryPhrase);
-  }
-
-  /**
-   * Validate an invite code without joining
-   * @param {string} inviteCode - The invite code to validate
-   * @returns {Promise<{success: boolean, syncId?: string, error?: string}>}
-   */
-  async validateInviteCode(inviteCode) {
-    return minimalSync.validateInviteCode(inviteCode);
-  }
 }
 
 // Export singleton
