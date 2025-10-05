@@ -1,32 +1,25 @@
-## Title: Fix emoji skin tone selector - exclude pre-modified variants from categories
+## Title: Remove skin tone selector - keep only generic emojis for now
 
-### Bug Description:
-Skin tone selector was not working - all emojis appeared with default skin tone and selecting different skin tones didn't change the displayed emojis.
+### Change Description:
+Disabled the skin tone selector in the emoji picker. Will keep only generic/default emojis until skin tone functionality can be properly implemented.
 
-**Root Cause:** The `buildEmojiCategories()` function was including emojis that already had skin tone modifiers baked into their unicode (e.g., 👋🏻, 👋🏼, etc.) as separate entries alongside the base emojis (👋). This caused the category to show both base and all skin tone variants, making the skin tone selector appear broken.
+**Reason:** The skin tone modifier system wasn't working correctly, and users should have a functional emoji picker without confusing UI elements that don't work.
 
-### The Fix:
-**src/components/EmojiPicker/EmojiPickerMain.js** (lines 75-93):
-- Added regex filter to exclude emojis with skin tone modifiers: `/1F3F[B-F]/`
-- Skin tone modifiers in unicode: 1F3FB (light) through 1F3FF (dark)
-- Now only base emojis are added to categories
-- Skin tones are applied dynamically via `applySkinTone()` in SearchResults.js
-
-### How It Works:
-1. **Category population:** Only base emojis (e.g., 👋) added to People category
-2. **Skin tone selection:** User selects skin tone via SkinToneSelector
-3. **Dynamic application:** SearchResults applies skin tone modifier to base emoji
-4. **Result:** 👋 + 🏻 modifier = 👋🏻
+### The Change:
+**src/components/EmojiPicker/EmojiPickerMain.js** (lines 216-222):
+- Commented out SkinToneSelector component
+- Generic emojis still displayed correctly in People category
+- Filter for skin tone variants (from previous fix) remains active
 
 ### Impact:
-- ✅ Skin tone selector now works correctly
-- ✅ Only base emojis shown in categories (no duplicates)
-- ✅ Selecting skin tones updates all people emojis dynamically
-- ✅ Cleaner category display (fewer total emojis, all unique)
+- ✅ Cleaner UI without non-functional skin tone selector
+- ✅ Only generic/default emojis shown (no duplicate variants)
+- ✅ Emoji picker fully functional
+- ⏸️ Skin tone selection disabled until proper fix can be implemented
 
 ### Technical Details:
-- Skin tone modifiers: U+1F3FB through U+1F3FF
-- Regex pattern matches: `1F3FB`, `1F3FC`, `1F3FD`, `1F3FE`, `1F3FF`
-- Applied to unified codes like `1F44B-1F3FB` (waving hand with light skin tone)
+- SkinToneSelector component commented out (not removed)
+- Can be re-enabled when proper implementation is done
+- Regex filter `/1F3F[B-F]/` still active to exclude pre-modified emojis
 
 ### Deployment Date: [To be filled by deployment script]

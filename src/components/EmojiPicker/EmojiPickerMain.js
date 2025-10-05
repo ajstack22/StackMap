@@ -213,13 +213,13 @@ const EmojiPickerMain = ({
         />
       )}
 
-      {/* Skin Tone Selector */}
-      {selectedCategory === 'People' && !searchQuery && (
+      {/* Skin Tone Selector - Disabled for now */}
+      {/* {selectedCategory === 'People' && !searchQuery && (
         <SkinToneSelector
           selectedSkinTone={selectedSkinTone}
           onSelectSkinTone={setSelectedSkinTone}
         />
-      )}
+      )} */}
 
       {/* Search Results Grid */}
       <SearchResults
