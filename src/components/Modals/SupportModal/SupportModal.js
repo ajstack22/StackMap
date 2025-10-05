@@ -113,7 +113,7 @@ const ImpactSection = () => (
   </View>
 );
 
-const SupportModal = ({ visible, onClose, insets, onSyncDiagnostic }) => {
+const SupportModal = ({ visible, onClose, insets }) => {
   const [scrollKey, setScrollKey] = useState(0);
   const scrollRef = useRef(null);
 
@@ -170,24 +170,6 @@ const SupportModal = ({ visible, onClose, insets, onSyncDiagnostic }) => {
           </View>
         )}
       </View>
-
-      {/* Debug Sync Button - available in qual for testing */}
-      {onSyncDiagnostic && (
-        <TouchableOpacity 
-          onPress={onSyncDiagnostic}
-          style={{
-            backgroundColor: '#FF6B6B',
-            padding: 10,
-            margin: 20,
-            borderRadius: 8,
-            alignItems: 'center'
-          }}
-        >
-          <Text style={{ color: 'white', fontWeight: 'bold' }}>
-            🔧 Open Sync Diagnostic Tool
-          </Text>
-        </TouchableOpacity>
-      )}
 
       <SupportWaysSection />
 

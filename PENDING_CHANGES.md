@@ -1,25 +1,19 @@
-## Title: Remove skin tone selector - keep only generic emojis for now
+## Title: Remove sync diagnostic tool from Support page
 
 ### Change Description:
-Disabled the skin tone selector in the emoji picker. Will keep only generic/default emojis until skin tone functionality can be properly implemented.
+Removed the "Open Sync Diagnostic Tool" button from the Support page as it's no longer needed.
 
-**Reason:** The skin tone modifier system wasn't working correctly, and users should have a functional emoji picker without confusing UI elements that don't work.
+### Changes Made:
+**src/components/Modals/SupportModal/SupportModal.js**:
+- Removed sync diagnostic button (lines 174-190)
+- Removed `onSyncDiagnostic` prop from component signature
 
-### The Change:
-**src/components/EmojiPicker/EmojiPickerMain.js** (lines 216-222):
-- Commented out SkinToneSelector component
-- Generic emojis still displayed correctly in People category
-- Filter for skin tone variants (from previous fix) remains active
+**App.js**:
+- Removed `onSyncDiagnostic={() => {}}` prop from both SupportModal instances (lines 5264, 5678)
 
 ### Impact:
-- ✅ Cleaner UI without non-functional skin tone selector
-- ✅ Only generic/default emojis shown (no duplicate variants)
-- ✅ Emoji picker fully functional
-- ⏸️ Skin tone selection disabled until proper fix can be implemented
-
-### Technical Details:
-- SkinToneSelector component commented out (not removed)
-- Can be re-enabled when proper implementation is done
-- Regex filter `/1F3F[B-F]/` still active to exclude pre-modified emojis
+- ✅ Cleaner Support page UI
+- ✅ Removed unused debug/diagnostic functionality
+- ✅ No impact on user-facing features
 
 ### Deployment Date: [To be filled by deployment script]

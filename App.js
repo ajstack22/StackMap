@@ -5261,7 +5261,6 @@ Users: ${userNames} (${userCount} total)
         visible={showSupportModal}
         onClose={() => setShowSupportModal(false)}
         insets={insets}
-        onSyncDiagnostic={() => {}}
       />
       
       {/* Sync Diagnostic Modal removed - test component no longer needed */}
@@ -5676,7 +5675,6 @@ Users: ${userNames} (${userCount} total)
           visible={showSupportModal}
           onClose={() => setShowSupportModal(false)}
           insets={insets}
-          onSyncDiagnostic={() => {}}
         />
 
         {/* Data Modal - Available during onboarding for import */}
