@@ -1,6 +1,6 @@
-## Title: Fix button icon alignment in Activity Library - replace Text with Icon components for proper centering
+## Title: Fix delete icon visibility in Activity Library
 
 ### Changes Made:
-Fix button icon alignment in Activity Library - replace Text with Icon components for proper centering
-
-### Deployment Date: 2025-10-05_16:19:55
+- Changed delete button icon from "close" to "delete" for better visibility
+- Icon name="delete" provides a more recognizable trash can icon
+- Maintains same size (16) and white color on red background

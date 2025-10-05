@@ -174,7 +174,7 @@ const LibraryTabContent = ({
                 justifyContent: 'center',
               }]}
             >
-              <Icon name="close" size={16} color="white" />
+              <Icon name="delete" size={16} color="white" />
             </TouchableOpacity>
           )}
         </View>
