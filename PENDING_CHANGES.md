@@ -1,6 +1,6 @@
-## Title: Fix delete icon visibility in Activity Library
+## Title: Fix delete icon visibility - use 'delete' icon instead of 'close' for trash can appearance
 
 ### Changes Made:
-- Changed delete button icon from "close" to "delete" for better visibility
-- Icon name="delete" provides a more recognizable trash can icon
-- Maintains same size (16) and white color on red background
+Fix delete icon visibility - use 'delete' icon instead of 'close' for trash can appearance
+
+### Deployment Date: 2025-10-05_16:27:45
