@@ -152,12 +152,7 @@ const LibraryTabContent = ({
               justifyContent: 'center',
             }]}
           >
-            <Text style={{ 
-              color: 'white', 
-              fontSize: 18, 
-              fontWeight: 'bold',
-              marginTop: Platform.OS === 'ios' ? -2 : Platform.OS === 'android' ? 1 : 0,
-            }}>+</Text>
+            <Icon name="add" size={16} color="white" />
           </TouchableOpacity>
           {!isSystemProvided && (
             <TouchableOpacity
@@ -179,12 +174,7 @@ const LibraryTabContent = ({
                 justifyContent: 'center',
               }]}
             >
-              <Text style={{ 
-                color: 'white', 
-                fontSize: 20, 
-                fontWeight: 'bold',
-                marginTop: Platform.OS === 'ios' ? -3 : Platform.OS === 'android' ? 1 : 0,
-              }}>×</Text>
+              <Icon name="close" size={16} color="white" />
             </TouchableOpacity>
           )}
         </View>
@@ -229,7 +219,7 @@ const LibraryTabContent = ({
           <Text style={styles.activityCount}>
             ({category.activities?.length || 0})
           </Text>
-          {category.activities && category.activities.length && (
+          {category.activities && category.activities.length > 0 && (
             <TouchableOpacity
               onPress={() => {
                 // Add all activities from this category

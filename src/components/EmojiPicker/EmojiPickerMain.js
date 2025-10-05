@@ -222,9 +222,12 @@ const EmojiPickerMain = ({
       }
     }
 
-    setCategoryKeys(Object.keys(categories));
-    setEmojiCategories(categories);
-  }, [showCustomImages, Object.keys(emojiCategories).length > 0]);
+    // Ensure all keys are valid strings
+    const validKeys = Object.keys(categories).filter(
+      key => typeof key === 'string' && key.trim().length > 0
+    );
+    setCategoryKeys(validKeys);
+  }, [showCustomImages, isLoading]);
 
   // Filter items based on search
   useEffect(() => {
