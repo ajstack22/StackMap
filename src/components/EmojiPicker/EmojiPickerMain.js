@@ -5,10 +5,10 @@ import {
   TouchableOpacity,
   Modal,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { isTablet } from '../../constants';
-import emojiData from 'emoji-datasource-apple/emoji.json';
 import EmojiSearch, { performEmojiSearch } from './EmojiSearch';
 import SearchResults from './SearchResults';
 import CategoryTabs from './CategoryTabs';
@@ -16,8 +16,55 @@ import SkinToneSelector from './SkinToneSelector';
 import { CUSTOM_IMAGES } from './constants';
 import { styles } from './styles';
 
+// Lazy-loaded emoji data - will be loaded asynchronously
+let cachedEmojiData = null;
+let cachedEmojiSearchIndex = null;
+let cachedEmojiCategories = null;
+let loadingPromise = null;
+
+// Async function to load emoji data
+const loadEmojiData = async () => {
+  if (cachedEmojiData) {
+    return {
+      emojiData: cachedEmojiData,
+      searchIndex: cachedEmojiSearchIndex,
+      categories: cachedEmojiCategories,
+    };
+  }
+
+  // If already loading, return the existing promise
+  if (loadingPromise) {
+    return loadingPromise;
+  }
+
+  // Start loading
+  loadingPromise = (async () => {
+    try {
+      // Dynamic import to avoid blocking the main thread
+      const emojiDataModule = await import('emoji-datasource-apple/emoji.json');
+      const emojiData = emojiDataModule.default || emojiDataModule;
+
+      cachedEmojiData = emojiData;
+      cachedEmojiSearchIndex = createEmojiSearchIndex(emojiData);
+      cachedEmojiCategories = buildEmojiCategories(emojiData);
+
+      return {
+        emojiData: cachedEmojiData,
+        searchIndex: cachedEmojiSearchIndex,
+        categories: cachedEmojiCategories,
+      };
+    } catch (error) {
+      console.error('Failed to load emoji data:', error);
+      loadingPromise = null;
+      throw error;
+    }
+  })();
+
+  return loadingPromise;
+};
+
 // Create emoji search index from emoji data
-const createEmojiSearchIndex = () => {
+const createEmojiSearchIndex = (emojiData) => {
   const searchIndex = {};
   emojiData.forEach(emoji => {
     if (emoji.unified) {
@@ -44,10 +91,8 @@ const createEmojiSearchIndex = () => {
   return searchIndex;
 };
 
-const EMOJI_SEARCH_INDEX = createEmojiSearchIndex();
-
 // Build comprehensive emoji categories from the full dataset
-const buildEmojiCategories = () => {
+const buildEmojiCategories = (emojiData) => {
   const categories = {
     People: [],
     Nature: [],
@@ -95,8 +140,6 @@ const buildEmojiCategories = () => {
   return categories;
 };
 
-const EMOJI_CATEGORIES = buildEmojiCategories();
-
 const EmojiPickerMain = ({
   visible = false,
   onClose,
@@ -109,11 +152,12 @@ const EmojiPickerMain = ({
   const [selectedCategory, setSelectedCategory] = useState('People');
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredItems, setFilteredItems] = useState([]);
-  const [categoryKeys, setCategoryKeys] = useState(
-    Object.keys(EMOJI_CATEGORIES),
-  );
+  const [categoryKeys, setCategoryKeys] = useState([]);
   const [selectedSkinTone, setSelectedSkinTone] = useState(null);
   const [detectedEmoji, setDetectedEmoji] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [emojiCategories, setEmojiCategories] = useState({});
+  const [emojiSearchIndex, setEmojiSearchIndex] = useState({});
 
   // Calculate columns based on screen size and platform
   const numColumns =
@@ -127,36 +171,76 @@ const EmojiPickerMain = ({
       ? 6
       : 5;
 
+  // Load emoji data asynchronously when component mounts or becomes visible
+  useEffect(() => {
+    let isMounted = true;
+
+    const initializeEmojiData = async () => {
+      if (visible || mode === 'inline') {
+        try {
+          setIsLoading(true);
+          const { categories, searchIndex } = await loadEmojiData();
+
+          if (isMounted) {
+            setEmojiCategories(categories);
+            setEmojiSearchIndex(searchIndex);
+            setIsLoading(false);
+          }
+        } catch (error) {
+          console.error('Failed to initialize emoji data:', error);
+          if (isMounted) {
+            setIsLoading(false);
+          }
+        }
+      }
+    };
+
+    initializeEmojiData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [visible, mode]);
+
   // Initialize categories with custom images
   useEffect(() => {
+    if (Object.keys(emojiCategories).length === 0) {
+      return;
+    }
+
+    const categories = { ...emojiCategories };
+
     if (showCustomImages) {
       // Add Custom category dynamically
-      if (!EMOJI_CATEGORIES.Custom) {
-        EMOJI_CATEGORIES.Custom = CUSTOM_IMAGES;
+      if (!categories.Custom) {
+        categories.Custom = CUSTOM_IMAGES;
       }
-      setCategoryKeys(Object.keys(EMOJI_CATEGORIES));
-      setSelectedCategory('People');
     } else {
       // Remove Custom category if it exists
-      if (EMOJI_CATEGORIES.Custom) {
-        delete EMOJI_CATEGORIES.Custom;
+      if (categories.Custom) {
+        delete categories.Custom;
       }
-      setCategoryKeys(Object.keys(EMOJI_CATEGORIES));
-      setSelectedCategory('People');
     }
-  }, [showCustomImages]);
+
+    setCategoryKeys(Object.keys(categories));
+    setEmojiCategories(categories);
+  }, [showCustomImages, Object.keys(emojiCategories).length > 0]);
 
   // Filter items based on search
   useEffect(() => {
+    if (isLoading || Object.keys(emojiCategories).length === 0) {
+      return;
+    }
+
     if (searchQuery) {
       const { filteredItems: searchResults, detectedEmoji: searchDetectedEmoji } =
-        performEmojiSearch(searchQuery, EMOJI_CATEGORIES, EMOJI_SEARCH_INDEX);
+        performEmojiSearch(searchQuery, emojiCategories, emojiSearchIndex);
       setFilteredItems(searchResults);
       setDetectedEmoji(searchDetectedEmoji);
     } else {
       // No search, show selected category
       setDetectedEmoji('');
-      const items = EMOJI_CATEGORIES[selectedCategory] || [];
+      const items = emojiCategories[selectedCategory] || [];
       setFilteredItems(
         items.map(item =>
           typeof item === 'string'
@@ -165,7 +249,7 @@ const EmojiPickerMain = ({
         ),
       );
     }
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, isLoading, emojiCategories, emojiSearchIndex]);
 
   const handleSelect = item => {
     if (item.type === 'emoji') {
@@ -194,43 +278,52 @@ const EmojiPickerMain = ({
         </View>
       )}
 
-      {/* Search Component */}
-      <EmojiSearch
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onClearSearch={() => setSearchQuery('')}
-        detectedEmoji={detectedEmoji}
-        onSelectDetectedEmoji={() => handleSelect({ type: 'emoji', icon: detectedEmoji })}
-        theme={theme}
-      />
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme?.primary || '#007AFF'} />
+          <Text style={styles.loadingText}>Loading emojis...</Text>
+        </View>
+      ) : (
+        <>
+          {/* Search Component */}
+          <EmojiSearch
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onClearSearch={() => setSearchQuery('')}
+            detectedEmoji={detectedEmoji}
+            onSelectDetectedEmoji={() => handleSelect({ type: 'emoji', icon: detectedEmoji })}
+            theme={theme}
+          />
 
-      {/* Category Tabs */}
-      {!searchQuery && (
-        <CategoryTabs
-          categories={categoryKeys}
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
-        />
+          {/* Category Tabs */}
+          {!searchQuery && (
+            <CategoryTabs
+              categories={categoryKeys}
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+            />
+          )}
+
+          {/* Skin Tone Selector - Disabled for now */}
+          {/* {selectedCategory === 'People' && !searchQuery && (
+            <SkinToneSelector
+              selectedSkinTone={selectedSkinTone}
+              onSelectSkinTone={setSelectedSkinTone}
+            />
+          )} */}
+
+          {/* Search Results Grid */}
+          <SearchResults
+            filteredItems={filteredItems}
+            numColumns={numColumns}
+            selectedCategory={selectedCategory}
+            selectedSkinTone={selectedSkinTone}
+            selectedEmoji={selectedEmoji}
+            onSelect={handleSelect}
+            isSearching={!!searchQuery}
+          />
+        </>
       )}
-
-      {/* Skin Tone Selector - Disabled for now */}
-      {/* {selectedCategory === 'People' && !searchQuery && (
-        <SkinToneSelector
-          selectedSkinTone={selectedSkinTone}
-          onSelectSkinTone={setSelectedSkinTone}
-        />
-      )} */}
-
-      {/* Search Results Grid */}
-      <SearchResults
-        filteredItems={filteredItems}
-        numColumns={numColumns}
-        selectedCategory={selectedCategory}
-        selectedSkinTone={selectedSkinTone}
-        selectedEmoji={selectedEmoji}
-        onSelect={handleSelect}
-        isSearching={!!searchQuery}
-      />
     </View>
   );
 

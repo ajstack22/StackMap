@@ -105,4 +105,16 @@ export const styles = StyleSheet.create({
     fontSize: isTablet() ? 26 : 22,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.xl,
+  },
+  loadingText: {
+    marginTop: SPACING.md,
+    fontSize: TYPOGRAPHY.sizes.md,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: COLORS.gray[600],
+  },
 });
