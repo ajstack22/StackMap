@@ -1,40 +1,30 @@
-## Title: Fix Complete Day to always operate on today regardless of day view mode
+## Title: Fix emoji picker to show all emojis from full dataset
 
 ### Bug Description:
-When user navigated: Both Days → Tomorrow view → Complete Day, the Complete Day feature incorrectly operated on tomorrow's activities instead of today's activities.
+After recent refactoring, the emoji picker only showed 8 hardcoded emojis per category instead of the full emoji dataset.
 
-**Root Cause:** DayManagementModal received `activities={activities}` which was derived from `currentDay`. When `currentDay='tomorrow'`, Complete Day received tomorrow's activities.
+**Root Cause:** `EMOJI_CATEGORIES` object in EmojiPickerMain.js (lines 50-61) contained hardcoded arrays with only 8 sample emojis per category, while the full `emoji-datasource-apple` package contains thousands of emojis.
 
 ### The Fix:
-**App.js** (lines 5469-5471):
-```javascript
-// Before:
-activities={activities}  // Bug: uses currentDay, can be tomorrow
-completedCount={activities.filter(a => a.completed).length}
-totalCount={activities.length}
-
-// After:
-activities={users[currentUser]?.days?.today?.activities || []}
-completedCount={(users[currentUser]?.days?.today?.activities || []).filter(a => a.completed).length}
-totalCount={(users[currentUser]?.days?.today?.activities || []).length}
-```
-
-### Expected Behavior:
-Complete Day is an end-of-day operation that should **ALWAYS** operate on today's activities, regardless of:
-- Current day view mode (today/tomorrow/both days)
-- Which user is being viewed
-- Any other UI state
+**src/components/EmojiPicker/EmojiPickerMain.js** (lines 49-91):
+- Replaced hardcoded categories with `buildEmojiCategories()` function
+- Populates all categories from full `emojiData` (emoji-datasource-apple)
+- Maps emoji-datasource categories to display categories:
+  - 'Smileys & Emotion' + 'People & Body' → People
+  - 'Animals & Nature' → Nature
+  - 'Food & Drink' → Food
+  - 'Travel & Places' → Travel
+  - Activities, Objects, Symbols, Flags → direct mapping
+- Changed default category from 'Lifestyle' to 'People'
 
 ### Impact:
-- ✅ Complete Day now consistently operates on today
-- ✅ Works correctly when viewing tomorrow in Both Days mode
-- ✅ Prevents accidental loss of tomorrow's activities
-- ✅ Maintains correct activity flow (unpinned deleted, pinned kept & copied)
+- ✅ Users now see full emoji library (1000+ emojis)
+- ✅ All emoji categories properly populated
+- ✅ Search functionality works across all emojis
+- ✅ Maintains custom images integration
 
-### Testing:
-Will verify in qual:
-1. Both Days mode → Tomorrow view → Complete Day shows today's activities
-2. Normal today view → Complete Day still works correctly
-3. Empty today + populated tomorrow → Complete Day handles correctly
+### Before vs After:
+- **Before:** 8 emojis per category (80 total across 10 categories)
+- **After:** Full emoji-datasource-apple dataset (1800+ emojis across 8 categories)
 
 ### Deployment Date: [To be filled by deployment script]

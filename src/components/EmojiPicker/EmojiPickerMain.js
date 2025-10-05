@@ -46,19 +46,49 @@ const createEmojiSearchIndex = () => {
 
 const EMOJI_SEARCH_INDEX = createEmojiSearchIndex();
 
-// Emoji categories
-const EMOJI_CATEGORIES = {
-  Lifestyle: ['💻', '🎮', '📱', '🎨', '📚', '✈️', '🏃', '🚗'],
-  Activities: ['⚽', '🏀', '🎯', '🎪', '🎭', '🎨', '🎮', '🎲'],
-  Food: ['🍎', '🍕', '🍔', '🌮', '🍰', '☕', '🍜', '🥗'],
-  Symbols: ['✨', '⭐', '💫', '🌟', '✅', '❌', '❤️', '💯'],
-  People: ['😀', '😊', '😇', '🤔', '😴', '🤗', '😎', '🥳'],
-  Nature: ['🌸', '🌺', '🌻', '🌹', '🌷', '🌼', '🌿', '🍀'],
-  Animals: ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'],
-  Objects: ['⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏉', '🎱'],
-  Travel: ['🚗', '✈️', '🚢', '🚂', '🚌', '🚁', '🚀', '⛵'],
-  More: ['🔔', '🔕', '🔊', '🔇', '🔒', '🔓', '🔑', '🔨'],
+// Build comprehensive emoji categories from the full dataset
+const buildEmojiCategories = () => {
+  const categories = {
+    People: [],
+    Nature: [],
+    Food: [],
+    Activities: [],
+    Travel: [],
+    Objects: [],
+    Symbols: [],
+    Flags: [],
+  };
+
+  // Category mapping from emoji-datasource to our display categories
+  const categoryMap = {
+    'Smileys & Emotion': 'People',
+    'People & Body': 'People',
+    'Animals & Nature': 'Nature',
+    'Food & Drink': 'Food',
+    'Travel & Places': 'Travel',
+    'Activities': 'Activities',
+    'Objects': 'Objects',
+    'Symbols': 'Symbols',
+    'Flags': 'Flags',
+  };
+
+  emojiData.forEach(emoji => {
+    if (emoji.unified && !emoji.obsoleted_by && !emoji.obsoletes) {
+      const emojiChar = String.fromCodePoint(
+        ...emoji.unified.split('-').map(u => parseInt(u, 16)),
+      );
+
+      const targetCategory = categoryMap[emoji.category];
+      if (targetCategory && categories[targetCategory]) {
+        categories[targetCategory].push(emojiChar);
+      }
+    }
+  });
+
+  return categories;
 };
+
+const EMOJI_CATEGORIES = buildEmojiCategories();
 
 const EmojiPickerMain = ({
   visible = false,
@@ -69,7 +99,7 @@ const EmojiPickerMain = ({
   selectedEmoji,
   showCustomImages = true,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState('Lifestyle');
+  const [selectedCategory, setSelectedCategory] = useState('People');
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredItems, setFilteredItems] = useState([]);
   const [categoryKeys, setCategoryKeys] = useState(
@@ -98,15 +128,14 @@ const EmojiPickerMain = ({
         EMOJI_CATEGORIES.Custom = CUSTOM_IMAGES;
       }
       setCategoryKeys(Object.keys(EMOJI_CATEGORIES));
-      // Prefer Lifestyle category if available, otherwise Custom
-      setSelectedCategory('Lifestyle');
+      setSelectedCategory('People');
     } else {
       // Remove Custom category if it exists
       if (EMOJI_CATEGORIES.Custom) {
         delete EMOJI_CATEGORIES.Custom;
       }
       setCategoryKeys(Object.keys(EMOJI_CATEGORIES));
-      setSelectedCategory('Lifestyle');
+      setSelectedCategory('People');
     }
   }, [showCustomImages]);
 
