@@ -1,38 +1,40 @@
-## Title: Fix critical iOS/Android crash - correct broken import path in AddTabContent.js
+## Title: Fix Complete Day to always operate on today regardless of day view mode
 
-### Root Cause:
-`AddTabContent.js` lines 65 & 107 were importing from a non-existent module:
-```javascript
-'../../../services/sync/encryptionService'
-```
+### Bug Description:
+When user navigated: Both Days → Tomorrow view → Complete Day, the Complete Day feature incorrectly operated on tomorrow's activities instead of today's activities.
 
-But the actual filename is `encryptionServiceFixed.ts`. This broken import caused the entire module to fail loading on iOS/Android, making the `styles` export undefined and crashing when trying to access `styles.scrollContainer`.
+**Root Cause:** DayManagementModal received `activities={activities}` which was derived from `currentDay`. When `currentDay='tomorrow'`, Complete Day received tomorrow's activities.
 
 ### The Fix:
-**src/components/Modals/ActivityManagementModal/AddTabContent.js** (lines 65 & 107):
+**App.js** (lines 5469-5471):
 ```javascript
-// Changed from:
-await import('../../../services/sync/encryptionService')
+// Before:
+activities={activities}  // Bug: uses currentDay, can be tomorrow
+completedCount={activities.filter(a => a.completed).length}
+totalCount={activities.length}
 
-// To:
-await import('../../../services/sync/encryptionServiceFixed')
+// After:
+activities={users[currentUser]?.days?.today?.activities || []}
+completedCount={(users[currentUser]?.days?.today?.activities || []).filter(a => a.completed).length}
+totalCount={(users[currentUser]?.days?.today?.activities || []).length}
 ```
 
-### Why This Was Hard to Find:
-1. **Misleading error location**: Error pointed to `styles.scrollContainer` being undefined, not the import failure
-2. **Multiple failed fix attempts**: Previous commits (9a7f001c, 0e287cd3, 27ab5d37, 44531ad0) incorrectly removed working `Dimensions.get()` code
-3. **Platform differences**: Web was more forgiving and only showed a warning; iOS/Android crashed immediately
-4. **Hidden import**: The broken import was inside an async function, not at the top-level imports
-5. **Web build warning revealed it**: Port 5501 showed "Module not found: Can't resolve '../../../services/sync/encryptionService'"
+### Expected Behavior:
+Complete Day is an end-of-day operation that should **ALWAYS** operate on today's activities, regardless of:
+- Current day view mode (today/tomorrow/both days)
+- Which user is being viewed
+- Any other UI state
 
-### Git History Cleanup:
-- Removed 4 commits with failed fix attempts (44531ad0 through 0e287cd3)
-- Reset to clean baseline (commit eee216fa)
-- Applied only the correct fix (import path correction)
+### Impact:
+- ✅ Complete Day now consistently operates on today
+- ✅ Works correctly when viewing tomorrow in Both Days mode
+- ✅ Prevents accidental loss of tomorrow's activities
+- ✅ Maintains correct activity flow (unpinned deleted, pinned kept & copied)
 
 ### Testing:
-- ✅ iOS simulator (iPhone 16 Pro Max): Activities menu opens successfully
-- ✅ Android emulator: App deployed and running
-- ✅ Web (port 5501): No more module resolution warnings
+Will verify in qual:
+1. Both Days mode → Tomorrow view → Complete Day shows today's activities
+2. Normal today view → Complete Day still works correctly
+3. Empty today + populated tomorrow → Complete Day handles correctly
 
 ### Deployment Date: [To be filled by deployment script]

@@ -5466,9 +5466,9 @@ Users: ${userNames} (${userCount} total)
         visible={showDayManagementModal}
         onClose={() => setShowDayManagementModal(false)}
         theme={theme}
-        activities={activities}
-        completedCount={activities.filter(a => a.completed).length}
-        totalCount={activities.length}
+        activities={users[currentUser]?.days?.today?.activities || []}
+        completedCount={(users[currentUser]?.days?.today?.activities || []).filter(a => a.completed).length}
+        totalCount={(users[currentUser]?.days?.today?.activities || []).length}
         onCompleteDay={handleCompleteDayConfirm}
         showToast={showToast}
         users={users}
