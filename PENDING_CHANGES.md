@@ -1,30 +1,32 @@
-## Title: Fix emoji picker to show all emojis from full dataset
+## Title: Fix emoji skin tone selector - exclude pre-modified variants from categories
 
 ### Bug Description:
-After recent refactoring, the emoji picker only showed 8 hardcoded emojis per category instead of the full emoji dataset.
+Skin tone selector was not working - all emojis appeared with default skin tone and selecting different skin tones didn't change the displayed emojis.
 
-**Root Cause:** `EMOJI_CATEGORIES` object in EmojiPickerMain.js (lines 50-61) contained hardcoded arrays with only 8 sample emojis per category, while the full `emoji-datasource-apple` package contains thousands of emojis.
+**Root Cause:** The `buildEmojiCategories()` function was including emojis that already had skin tone modifiers baked into their unicode (e.g., 👋🏻, 👋🏼, etc.) as separate entries alongside the base emojis (👋). This caused the category to show both base and all skin tone variants, making the skin tone selector appear broken.
 
 ### The Fix:
-**src/components/EmojiPicker/EmojiPickerMain.js** (lines 49-91):
-- Replaced hardcoded categories with `buildEmojiCategories()` function
-- Populates all categories from full `emojiData` (emoji-datasource-apple)
-- Maps emoji-datasource categories to display categories:
-  - 'Smileys & Emotion' + 'People & Body' → People
-  - 'Animals & Nature' → Nature
-  - 'Food & Drink' → Food
-  - 'Travel & Places' → Travel
-  - Activities, Objects, Symbols, Flags → direct mapping
-- Changed default category from 'Lifestyle' to 'People'
+**src/components/EmojiPicker/EmojiPickerMain.js** (lines 75-93):
+- Added regex filter to exclude emojis with skin tone modifiers: `/1F3F[B-F]/`
+- Skin tone modifiers in unicode: 1F3FB (light) through 1F3FF (dark)
+- Now only base emojis are added to categories
+- Skin tones are applied dynamically via `applySkinTone()` in SearchResults.js
+
+### How It Works:
+1. **Category population:** Only base emojis (e.g., 👋) added to People category
+2. **Skin tone selection:** User selects skin tone via SkinToneSelector
+3. **Dynamic application:** SearchResults applies skin tone modifier to base emoji
+4. **Result:** 👋 + 🏻 modifier = 👋🏻
 
 ### Impact:
-- ✅ Users now see full emoji library (1000+ emojis)
-- ✅ All emoji categories properly populated
-- ✅ Search functionality works across all emojis
-- ✅ Maintains custom images integration
+- ✅ Skin tone selector now works correctly
+- ✅ Only base emojis shown in categories (no duplicates)
+- ✅ Selecting skin tones updates all people emojis dynamically
+- ✅ Cleaner category display (fewer total emojis, all unique)
 
-### Before vs After:
-- **Before:** 8 emojis per category (80 total across 10 categories)
-- **After:** Full emoji-datasource-apple dataset (1800+ emojis across 8 categories)
+### Technical Details:
+- Skin tone modifiers: U+1F3FB through U+1F3FF
+- Regex pattern matches: `1F3FB`, `1F3FC`, `1F3FD`, `1F3FE`, `1F3FF`
+- Applied to unified codes like `1F44B-1F3FB` (waving hand with light skin tone)
 
 ### Deployment Date: [To be filled by deployment script]

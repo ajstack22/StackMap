@@ -73,7 +73,14 @@ const buildEmojiCategories = () => {
   };
 
   emojiData.forEach(emoji => {
+    // Skip obsolete emojis and skin tone variants (they contain 1F3FB-1F3FF in unified)
     if (emoji.unified && !emoji.obsoleted_by && !emoji.obsoletes) {
+      // Filter out emojis that already have skin tone modifiers
+      const hasSkinTone = /1F3F[B-F]/.test(emoji.unified);
+      if (hasSkinTone) {
+        return; // Skip skin tone variants - we'll apply them dynamically
+      }
+
       const emojiChar = String.fromCodePoint(
         ...emoji.unified.split('-').map(u => parseInt(u, 16)),
       );
