@@ -48,8 +48,8 @@ export const styles = StyleSheet.create({
   },
   section: {
     marginHorizontal: IS_MOBILE ? SPACING.xs : SPACING.md,
-    marginVertical: SPACING.sm,
-    padding: IS_MOBILE ? SPACING.sm : SPACING.md,
+    marginVertical: SPACING.xs,
+    padding: IS_MOBILE ? SPACING.md : SPACING.lg,
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     ...Platform.select({
@@ -80,11 +80,8 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   buttonsList: {
+    marginTop: SPACING.sm,
     marginBottom: SPACING.lg,
-    // Ensure all buttons are visible on Android
-    ...(Platform.OS === 'android' && {
-      minHeight: 300,
-    }),
     ...(Platform.OS === 'web' && {
       maxWidth: 600,
       alignSelf: 'center',
@@ -187,7 +184,7 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.gray[600],
     marginTop: SPACING.xs,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   toggleContainer: {
@@ -298,7 +295,7 @@ export const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: COLORS.gray[200],
-    marginVertical: SPACING.lg,
+    marginVertical: SPACING.md,
     marginHorizontal: -SPACING.md,
   },
   celebrationScrollView: {
@@ -335,15 +332,15 @@ export const styles = StyleSheet.create({
   // Standardized tab header
   standardTabContainer: {
     alignItems: 'center',
-    paddingVertical: SPACING.xl,
+    paddingVertical: SPACING.md,
   },
   standardTabTitle: {
     fontSize: 24,
     fontWeight: Platform.OS === 'ios' ? '700' : '800',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: '#000',
-    marginTop: SPACING.md,
-    marginBottom: SPACING.sm,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.xs,
     textAlign: 'center',
   },
   standardTabDescription: {
@@ -352,6 +349,6 @@ export const styles = StyleSheet.create({
     color: '#000',
     textAlign: 'center',
     paddingHorizontal: SPACING.xl,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
   },
 });

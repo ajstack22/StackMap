@@ -328,10 +328,9 @@ const SettingsModal = ({
               Platform.OS === 'android' && { flex: 1 },
             ]}
             contentContainerStyle={{
-              flexGrow: 1,
               paddingBottom: Platform.OS === 'android' ? 100 : 80,
             }}
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={true}
             showsHorizontalScrollIndicator={false}
             nestedScrollEnabled={true}
             removeClippedSubviews={false}
