@@ -63,6 +63,20 @@ yarn-error.log
 **/fastlane/screenshots
 **/fastlane/test_output
 
+# Fastlane secrets - NEVER COMMIT THESE!
+ios/fastlane/.env
+ios/fastlane/AuthKey_*.p8
+ios/fastlane/*.mobileprovision
+ios/fastlane/*.cer
+ios/fastlane/*.p12
+
+# Android Fastlane secrets - NEVER COMMIT THESE!
+android/fastlane/.env
+android/fastlane/*.json
+android/fastlane/*.p12
+android/fastlane/*.cer
+android/fastlane/*.mobileprovision
+
 # Bundle artifact
 *.jsbundle
 

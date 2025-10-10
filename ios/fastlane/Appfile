@@ -1,0 +1,16 @@
+# iOS Appfile for StackMap
+# This file contains the main configuration for fastlane
+
+app_identifier("app.stackmap")
+
+# TODO: Replace with your actual Apple ID email (NOT NEEDED - using API Key instead)
+# This should be stored in .env as FASTLANE_APPLE_ID
+# apple_id("PLACEHOLDER_APPLE_ID@example.com")  # Commented out - using API Key authentication
+
+team_id("84W9WSYQQB")
+
+# iTunes Connect Team ID (usually same as Team ID)
+itc_team_id("84W9WSYQQB")
+
+# For more information about the Appfile, see:
+# https://docs.fastlane.tools/advanced/#appfile

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Text } from '../Typography';
 import { SPACING, TYPOGRAPHY } from '../../constants';
+import Logo from '../Logo/Logo';
 
 /**
  * LoadingSpinner component for consistent loading indicators
@@ -21,6 +22,8 @@ import { SPACING, TYPOGRAPHY } from '../../constants';
  * @param {string} [props.message] - Optional loading message
  * @param {boolean} [props.overlay=false] - Show as overlay with background
  * @param {boolean} [props.fullScreen=false] - Cover full screen
+ * @param {boolean} [props.showLogo=false] - Show StackMap logo above spinner
+ * @param {boolean} [props.transparentBackground=false] - Use transparent background instead of white box
  * @param {Object} [props.style] - Additional container styles
  * @param {Object} props.theme - Theme object with colors
  * @returns {React.ReactElement} Styled loading spinner component
@@ -31,6 +34,8 @@ const LoadingSpinner = ({
   message,
   overlay = false,
   fullScreen = false,
+  showLogo = false,
+  transparentBackground = false,
   style,
   theme,
   testID
@@ -55,9 +60,18 @@ const LoadingSpinner = ({
     return baseStyles;
   };
 
+  const contentStyles = transparentBackground
+    ? [styles.content, styles.transparentContent]
+    : styles.content;
+
   return (
     <View style={getContainerStyles()} testID={testID}>
-      <View style={styles.content}>
+      <View style={contentStyles}>
+        {showLogo && (
+          <View style={styles.logoContainer}>
+            <Logo size={80} color={spinnerColor} theme={theme} />
+          </View>
+        )}
         <ActivityIndicator
           size={size}
           color={spinnerColor}
@@ -111,6 +125,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
+  logoContainer: {
+    marginBottom: SPACING.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  transparentContent: {
+    backgroundColor: 'transparent',
+    minWidth: 0,
+    minHeight: 0,
+  },
 });
 
 LoadingSpinner.propTypes = {
@@ -119,6 +143,8 @@ LoadingSpinner.propTypes = {
   message: PropTypes.string,
   overlay: PropTypes.bool,
   fullScreen: PropTypes.bool,
+  showLogo: PropTypes.bool,
+  transparentBackground: PropTypes.bool,
   style: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
   theme: PropTypes.object,
   testID: PropTypes.string,

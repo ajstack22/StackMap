@@ -19,6 +19,7 @@ import {
   Text as RNText,
   TextInput as RNTextInput,
   Platform,
+  StyleSheet,
 } from 'react-native';
 
 // Font weight mappings for Android
@@ -81,16 +82,20 @@ export const Text = React.forwardRef((props, ref) => {
 
   // On Android, when using font variants (Bold/Regular), we MUST remove fontWeight
   // Otherwise Android can't load the custom font and falls back to system font
-  const finalStyle = Platform.OS === 'android' 
+  // IMPORTANT: We flatten the style array first, then apply fontFamily to avoid
+  // nested arrays that can cause style resolution issues on web
+  const flattenedStyle = StyleSheet.flatten(style);
+
+  const finalStyle = Platform.OS === 'android'
     ? [
-        style, // User styles
+        flattenedStyle, // Flattened user styles
         {
           fontFamily, // Comic Relief font variant (Regular or Bold)
           fontWeight: undefined, // MUST be undefined on Android to use font variants
         },
       ]
     : [
-        style, // User styles
+        flattenedStyle, // Flattened user styles
         {
           fontFamily, // Comic Relief font
           // iOS and Web can handle fontWeight with custom fonts
@@ -124,10 +129,13 @@ export const TextInput = React.forwardRef((props, ref) => {
 
   const fontFamily = getFontFamily(fontWeight);
 
+  // Flatten style array to avoid nested arrays causing style resolution issues
+  const flattenedStyle = StyleSheet.flatten(style);
+
   // Android needs fontWeight removed when using font variants
   const finalStyle = Platform.OS === 'android'
     ? [
-        style,
+        flattenedStyle, // Flattened user styles
         {
           fontFamily, // Apply Comic Relief font variant
           fontWeight: undefined, // Remove fontWeight on Android
@@ -135,7 +143,7 @@ export const TextInput = React.forwardRef((props, ref) => {
         },
       ]
     : [
-        style,
+        flattenedStyle, // Flattened user styles
         {
           fontFamily, // Apply Comic Relief
         },

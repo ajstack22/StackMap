@@ -1993,12 +1993,18 @@ const App = () => {
       <View
         style={{
           flex: 1,
-          backgroundColor: '#0095FF',
+          backgroundColor: '#5C7E9D',
           justifyContent: 'center',
           alignItems: 'center',
         }}
       >
-        <LoadingSpinner size="large" color="#FFFFFF" theme={theme} />
+        <LoadingSpinner
+          size="large"
+          color="#FFFFFF"
+          theme={theme}
+          showLogo={true}
+          transparentBackground={true}
+        />
         <Text style={{ color: '#FFFFFF', marginTop: 20 }}>
           Loading theme...
         </Text>
@@ -4431,7 +4437,7 @@ Users: ${userNames} (${userCount} total)
   const fabTop =
     bannerPosition === 'top'
       ? Platform.OS === 'web'
-        ? 25 // Web: center on 110px header (110/2 - 60/2 = 25)
+        ? 20 // Web: adjusted to sit better on 110px header (was 25, reduced by 5px for better visual centering)
         : Platform.OS === 'android'
         ? (StatusBar.currentHeight || 24) + 25 // Android: moved up to better center on banner
         : insets.top + (isTablet() ? 15 : 25) // iOS: moved up for better centering
@@ -5621,12 +5627,18 @@ Users: ${userNames} (${userCount} total)
       <View
         style={{
           flex: 1,
-          backgroundColor: '#0095FF',
+          backgroundColor: '#5C7E9D',
           justifyContent: 'center',
           alignItems: 'center',
         }}
       >
-        <LoadingSpinner size="large" color="#FFFFFF" theme={theme} />
+        <LoadingSpinner
+          size="large"
+          color="#FFFFFF"
+          theme={theme}
+          showLogo={true}
+          transparentBackground={true}
+        />
       </View>
     );
   }
@@ -5825,7 +5837,7 @@ const styles = StyleSheet.create({
         : isTablet()
         ? 31
         : 20, // Keep native sizes unchanged
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    // fontFamily removed - let Typography component handle it to avoid Android rendering issues
   },
   subtitleEmojiEdit: {
     // No change needed for emoji in edit mode
@@ -5835,17 +5847,18 @@ const styles = StyleSheet.create({
       Platform.OS === 'web' ? (isTablet() ? 15 : 12) : isTablet() ? 18 : 14,
     fontWeight: '500',
     color: COLORS.text.primary,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    // fontFamily removed - let Typography component handle it to avoid Android rendering issues
   },
   subtitleDay: {
     fontSize: isTablet() ? 18 : 14,
     color: COLORS.text.primary,
     fontWeight: '500',
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    // fontFamily removed - let Typography component handle it to avoid Android rendering issues
   },
   subtitleDayEdit: {
-    color: COLORS.error,
+    color: COLORS.semantic.error,
     fontWeight: 'bold',
+    // fontFamily removed - let Typography component handle it to avoid Android rendering issues
   },
   exitEditButton: {
     position: 'absolute',

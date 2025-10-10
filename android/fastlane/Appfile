@@ -1,0 +1,11 @@
+# Android Appfile for StackMap
+# This file defines the basic app configuration for fastlane
+
+# Package name (application ID)
+package_name("com.stackmapnative")
+
+# Google Play Console service account JSON key
+# This will be stored in macOS Keychain for security
+# Use the helper lane: fastlane store_credentials_in_keychain
+# Then this will read from Keychain automatically
+json_key_file(ENV["PLAY_STORE_JSON_KEY_PATH"] || "~/.android/stackmap-play-store-key.json")

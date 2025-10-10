@@ -295,7 +295,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 250831045;
+				CURRENT_PROJECT_VERSION = 250831047;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = StackMapNative/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = StackMap;
@@ -328,7 +328,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 250831045;
+				CURRENT_PROJECT_VERSION = 250831047;
 				INFOPLIST_FILE = StackMapNative/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = StackMap;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";

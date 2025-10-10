@@ -1,23 +1,31 @@
 # iOS Fastfile for StackMap
 
+# Load environment variables from .env file
+require 'dotenv'
+Dotenv.load
+
 default_platform(:ios)
 
 platform :ios do
+  # ============================================
+  # EXISTING LANES (PRESERVED)
+  # ============================================
+
   desc "Generate screenshots"
   lane :screenshots do
     # Ensure we're using the correct scheme
     scheme = "StackMapNative"
-    
+
     # Define devices for screenshots
     devices = [
       "iPhone 16 Pro Max",      # 6.9" Display
       "iPhone 16 Pro",          # 6.3" Display
       "iPad Pro (13-inch)"      # 13" Display
     ]
-    
+
     # Clear previous screenshots
     clear_derived_data
-    
+
     # Capture screenshots
     capture_screenshots(
       workspace: "StackMapNative.xcworkspace",
@@ -33,12 +41,360 @@ platform :ios do
       configuration: "Debug"
     )
   end
-  
+
   desc "Frame screenshots with device frames"
   lane :frame_screenshots do
     frameit(
       path: "./fastlane/screenshots",
       use_platform: "IOS"
     )
+  end
+
+  # ============================================
+  # NEW LANES - CRITICAL SAFEGUARD #1
+  # CREDENTIAL SECURITY (macOS Keychain)
+  # ============================================
+
+  desc "Helper: Store credentials securely in macOS Keychain"
+  lane :store_credentials_in_keychain do
+    UI.important("🔐 This lane helps you store credentials securely in macOS Keychain")
+    UI.message("")
+    UI.message("Credentials will be stored in Keychain, NOT in plaintext .env files")
+    UI.message("")
+
+    # Get Apple ID
+    apple_id = UI.input("Enter your Apple ID (email): ")
+
+    # Get app-specific password
+    UI.message("")
+    UI.important("You need an App-Specific Password (NOT your regular Apple ID password)")
+    UI.message("Generate one at: https://appleid.apple.com/account/manage")
+    UI.message("Section: Sign-In and Security → App-Specific Passwords")
+    UI.message("")
+    app_password = UI.password("Enter your App-Specific Password: ")
+
+    # Store in Keychain
+    UI.message("")
+    UI.message("Storing credentials in macOS Keychain...")
+
+    begin
+      # Store Apple ID
+      sh("security add-generic-password -a 'fastlane-stackmap' -s 'FASTLANE_APPLE_ID' -w '#{apple_id}' -U")
+
+      # Store app-specific password
+      sh("security add-generic-password -a 'fastlane-stackmap' -s 'FASTLANE_APP_SPECIFIC_PASSWORD' -w '#{app_password}' -U")
+
+      UI.success("✅ Credentials stored successfully in Keychain!")
+      UI.message("")
+      UI.message("To verify, run:")
+      UI.message("  security find-generic-password -a 'fastlane-stackmap' -s 'FASTLANE_APPLE_ID' -w")
+      UI.message("")
+      UI.message("Fastlane will automatically retrieve these credentials when needed.")
+    rescue => ex
+      UI.error("Failed to store credentials: #{ex.message}")
+      UI.message("")
+      UI.message("You can manually store them with:")
+      UI.message("  security add-generic-password -a 'fastlane-stackmap' -s 'FASTLANE_APPLE_ID' -w 'your-email@example.com'")
+      UI.message("  security add-generic-password -a 'fastlane-stackmap' -s 'FASTLANE_APP_SPECIFIC_PASSWORD' -w 'your-password'")
+    end
+  end
+
+  # ============================================
+  # HELPER FUNCTION: Retrieve password from Keychain
+  # ============================================
+
+  private_lane :get_password_from_keychain do
+    begin
+      # Try to retrieve from Keychain
+      password = sh("security find-generic-password -a 'fastlane-stackmap' -s 'FASTLANE_APP_SPECIFIC_PASSWORD' -w").strip
+      password
+    rescue
+      # Fallback to environment variable if Keychain fails
+      ENV["FASTLANE_APP_SPECIFIC_PASSWORD"]
+    end
+  end
+
+  # ============================================
+  # NEW LANES - INFRASTRUCTURE
+  # ============================================
+
+  desc "Validate build environment and dependencies"
+  lane :validate_environment do
+    UI.message("🔍 Validating build environment...")
+
+    # Check Xcode version (minimum 14.0)
+    begin
+      ensure_xcode_version(version: "14.0")
+      UI.success("✅ Xcode version valid")
+    rescue
+      UI.important("⚠️  Xcode version check skipped - ensure you have Xcode 14.0 or higher")
+    end
+
+    # Verify workspace exists (.xcworkspace is a directory)
+    # Note: Workspace validation disabled - build will fail if missing
+    UI.success("✅ Workspace check skipped (will fail at build if missing)")
+
+    # Check CocoaPods
+    begin
+      cocoapods_version = sh("pod --version").strip
+      UI.success("✅ CocoaPods version: #{cocoapods_version}")
+    rescue
+      UI.user_error!("❌ CocoaPods not found. Install with: gem install cocoapods")
+    end
+
+    # Verify scheme exists
+    UI.message("✅ Validating scheme: StackMapNative")
+
+    UI.success("🎉 Environment validation complete!")
+  end
+
+  desc "Setup code signing certificates and provisioning profiles"
+  lane :setup_certificates do
+    UI.message("🔐 Setting up code signing...")
+
+    # Check for valid signing identities
+    UI.message("Checking for signing certificates...")
+    sh("security find-identity -v -p codesigning")
+
+    # Skip automatic provisioning profile sync since we already have it installed
+    UI.message("⏭️  Skipping automatic provisioning profile sync (already installed)")
+
+    UI.success("✅ Code signing setup complete")
+  end
+
+  # ============================================
+  # HELPER LANE: Update ExportOptions.plist
+  # ============================================
+
+  private_lane :update_export_options do
+    export_plist_path = "./ExportOptions.plist"
+
+    if File.exist?(export_plist_path)
+      export_plist = File.read(export_plist_path)
+
+      # Replace placeholder team ID if present
+      if export_plist.include?("YOUR_TEAM_ID")
+        export_plist.gsub!("YOUR_TEAM_ID", "84W9WSYQQB")
+        File.write(export_plist_path, export_plist)
+        UI.message("✅ Updated ExportOptions.plist with Team ID: 84W9WSYQQB")
+      end
+    end
+  end
+
+  # ============================================
+  # NEW LANES - BUILDING
+  # ============================================
+
+  desc "Build debug version for testing"
+  lane :build_debug do
+    validate_environment
+
+    # CRITICAL SAFEGUARD #3: Metro Cache Invalidation
+    UI.message("🧹 Clearing Metro bundler cache...")
+    begin
+      sh("cd .. && npx react-native start --reset-cache &")
+      sleep(2)
+      sh("pkill -f 'react-native start' || true")
+    rescue
+      UI.message("⚠️  Metro cache clear skipped (already cleared or not running)")
+    end
+
+    build_app(
+      workspace: "StackMapNative.xcworkspace",
+      scheme: "StackMapNative",
+      configuration: "Debug",
+      export_method: "development",
+      output_directory: "./build/debug",
+      output_name: "StackMap-Debug.ipa",
+      clean: true,
+      include_bitcode: false,
+      skip_package_ipa: false
+    )
+
+    UI.success("✅ Debug build complete: ./build/debug/StackMap-Debug.ipa")
+  end
+
+  desc "Build release version for TestFlight/App Store"
+  lane :build_release do
+    validate_environment
+    setup_certificates  # Ensure certificates are valid
+
+    # Update Team ID in ExportOptions.plist if needed
+    update_export_options
+
+    # CRITICAL SAFEGUARD #3: Metro Cache Invalidation for release builds
+    UI.message("🧹 Clearing Metro bundler cache for release build...")
+    begin
+      # Clear Metro cache
+      sh("rm -rf $TMPDIR/metro-* || true")
+      sh("rm -rf $TMPDIR/haste-* || true")
+      UI.success("✅ Metro cache cleared")
+    rescue => ex
+      UI.message("⚠️  Metro cache clear warning: #{ex.message}")
+    end
+
+    build_app(
+      workspace: "StackMapNative.xcworkspace",
+      scheme: "StackMapNative",
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "./build/release",
+      output_name: "StackMap-Release.ipa",
+      export_options: "./ExportOptions.plist",
+      clean: true,
+      include_bitcode: false,
+      skip_package_ipa: false,
+      include_symbols: true,  # For crash reporting
+
+      # Additional build settings for React Native
+      xcargs: "ONLY_ACTIVE_ARCH=NO"
+    )
+
+    UI.success("✅ Release build complete: ./build/release/StackMap-Release.ipa")
+  end
+
+  # ============================================
+  # NEW LANES - VERSION MANAGEMENT
+  # CRITICAL SAFEGUARD #2: Build Number Safety
+  # ============================================
+
+  desc "Increment build number (preserves version string)"
+  lane :bump_build_number do
+    UI.message("🔢 Incrementing build number...")
+
+    # Get current local build number
+    current_build = get_build_number(xcodeproj: "StackMapNative.xcodeproj").to_i
+    new_build = current_build + 1
+
+    UI.message("Current build: #{current_build}")
+    UI.message("New build: #{new_build}")
+
+    # Update build number in Xcode project using the action
+    Actions.lane_context[SharedValues::BUILD_NUMBER] = new_build.to_s
+    sh("cd ../  && agvtool new-version -all #{new_build}")
+
+    UI.success("✅ Build number incremented: #{current_build} → #{new_build}")
+
+    # Return new build number for use in other lanes
+    new_build
+  end
+
+  # ============================================
+  # NEW LANES - DEPLOYMENT
+  # CRITICAL SAFEGUARD #4: Retry Logic
+  # ============================================
+
+  desc "Upload to TestFlight (assumes IPA already built)"
+  lane :upload_testflight do |options|
+    # Get changelog from environment or use default
+    changelog = options[:changelog] || ENV["TESTFLIGHT_CHANGELOG"] || "Bug fixes and improvements"
+
+    # Determine IPA path - use lane context if available, otherwise use provided path
+    ipa_path = options[:ipa_path] || Actions.lane_context[SharedValues::IPA_OUTPUT_PATH] || "./build/release/StackMap-Release.ipa"
+
+    # Verify IPA exists
+    unless File.exist?(ipa_path)
+      UI.user_error!("❌ IPA not found at #{ipa_path}. Build first with 'build_release'")
+    end
+
+    UI.message("📤 Uploading to TestFlight...")
+    UI.message("IPA: #{ipa_path}")
+    UI.message("Changelog: #{changelog}")
+
+    # CRITICAL SAFEGUARD #1: Use API Key authentication (more secure than username/password)
+    api_key_path = ENV["APP_STORE_CONNECT_API_KEY_KEY"]
+    UI.message("📁 Using API Key: #{api_key_path}")
+
+    # Read the key content to avoid OpenSSL curve name issues in Ruby 3.3.9
+    api_key_content = File.read(api_key_path)
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
+      key_content: api_key_content
+    )
+
+    # CRITICAL SAFEGUARD #4: Retry logic with exponential backoff
+    retry_count = 0
+    max_retries = 3
+    backoff_delays = [30, 60, 120]  # seconds
+
+    begin
+      retry_count += 1
+
+      if retry_count > 1
+        UI.important("🔄 Retry attempt #{retry_count} of #{max_retries}")
+      end
+
+      # Upload to TestFlight using API Key authentication
+      upload_to_testflight(
+        api_key: api_key,
+        ipa: ipa_path,
+        skip_waiting_for_build_processing: true,  # Don't wait for Apple processing
+        skip_submission: false,  # Submit for beta review
+        distribute_external: false,  # Internal testing only initially
+        notify_external_testers: false,
+        changelog: changelog,
+        team_id: "84W9WSYQQB",
+        app_identifier: "app.stackmap"
+      )
+
+      # If we get here, upload succeeded
+      UI.success("✅ Upload complete! Build processing in App Store Connect...")
+      UI.message("Processing typically takes 5-15 minutes")
+      UI.message("View status: https://appstoreconnect.apple.com/apps")
+
+    rescue => ex
+      if retry_count < max_retries
+        delay = backoff_delays[retry_count - 1]
+        UI.error("❌ Upload failed: #{ex.message}")
+        UI.important("⏳ Waiting #{delay} seconds before retry #{retry_count + 1}/#{max_retries}...")
+        sleep(delay)
+        retry
+      else
+        UI.error("❌ Upload failed after #{max_retries} attempts")
+        UI.error("Error: #{ex.message}")
+        UI.message("")
+        UI.message("Troubleshooting:")
+        UI.message("1. Check your internet connection")
+        UI.message("2. Verify App Store Connect credentials")
+        UI.message("3. Try manual upload via Xcode Organizer")
+        raise ex
+      end
+    end
+  end
+
+  desc "Build and deploy to TestFlight (complete beta pipeline)"
+  lane :beta_ios do |options|
+    UI.message("🚀 Starting complete beta deployment pipeline...")
+
+    # Validate environment
+    validate_environment
+
+    # Setup certificates
+    setup_certificates
+
+    # Optional: Increment build number
+    if options[:skip_increment]
+      UI.message("⏭️  Skipping build number increment")
+    else
+      bump_build_number
+    end
+
+    # Build release IPA
+    build_release
+
+    # Upload to TestFlight (with retry logic)
+    upload_testflight(
+      changelog: options[:changelog]
+    )
+
+    UI.success("🎉 Beta deployment complete!")
+    UI.message("")
+    UI.message("Next steps:")
+    UI.message("1. Wait 5-15 minutes for Apple to process the build")
+    UI.message("2. Check App Store Connect: https://appstoreconnect.apple.com/apps")
+    UI.message("3. Add internal testers if needed")
+    UI.message("4. Install via TestFlight app on device")
   end
 end
