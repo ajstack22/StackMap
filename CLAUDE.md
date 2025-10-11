@@ -43,12 +43,31 @@ StackMap uses the **Atlas Framework** for structured development workflows. Choo
 # ### Changes Made:
 # - List of changes...
 
-./scripts/qual_deploy.sh  # Deploys to QUAL/staging with auto version increment + tests
-./scripts/prod_deploy.sh all  # Full production deploy (web + Android AAB + iOS prep)
-./scripts/prod_deploy.sh web  # Deploy web to production only
+# Four-Tier Deployment Strategy (USE MASTER SCRIPT):
+./scripts/deploy.sh qual [--all]         # QUAL: Development testing (qual-api DB, web + mobile, multiple/day)
+./scripts/deploy.sh stage [--all]        # STAGE: Internal team validation (stage-api DB shares Qual DB, mobile-only, before beta)
+./scripts/deploy.sh beta [--all]         # BETA: Closed beta testing (beta-api/prod-api DB, beta web + mobile, 1-2/week)
+./scripts/deploy.sh prod [--all]         # PROD: Public release (prod-api DB, web + mobile, weekly/bi-weekly)
+
+# Platform-specific deployment (all tiers):
+./scripts/deploy.sh qual --web           # Deploy web only
+./scripts/deploy.sh qual --ios           # Deploy iOS only
+./scripts/deploy.sh qual --android       # Deploy Android only
+./scripts/deploy.sh beta --all           # Deploy all platforms (default)
+
+# ⚠️ IMPORTANT: Always use ./scripts/deploy.sh (master script)
+# - Handles validation, locking, and verification
+# - Delegates to tier-specific scripts (qual_deploy.sh, deploy_stage.sh, deploy_beta.sh, prod_deploy.sh)
+# - Direct execution of tier scripts is blocked
 ```
+**Four-Tier Strategy:** QUAL (multiple/day) → STAGE (internal validation) → BETA (1-2/week) → PROD (weekly/bi-weekly)
+**API Endpoints:** stackmap.app/qual/api (QUAL), stackmap.app/stage/api (STAGE, shares Qual DB), stackmap.app/beta/api (BETA, Prod DB), stackmap.app/api (PROD)
 **Commit Messages:** Update `PENDING_CHANGES.md` before deploying for descriptive commit messages
+**iOS Production:** Now fully automated! No manual Xcode steps required - builds, uploads, and prepares for review
+**Master Script:** Always use `./scripts/deploy.sh [tier] [options]` - validates before delegating to tier scripts
 **For all deployment details:** See `docs/deployment/README.md`
+**Beta deployment guide:** See `docs/deployment/BETA_DEPLOYMENT_GUIDE.md`
+**Stage deployment guide:** See `docs/deployment/STAGE_DEPLOYMENT_SETUP.md`
 **Testing approach:** See `docs/testing/simple-testing-guide.md`
 **⚠️ Timeout:** Android builds take 2-3 minutes - use 600000ms (10 min) timeout when automating
 
