@@ -15,15 +15,21 @@ NC='\033[0m' # No Color
 
 # Function to validate deployment readiness
 validate_deployment() {
+    local DEPLOY_ENV=$1
     echo -e "${YELLOW}🔍 Running pre-deployment validation...${NC}"
-    
-    # Check for uncommitted changes
+
+    # Check for uncommitted changes (tier-specific)
     if [[ -n $(git status --porcelain) ]]; then
-        echo -e "${RED}❌ ERROR: Uncommitted changes detected!${NC}"
-        echo "Please commit or stash your changes first."
-        exit 1
+        if [[ "$DEPLOY_ENV" == "qual" || "$DEPLOY_ENV" == "stage" ]]; then
+            echo -e "${YELLOW}⚠️  Uncommitted changes detected (allowed for $DEPLOY_ENV)${NC}"
+        else
+            echo -e "${RED}❌ ERROR: Uncommitted changes detected!${NC}"
+            echo "Please commit or stash your changes first."
+            echo "Beta and prod deployments require clean git state for traceability."
+            exit 1
+        fi
     fi
-    
+
     # Ensure we're on main branch
     CURRENT_BRANCH=$(git branch --show-current)
     if [[ "$CURRENT_BRANCH" != "main" ]]; then
@@ -31,11 +37,15 @@ validate_deployment() {
         echo "Please switch to main branch: git checkout main"
         exit 1
     fi
-    
-    # Pull latest changes
-    echo "📥 Pulling latest changes from main..."
-    git pull origin main
-    
+
+    # Pull latest changes (skip for qual/stage with uncommitted changes)
+    if [[ -z $(git status --porcelain) ]]; then
+        echo "📥 Pulling latest changes from main..."
+        git pull origin main
+    else
+        echo -e "${YELLOW}⏭️  Skipping git pull (uncommitted changes present)${NC}"
+    fi
+
     echo -e "${GREEN}✅ Validation passed!${NC}"
 }
 
@@ -81,12 +91,18 @@ prepare_deployment() {
     cp -r web/build/fonts . 2>/dev/null || true
     cp -r web/build/icons . 2>/dev/null || true
     
-    # Fix paths for QUAL environment (needs absolute paths for nested URLs)
+    # Fix paths for QUAL and BETA environments (need absolute paths for nested URLs)
     if [[ "$DEPLOY_ENV" == "qual" ]]; then
         echo "📝 Fixing paths for QUAL environment..."
         # Replace relative paths with absolute paths in index.html
         sed -i.bak 's|src="./|src="/qual/|g' index.html
         sed -i.bak 's|href="./|href="/qual/|g' index.html
+        rm index.html.bak
+    elif [[ "$DEPLOY_ENV" == "beta" ]]; then
+        echo "📝 Fixing paths for BETA environment..."
+        # Replace relative paths with absolute paths in index.html
+        sed -i.bak 's|src="./|src="/beta/|g' index.html
+        sed -i.bak 's|href="./|href="/beta/|g' index.html
         rm index.html.bak
     fi
     
@@ -102,10 +118,14 @@ prepare_deployment() {
     # Add asset directories
     git add -f fonts/ icons/ 2>/dev/null || true
     
-    # Add .htaccess for QUAL environment
+    # Add .htaccess for QUAL and BETA environments
     if [[ "$DEPLOY_ENV" == "qual" ]] && [[ -f "qual/.htaccess" ]]; then
         echo "📝 Including .htaccess for QUAL..."
         cp qual/.htaccess .
+        git add -f .htaccess
+    elif [[ "$DEPLOY_ENV" == "beta" ]] && [[ -f "beta/.htaccess" ]]; then
+        echo "📝 Including .htaccess for BETA..."
+        cp beta/.htaccess .
         git add -f .htaccess
     fi
     
@@ -145,6 +165,14 @@ deploy_to_server() {
             exit 1
         }
         echo -e "${GREEN}✅ Deployed to: https://stackmap.app/qual/${NC}"
+    elif [[ "$DEPLOY_ENV" == "beta" ]]; then
+        echo "📡 Triggering beta server pull..."
+        ssh stackmap-cpanel "cd ~/public_html/beta && git fetch && git reset --hard origin/${BRANCH_NAME}" || {
+            echo -e "${RED}❌ ERROR: Failed to deploy to beta server${NC}"
+            git checkout main
+            exit 1
+        }
+        echo -e "${GREEN}✅ Deployed to: https://stackmap.app/beta/${NC}"
     elif [[ "$DEPLOY_ENV" == "prod" ]]; then
         echo "📡 Deploying to production..."
         ssh stackmap-cpanel "cd ~/scripts && ./simple-deploy.sh deploy" || {
@@ -171,12 +199,20 @@ show_history() {
 }
 
 # Main execution
-case "${1:-qual}" in
+DEPLOY_ENV="${1:-qual}"
+
+case "$DEPLOY_ENV" in
     "qual")
-        validate_deployment
+        validate_deployment "qual"
         build_project
         prepare_deployment "qual"
         deploy_to_server "qual"
+        ;;
+    "beta")
+        validate_deployment "beta"
+        build_project
+        prepare_deployment "beta"
+        deploy_to_server "beta"
         ;;
     "prod")
         echo -e "${YELLOW}⚠️  PRODUCTION DEPLOYMENT${NC}"
@@ -187,6 +223,7 @@ case "${1:-qual}" in
             echo "Deployment cancelled. Test on qual first!"
             exit 1
         fi
+        validate_deployment "prod"
         deploy_to_server "prod"
         ;;
     "history")
@@ -194,18 +231,23 @@ case "${1:-qual}" in
         ;;
     "setup")
         echo "📝 One-time server setup instructions:"
-        echo "1. SSH into server"
-        echo "2. Run these commands:"
-        echo "   cd ~/public_html/qual"
-        echo "   git fetch origin"
-        echo "   git checkout -b deploy-qual origin/deploy-qual"
         echo ""
-        echo "3. Update server's git config to track deploy branch:"
-        echo "   git branch --set-upstream-to=origin/deploy-qual"
+        echo "QUAL Setup:"
+        echo "  cd ~/public_html/qual"
+        echo "  git fetch origin"
+        echo "  git checkout -b deploy-qual origin/deploy-qual"
+        echo "  git branch --set-upstream-to=origin/deploy-qual"
+        echo ""
+        echo "BETA Setup:"
+        echo "  cd ~/public_html/beta"
+        echo "  git fetch origin"
+        echo "  git checkout -b deploy-beta origin/deploy-beta"
+        echo "  git branch --set-upstream-to=origin/deploy-beta"
         ;;
     *)
-        echo "Usage: $0 [qual|prod|history|setup]"
-        echo "  qual    - Build and deploy to staging (default)"
+        echo "Usage: $0 [qual|beta|prod|history|setup]"
+        echo "  qual    - Build and deploy to qual environment (default)"
+        echo "  beta    - Build and deploy to beta environment"
         echo "  prod    - Deploy current qual to production"
         echo "  history - Show deployment history"
         echo "  setup   - Show one-time server setup instructions"
