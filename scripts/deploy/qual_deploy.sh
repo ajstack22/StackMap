@@ -44,9 +44,17 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # Get current directory
+# Script is now in scripts/deploy/, so go up two levels to reach project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+SCRIPTS_ROOT="$(dirname "$SCRIPT_DIR")"  # Parent scripts directory
+PROJECT_ROOT="$(dirname "$SCRIPTS_ROOT")"
 cd "$PROJECT_ROOT"
+
+# Load app configuration
+source "$SCRIPT_DIR/app-config.sh"
+
+# Load deployment reporting functions (for status dashboard)
+source "$SCRIPT_DIR/lib/reporting.sh"
 
 # Parse command line arguments
 DEPLOY_WEB=false
@@ -102,10 +110,64 @@ echo ""
 DEPLOYMENT_STATUS=""
 DEPLOYMENT_START=$(date +%s)
 
+# Generate deployment status page
+generate_status_page "qual" "$CURRENT_VERSION"
+
+# Validation complete (qual doesn't have strict validation)
+update_status_page "validation" "success"
+
+# Mark tests as skipped (qual doesn't run test suite)
+update_status_page "tests" "skipped"
+
+# Run health scan (qual-specific)
+echo ""
+echo "🔍 Running Health Scan..."
+if [ -f "$SCRIPTS_ROOT/test-health-report.sh" ]; then
+    # Run health scan and capture results
+    "$SCRIPTS_ROOT/test-health-report.sh" > /tmp/qual-health-scan.txt 2>&1 || true
+
+    # Parse results
+    SMOKE_PASSED=$(grep -oE "[0-9]+ passed" /tmp/qual-health-scan.txt | head -1 | grep -oE "[0-9]+" || echo "0")
+    SMOKE_FAILED=$(grep -oE "[0-9]+ failed" /tmp/qual-health-scan.txt | head -1 | grep -oE "[0-9]+" || echo "0")
+
+    CRITICAL_PASSED=$(grep -oE "[0-9]+ passed" /tmp/qual-health-scan.txt | sed -n '2p' | grep -oE "[0-9]+" || echo "0")
+    CRITICAL_FAILED=$(grep -oE "[0-9]+ failed" /tmp/qual-health-scan.txt | sed -n '2p' | grep -oE "[0-9]+" || echo "0")
+
+    IMPORTANT_PASSED=$(grep -oE "[0-9]+/[0-9]+ passed" /tmp/qual-health-scan.txt | head -1 | cut -d'/' -f1 || echo "0")
+    IMPORTANT_TOTAL=$(grep -oE "[0-9]+/[0-9]+ passed" /tmp/qual-health-scan.txt | head -1 | cut -d'/' -f2 | grep -oE "[0-9]+" || echo "0")
+
+    UI_PASSED=$(grep -oE "[0-9]+ passed" /tmp/qual-health-scan.txt | tail -1 | grep -oE "[0-9]+" || echo "0")
+    UI_FAILED=$(grep -oE "[0-9]+ failed" /tmp/qual-health-scan.txt | tail -1 | grep -oE "[0-9]+" || echo "0")
+
+    # Determine overall status
+    if grep -q "HEALTHY" /tmp/qual-health-scan.txt; then
+        OVERALL_STATUS="HEALTHY"
+    elif grep -q "CAUTION" /tmp/qual-health-scan.txt; then
+        OVERALL_STATUS="CAUTION"
+    elif grep -q "WARNING" /tmp/qual-health-scan.txt; then
+        OVERALL_STATUS="WARNING"
+    elif grep -q "FAILING" /tmp/qual-health-scan.txt; then
+        OVERALL_STATUS="FAILING"
+    else
+        OVERALL_STATUS="UNKNOWN"
+    fi
+
+    # Update scan results in status page
+    update_scan_results "$SMOKE_PASSED" "$SMOKE_FAILED" "$CRITICAL_PASSED" "$CRITICAL_FAILED" "$IMPORTANT_PASSED" "$IMPORTANT_TOTAL" "$UI_PASSED" "$UI_FAILED" "$OVERALL_STATUS"
+
+    echo "✅ Health scan complete: $OVERALL_STATUS"
+    echo ""
+else
+    echo "⚠️  test-health-report.sh not found, skipping health scan"
+    echo ""
+fi
+
 # Deploy Web (qual uses dedicated qual environment)
 if [ "$DEPLOY_WEB" = true ]; then
+    update_status_page "web" "in_progress"
+
     echo "🌐 Deploying Web Qual..."
-    echo "Deploying to qual environment (stackmap.app/qual)"
+    echo "Deploying to qual environment ($APP_URL_QUAL)"
     echo "Qual web uses qual/api endpoint (qual database)"
     echo ""
 
@@ -113,60 +175,72 @@ if [ "$DEPLOY_WEB" = true ]; then
     echo "📦 Building web bundle for qual..."
     NODE_ENV=production npm run build:web
 
-    if [ ! -f "web/build/index.html" ]; then
+    if [ ! -f "$APP_WEB_INDEX_FILE" ]; then
         echo -e "${RED}❌ Web build failed - no index.html generated${NC}"
+        update_status_page "web" "failed"
         exit 1
     fi
 
     echo -e "${GREEN}✅ Web build complete${NC}"
     echo ""
 
-    # Deploy to qual using deployment infrastructure
-    if [ -f "$SCRIPT_DIR/deploy-with-tracking.sh" ]; then
-        "$SCRIPT_DIR/deploy-with-tracking.sh" qual
+    # Deploy to qual using deployment infrastructure (in parent scripts directory)
+    if [ -f "$SCRIPTS_ROOT/deploy-with-tracking.sh" ]; then
+        "$SCRIPTS_ROOT/deploy-with-tracking.sh" qual
     else
         echo -e "${RED}❌ deploy-with-tracking.sh not found${NC}"
         echo "   Cannot deploy web qual without deployment script"
+        update_status_page "web" "failed"
         exit 1
     fi
 
-    DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n  ✅ Web: stackmap.app/qual (uses qual/api)"
+    DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n  ✅ Web: $APP_URL_QUAL (uses qual/api)"
+    update_status_page "web" "success"
     echo -e "${GREEN}✅ Web qual deployed${NC}"
     echo ""
+else
+    update_status_page "web" "skipped"
 fi
 
 # Deploy iOS to simulators
 if [ "$DEPLOY_IOS" = true ]; then
+    update_status_page "ios" "in_progress"
+
     echo "🍎 Deploying iOS Qual to Simulators..."
     echo "This will build and deploy to iOS simulators"
     echo "iOS will use qual/api endpoint (qual database)"
     echo ""
 
-    # Build for iPhone 16 Pro Max
-    echo "📱 Building for iPhone 16 Pro Max..."
-    if npx react-native run-ios --simulator="iPhone 16 Pro Max"; then
-        echo -e "${GREEN}✅ iOS deployed to iPhone 16 Pro Max${NC}"
+    # Build for iPhone (using configured test device)
+    echo "📱 Building for $APP_IOS_TEST_PHONE..."
+    if npx react-native run-ios --simulator="$APP_IOS_TEST_PHONE"; then
+        echo -e "${GREEN}✅ iOS deployed to $APP_IOS_TEST_PHONE${NC}"
     else
-        echo -e "${YELLOW}⚠️  iPhone 16 Pro Max build failed (non-blocking)${NC}"
+        echo -e "${YELLOW}⚠️  $APP_IOS_TEST_PHONE build failed (non-blocking)${NC}"
     fi
     echo ""
 
-    # Build for iPad Pro 11-inch (M4)
-    echo "📱 Building for iPad Pro 11-inch (M4)..."
-    if npx react-native run-ios --simulator="iPad Pro 11-inch (M4)"; then
-        echo -e "${GREEN}✅ iOS deployed to iPad Pro 11-inch${NC}"
+    # Build for iPad (using configured test device)
+    echo "📱 Building for $APP_IOS_TEST_TABLET..."
+    if npx react-native run-ios --simulator="$APP_IOS_TEST_TABLET"; then
+        echo -e "${GREEN}✅ iOS deployed to $APP_IOS_TEST_TABLET${NC}"
     else
-        echo -e "${YELLOW}⚠️  iPad Pro build failed (non-blocking)${NC}"
+        echo -e "${YELLOW}⚠️  $APP_IOS_TEST_TABLET build failed (non-blocking)${NC}"
     fi
     echo ""
 
     DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n  ✅ iOS: Simulators (qual/api)"
+    update_status_page "ios" "success"
     echo -e "${GREEN}✅ iOS qual deployment complete${NC}"
     echo ""
+else
+    update_status_page "ios" "skipped"
 fi
 
 # Deploy Android to emulators/devices
 if [ "$DEPLOY_ANDROID" = true ]; then
+    update_status_page "android" "in_progress"
+
     echo "🤖 Deploying Android Qual to Devices..."
     echo "This will build and deploy to connected Android devices/emulators"
     echo "Android will use qual/api endpoint (qual database)"
@@ -190,6 +264,7 @@ if [ "$DEPLOY_ANDROID" = true ]; then
     else
         cd ..
         echo -e "${RED}❌ Android build failed${NC}"
+        update_status_page "android" "failed"
         exit 1
     fi
     echo ""
@@ -208,12 +283,12 @@ if [ "$DEPLOY_ANDROID" = true ]; then
         for DEVICE in $DEVICES; do
             MODEL=$(adb -s $DEVICE shell getprop ro.product.model 2>/dev/null | tr -d '\r')
             echo "📱 Installing on $MODEL ($DEVICE)..."
-            if adb -s $DEVICE install -r android/app/build/outputs/apk/debug/app-debug.apk 2>/dev/null; then
+            if adb -s $DEVICE install -r "$APP_ANDROID_APK_DEBUG_PATH" 2>/dev/null; then
                 echo -e "${GREEN}✅ Installed on $MODEL${NC}"
             else
                 echo "  Uninstalling old version first..."
-                adb -s $DEVICE uninstall com.stackmapnative 2>/dev/null || true
-                if adb -s $DEVICE install android/app/build/outputs/apk/debug/app-debug.apk; then
+                adb -s $DEVICE uninstall "$APP_ANDROID_PACKAGE" 2>/dev/null || true
+                if adb -s $DEVICE install "$APP_ANDROID_APK_DEBUG_PATH"; then
                     echo -e "${GREEN}✅ Installed on $MODEL${NC}"
                 else
                     echo -e "${YELLOW}⚠️  Failed to install on $MODEL (non-blocking)${NC}"
@@ -226,8 +301,11 @@ if [ "$DEPLOY_ANDROID" = true ]; then
     fi
 
     DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n  ✅ Android: Devices/Emulators (qual/api)"
+    update_status_page "android" "success"
     echo -e "${GREEN}✅ Android qual deployment complete${NC}"
     echo ""
+else
+    update_status_page "android" "skipped"
 fi
 
 # Calculate deployment time
@@ -235,6 +313,10 @@ DEPLOYMENT_END=$(date +%s)
 DEPLOYMENT_TIME=$((DEPLOYMENT_END - DEPLOYMENT_START))
 DEPLOYMENT_MINUTES=$((DEPLOYMENT_TIME / 60))
 DEPLOYMENT_SECONDS=$((DEPLOYMENT_TIME % 60))
+
+# Finalize and open status page
+finalize_status_page
+open_status_page
 
 # Generate qual deployment report
 echo ""
@@ -251,7 +333,7 @@ echo "📱 Next Steps:"
 echo ""
 echo "1. Test Qual Builds (Development Testing):"
 if [ "$DEPLOY_WEB" = true ]; then
-    echo "   • Web: https://stackmap.app/qual"
+    echo "   • Web: $APP_URL_QUAL"
     echo "   • Uses qual/api endpoint (qual database)"
 fi
 if [ "$DEPLOY_IOS" = true ]; then
