@@ -6,9 +6,12 @@ This guide consolidates all Android-specific development information for StackMa
 
 ### Development Commands
 ```bash
-# AUTOMATED DEPLOYMENT (Recommended)
-./scripts/deploy-android-all.sh  # Full deployment with version increment
-./scripts/deploy-android-quick.sh  # Quick reload for minor changes
+# FOUR-TIER DEPLOYMENT (Recommended)
+# Use the master deployment script with tier and platform flags
+./scripts/deploy.sh qual --android    # QUAL: Development testing (qual-api DB, multiple/day)
+./scripts/deploy.sh stage --android   # STAGE: Internal team validation (stage-api DB, before beta)
+./scripts/deploy.sh beta --android    # BETA: Closed beta testing (beta-api/prod-api DB, 1-2/week)
+./scripts/deploy.sh prod --android    # PROD: Public release (prod-api DB, weekly/bi-weekly)
 
 # Manual commands (if needed)
 npx react-native run-android  # Run with Metro

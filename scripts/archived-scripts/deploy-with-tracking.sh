@@ -4,7 +4,11 @@
 
 set -e  # Exit on any error
 
-echo "🚀 StackMap Deployment with Git Tracking"
+# Load app configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/app-config.sh"
+
+echo "🚀 ${APP_NAME} Deployment with Git Tracking"
 echo "========================================"
 
 # Color codes for output
@@ -159,28 +163,28 @@ deploy_to_server() {
     # Deploy to server based on environment
     if [[ "$DEPLOY_ENV" == "qual" ]]; then
         echo "📡 Triggering qual server pull..."
-        ssh stackmap-cpanel "cd ~/public_html/qual && git fetch && git reset --hard origin/${BRANCH_NAME}" || {
+        ssh "$APP_SSH_HOST" "cd $APP_SSH_QUAL_DIR && git fetch && git reset --hard origin/${BRANCH_NAME}" || {
             echo -e "${RED}❌ ERROR: Failed to deploy to qual server${NC}"
             git checkout main
             exit 1
         }
-        echo -e "${GREEN}✅ Deployed to: https://stackmap.app/qual/${NC}"
+        echo -e "${GREEN}✅ Deployed to: $APP_URL_QUAL/${NC}"
     elif [[ "$DEPLOY_ENV" == "beta" ]]; then
         echo "📡 Triggering beta server pull..."
-        ssh stackmap-cpanel "cd ~/public_html/beta && git fetch && git reset --hard origin/${BRANCH_NAME}" || {
+        ssh "$APP_SSH_HOST" "cd $APP_SSH_BETA_DIR && git fetch && git reset --hard origin/${BRANCH_NAME}" || {
             echo -e "${RED}❌ ERROR: Failed to deploy to beta server${NC}"
             git checkout main
             exit 1
         }
-        echo -e "${GREEN}✅ Deployed to: https://stackmap.app/beta/${NC}"
+        echo -e "${GREEN}✅ Deployed to: $APP_URL_BETA/${NC}"
     elif [[ "$DEPLOY_ENV" == "prod" ]]; then
         echo "📡 Deploying to production..."
-        ssh stackmap-cpanel "cd ~/scripts && ./simple-deploy.sh deploy" || {
+        ssh "$APP_SSH_HOST" "cd ~/scripts && ./simple-deploy.sh deploy" || {
             echo -e "${RED}❌ ERROR: Failed to deploy to production${NC}"
             git checkout main
             exit 1
         }
-        echo -e "${GREEN}✅ Deployed to: https://stackmap.app/${NC}"
+        echo -e "${GREEN}✅ Deployed to: $APP_URL_PROD/${NC}"
     fi
     
     # Return to main branch
@@ -233,13 +237,13 @@ case "$DEPLOY_ENV" in
         echo "📝 One-time server setup instructions:"
         echo ""
         echo "QUAL Setup:"
-        echo "  cd ~/public_html/qual"
+        echo "  cd $APP_SSH_QUAL_DIR"
         echo "  git fetch origin"
         echo "  git checkout -b deploy-qual origin/deploy-qual"
         echo "  git branch --set-upstream-to=origin/deploy-qual"
         echo ""
         echo "BETA Setup:"
-        echo "  cd ~/public_html/beta"
+        echo "  cd $APP_SSH_BETA_DIR"
         echo "  git fetch origin"
         echo "  git checkout -b deploy-beta origin/deploy-beta"
         echo "  git branch --set-upstream-to=origin/deploy-beta"

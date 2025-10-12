@@ -1,46 +1,177 @@
 # StackMap Deployment Guide
 **Last Updated:** January 2025
 
-## 🚀 Quick Start - Deploy Everything
+## 🚀 Four-Tier Deployment Strategy
+
+StackMap uses a four-tier deployment approach for controlled releases:
+
+```
+QUAL → STAGE → BETA → PROD
+(multiple/day) → (before beta) → (1-2/week) → (weekly/bi-weekly)
+```
+
+### Deployment Flow Overview
+
+| Tier | Purpose | API Endpoint | Database | Platforms | Git State | Frequency |
+|------|---------|-------------|----------|-----------|-----------|-----------|
+| **QUAL** | Development testing | qual-api.stackmap.app | Qual DB | Web + Mobile | Allows uncommitted | Multiple/day |
+| **STAGE** | Internal validation | qual-api.stackmap.app | Qual DB | Mobile only | Allows uncommitted | Before beta |
+| **BETA** | Closed beta testing | beta-api.stackmap.app | Prod DB | Beta web + Mobile | Requires clean | 1-2/week |
+| **PROD** | Public release | api.stackmap.app | Prod DB | Web + Mobile | Requires clean | Weekly/bi-weekly |
+
+### Quick Start
+
 ```bash
-# Stage 1: Deploy to QUAL (staging)
+# Tier 1: QUAL - Local testing (simulators/emulators + qual web)
 ./scripts/qual_deploy.sh
 
-# Stage 2: Deploy to PRODUCTION
-./scripts/prod_deploy.sh all  # Web + Android AAB + iOS prep
+# Tier 2: STAGE - Internal validation (mobile only, qual DB)
+./scripts/deploy_stage.sh --all
+
+# Tier 3: BETA - TestFlight + Play Internal Testing + beta web
+./scripts/deploy_beta.sh --all
+
+# Tier 4: PROD - App Store + Play Production + prod web
+./scripts/prod_deploy.sh all
 ```
 
 ### Platform-Specific Options
+
 ```bash
+# QUAL Options
 ./scripts/qual_deploy.sh --android --ios  # Android + iOS only to qual
 ./scripts/qual_deploy.sh --web           # Web to qual staging
 ./scripts/qual_deploy.sh --ios-device    # iOS physical device
-# Note: --skip-tests has been REMOVED - tests are mandatory
 
-# Production options
+# STAGE Options (Mobile only, qual DB)
+./scripts/deploy_stage.sh --all      # All mobile platforms (recommended)
+./scripts/deploy_stage.sh --ios      # iOS TestFlight only
+./scripts/deploy_stage.sh --android  # Android Play Internal Testing only
+
+# BETA Options (Prod DB)
+./scripts/deploy_beta.sh --all      # All platforms (recommended)
+./scripts/deploy_beta.sh --ios      # iOS TestFlight only
+./scripts/deploy_beta.sh --android  # Android Play Internal Testing only
+./scripts/deploy_beta.sh --web      # Web beta (qual environment)
+
+# PROD Options
+./scripts/prod_deploy.sh all      # Full production deploy
 ./scripts/prod_deploy.sh web      # Deploy web only
 ./scripts/prod_deploy.sh android  # Build Android AAB only
 ./scripts/prod_deploy.sh ios      # Prepare iOS for archive
 ```
 
+### Deployment Guides
+
+- **[Beta Deployment Guide](./BETA_DEPLOYMENT_GUIDE.md)** - Complete guide for beta deployments
+- **[Four-Tier Strategy](./FOUR_TIER_BUILD_GUIDE.md)** - Detailed architecture and implementation plan
+- **[Stage Deployment Setup](./STAGE_DEPLOYMENT_SETUP.md)** - Stage tier configuration guide
+
+## 🎯 When to Deploy to Each Tier
+
+### QUAL (Development Testing)
+**Deploy when:**
+- Testing new features in development
+- Debugging issues locally
+- Verifying UI changes
+- Running multiple tests per day
+
+**Characteristics:**
+- Uses qual database (safe for testing)
+- Available on web at stackmap.app/qual
+- Fast iteration cycle
+- No external testers involved
+- **Git requirements:** Allows uncommitted changes (rapid development)
+
+### STAGE (Internal Validation)
+**Deploy when:**
+- Feature is complete and tested in QUAL
+- Ready for internal team validation
+- Need to verify on real devices before beta
+- Want to test with qual database before switching to prod
+
+**Characteristics:**
+- Mobile-only (no web deployment)
+- Uses qual database (safe sandbox)
+- Internal team testing
+- Final check before beta release
+- **Git requirements:** Allows uncommitted changes (internal testing)
+
+### BETA (Closed Beta Testing)
+**Deploy when:**
+- Feature passed internal validation in STAGE
+- Ready for external beta testers
+- Need feedback from real users
+- Testing with production database
+
+**Characteristics:**
+- Uses production database (real data)
+- Available on beta web and TestFlight/Play Internal
+- External testers involved
+- 1-2 deployments per week
+- **Git requirements:** Requires clean git state (traceability)
+
+### PROD (Public Release)
+**Deploy when:**
+- Feature thoroughly tested in BETA
+- All feedback addressed
+- Ready for public release
+- Stable and production-ready
+
+**Characteristics:**
+- Public-facing release
+- Full production environment
+- Weekly or bi-weekly cadence
+- Requires highest quality standards
+- **Git requirements:** Requires clean git state (traceability)
+
+## 🔌 API Endpoint Mapping
+
+| Tier | Mobile Build Type | API Endpoint | Database | Web URL |
+|------|------------------|--------------|----------|---------|
+| **QUAL** | qual | https://qual-api.stackmap.app | Qual DB | stackmap.app/qual |
+| **STAGE** | stage | https://qual-api.stackmap.app | Qual DB | N/A (mobile only) |
+| **BETA** | beta | https://beta-api.stackmap.app | Prod DB | stackmap.app/qual (beta web) |
+| **PROD** | release | https://api.stackmap.app | Prod DB | stackmap.app |
+
+**Key Points:**
+- STAGE uses qual DB but is a separate mobile build type
+- BETA switches to production database for real-world testing
+- Web beta still uses qual environment but connects to beta API
+
 ## 📱 Platform Deployment Details
 
 ### iOS Deployment
 ```bash
-./scripts/deploy-ios.sh          # Simulator
-./scripts/deploy-ios.sh device   # Physical device
+# QUAL tier (development testing)
+./scripts/deploy.sh qual --ios              # Simulator build
+./scripts/qual_deploy.sh --ios-device       # Physical device
+
+# STAGE tier (internal validation)
+./scripts/deploy.sh stage --ios             # TestFlight internal
+
+# BETA tier (closed beta)
+./scripts/deploy.sh beta --ios              # TestFlight beta
+
+# PROD tier (public release)
+./scripts/deploy.sh prod --ios              # App Store submission
 ```
 
-**Manual Process:**
-1. Open Xcode: `open ios/StackMapNative.xcworkspace`
-2. Select target device
-3. Product → Archive
-4. Distribute via TestFlight/App Store
+**iOS builds are now fully automated** - no manual Xcode steps required for any tier!
 
 ### Android Deployment
 ```bash
-./scripts/deploy-android-all.sh   # Full deployment
-./scripts/deploy-android-quick.sh # Quick reload for Metro
+# QUAL tier (development testing)
+./scripts/deploy.sh qual --android          # Local device/emulator
+
+# STAGE tier (internal validation)
+./scripts/deploy.sh stage --android         # Play Internal Testing
+
+# BETA tier (closed beta)
+./scripts/deploy.sh beta --android          # Play Internal Testing (beta)
+
+# PROD tier (public release)
+./scripts/deploy.sh prod --android          # Play Store production
 ```
 
 **Strategy:**
@@ -195,11 +326,29 @@ ssh stackmap-cpanel "cd ~/public_html/qual && git checkout <commit-hash>"
 - Certificates managed per platform
 
 ## 📝 Environment Configuration
-- **Bundle IDs:** iOS: `com.stackmapnative`, Android: `com.stackmapnative`
-- **API URLs:**
-  - Dev/Qual: `https://stackmap.app/qual/api/sync/`
-  - Production: `https://stackmap.app/api/sync/`
+
+### Bundle IDs
+- **iOS:** `com.stackmapnative`
+- **Android:** `com.stackmapnative`
+
+### API Endpoints by Tier
+- **QUAL:** `https://qual-api.stackmap.app/api/sync/` (Qual DB)
+- **STAGE:** `https://qual-api.stackmap.app/api/sync/` (Qual DB)
+- **BETA:** `https://beta-api.stackmap.app/api/sync/` (Prod DB)
+- **PROD:** `https://api.stackmap.app/api/sync/` (Prod DB)
+
+### Web URLs
+- **QUAL Web:** `https://stackmap.app/qual/`
+- **BETA Web:** `https://stackmap.app/qual/` (uses beta API endpoint)
+- **PROD Web:** `https://stackmap.app/`
+
+### Build Types (Mobile)
+Each tier uses a different build configuration:
+- **qual:** Development testing with qual database
+- **stage:** Internal validation with qual database
+- **beta:** External testing with production database
+- **release:** Public release with production database
 
 ---
 
-**Remember:** Use `./scripts/qual_deploy.sh` for staging, then `./scripts/prod_deploy.sh all` for production!
+**Remember:** Follow the four-tier progression: QUAL → STAGE → BETA → PROD

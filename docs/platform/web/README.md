@@ -12,10 +12,12 @@ npm run web          # Run with hot reload (localhost:3000)
 # Production builds
 NODE_ENV=production npm run build:web  # Build optimized bundle
 
-# Deployment (automated)
-./scripts/deploy-web.sh qual    # Deploy to qual with version increment
-./scripts/deploy-web.sh prod    # Deploy to production
-./scripts/qual_deploy.sh or prod_deploy.sh --web   # Master deployment (all platforms)
+# FOUR-TIER DEPLOYMENT (Recommended)
+# Use the master deployment script with tier and platform flags
+# NOTE: STAGE tier is mobile-only (no web deployment)
+./scripts/deploy.sh qual --web    # QUAL: Development testing (qual-api DB, multiple/day)
+./scripts/deploy.sh beta --web    # BETA: Closed beta testing (beta-api/prod-api DB, 1-2/week)
+./scripts/deploy.sh prod --web    # PROD: Public release (prod-api DB, weekly/bi-weekly)
 ```
 
 ### Project Requirements

@@ -6,9 +6,12 @@ This guide consolidates all iOS-specific development information for StackMap.
 
 ### Development Commands
 ```bash
-# AUTOMATED DEPLOYMENT (Recommended)
-./scripts/deploy-ios.sh          # Deploy to simulator with version increment
-./scripts/deploy-ios.sh device   # Deploy to physical device
+# FOUR-TIER DEPLOYMENT (Recommended)
+# Use the master deployment script with tier and platform flags
+./scripts/deploy.sh qual --ios    # QUAL: Development testing (qual-api DB, multiple/day)
+./scripts/deploy.sh stage --ios   # STAGE: Internal team validation (stage-api DB, before beta)
+./scripts/deploy.sh beta --ios    # BETA: Closed beta testing (beta-api/prod-api DB, 1-2/week)
+./scripts/deploy.sh prod --ios    # PROD: Public release (prod-api DB, weekly/bi-weekly)
 
 # Manual commands (if needed)
 npx react-native run-ios --simulator="iPhone 16 Pro Max"
