@@ -598,7 +598,7 @@ _update_status_page_html() {
     fi
 
     local project_root=$(get_project_root)
-    local template="$project_root/scripts/lib/status-page-template.html"
+    local template="$project_root/scripts/deploy/lib/status-page-template.html"
 
     if [ ! -f "$template" ]; then
         log_error "Status page template not found: $template"
