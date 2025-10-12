@@ -71,7 +71,8 @@ get_project_root() {
     if [ -n "$PROJECT_ROOT" ]; then
         echo "$PROJECT_ROOT"
     else
-        echo "$(dirname "$SCRIPT_DIR")"
+        # SCRIPT_DIR is now in scripts/deploy/, so go up two levels to reach project root
+        echo "$(dirname "$(dirname "$SCRIPT_DIR")")"
     fi
 }
 
