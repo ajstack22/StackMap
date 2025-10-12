@@ -6,7 +6,7 @@ set -e  # Exit on any error
 
 # Load app configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/app-config.sh"
+source "$SCRIPT_DIR/deploy/app-config.sh"
 
 echo "🚀 ${APP_NAME} Deployment with Git Tracking"
 echo "========================================"
