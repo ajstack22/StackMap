@@ -122,9 +122,9 @@ update_status_page "tests" "skipped"
 # Run health scan (qual-specific)
 echo ""
 echo "🔍 Running Health Scan..."
-if [ -f "$SCRIPTS_ROOT/test-health-report.sh" ]; then
+if [ -f "$SCRIPTS_ROOT/testing/test-health-report.sh" ]; then
     # Run health scan and capture results
-    "$SCRIPTS_ROOT/test-health-report.sh" > /tmp/qual-health-scan.txt 2>&1 || true
+    "$SCRIPTS_ROOT/testing/test-health-report.sh" > /tmp/qual-health-scan.txt 2>&1 || true
 
     # Parse results
     SMOKE_PASSED=$(grep -oE "[0-9]+ passed" /tmp/qual-health-scan.txt | head -1 | grep -oE "[0-9]+" || echo "0")
@@ -158,7 +158,7 @@ if [ -f "$SCRIPTS_ROOT/test-health-report.sh" ]; then
     echo "✅ Health scan complete: $OVERALL_STATUS"
     echo ""
 else
-    echo "⚠️  test-health-report.sh not found, skipping health scan"
+    echo "⚠️  testing/test-health-report.sh not found, skipping health scan"
     echo ""
 fi
 
