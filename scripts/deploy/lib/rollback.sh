@@ -19,7 +19,10 @@ fi
 
 # Deployment state directory - stored in project for persistence
 # Not in /tmp to survive system restarts and temp directory cleanup
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# Only set PROJECT_ROOT if not already set (may be inherited from deploy.sh)
+if [ -z "$PROJECT_ROOT" ]; then
+    PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+fi
 DEPLOYMENT_STATE_DIR="$PROJECT_ROOT/$APP_DEPLOYMENT_STATE_DIR"
 mkdir -p "$DEPLOYMENT_STATE_DIR"
 
