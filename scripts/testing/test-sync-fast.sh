@@ -1,103 +1,78 @@
 #!/bin/bash
 
-# Fast sync testing between web and mobile
-# Uses qual API for both environments
+# Fast sync test script - minimal clicks required
+# Usage: ./scripts/test-sync-fast.sh
 
-echo "🚀 Fast Sync Testing Setup"
-echo "=========================="
-echo ""
-
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# Check if qual build exists
-if [ ! -f "bundle.js" ]; then
-    echo -e "${YELLOW}⚠️  No qual build found. Building now...${NC}"
-    NODE_ENV=production PUBLIC_URL=/qual npm run build:web
-    echo "Copying to qual directory..."
-    cp bundle.* index.html manifest.json service-worker.js /Users/adamstack/StackMap/StackMap/
-    echo -e "${GREEN}✅ Qual build ready${NC}"
-fi
-
-echo ""
-echo -e "${GREEN}Option 1: Web (Qual) + iOS Simulator${NC}"
-echo "--------------------------------------"
-echo "Terminal 1:"
-echo "  npm run ios"
-echo ""
-echo "Terminal 2 (or browser):"
-echo "  open https://stackmap.app/qual/"
-echo ""
-echo "Both will use the qual API endpoints for sync"
-echo ""
-
-echo -e "${GREEN}Option 2: Web (Qual) + Android Emulator${NC}"
-echo "----------------------------------------"
-echo "Terminal 1:"
-echo "  npm run android"
-echo ""
-echo "Terminal 2 (or browser):"
-echo "  open https://stackmap.app/qual/"
-echo ""
-
-echo -e "${GREEN}Option 3: Multiple Browser Tabs (Qual)${NC}"
-echo "---------------------------------------"
-echo "  open https://stackmap.app/qual/"
-echo "  Open in regular tab + incognito/private tab"
-echo ""
-
-echo -e "${YELLOW}Quick Test Workflow:${NC}"
-echo "===================="
-echo "1. Import demo-data-kids.json on Device/Tab 1"
-echo "2. Settings → Sync → Enable Sync → Copy phrase"
-echo "3. On Device/Tab 2: Settings → Sync → Join → Paste phrase"
-echo "4. Make changes on either device"
-echo "5. Watch console for sync logs"
-echo ""
-
-echo -e "${GREEN}Automated Test Commands:${NC}"
+echo "🧪 Fast Sync Test Script"
 echo "========================"
 echo ""
-echo "# Test sync with mock data (if you have the test file):"
-echo "node src/services/sync/testSyncIntegration.cjs"
+echo "This script will guide you through sync testing with minimal clicks."
 echo ""
 
-# Quick validation check
-echo -e "${YELLOW}Running quick validation...${NC}"
-echo "----------------------------"
-
-# Check if deleted activity filter is present
-if grep -q "!activity.deleted" src/services/sync/dataValidator.ts 2>/dev/null; then
-    echo -e "${GREEN}✅ Deleted activity filter is active${NC}"
-else
-    echo -e "${YELLOW}⚠️  Deleted activity filter may not be active${NC}"
-fi
-
-# Check current version
-CURRENT_VERSION=$(grep '"version"' package.json | cut -d '"' -f 4)
-echo -e "📌 Current version: ${GREEN}$CURRENT_VERSION${NC}"
-
-# Check qual deployment
+# Generate a test sync ID
+SYNC_ID=$(openssl rand -hex 16)
+echo "📝 Test Sync ID: $SYNC_ID"
 echo ""
-echo -e "${YELLOW}Checking qual deployment status...${NC}"
-if curl -s -o /dev/null -w "%{http_code}" https://stackmap.app/qual/ | grep -q "200"; then
-    echo -e "${GREEN}✅ Qual site is accessible${NC}"
-    
-    # Check if API is responding
-    if curl -s -o /dev/null -w "%{http_code}" https://stackmap.app/qual/api/sync/health.php | grep -q "200"; then
-        echo -e "${GREEN}✅ Qual sync API is responding${NC}"
-    else
-        echo -e "${YELLOW}⚠️  Qual sync API may not be responding${NC}"
-    fi
-else
-    echo -e "${YELLOW}⚠️  Qual site may not be deployed${NC}"
-fi
+
+# Create test URLs
+URL_A="https://stackmap.app/qual/?syncTest=true&device=A"
+URL_B="https://stackmap.app/qual/?syncTest=true&device=B"
+
+echo "Instructions:"
+echo "-------------"
+echo "1. Opening two browser windows..."
+echo ""
+
+# Open Device A
+echo "📱 Device A (Creator):"
+echo "   - Click '🧪 Sync Testing'"
+echo "   - Click 'Create New Sync'"
+echo "   - Copy the sync ID"
+echo ""
+open "$URL_A"
+
+sleep 2
+
+# Open Device B
+echo "📱 Device B (Joiner):"
+echo "   - Click '🧪 Sync Testing'"
+echo "   - Click 'Join Existing Sync'"
+echo "   - Paste the sync ID from Device A"
+echo "   - Click 'Join Sync'"
+echo ""
+open "$URL_B"
 
 echo ""
-echo -e "${GREEN}Ready to test!${NC}"
-echo "=============="
-echo "Choose one of the options above to start testing."
-echo "The qual environment uses the same API for all platforms,"
-echo "so changes will sync immediately between devices."
+echo "Quick Test Steps:"
+echo "-----------------"
+echo "1. ✅ After both devices are synced:"
+echo "   - On Device B: Click 'Add New User' → Enter 'Test User B' → Save"
+echo "   - Wait 3 seconds"
+echo "   - On Device A: Refresh the page (Cmd+R)"
+echo "   - Verify 'Test User B' appears on Device A"
+echo ""
+echo "2. ✅ For bidirectional test:"
+echo "   - On Device A: Add a new user 'Test User A'"
+echo "   - Wait 3 seconds"
+echo "   - On Device B: Refresh the page"
+echo "   - Verify 'Test User A' appears on Device B"
+echo ""
+echo "Expected Results:"
+echo "-----------------"
+echo "✅ Users added on Device B appear on Device A"
+echo "✅ Users added on Device A appear on Device B"
+echo "✅ No console errors about 'reduce is not a function'"
+echo "✅ Data persists after page refresh"
+echo ""
+echo "Press Enter when testing is complete..."
+read
+
+echo ""
+echo "Test completed!"
+echo ""
+echo "If sync worked correctly, you should have seen:"
+echo "  • Bidirectional data sync"
+echo "  • No JavaScript errors"
+echo "  • Data persistence"
+echo ""
+echo "Run './scripts/test-sync-fast.sh' anytime to test sync quickly."

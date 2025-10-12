@@ -51,13 +51,13 @@ docs/development/backlog/
 
 ```bash
 # List all backlog stories
-./scripts/manage-backlog.sh list
+./scripts/utilities/manage-backlog.sh list
 
 # Manually create stories (if needed)
-./scripts/manage-backlog.sh typescript 42        # 42 TypeScript errors
-./scripts/manage-backlog.sh todos 15            # 15 TODO comments
-./scripts/manage-backlog.sh prettier failed     # Formatting issues
-./scripts/manage-backlog.sh bundle 6.2MB        # Large bundle size
+./scripts/utilities/manage-backlog.sh typescript 42        # 42 TypeScript errors
+./scripts/utilities/manage-backlog.sh todos 15            # 15 TODO comments
+./scripts/utilities/manage-backlog.sh prettier failed     # Formatting issues
+./scripts/utilities/manage-backlog.sh bundle 6.2MB        # Large bundle size
 ```
 
 ## Example Output During Deployment
@@ -96,7 +96,7 @@ Run './scripts/manage-backlog.sh list' to see all backlog items
 ## Working with Backlog Stories
 
 ### During Sprint Planning
-1. Review backlog stories: `./scripts/manage-backlog.sh list`
+1. Review backlog stories: `./scripts/utilities/manage-backlog.sh list`
 2. Select stories based on priority and available time
 3. Move selected stories to `docs/development/stories/active/`
 4. Update story status from "Backlog" to "In Progress"

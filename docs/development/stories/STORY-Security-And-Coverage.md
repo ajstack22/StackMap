@@ -178,7 +178,7 @@ npm test -- --coverage --collectCoverageFrom="src/**/*.js" --collectCoverageFrom
 ### Security Verification
 ```bash
 # Run SonarQube analysis
-./scripts/sonar-analysis.sh
+./scripts/utilities/sonar-analysis.sh
 
 # Check for security hotspots
 sonar-scanner -Dsonar.verbose=true

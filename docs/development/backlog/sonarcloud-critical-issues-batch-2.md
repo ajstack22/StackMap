@@ -140,7 +140,7 @@ npm test -- --testPathPattern="(fileProcessingUtils|syncOperationUtils|CategoryA
 npm test
 
 # Verify SonarCloud
-./scripts/sonar-analysis.sh
+./scripts/utilities/sonar-analysis.sh
 ```
 
 ## Related Documentation
