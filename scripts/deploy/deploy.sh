@@ -39,6 +39,8 @@ set -e  # Exit on error
 # Script is now in scripts/deploy/, so go up two levels to reach project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
+export PROJECT_ROOT  # Export so libraries can use it
+export SCRIPT_DIR    # Export so libraries can use it
 cd "$PROJECT_ROOT"
 
 # Load app configuration first
