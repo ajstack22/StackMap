@@ -95,8 +95,12 @@ if [ "$DEPLOY_ALL" = true ]; then
     DEPLOY_ANDROID=true
 fi
 
-# Get current version
-CURRENT_VERSION=$(grep '"version":' "$PROJECT_ROOT/package.json" | head -1 | cut -d'"' -f4)
+# Get version from master script (already incremented) or from package.json
+if [ -z "$DEPLOYMENT_VERSION" ]; then
+    CURRENT_VERSION=$(grep '"version":' "$PROJECT_ROOT/package.json" | head -1 | cut -d'"' -f4)
+else
+    CURRENT_VERSION="$DEPLOYMENT_VERSION"
+fi
 
 echo ""
 echo "========================================="
@@ -115,6 +119,14 @@ generate_status_page "qual" "$CURRENT_VERSION"
 
 # Validation complete (qual doesn't have strict validation)
 update_status_page "validation" "success"
+
+# Update quality gate results on status page (they ran in master script)
+if [ -f "$SCRIPT_DIR/lib/quality-status.sh" ]; then
+    source "$SCRIPT_DIR/lib/quality-status.sh"
+    update_quality_status_from_results "qual"
+    # Regenerate status page with quality results
+    _update_status_page_html "qual" "$CURRENT_VERSION" "yellow"
+fi
 
 # Mark tests as skipped (qual doesn't run test suite)
 update_status_page "tests" "skipped"
@@ -211,19 +223,23 @@ if [ "$DEPLOY_IOS" = true ]; then
     echo "iOS will use qual/api endpoint (qual database)"
     echo ""
 
-    # Build for iPhone (using configured test device)
-    echo "📱 Building for $APP_IOS_TEST_PHONE..."
-    if npx react-native run-ios --simulator="$APP_IOS_TEST_PHONE"; then
+    # Build for iPhone (using configured test device with Qual configuration)
+    echo "📱 Building for $APP_IOS_TEST_PHONE (Qual configuration)..."
+    if npx react-native run-ios --simulator="$APP_IOS_TEST_PHONE" --mode Qual; then
         echo -e "${GREEN}✅ iOS deployed to $APP_IOS_TEST_PHONE${NC}"
+        echo -e "${GREEN}   App name: StackMap QUAL${NC}"
+        echo -e "${GREEN}   Bundle ID: app.stackmap.qual${NC}"
     else
         echo -e "${YELLOW}⚠️  $APP_IOS_TEST_PHONE build failed (non-blocking)${NC}"
     fi
     echo ""
 
-    # Build for iPad (using configured test device)
-    echo "📱 Building for $APP_IOS_TEST_TABLET..."
-    if npx react-native run-ios --simulator="$APP_IOS_TEST_TABLET"; then
+    # Build for iPad (using configured test device with Qual configuration)
+    echo "📱 Building for $APP_IOS_TEST_TABLET (Qual configuration)..."
+    if npx react-native run-ios --simulator="$APP_IOS_TEST_TABLET" --mode Qual; then
         echo -e "${GREEN}✅ iOS deployed to $APP_IOS_TEST_TABLET${NC}"
+        echo -e "${GREEN}   App name: StackMap QUAL${NC}"
+        echo -e "${GREEN}   Bundle ID: app.stackmap.qual${NC}"
     else
         echo -e "${YELLOW}⚠️  $APP_IOS_TEST_TABLET build failed (non-blocking)${NC}"
     fi
@@ -255,19 +271,23 @@ if [ "$DEPLOY_ANDROID" = true ]; then
         --bundle-output android/app/src/main/assets/index.android.bundle \
         --assets-dest android/app/src/main/res/
 
-    # Build APK
-    echo "🔨 Building debug APK..."
+    # Build qual variant APK
+    echo "🔨 Building qual debug APK..."
     cd android
-    if ./gradlew assembleDebug --console=plain 2>&1 | grep -v "WARNING:"; then
+    if ./gradlew assembleQualDebug --console=plain 2>&1 | grep -v "WARNING:"; then
         cd ..
-        echo -e "${GREEN}✅ Android build complete${NC}"
+        echo -e "${GREEN}✅ Android qual build complete${NC}"
     else
         cd ..
-        echo -e "${RED}❌ Android build failed${NC}"
+        echo -e "${RED}❌ Android qual build failed${NC}"
         update_status_page "android" "failed"
         exit 1
     fi
     echo ""
+
+    # Set qual APK path
+    QUAL_APK_PATH="android/app/build/outputs/apk/qual/debug/app-qual-debug.apk"
+    QUAL_PACKAGE="com.stackmapnative.qual"
 
     # Install on connected devices
     echo "📱 Installing on connected devices..."
@@ -282,13 +302,13 @@ if [ "$DEPLOY_ANDROID" = true ]; then
 
         for DEVICE in $DEVICES; do
             MODEL=$(adb -s $DEVICE shell getprop ro.product.model 2>/dev/null | tr -d '\r')
-            echo "📱 Installing on $MODEL ($DEVICE)..."
-            if adb -s $DEVICE install -r "$APP_ANDROID_APK_DEBUG_PATH" 2>/dev/null; then
+            echo "📱 Installing qual variant on $MODEL ($DEVICE)..."
+            if adb -s $DEVICE install -r "$QUAL_APK_PATH" 2>/dev/null; then
                 echo -e "${GREEN}✅ Installed on $MODEL${NC}"
             else
                 echo "  Uninstalling old version first..."
-                adb -s $DEVICE uninstall "$APP_ANDROID_PACKAGE" 2>/dev/null || true
-                if adb -s $DEVICE install "$APP_ANDROID_APK_DEBUG_PATH"; then
+                adb -s $DEVICE uninstall "$QUAL_PACKAGE" 2>/dev/null || true
+                if adb -s $DEVICE install "$QUAL_APK_PATH"; then
                     echo -e "${GREEN}✅ Installed on $MODEL${NC}"
                 else
                     echo -e "${YELLOW}⚠️  Failed to install on $MODEL (non-blocking)${NC}"

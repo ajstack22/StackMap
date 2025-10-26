@@ -54,6 +54,15 @@
                     </div>
                 </div>
 
+                <!-- Quality Gates -->
+                <div class="flex items-center gap-3 p-3 bg-gray-900 rounded">
+                    <span class="text-2xl status-{{QUALITY_STATUS}}">{{QUALITY_ICON}}</span>
+                    <div class="flex-1">
+                        <div class="font-semibold">Quality Gates</div>
+                        <div class="text-sm text-gray-400">{{QUALITY_MESSAGE}}</div>
+                    </div>
+                </div>
+
                 <!-- Tests -->
                 <div class="flex items-center gap-3 p-3 bg-gray-900 rounded">
                     <span class="text-2xl status-{{TESTS_STATUS}}">{{TESTS_ICON}}</span>
@@ -87,6 +96,61 @@
                     <div class="flex-1">
                         <div class="font-semibold">Android Deployment</div>
                         <div class="text-sm text-gray-400">{{ANDROID_MESSAGE}}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quality Gate Details -->
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 mb-6 border border-gray-700 {{QUALITY_DISPLAY}}">
+            <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <span class="text-2xl">🎯</span> Quality Gate Results
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+                <!-- NPM Audit -->
+                <div class="bg-gray-900 rounded p-4">
+                    <div class="text-sm text-gray-400 mb-1">🔒 Security Audit</div>
+                    <div class="text-2xl font-bold {{QUALITY_AUDIT_COLOR}}">{{QUALITY_AUDIT_RESULT}}</div>
+                    <div class="text-xs text-gray-500 mt-1">{{QUALITY_AUDIT_DETAILS}}</div>
+                </div>
+
+                <!-- ESLint -->
+                <div class="bg-gray-900 rounded p-4">
+                    <div class="text-sm text-gray-400 mb-1">📝 Code Quality</div>
+                    <div class="text-2xl font-bold {{QUALITY_LINT_COLOR}}">{{QUALITY_LINT_RESULT}}</div>
+                    <div class="text-xs text-gray-500 mt-1">{{QUALITY_LINT_DETAILS}}</div>
+                </div>
+
+                <!-- TypeScript -->
+                <div class="bg-gray-900 rounded p-4">
+                    <div class="text-sm text-gray-400 mb-1">🔷 Type Check</div>
+                    <div class="text-2xl font-bold {{QUALITY_TS_COLOR}}">{{QUALITY_TS_RESULT}}</div>
+                    <div class="text-xs text-gray-500 mt-1">{{QUALITY_TS_DETAILS}}</div>
+                </div>
+
+                <!-- Licenses -->
+                <div class="bg-gray-900 rounded p-4">
+                    <div class="text-sm text-gray-400 mb-1">📜 Licenses</div>
+                    <div class="text-2xl font-bold {{QUALITY_LICENSE_COLOR}}">{{QUALITY_LICENSE_RESULT}}</div>
+                    <div class="text-xs text-gray-500 mt-1">{{QUALITY_LICENSE_DETAILS}}</div>
+                </div>
+
+                <!-- SonarQube -->
+                <div class="bg-gray-900 rounded p-4">
+                    <div class="text-sm text-gray-400 mb-1">📊 SonarQube</div>
+                    <div class="text-2xl font-bold {{QUALITY_SONAR_COLOR}}">{{QUALITY_SONAR_RESULT}}</div>
+                    <div class="text-xs text-gray-500 mt-1">{{QUALITY_SONAR_DETAILS}}</div>
+                </div>
+            </div>
+
+            <!-- Overall Quality Status -->
+            <div class="p-4 rounded {{QUALITY_OVERALL_BG}} border {{QUALITY_OVERALL_BORDER}}">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">{{QUALITY_OVERALL_ICON}}</span>
+                    <div>
+                        <div class="font-bold {{QUALITY_OVERALL_COLOR}}">{{QUALITY_OVERALL_STATUS}}</div>
+                        <div class="text-sm text-gray-400">{{QUALITY_OVERALL_MESSAGE}}</div>
                     </div>
                 </div>
             </div>

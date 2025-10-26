@@ -63,6 +63,22 @@ Setup code signing certificates and provisioning profiles
 
 Build debug version for testing
 
+### ios test
+
+```sh
+[bundle exec] fastlane ios test
+```
+
+Run iOS test suite (integrates with NPM test scripts)
+
+### ios test_native
+
+```sh
+[bundle exec] fastlane ios test_native
+```
+
+Run native iOS tests (XCTest - placeholder)
+
 ### ios build_release
 
 ```sh
@@ -70,6 +86,16 @@ Build debug version for testing
 ```
 
 Build release version for TestFlight/App Store
+
+### ios qual_ios
+
+```sh
+[bundle exec] fastlane ios qual_ios
+```
+
+Build and install QUAL debug to simulator (local testing)
+
+Usage: fastlane qual_ios
 
 ### ios bump_build_number
 
@@ -93,7 +119,23 @@ Upload to TestFlight (assumes IPA already built)
 [bundle exec] fastlane ios beta_ios
 ```
 
-Build and deploy to TestFlight (complete beta pipeline)
+Build and deploy to TestFlight External Testing (beta environment)
+
+### ios stage_ios
+
+```sh
+[bundle exec] fastlane ios stage_ios
+```
+
+Build and deploy to TestFlight Internal Testing (stage environment)
+
+### ios prod_ios
+
+```sh
+[bundle exec] fastlane ios prod_ios
+```
+
+Build and deploy to App Store production (full submission)
 
 ----
 

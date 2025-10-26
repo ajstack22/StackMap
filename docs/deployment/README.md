@@ -327,9 +327,24 @@ ssh stackmap-cpanel "cd ~/public_html/qual && git checkout <commit-hash>"
 
 ## 📝 Environment Configuration
 
-### Bundle IDs
-- **iOS:** `com.stackmapnative`
-- **Android:** `com.stackmapnative`
+### Platform Identifiers
+
+**iOS Bundle IDs:**
+- QUAL: `app.stackmap.qual` (local simulator only)
+- STAGE/BETA/PROD: `app.stackmap` (single bundle ID)
+
+**Android Package Names:**
+- All environments: `com.stackmapnative` (single package name)
+
+**Strategy Rationale:**
+Both platforms use a single identifier for distribution tiers (stage/beta/prod):
+- **iOS:** TestFlight requires same bundle ID for Internal/External testing groups
+- **Android:** Play Store tracks differentiate same package name builds
+- **Benefits:** Simpler app store management, automatic provisioning, matches platform requirements
+
+**Differentiation:**
+- iOS: TestFlight groups (Internal vs External) + display names + BUILD_TYPE_ENV
+- Android: Gradle flavors + Play Store tracks + display names
 
 ### API Endpoints by Tier
 - **QUAL:** `https://qual-api.stackmap.app/api/sync/` (Qual DB)

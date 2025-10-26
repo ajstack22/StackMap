@@ -21,7 +21,7 @@ react {
     //   The list of variants to that are debuggable. For those we're going to
     //   skip the bundling of the JS bundle and the assets. By default is just 'debug'.
     //   If you add flavors like lite, prod, etc. you'll have to list your debuggableVariants.
-    // debuggableVariants = ["liteDebug", "prodDebug"]
+    debuggableVariants = ["qualDebug", "stageDebug", "betaDebug", "prodDebug"]
 
     /* Bundling */
     //   A list containing the node command and its flags. Default is just 'node'.
@@ -82,8 +82,42 @@ android {
         applicationId "com.stackmapnative"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 251003003
+        versionCode 251003004
         versionName "25.10.03"
+    }
+
+    // Product flavors for 4-tier deployment system
+    flavorDimensions "environment"
+    productFlavors {
+        qual {
+            dimension "environment"
+            applicationIdSuffix ".qual"
+            versionNameSuffix "-qual"
+            buildConfigField "String", "BUILD_TYPE_ENV", '"qual"'
+            resValue "string", "app_name", "StackMap QUAL"
+        }
+        stage {
+            dimension "environment"
+            // No applicationIdSuffix - uses base package name (com.stackmapnative)
+            // Differentiated via Play Store Internal Testing track
+            versionNameSuffix "-stage"
+            buildConfigField "String", "BUILD_TYPE_ENV", '"stage"'
+            resValue "string", "app_name", "StackMap STAGE"
+        }
+        beta {
+            dimension "environment"
+            // No applicationIdSuffix - uses base package name (com.stackmapnative)
+            // Differentiated via Play Store Closed Testing track
+            versionNameSuffix "-beta"
+            buildConfigField "String", "BUILD_TYPE_ENV", '"beta"'
+            resValue "string", "app_name", "StackMap"  // Same as prod for beta users
+        }
+        prod {
+            dimension "environment"
+            // No suffix for production
+            buildConfigField "String", "BUILD_TYPE_ENV", '"prod"'
+            resValue "string", "app_name", "StackMap"
+        }
     }
     signingConfigs {
         debug {

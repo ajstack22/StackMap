@@ -5,6 +5,7 @@
 | If your task is... | Use this tier | Example command |
 |-------------------|---------------|-----------------|
 | **Typo, color change, 1 file** | 🟢 **Quick** | `"Fix typo in welcome text. Atlas Quick."` |
+| **Style tweak, simple UI change** | 🔵 **Iterative** | `"Improve button spacing. Atlas Iterative."` |
 | **Bug fix, small feature, 2-5 files** | 🟡 **Standard** | `"Fix sync race condition. Atlas Standard."` |
 | **New module, epic, 6+ files** | 🔴 **Full** | `"Implement photo attachments. Atlas Full."` |
 
@@ -19,6 +20,21 @@
 2. Deploy via `./scripts/qual_deploy.sh`
 
 **Perfect for:** Typos, colors, config updates, single-line fixes
+
+---
+
+## 🔵 Iterative Workflow (15-30 min)
+
+```
+"[Change needing validation]. Use Atlas Iterative workflow."
+```
+
+**Phases:**
+1. Make change
+2. Peer review (repeat until passes)
+3. Deploy via `./scripts/qual_deploy.sh`
+
+**Perfect for:** Styling improvements, simple UI tweaks, straightforward refactors that need quality validation but not upfront research/planning
 
 ---
 
@@ -168,6 +184,10 @@ npm test
 ```
 Is it 1 file, trivial, zero risk?
 ├─ YES → Quick Workflow
+└─ NO → Continue...
+
+Does it need validation but not research/planning?
+├─ YES → Iterative Workflow
 └─ NO → Continue...
 
 Is it 2-5 files, clear requirements?

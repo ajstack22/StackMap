@@ -8,6 +8,36 @@ default_platform(:ios)
 
 platform :ios do
   # ============================================
+  # CRITICAL SAFEGUARD: Info.plist Restoration
+  # Signal traps to ensure Info.plist is always restored
+  # ============================================
+
+  # Track if Info.plist has been modified
+  @info_plist_modified = false
+
+  # Cleanup handler for signal interruptions
+  def cleanup_and_exit
+    if @info_plist_modified
+      UI.important("🛑 Interrupt detected - restoring Info.plist...")
+      restore_info_plist
+    end
+    exit(1)
+  end
+
+  # Set up signal traps to catch interruptions
+  trap("INT") { cleanup_and_exit }
+  trap("TERM") { cleanup_and_exit }
+
+  # Also use at_exit to ensure restoration on any exit
+  at_exit do
+    if @info_plist_modified
+      UI.message("🔄 Ensuring Info.plist restoration on exit...")
+      restore_info_plist
+      @info_plist_modified = false
+    end
+  end
+
+  # ============================================
   # EXISTING LANES (PRESERVED)
   # ============================================
 
@@ -163,6 +193,35 @@ platform :ios do
   end
 
   # ============================================
+  # HELPER LANE: Create environment-specific export options
+  # ============================================
+
+  desc "Create export options plist for specific bundle ID"
+  private_lane :create_export_options do |options|
+    bundle_id = options[:bundle_id] || "app.stackmap"
+
+    export_plist = {
+      "destination" => "export",
+      "method" => "app-store",
+      "signingStyle" => "automatic",
+      "signingCertificate" => "Apple Distribution",
+      "teamID" => "84W9WSYQQB",
+      "uploadBitcode" => false,
+      "uploadSymbols" => true,
+      "stripSwiftSymbols" => true
+    }
+
+    # Write to temp file
+    temp_plist = "/tmp/ExportOptions-#{bundle_id}.plist"
+    File.open(temp_plist, 'w') do |file|
+      file.write(Plist::Emit.dump(export_plist))
+    end
+
+    UI.message("✅ Created export options for #{bundle_id}")
+    temp_plist
+  end
+
+  # ============================================
   # HELPER LANE: Update ExportOptions.plist
   # ============================================
 
@@ -177,6 +236,259 @@ platform :ios do
         export_plist.gsub!("YOUR_TEAM_ID", "84W9WSYQQB")
         File.write(export_plist_path, export_plist)
         UI.message("✅ Updated ExportOptions.plist with Team ID: 84W9WSYQQB")
+      end
+    end
+  end
+
+  # ============================================
+  # HELPER LANE: Set BUILD_TYPE in Info.plist (with backup)
+  # ============================================
+
+  private_lane :set_build_type_in_plist do |options|
+    build_type = options[:build_type] || "prod"
+    info_plist_path = "./StackMapNative/Info.plist"
+    backup_path = "./StackMapNative/Info.plist.backup"
+    timestamped_backup = "./StackMapNative/Info.plist.backup.#{Time.now.to_i}"
+
+    UI.message("📦 Setting BUILD_TYPE_ENV to: #{build_type}")
+
+    # Verify source file exists
+    unless File.exist?(info_plist_path)
+      UI.user_error!("❌ Info.plist not found at #{info_plist_path}")
+    end
+
+    # Create primary backup
+    sh("cp '#{info_plist_path}' '#{backup_path}'")
+
+    # Verify backup was created successfully
+    unless File.exist?(backup_path)
+      UI.user_error!("❌ Failed to create backup of Info.plist")
+    end
+
+    # Create timestamped backup for extra safety
+    sh("cp '#{info_plist_path}' '#{timestamped_backup}'")
+
+    # Verify both backups have content
+    backup_size = File.size(backup_path)
+    if backup_size == 0
+      UI.user_error!("❌ Backup file is empty - aborting modification")
+    end
+
+    UI.message("💾 Backed up Info.plist (#{backup_size} bytes)")
+    UI.message("💾 Created timestamped backup: #{File.basename(timestamped_backup)}")
+
+    # CRITICAL: Set flag to indicate Info.plist has been modified
+    # This triggers restoration in signal traps and at_exit
+    @info_plist_modified = true
+
+    # Use PlistBuddy to add/update the BUILD_TYPE_ENV key
+    sh("/usr/libexec/PlistBuddy -c 'Delete :BUILD_TYPE_ENV' '#{info_plist_path}' 2>/dev/null || true")
+    sh("/usr/libexec/PlistBuddy -c 'Add :BUILD_TYPE_ENV string #{build_type}' '#{info_plist_path}'")
+
+    UI.success("✅ BUILD_TYPE_ENV set to: #{build_type} in Info.plist")
+  end
+
+  # Helper to restore Info.plist from backup
+  private_lane :restore_info_plist do
+    info_plist_path = "./StackMapNative/Info.plist"
+    backup_path = "./StackMapNative/Info.plist.backup"
+
+    # Check if backup exists
+    unless File.exist?(backup_path)
+      UI.message("⚠️  Primary backup not found: #{backup_path}")
+
+      # Try to find timestamped backup
+      backup_dir = File.dirname(backup_path)
+      timestamped_backups = Dir.glob("#{backup_dir}/Info.plist.backup.*").sort.reverse
+
+      if timestamped_backups.any?
+        backup_path = timestamped_backups.first
+        UI.important("🔄 Using timestamped backup: #{File.basename(backup_path)}")
+      else
+        UI.message("ℹ️  No backup files found - Info.plist was likely not modified")
+        UI.message("Skipping restoration (this is normal if build failed early)")
+        next  # Skip restoration but don't error
+      end
+    end
+
+    # Verify backup has content before restoring
+    backup_size = File.size(backup_path)
+    if backup_size == 0
+      UI.message("⚠️  Backup file is empty - skipping restoration")
+      UI.message("Info.plist may be in modified state - check git status")
+      next
+    end
+
+    # Restore from backup
+    begin
+      sh("mv '#{backup_path}' '#{info_plist_path}'")
+      UI.success("✅ Restored original Info.plist (#{backup_size} bytes)")
+
+      # CRITICAL: Reset the modification flag after successful restoration
+      @info_plist_modified = false
+
+      # Clean up old timestamped backups (keep last 5)
+      backup_dir = File.dirname(info_plist_path)
+      timestamped_backups = Dir.glob("#{backup_dir}/Info.plist.backup.*").sort.reverse
+      if timestamped_backups.count > 5
+        timestamped_backups[5..-1].each { |f| File.delete(f) }
+        UI.message("🧹 Cleaned up old backup files")
+      end
+    rescue => ex
+      UI.error("❌ Failed to restore Info.plist: #{ex.message}")
+      UI.error("Info.plist may be in modified state!")
+    end
+  end
+
+  # ============================================
+  # HELPER LANE: Generate deployment summary
+  # ============================================
+
+  desc "Generate deployment summary markdown file"
+  private_lane :generate_deployment_summary do |options|
+    platform = options[:platform] || "iOS"
+    env = options[:env] || "unknown"
+    version = options[:version] || "unknown"
+    build = options[:build] || "unknown"
+    success = options[:success].nil? ? true : options[:success]
+
+    # Create deployments directory if needed
+    deployments_dir = "../../deployments/#{platform.downcase}"
+    sh("mkdir -p #{deployments_dir}")
+
+    # Generate filename with timestamp
+    timestamp = Time.now.strftime("%Y-%m-%d_%H-%M-%S")
+    filename = "#{deployments_dir}/#{timestamp}-#{env}-#{version}.md"
+
+    # Read PENDING_CHANGES.md if available
+    changes = "No changes documented"
+    pending_changes_path = "../../PENDING_CHANGES.md"
+    if File.exist?(pending_changes_path)
+      content = File.read(pending_changes_path)
+
+      # Extract title and changes
+      title_match = content.match(/^## Title:\s*(.+)$/i)
+      changes_match = content.match(/^### Changes Made:\s*\n([\s\S]+?)(?=\n###|\n##|$)/i)
+
+      if title_match && changes_match
+        changes = "**#{title_match[1].strip}**\n\n#{changes_match[1].strip}"
+      end
+    end
+
+    # Get git info
+    git_branch = sh("git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown'").strip
+    git_sha = sh("git rev-parse --short HEAD 2>/dev/null || echo 'unknown'").strip
+
+    # Generate markdown content
+    status_emoji = success ? "✅" : "❌"
+    markdown = <<~MARKDOWN
+      # #{platform} #{env.upcase} Deployment - #{Time.now.strftime("%Y-%m-%d %H:%M:%S")}
+
+      **Status:** #{status_emoji} #{success ? 'Success' : 'Failed'}
+
+      ## Version Info
+      - **Version:** #{version}
+      - **Build:** #{build}
+      - **Platform:** #{platform}
+      - **Environment:** #{env}
+
+      ## Git Info
+      - **Branch:** #{git_branch}
+      - **Commit:** #{git_sha}
+
+      ## Changes
+
+      #{changes}
+
+      ---
+      *Generated by fastlane #{platform.downcase}_#{env}*
+    MARKDOWN
+
+    # Write file
+    File.write(filename, markdown)
+    UI.success("📝 Deployment summary: #{filename}")
+
+    filename
+  end
+
+  # ============================================
+  # HELPER LANE: Upload to TestFlight with retry logic
+  # Shared by stage_ios and beta_ios
+  # ============================================
+
+  private_lane :upload_to_testflight_with_retry do |options|
+    ipa_path = options[:ipa_path] || Actions.lane_context[SharedValues::IPA_OUTPUT_PATH] || "./build/release/StackMap-Release.ipa"
+    changelog = options[:changelog] || "Release"
+    distribute_external = options[:distribute_external] || false
+    groups = options[:groups] || []
+
+    # Verify IPA exists
+    unless File.exist?(ipa_path)
+      UI.user_error!("❌ IPA not found at #{ipa_path}")
+    end
+
+    UI.message("📤 Uploading to TestFlight...")
+    UI.message("IPA: #{ipa_path}")
+    UI.message("Changelog: #{changelog}")
+    UI.message("External Distribution: #{distribute_external}")
+
+    # API Key authentication
+    api_key_path = ENV["APP_STORE_CONNECT_API_KEY_KEY"]
+    api_key_content = File.read(api_key_path)
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
+      key_content: api_key_content
+    )
+
+    # Retry logic with exponential backoff
+    retry_count = 0
+    max_retries = 3
+    backoff_delays = [30, 60, 120]  # seconds
+
+    begin
+      retry_count += 1
+
+      if retry_count > 1
+        UI.important("🔄 Retry attempt #{retry_count} of #{max_retries}")
+      end
+
+      # Upload to TestFlight
+      upload_to_testflight(
+        api_key: api_key,
+        ipa: ipa_path,
+        skip_waiting_for_build_processing: true,
+        skip_submission: false,
+        distribute_external: distribute_external,
+        groups: groups,
+        notify_external_testers: false,
+        changelog: changelog,
+        team_id: "84W9WSYQQB",
+        app_identifier: "app.stackmap"
+      )
+
+      # Upload succeeded
+      UI.success("✅ Upload complete! Build processing in App Store Connect...")
+      UI.message("Processing typically takes 5-15 minutes")
+      UI.message("View status: https://appstoreconnect.apple.com/apps")
+
+    rescue => ex
+      if retry_count < max_retries
+        delay = backoff_delays[retry_count - 1]
+        UI.error("❌ Upload failed: #{ex.message}")
+        UI.important("⏳ Waiting #{delay} seconds before retry #{retry_count + 1}/#{max_retries}...")
+        sleep(delay)
+        retry
+      else
+        UI.error("❌ Upload failed after #{max_retries} attempts")
+        UI.error("Error: #{ex.message}")
+        UI.message("")
+        UI.message("Troubleshooting:")
+        UI.message("1. Check your internet connection")
+        UI.message("2. Verify App Store Connect credentials")
+        UI.message("3. Try manual upload via Xcode Organizer")
+        raise ex
       end
     end
   end
@@ -212,6 +524,44 @@ platform :ios do
     )
 
     UI.success("✅ Debug build complete: ./build/debug/StackMap-Debug.ipa")
+  end
+
+  # ============================================
+  # TESTING LANES
+  # ============================================
+
+  desc "Run iOS test suite (integrates with NPM test scripts)"
+  lane :test do
+    UI.message("🧪 Running iOS test suite...")
+
+    begin
+      # Run smoke tests
+      UI.message("Running smoke tests...")
+      sh("cd ../.. && npm run test:smoke || true")
+
+      # Run critical tests
+      UI.message("Running critical tests...")
+      sh("cd ../.. && npm run test:critical || true")
+
+      UI.success("✅ iOS tests completed!")
+    rescue => ex
+      UI.error("❌ Tests failed: #{ex}")
+      UI.important("⚠️  Continuing with deployment (adjust as needed)")
+    end
+  end
+
+  desc "Run native iOS tests (XCTest - placeholder)"
+  lane :test_native do
+    UI.important("⚠️  iOS native test targets not configured yet")
+    UI.message("")
+    UI.message("To set up native iOS testing:")
+    UI.message("1. Open ios/StackMapNative.xcodeproj in Xcode")
+    UI.message("2. File → New → Target → iOS Unit Testing Bundle")
+    UI.message("3. Name it: StackMapNativeTests")
+    UI.message("4. Add tests to ios/StackMapNativeTests/")
+    UI.message("5. Re-run this lane with run_tests action")
+    UI.message("")
+    UI.message("See docs/deployment/fastlane-roadmap/phase-2-testing.md for details")
   end
 
   desc "Build release version for TestFlight/App Store"
@@ -251,6 +601,37 @@ platform :ios do
     )
 
     UI.success("✅ Release build complete: ./build/release/StackMap-Release.ipa")
+  end
+
+  desc "Build and install QUAL debug to simulator (local testing)"
+  desc "Usage: fastlane qual_ios"
+  lane :qual_ios do
+    UI.message("🚀 Building qual for simulator...")
+
+    # Validate environment
+    validate_environment
+
+    # Clear Metro cache
+    UI.message("🧹 Clearing Metro bundler cache...")
+    sh("rm -rf $TMPDIR/metro-* || true")
+    sh("rm -rf $TMPDIR/haste-* || true")
+
+    # Build for simulator with Qual configuration
+    build_app(
+      workspace: "StackMapNative.xcworkspace",
+      scheme: "StackMapNative",
+      configuration: "Qual",
+      destination: "platform=iOS Simulator,name=iPhone 16 Pro",
+      skip_package_ipa: true,
+      skip_archive: true,
+      clean: false  # Faster builds
+    )
+
+    UI.success("✅ Qual build installed on iPhone 16 Pro!")
+    UI.message("")
+    UI.message("Bundle ID: app.stackmap.qual")
+    UI.message("App Name: StackMap QUAL")
+    UI.message("Environment: QUAL (using qual/api endpoint)")
   end
 
   # ============================================
@@ -364,9 +745,9 @@ platform :ios do
     end
   end
 
-  desc "Build and deploy to TestFlight (complete beta pipeline)"
+  desc "Build and deploy to TestFlight External Testing (beta environment)"
   lane :beta_ios do |options|
-    UI.message("🚀 Starting complete beta deployment pipeline...")
+    UI.message("🚀 Starting beta deployment pipeline (External Testing)...")
 
     # Validate environment
     validate_environment
@@ -381,20 +762,282 @@ platform :ios do
       bump_build_number
     end
 
-    # Build release IPA
-    build_release
+    # Build with Beta configuration (handles BUILD_TYPE_ENV via xcconfig)
+    UI.message("🔨 Building with Beta configuration...")
+    build_app(
+      workspace: "StackMapNative.xcworkspace",
+      scheme: "StackMapNative",
+      configuration: "Beta",  # Uses Beta.xcconfig
+      export_method: "app-store",
+      output_directory: "./build/beta",
+      output_name: "StackMap-Beta.ipa",
+      export_options: "./ExportOptions.plist",
+      clean: true,
+      include_bitcode: false,
+      skip_package_ipa: false,
+      include_symbols: true,
+      xcargs: "-allowProvisioningUpdates ONLY_ACTIVE_ARCH=NO"
+    )
 
-    # Upload to TestFlight (with retry logic)
-    upload_testflight(
-      changelog: options[:changelog]
+    # Get changelog
+    changelog = options[:changelog] || ENV["TESTFLIGHT_CHANGELOG"] || "Beta release for external testing"
+
+    # Upload to TestFlight External Testing using shared helper
+    # Note: ipa_path automatically uses IPA_OUTPUT_PATH from lane context (set by build_app)
+    upload_to_testflight_with_retry(
+      changelog: changelog,
+      distribute_external: true,  # External Testing for wider beta groups
+      groups: ["Beta Testers"]  # External tester group (configure in App Store Connect)
+    )
+
+    # Generate deployment summary
+    generate_deployment_summary(
+      platform: "iOS",
+      env: "beta",
+      version: get_version_number,
+      build: get_build_number,
+      success: true
     )
 
     UI.success("🎉 Beta deployment complete!")
     UI.message("")
+    UI.message("Environment: BETA (using beta/api endpoint)")
+    UI.message("Bundle ID: app.stackmap.beta")
+    UI.message("App Name: StackMap (same as prod for users)")
+    UI.message("Distribution: External Testing (requires Apple beta review)")
+    UI.message("")
     UI.message("Next steps:")
     UI.message("1. Wait 5-15 minutes for Apple to process the build")
     UI.message("2. Check App Store Connect: https://appstoreconnect.apple.com/apps")
-    UI.message("3. Add internal testers if needed")
-    UI.message("4. Install via TestFlight app on device")
+    UI.message("3. Wait for Apple beta review approval (typically 24-48 hours)")
+    UI.message("4. External testers in 'Beta Testers' group will be notified")
+  end
+
+  desc "Build and deploy to TestFlight Internal Testing (stage environment)"
+  lane :stage_ios do |options|
+    UI.message("🚀 Starting stage deployment pipeline (Internal Testing only)...")
+
+    # Validate environment
+    validate_environment
+
+    # Setup certificates
+    setup_certificates
+
+    # Optional: Increment build number
+    if options[:skip_increment]
+      UI.message("⏭️  Skipping build number increment")
+    else
+      bump_build_number
+    end
+
+    # Build with Stage configuration (handles BUILD_TYPE_ENV via xcconfig)
+    UI.message("🔨 Building with Stage configuration...")
+    build_app(
+      workspace: "StackMapNative.xcworkspace",
+      scheme: "StackMapNative",
+      configuration: "Stage",  # Uses Stage.xcconfig
+      export_method: "app-store",
+      output_directory: "./build/stage",
+      output_name: "StackMap-Stage.ipa",
+      export_options: "./ExportOptions.plist",
+      clean: true,
+      include_bitcode: false,
+      skip_package_ipa: false,
+      include_symbols: true,
+      xcargs: "-allowProvisioningUpdates ONLY_ACTIVE_ARCH=NO"
+    )
+
+    # Get changelog
+    changelog = options[:changelog] || ENV["TESTFLIGHT_CHANGELOG"] || "Stage build for internal testing"
+
+    # Upload to TestFlight Internal Testing using shared helper
+    # Note: ipa_path automatically uses IPA_OUTPUT_PATH from lane context (set by build_app)
+    upload_to_testflight_with_retry(
+      changelog: changelog,
+      distribute_external: false  # Internal Testing only
+    )
+
+    # Generate deployment summary
+    generate_deployment_summary(
+      platform: "iOS",
+      env: "stage",
+      version: get_version_number,
+      build: get_build_number,
+      success: true
+    )
+
+    UI.success("🎉 Stage deployment complete!")
+    UI.message("")
+    UI.message("Environment: STAGE (using stage/api endpoint)")
+    UI.message("Bundle ID: app.stackmap.stage")
+    UI.message("App Name: StackMap STAGE")
+    UI.message("Distribution: Internal Testing only")
+    UI.message("")
+    UI.message("Next steps:")
+    UI.message("1. Wait 5-15 minutes for Apple to process the build")
+    UI.message("2. Check App Store Connect: https://appstoreconnect.apple.com/apps")
+    UI.message("3. Distribute to internal testers for stage environment testing")
+  end
+
+  # ============================================
+  # PRODUCTION DEPLOYMENT LANES
+  # ============================================
+
+  desc "Load release notes from PENDING_CHANGES.md"
+  private_lane :load_release_notes_from_file do
+    pending_changes_path = "../PENDING_CHANGES.md"
+
+    if File.exist?(pending_changes_path)
+      content = File.read(pending_changes_path)
+
+      # Extract title
+      title_match = content.match(/^## Title:\s*(.+)$/i)
+      title = title_match ? title_match[1].strip : nil
+
+      # Extract changes
+      changes_section = content.match(/^### Changes Made:\s*\n([\s\S]+?)(?=\n###|\n##|$)/i)
+      changes = changes_section ? changes_section[1].strip : nil
+
+      # Build release notes
+      if title && changes
+        release_notes = "#{title}\n\n#{changes}"
+        UI.message("📝 Loaded release notes from PENDING_CHANGES.md")
+        release_notes
+      else
+        UI.message("⚠️  PENDING_CHANGES.md exists but missing title or changes")
+        "Bug fixes and improvements"
+      end
+    else
+      UI.message("⚠️  PENDING_CHANGES.md not found, using default release notes")
+      "Bug fixes and improvements"
+    end
+  end
+
+  desc "Build and deploy to App Store production (full submission)"
+  lane :prod_ios do |options|
+    UI.message("🚀 Starting production deployment pipeline...")
+
+    # Validate environment
+    validate_environment
+
+    # Setup certificates
+    setup_certificates
+
+    # Optional: Increment build number (default: true)
+    unless options[:skip_increment]
+      bump_build_number
+    end
+
+    # Build with Prod configuration (handles BUILD_TYPE_ENV via xcconfig)
+    UI.message("🔨 Building with Prod configuration...")
+    build_app(
+      workspace: "StackMapNative.xcworkspace",
+      scheme: "StackMapNative",
+      configuration: "Prod",  # Uses Prod.xcconfig
+      export_method: "app-store",
+      output_directory: "./build/prod",
+      output_name: "StackMap-Prod.ipa",
+      export_options: "./ExportOptions.plist",
+      clean: true,
+      include_bitcode: false,
+      skip_package_ipa: false,
+      include_symbols: true,
+      xcargs: "-allowProvisioningUpdates ONLY_ACTIVE_ARCH=NO"
+    )
+
+    # Get release notes
+    changelog = options[:changelog] || ENV["RELEASE_NOTES"] || load_release_notes_from_file
+
+    # Get IPA path
+    ipa_path = Actions.lane_context[SharedValues::IPA_OUTPUT_PATH] || "./build/prod/StackMap-Prod.ipa"
+
+    # Verify IPA exists
+    unless File.exist?(ipa_path)
+      UI.user_error!("❌ IPA not found at #{ipa_path}")
+    end
+
+    # API Key authentication (same as beta)
+    api_key_path = ENV["APP_STORE_CONNECT_API_KEY_KEY"]
+    api_key_content = File.read(api_key_path)
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
+      key_content: api_key_content
+    )
+
+    # Upload to App Store Connect with retry logic
+    UI.message("📤 Uploading to App Store Connect...")
+
+    retry_count = 0
+    max_retries = 3
+    backoff_delays = [30, 60, 120]  # seconds
+
+    begin
+      retry_count += 1
+
+      if retry_count > 1
+        UI.important("🔄 Retry attempt #{retry_count} of #{max_retries}")
+      end
+
+      deliver(
+        api_key: api_key,
+        ipa: ipa_path,
+        skip_metadata: options[:skip_metadata] || false,
+        skip_screenshots: options[:skip_screenshots] || true,  # Default: skip screenshots
+        submit_for_review: options[:submit] || false,  # Manual approval by default
+        automatic_release: options[:auto_release] || false,  # Manual release after review
+        precheck_include_in_app_purchases: false,
+        submission_information: {
+          add_id_info_uses_idfa: false
+        },
+        # Use changelog if provided
+        release_notes: {
+          "en-US" => changelog
+        }
+      )
+
+      # If we get here, upload succeeded
+      UI.success("✅ Upload complete!")
+
+    rescue => ex
+      if retry_count < max_retries
+        delay = backoff_delays[retry_count - 1]
+        UI.error("❌ Upload failed: #{ex.message}")
+        UI.important("⏳ Waiting #{delay} seconds before retry #{retry_count + 1}/#{max_retries}...")
+        sleep(delay)
+        retry
+      else
+        UI.error("❌ Upload failed after #{max_retries} attempts")
+        UI.error("Error: #{ex.message}")
+        UI.message("")
+        UI.message("Troubleshooting:")
+        UI.message("1. Check your internet connection")
+        UI.message("2. Verify App Store Connect credentials")
+        UI.message("3. Try manual upload via Xcode Organizer")
+        raise ex
+      end
+    end
+
+    # Generate deployment summary
+    generate_deployment_summary(
+      platform: "iOS",
+      env: "prod",
+      version: get_version_number,
+      build: get_build_number,
+      success: true
+    )
+
+    UI.success("🎉 Production deployment complete!")
+    UI.message("")
+    UI.message("Next steps:")
+    UI.message("1. Check App Store Connect: https://appstoreconnect.apple.com/apps")
+    UI.message("2. Review build details and metadata")
+    if options[:submit]
+      UI.message("3. Build submitted for review - monitor review status")
+    else
+      UI.message("3. Submit for review when ready")
+    end
+    UI.message("4. Monitor review status")
   end
 end

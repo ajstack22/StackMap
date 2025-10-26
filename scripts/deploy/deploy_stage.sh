@@ -105,8 +105,12 @@ if [[ -n $(git status --porcelain) ]]; then
     echo ""
 fi
 
-# Get current version
-CURRENT_VERSION=$(grep '"version":' "$PROJECT_ROOT/package.json" | head -1 | cut -d'"' -f4)
+# Get version from master script (already incremented) or from package.json
+if [ -z "$DEPLOYMENT_VERSION" ]; then
+    CURRENT_VERSION=$(grep '"version":' "$PROJECT_ROOT/package.json" | head -1 | cut -d'"' -f4)
+else
+    CURRENT_VERSION="$DEPLOYMENT_VERSION"
+fi
 
 # Check if version already has stage suffix
 if [[ "$CURRENT_VERSION" == *"-stage"* ]]; then

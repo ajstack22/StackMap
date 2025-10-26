@@ -1743,7 +1743,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-safe-area-context (5.5.1):
+  - react-native-safe-area-context (5.6.1):
     - React-Core
   - React-NativeModulesApple (0.80.1):
     - boost
@@ -2601,7 +2601,7 @@ SPEC CHECKSUMS:
   react-native-mmkv: bf4747d65be520ae2dfa36933045f5a70fee4d9b
   react-native-netinfo: cec9c4e86083cb5b6aba0e0711f563e2fbbff187
   react-native-pager-view: 4aa04e4a76be68dc67f5ba3df2e1981b1c7d0f85
-  react-native-safe-area-context: 827032edf27079702cbd006f11dc79451a2d744b
+  react-native-safe-area-context: 2243039f43d10cb1ea30ec5ac57fc6d1448413f4
   React-NativeModulesApple: 983f3483ef0a3446b56d490f09d579fba2442e17
   React-oscompat: 114036cd8f064558c9c1a0c04fc9ae5e1453706a
   React-perflogger: e7287fee27c16e3c8bd4d470f2361572b63be16b

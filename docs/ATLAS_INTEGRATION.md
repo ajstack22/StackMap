@@ -12,6 +12,12 @@ StackMap uses the **Atlas Lite Framework** for structured, agent-driven developm
 ```
 **Result:** Change made → Deployed via `./scripts/qual_deploy.sh` in ~10 minutes
 
+### For Changes Needing Validation
+```
+"Improve button spacing on the login screen. Use Atlas Iterative workflow."
+```
+**Result:** Change → Peer Review Cycle → Deploy in ~20 minutes
+
 ### For Most Tasks (Recommended Default)
 ```
 "Fix the login bug where users can't save activities. Use Atlas Standard workflow."
@@ -44,6 +50,31 @@ StackMap uses the **Atlas Lite Framework** for structured, agent-driven developm
 ```
 "Change primary button color to #007AFF. Atlas Quick workflow."
 ```
+
+---
+
+### 🔵 Iterative Workflow (15-30 minutes)
+
+**When to use:**
+- Styling improvements that need review
+- Simple UI tweaks requiring validation
+- Straightforward refactors
+- Changes where you know what to do but want quality checks
+
+**What happens:**
+1. **Make Change** - Implement change, verify locally
+2. **Peer Review** - Submit to peer-reviewer agent, address feedback, repeat until passes
+3. **Deploy** - Run `./scripts/qual_deploy.sh`, done
+
+**Example command:**
+```
+"Improve card layout spacing for better readability. Atlas Iterative workflow."
+```
+
+**StackMap-specific considerations:**
+- Still update `PENDING_CHANGES.md` before deployment
+- Peer review checks field naming, platform gotchas, store usage
+- Faster than Standard because no research/planning phase needed
 
 ---
 
@@ -292,14 +323,16 @@ Issues found:
 
 ## Decision Matrix: Which Tier?
 
-| Question | Quick | Standard | Full |
-|----------|-------|----------|------|
-| How many files affected? | 1 | 2-5 | 6+ |
-| Any logic changes? | No | Yes | Complex |
-| Security implications? | No | Maybe | Yes |
-| Cross-platform? | No | Maybe | Yes |
-| Need formal requirements? | No | No | Yes |
-| Risk of breaking changes? | Zero | Low-Med | High |
+| Question | Quick | Iterative | Standard | Full |
+|----------|-------|-----------|----------|------|
+| How many files affected? | 1 | 1-2 | 2-5 | 6+ |
+| Any logic changes? | No | Simple | Yes | Complex |
+| Need validation? | No | Yes | Yes | Yes |
+| Need research/planning? | No | No | Yes | Yes |
+| Security implications? | No | No | Maybe | Yes |
+| Cross-platform? | No | No | Maybe | Yes |
+| Need formal requirements? | No | No | No | Yes |
+| Risk of breaking changes? | Zero | Low | Low-Med | High |
 
 **When in doubt, use Standard workflow** - it's the right balance for 80% of tasks.
 
@@ -307,10 +340,15 @@ Issues found:
 
 ## Escalation Rules
 
-### Escalate Quick → Standard if:
+### Escalate Quick → Iterative if:
+- Change works but you want peer validation
+- Simple change but want quality checks
+
+### Escalate Quick/Iterative → Standard if:
 - During implementation, multiple files need changes
 - Tests fail and require new test cases
-- Edge cases emerge that need peer review
+- Complex edge cases emerge that need planning
+- Requirements unclear - need research phase
 
 ### Escalate Standard → Full if:
 - Scope expands to 6+ files

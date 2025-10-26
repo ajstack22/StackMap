@@ -130,6 +130,35 @@ if [ "$DEPLOY_ALL" = true ]; then
 fi
 
 # ============================================
+# Acquire Deployment Lock
+# ============================================
+
+# Acquire exclusive deployment lock to prevent concurrent deployments
+acquire_deployment_lock "$TIER"
+
+# Release lock on exit (success or failure)
+trap release_deployment_lock EXIT
+
+# ============================================
+# Version Increment (BEFORE displaying plan)
+# ============================================
+
+# Increment version before deployment (for all tiers)
+log_step "Incrementing version number..."
+if [ -f "$SCRIPT_DIR/version-increment.sh" ]; then
+    source "$SCRIPT_DIR/version-increment.sh"
+    increment_version
+    DEPLOYMENT_VERSION="$NEW_VERSION"
+    log_success "Version incremented to: $NEW_VERSION"
+else
+    log_warning "Version increment script not found, using current version"
+    DEPLOYMENT_VERSION=$(get_current_version)
+fi
+
+# Export version for use throughout deployment
+export DEPLOYMENT_VERSION
+
+# ============================================
 # Display Deployment Plan
 # ============================================
 
@@ -141,23 +170,13 @@ TIER_UPPER=$(echo "$TIER" | tr '[:lower:]' '[:upper:]')
 echo "Tier:           $TIER_UPPER"
 echo "Branch:         $(get_git_branch)"
 echo "Commit:         $(get_git_commit)"
-echo "Version:        $(get_current_version)"
+echo "Version:        $DEPLOYMENT_VERSION"
 echo ""
 echo "Platforms:"
 [ "$DEPLOY_WEB" = true ] && echo "  ✓ Web"
 [ "$DEPLOY_IOS" = true ] && echo "  ✓ iOS"
 [ "$DEPLOY_ANDROID" = true ] && echo "  ✓ Android"
 echo ""
-
-# ============================================
-# Acquire Deployment Lock
-# ============================================
-
-# Acquire exclusive deployment lock to prevent concurrent deployments
-acquire_deployment_lock "$TIER"
-
-# Release lock on exit (success or failure)
-trap release_deployment_lock EXIT
 
 # ============================================
 # Pre-Deployment Validation
@@ -328,8 +347,7 @@ fi
 # Generate Deployment Report
 # ============================================
 
-CURRENT_VERSION=$(get_current_version)
-generate_deployment_report "$TIER" "$CURRENT_VERSION"
+generate_deployment_report "$TIER" "$DEPLOYMENT_VERSION"
 
 # ============================================
 # Display Next Steps
@@ -348,7 +366,7 @@ TIER_UPPER=$(echo "$TIER" | tr '[:lower:]' '[:upper:]')
 PLATFORMS_UPPER=$(echo "$VERIFY_PLATFORMS" | tr '[:lower:]' '[:upper:]')
 
 echo "Tier:           $TIER_UPPER"
-echo "Version:        $CURRENT_VERSION"
+echo "Version:        $DEPLOYMENT_VERSION"
 echo "Platforms:      $PLATFORMS_UPPER"
 echo ""
 

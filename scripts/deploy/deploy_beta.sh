@@ -95,8 +95,12 @@ if [[ -n $(git status --porcelain) ]]; then
     exit 1
 fi
 
-# Get current version (no increment for beta - uses qual version)
-CURRENT_VERSION=$(grep '"version":' "$PROJECT_ROOT/package.json" | head -1 | cut -d'"' -f4)
+# Get version from master script (already incremented) or from package.json
+if [ -z "$DEPLOYMENT_VERSION" ]; then
+    CURRENT_VERSION=$(grep '"version":' "$PROJECT_ROOT/package.json" | head -1 | cut -d'"' -f4)
+else
+    CURRENT_VERSION="$DEPLOYMENT_VERSION"
+fi
 
 # Check if version already has beta suffix
 if [[ "$CURRENT_VERSION" == *"-beta"* ]]; then

@@ -41,7 +41,7 @@ Usage: fastlane build_debug
 [bundle exec] fastlane android build_release
 ```
 
-Build signed release APK and AAB
+Build signed release APK and AAB (production flavor)
 
 Usage: fastlane build_release
 
@@ -91,9 +91,31 @@ Usage: fastlane increment_version_code
 [bundle exec] fastlane android beta_android
 ```
 
-Build and deploy to Google Play Internal Testing
+Build and deploy to Google Play Closed Testing (beta environment)
 
 Usage: fastlane beta_android
+
+NOTE: Closed Testing allows wider beta tester groups (vs Internal Testing for stage)
+
+### android stage_android
+
+```sh
+[bundle exec] fastlane android stage_android
+```
+
+Build and deploy to Google Play Internal Testing (stage environment)
+
+Usage: fastlane stage_android
+
+### android qual_android
+
+```sh
+[bundle exec] fastlane android qual_android
+```
+
+Build and install qual debug APK to local emulator/device
+
+Usage: fastlane qual_android
 
 ### android publish_internal_draft
 
@@ -114,6 +136,16 @@ Usage: fastlane publish_internal_draft
 Promote internal track release to production
 
 Usage: fastlane promote_to_production
+
+### android prod_android
+
+```sh
+[bundle exec] fastlane android prod_android
+```
+
+Build and deploy to Google Play Production (full release)
+
+Usage: fastlane prod_android
 
 ### android validate_signing
 

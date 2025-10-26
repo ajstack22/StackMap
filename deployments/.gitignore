@@ -1,0 +1,12 @@
+# Deployment Reports
+# Keep the directory structure but ignore all reports by default
+# (Reports can be selectively added if needed for documentation)
+
+# Ignore all files
+*
+
+# But keep this .gitignore file
+!.gitignore
+
+# Optionally keep a README
+!README.md

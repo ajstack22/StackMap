@@ -1,0 +1,22 @@
+// ============================================
+// Qual Environment Configuration
+// ============================================
+// This configuration is used for qual deployment (local testing)
+// Bundle ID suffix allows side-by-side installation with other environments
+
+// Include CocoaPods configuration
+#include? "Pods/Target Support Files/Pods-StackMap/Pods-StackMap.qual.xcconfig"
+
+// Bundle Identifier (unique for qual environment)
+PRODUCT_BUNDLE_IDENTIFIER = app.stackmap.qual
+
+// App Display Name (shown on home screen)
+PRODUCT_NAME = StackMap QUAL
+
+// Build Type Environment (accessible at runtime via Info.plist)
+BUILD_TYPE_ENV = qual
+
+// Code signing (use development provisioning for qual)
+CODE_SIGN_IDENTITY = Apple Development
+CODE_SIGN_STYLE = Automatic
+DEVELOPMENT_TEAM = 84W9WSYQQB

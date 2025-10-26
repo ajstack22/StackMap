@@ -5,7 +5,50 @@
 - Current Feature: Edit Mode List Refactor (converting cards to list view)
 - NOT working on: Sync fixes, documentation cleanup, or old issues
 
-## 🤖 ATLAS WORKFLOW SYSTEM
+## 🤖 ATLAS SKILLS SYSTEM (RECOMMENDED)
+StackMap now uses **Atlas Skills** for structured development - a more efficient, executable alternative to the documentation-based Atlas workflow.
+
+### Quick Start with Skills
+
+**Automatic tier selection** (recommended):
+```
+"[Task description]"
+```
+Claude will automatically analyze and route to the appropriate workflow tier.
+
+**Explicit tier selection**:
+```
+"[Task description]. Use Atlas [Quick|Iterative|Standard|Full] workflow."
+```
+
+### Available Skills
+
+**Core Workflow Tiers:**
+- **atlas-meta**: Orchestrator (routes to appropriate tier)
+- **atlas-quick**: Trivial changes (5-15 min)
+- **atlas-iterative**: Changes needing validation (15-30 min)
+- **atlas-standard**: Most tasks - DEFAULT (30-60 min) ⭐
+- **atlas-full**: Complex features (2-4 hours)
+
+**Agent Skills:**
+- **atlas-agent-developer**: Implementation (Sonnet)
+- **atlas-agent-peer-reviewer**: Deep reviews (Opus)
+- **atlas-agent-product-manager**: Stories (Sonnet)
+- **atlas-agent-devops**: Deployment (Sonnet)
+- **atlas-agent-security**: Security audits (Sonnet)
+
+### Benefits
+
+- **12x more efficient**: 400 tokens vs 5,000 tokens
+- **Progressive disclosure**: Load only what's needed
+- **Automated validation**: Scripts enforce quality gates
+- **StackMap integration**: All conventions built-in
+
+**📖 Full Documentation**: See [atlas-skills/README.md](./atlas-skills/README.md)
+
+---
+
+## 🤖 ATLAS WORKFLOW SYSTEM (Legacy - use Atlas Skills instead)
 StackMap uses the **Atlas Framework** for structured development workflows. Choose the right tier:
 
 ### Quick Workflow (5-15 min) - Trivial Changes
@@ -14,6 +57,13 @@ StackMap uses the **Atlas Framework** for structured development workflows. Choo
 ```
 **Use for:** Color changes, text updates, typo fixes, single-line changes
 **Phases:** Make change → Deploy
+
+### Iterative Workflow (15-30 min) - Changes Needing Validation
+```
+"[CHANGE DESCRIPTION]. Use Atlas Iterative workflow."
+```
+**Use for:** Style improvements, simple UI tweaks, straightforward refactors needing peer review
+**Phases:** Make change → Peer review (repeat until passes) → Deploy
 
 ### Standard Workflow (30-60 min) - Most Tasks ⭐ **DEFAULT**
 ```
@@ -64,6 +114,8 @@ StackMap uses the **Atlas Framework** for structured development workflows. Choo
 **API Endpoints:** stackmap.app/qual/api (QUAL), stackmap.app/stage/api (STAGE, shares Qual DB), stackmap.app/beta/api (BETA, Prod DB), stackmap.app/api (PROD)
 **Commit Messages:** Update `PENDING_CHANGES.md` before deploying for descriptive commit messages
 **iOS Production:** Now fully automated! No manual Xcode steps required - builds, uploads, and prepares for review
+**iOS Bundle IDs:** Single bundle ID (`app.stackmap`) for stage/beta/prod, differentiated via TestFlight groups. QUAL uses `app.stackmap.qual` for local testing only.
+**Android Package:** Single package name (`com.stackmapnative`) for all environments, differentiated via build variants
 **Master Script:** Always use `./scripts/deploy.sh [tier] [options]` - validates before delegating to tier scripts
 **For all deployment details:** See `docs/deployment/README.md`
 **Beta deployment guide:** See `docs/deployment/BETA_DEPLOYMENT_GUIDE.md`

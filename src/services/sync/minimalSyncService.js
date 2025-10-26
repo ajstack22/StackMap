@@ -19,10 +19,12 @@ import nacl from 'tweetnacl';
 import conflictResolver from './conflictResolver';
 // Use fixed encryption service that works on iOS
 import encryptionService from './encryptionServiceFixed';
+// Import build configuration for API URL
+import { getCurrentApiUrl } from '../../config/buildConfig';
 
 class MinimalSyncService {
   constructor() {
-    
+
     // Constructor initialization
     this.syncId = null;
     this.deviceId = null;
@@ -31,7 +33,7 @@ class MinimalSyncService {
     this.isEnabled = false;
     this.lastPullTime = 0;
     this.onDataReceived = null; // Callback for when new data arrives
-    
+
     // Load existing sync ID on initialization
     // Using setTimeout to prevent blocking the constructor and ensure AsyncStorage is ready
     // This pattern was proven to work in the old syncService
@@ -40,69 +42,11 @@ class MinimalSyncService {
       }).catch(error => {
       });
     }, 1000); // 1 second delay, same as old syncService
-    
-    // Determine API URL based on environment
-    try {
-      if (typeof window !== 'undefined' && window.location) {
-        // Web environment - safely access location properties
-        const hostname = window.location.hostname || '';
-        const href = window.location.href || '';
 
-        if (hostname === 'localhost' || hostname === '127.0.0.1') {
-          // Local development - use relative URL to go through webpack proxy
-          this.API_BASE = '/api/sync';
-        } else if (href.includes('/qual/') || href.includes('qual.')) {
-          // QUAL environment - check for /qual/ in URL or qual subdomain
-          this.API_BASE = 'https://stackmap.app/qual/api/sync';
-        } else {
-          // Production
-          this.API_BASE = 'https://stackmap.app/api/sync';
-        }
-      } else {
-        // No window.location available, use mobile logic
-        this.setMobileApiUrl();
-      }
-    } catch (e) {
-      // Fallback if window.location access fails
-      this.API_BASE = 'https://stackmap.app/api/sync';
-    }
-    
-    
-    // Initialize device ID synchronously with a placeholder
-    this.deviceId = null;
-    // Then initialize it properly (async)
-    this.initDeviceId();
-    
-    // Track encryption initialization
-    this.encryptionReady = false;
-  }
+    // Use centralized build configuration for API URL
+    // Call at runtime to allow environment changes in tests
+    this.API_BASE = getCurrentApiUrl();
 
-  setMobileApiUrl() {
-    // Mobile environments
-    // Check if we're in development mode using __DEV__ global
-    // __DEV__ is true in debug builds, false in release builds
-    let isDevelopment = false;
-
-    try {
-      isDevelopment = typeof __DEV__ !== 'undefined' ? __DEV__ : true; // Default to development when __DEV__ is missing
-    } catch (e) {
-      // If __DEV__ doesn't exist or errors, assume development
-      isDevelopment = true;
-    }
-
-    if (Platform.OS === 'ios' || Platform.OS === 'android') {
-      // Use appropriate API based on build type
-      if (isDevelopment) {
-        // Development/Debug builds use QUAL
-        this.API_BASE = 'https://stackmap.app/qual/api/sync';
-      } else {
-        // Production/Release builds use production API
-        this.API_BASE = 'https://stackmap.app/api/sync';
-      }
-    } else {
-      // Default for other non-web environments
-      this.API_BASE = 'https://stackmap.app/api/sync';
-    }
 
     // Initialize device ID synchronously with a placeholder
     this.deviceId = null;
@@ -123,6 +67,7 @@ class MinimalSyncService {
     // Check for recovery phrase in URL fragment
     this.checkForRecoveryPhrase();
   }
+
 
   async initDeviceId() {
     try {
@@ -218,34 +163,42 @@ class MinimalSyncService {
    */
   checkForRecoveryPhrase() {
     // Only run on web platform - window.location doesn't exist on React Native
-    if (typeof window === 'undefined' || 
-        typeof window.location === 'undefined' ||
-        !window.location || 
-        !window.location.hash) {
+    if (typeof window === 'undefined') {
       return;
     }
-    
-    const fragment = window.location.hash.substring(1);
-    
-    // Clear immediately
-    if (fragment) {
-      window.history.replaceState(
-        null,
-        document.title,
-        window.location.pathname + window.location.search
-      );
-      
-      // Use if it looks like a recovery phrase (32 hex characters)
-      if (fragment.length === 32 && /^[a-f0-9]+$/i.test(fragment)) {
-        this.pendingRecoveryPhrase = fragment;
-        
-        // Clear from memory after 10 seconds if unused
-        setTimeout(() => {
-          if (this.pendingRecoveryPhrase === fragment) {
-            this.pendingRecoveryPhrase = null;
-          }
-        }, 10000);
+
+    try {
+      // Safely access window.location
+      const location = window.location;
+      if (!location || !location.hash) {
+        return;
       }
+
+      const fragment = location.hash.substring(1);
+
+      // Clear immediately
+      if (fragment) {
+        window.history.replaceState(
+          null,
+          document.title,
+          location.pathname + location.search
+        );
+
+        // Use if it looks like a recovery phrase (32 hex characters)
+        if (fragment.length === 32 && /^[a-f0-9]+$/i.test(fragment)) {
+          this.pendingRecoveryPhrase = fragment;
+
+          // Clear from memory after 10 seconds if unused
+          setTimeout(() => {
+            if (this.pendingRecoveryPhrase === fragment) {
+              this.pendingRecoveryPhrase = null;
+            }
+          }, 10000);
+        }
+      }
+    } catch (e) {
+      // Gracefully handle window.location access errors (e.g., in tests or restricted environments)
+      return;
     }
   }
 

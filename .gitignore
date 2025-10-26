@@ -106,6 +106,9 @@ ios/StackMapNative 20*
 ios/*.crash
 ios/*.ips
 
+# iOS Info.plist backup (created during fastlane stage/beta deployment)
+ios/StackMapNative/Info.plist.backup
+
 # Temporary tools
 icon-color-preview.html
 
@@ -173,3 +176,7 @@ tsconfig.tsbuildinfo
 .manylla-env
 atlas/
 .claude/
+
+# Deployment state files
+.deployment/
+deployments/current-status.html

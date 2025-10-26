@@ -618,12 +618,33 @@ _update_status_page_html() {
         refresh_interval="999999"  # Effectively disable
     fi
 
-    # Generate status messages
+    # Generate status messages (tier-aware)
     local validation_msg="Checking environment, git status, and credentials..."
     local tests_msg="Running test suite..."
     local web_msg="Building and deploying web application..."
-    local ios_msg="Building and uploading to TestFlight..."
-    local android_msg="Building and uploading to Play Store..."
+
+    # Tier-specific iOS/Android messages
+    local ios_msg=""
+    local android_msg=""
+
+    case "$tier" in
+        qual)
+            ios_msg="Building for iOS simulators..."
+            android_msg="Building for Android devices/emulators..."
+            ;;
+        stage)
+            ios_msg="Building and uploading to TestFlight Internal..."
+            android_msg="Building and uploading to Play Console Internal Testing..."
+            ;;
+        beta)
+            ios_msg="Building and uploading to TestFlight External..."
+            android_msg="Building and uploading to Play Console Closed Testing..."
+            ;;
+        prod)
+            ios_msg="Building and uploading to App Store..."
+            android_msg="Building and uploading to Play Store..."
+            ;;
+    esac
 
     [ "$STATUS_VALIDATION" = "success" ] && validation_msg="Environment validated successfully"
     [ "$STATUS_VALIDATION" = "failed" ] && validation_msg="Validation failed - check logs"
@@ -631,15 +652,30 @@ _update_status_page_html() {
     [ "$STATUS_TESTS" = "success" ] && tests_msg="All tests passed"
     [ "$STATUS_TESTS" = "failed" ] && tests_msg="Some tests failed - check logs"
 
-    [ "$STATUS_WEB" = "success" ] && web_msg="Deployed to $APP_URL_QUAL"
+    [ "$STATUS_WEB" = "success" ] && web_msg="Deployed to https://stackmap.app/${tier}"
     [ "$STATUS_WEB" = "failed" ] && web_msg="Web deployment failed"
     [ "$STATUS_WEB" = "skipped" ] && web_msg="Web deployment skipped"
 
-    [ "$STATUS_IOS" = "success" ] && ios_msg="Uploaded to TestFlight successfully"
+    # Tier-specific success messages
+    if [ "$STATUS_IOS" = "success" ]; then
+        case "$tier" in
+            qual) ios_msg="Deployed to simulators (iPhone & iPad)" ;;
+            stage) ios_msg="Uploaded to TestFlight Internal successfully" ;;
+            beta) ios_msg="Uploaded to TestFlight External successfully" ;;
+            prod) ios_msg="Uploaded to App Store successfully" ;;
+        esac
+    fi
     [ "$STATUS_IOS" = "failed" ] && ios_msg="iOS deployment failed"
     [ "$STATUS_IOS" = "skipped" ] && ios_msg="iOS deployment skipped"
 
-    [ "$STATUS_ANDROID" = "success" ] && android_msg="Uploaded to Play Store successfully"
+    if [ "$STATUS_ANDROID" = "success" ]; then
+        case "$tier" in
+            qual) android_msg="Deployed to connected devices/emulators" ;;
+            stage) android_msg="Uploaded to Play Console Internal Testing successfully" ;;
+            beta) android_msg="Uploaded to Play Console Closed Testing successfully" ;;
+            prod) android_msg="Uploaded to Play Store successfully" ;;
+        esac
+    fi
     [ "$STATUS_ANDROID" = "failed" ] && android_msg="Android deployment failed"
     [ "$STATUS_ANDROID" = "skipped" ] && android_msg="Android deployment skipped"
 
@@ -647,6 +683,12 @@ _update_status_page_html() {
     local auto_refresh_msg="Page will auto-refresh every ${STATUS_PAGE_REFRESH_INTERVAL}s"
     if [ "$STATUS_PAGE_AUTO_REFRESH" != "true" ]; then
         auto_refresh_msg="Auto-refresh disabled"
+    fi
+
+    # Load quality gate status
+    if [ -f "$project_root/scripts/deploy/lib/quality-status.sh" ]; then
+        source "$project_root/scripts/deploy/lib/quality-status.sh"
+        update_quality_status_from_results "$tier"
     fi
 
     # Replace all placeholders in template
@@ -681,6 +723,31 @@ _update_status_page_html() {
         -e "s|{{PLAY_CONSOLE_APP_ID}}|${PLAY_CONSOLE_APP_ID}|g" \
         -e "s|{{LAST_UPDATE}}|$(date '+%Y-%m-%d %H:%M:%S')|g" \
         -e "s|{{AUTO_REFRESH_MESSAGE}}|${auto_refresh_msg}|g" \
+        -e "s|{{QUALITY_STATUS}}|${QUALITY_STATUS:-pending}|g" \
+        -e "s|{{QUALITY_ICON}}|${QUALITY_ICON:-⏳}|g" \
+        -e "s|{{QUALITY_MESSAGE}}|${QUALITY_MESSAGE:-Running quality gates...}|g" \
+        -e "s|{{QUALITY_DISPLAY}}|${QUALITY_DISPLAY:-}|g" \
+        -e "s|{{QUALITY_AUDIT_RESULT}}|${QUALITY_AUDIT_RESULT:-Pending}|g" \
+        -e "s|{{QUALITY_AUDIT_DETAILS}}|${QUALITY_AUDIT_DETAILS:-}|g" \
+        -e "s|{{QUALITY_AUDIT_COLOR}}|${QUALITY_AUDIT_COLOR:-text-gray-400}|g" \
+        -e "s|{{QUALITY_LINT_RESULT}}|${QUALITY_LINT_RESULT:-Pending}|g" \
+        -e "s|{{QUALITY_LINT_DETAILS}}|${QUALITY_LINT_DETAILS:-}|g" \
+        -e "s|{{QUALITY_LINT_COLOR}}|${QUALITY_LINT_COLOR:-text-gray-400}|g" \
+        -e "s|{{QUALITY_TS_RESULT}}|${QUALITY_TS_RESULT:-Pending}|g" \
+        -e "s|{{QUALITY_TS_DETAILS}}|${QUALITY_TS_DETAILS:-}|g" \
+        -e "s|{{QUALITY_TS_COLOR}}|${QUALITY_TS_COLOR:-text-gray-400}|g" \
+        -e "s|{{QUALITY_LICENSE_RESULT}}|${QUALITY_LICENSE_RESULT:-Pending}|g" \
+        -e "s|{{QUALITY_LICENSE_DETAILS}}|${QUALITY_LICENSE_DETAILS:-}|g" \
+        -e "s|{{QUALITY_LICENSE_COLOR}}|${QUALITY_LICENSE_COLOR:-text-gray-400}|g" \
+        -e "s|{{QUALITY_SONAR_RESULT}}|${QUALITY_SONAR_RESULT:-Pending}|g" \
+        -e "s|{{QUALITY_SONAR_DETAILS}}|${QUALITY_SONAR_DETAILS:-}|g" \
+        -e "s|{{QUALITY_SONAR_COLOR}}|${QUALITY_SONAR_COLOR:-text-gray-400}|g" \
+        -e "s|{{QUALITY_OVERALL_STATUS}}|${QUALITY_OVERALL_STATUS:-Pending}|g" \
+        -e "s|{{QUALITY_OVERALL_MESSAGE}}|${QUALITY_OVERALL_MESSAGE:-Running quality checks...}|g" \
+        -e "s|{{QUALITY_OVERALL_ICON}}|${QUALITY_OVERALL_ICON:-⏳}|g" \
+        -e "s|{{QUALITY_OVERALL_COLOR}}|${QUALITY_OVERALL_COLOR:-text-gray-400}|g" \
+        -e "s|{{QUALITY_OVERALL_BG}}|${QUALITY_OVERALL_BG:-bg-gray-900}|g" \
+        -e "s|{{QUALITY_OVERALL_BORDER}}|${QUALITY_OVERALL_BORDER:-border-gray-700}|g" \
         -e "s|{{SCAN_DISPLAY}}|${SCAN_DISPLAY}|g" \
         -e "s|{{SCAN_SMOKE_RESULT}}|${SCAN_SMOKE_RESULT}|g" \
         -e "s|{{SCAN_SMOKE_DETAILS}}|${SCAN_SMOKE_DETAILS}|g" \
@@ -765,6 +832,17 @@ open_status_page() {
 # Initialize report tracking variables if not set
 if [ -z "$DEPLOYMENT_START_TIME" ]; then
     export DEPLOYMENT_START_TIME=$(date +%s)
+fi
+
+# Initialize status page auto-refresh settings if not set
+if [ -z "$STATUS_PAGE_AUTO_REFRESH" ]; then
+    export STATUS_PAGE_AUTO_REFRESH=true  # Enable auto-refresh during deployment
+fi
+if [ -z "$STATUS_PAGE_REFRESH_INTERVAL" ]; then
+    export STATUS_PAGE_REFRESH_INTERVAL=5  # Refresh every 5 seconds
+fi
+if [ -z "$AUTO_OPEN_STATUS_PAGE" ]; then
+    export AUTO_OPEN_STATUS_PAGE=true  # Auto-open in browser
 fi
 
 # Export functions

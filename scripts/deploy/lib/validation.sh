@@ -366,6 +366,7 @@ validate_dependencies() {
 
 run_full_validation() {
     local tier="${1:-qual}"
+    local run_quality_gates="${2:-true}"
 
     log_header "🔍 Pre-Deployment Validation: $(echo "$tier" | tr '[:lower:]' '[:upper:]')"
 
@@ -379,6 +380,18 @@ run_full_validation() {
     # Only validate credentials for stage/beta/prod
     if [ "$tier" != "qual" ]; then
         validate_credentials "$tier" || validation_failed=true
+    fi
+
+    # Run quality gates if enabled
+    if [ "$run_quality_gates" = "true" ]; then
+        # Source quality gates library
+        local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        if [ -f "$script_dir/quality-gates.sh" ]; then
+            source "$script_dir/quality-gates.sh"
+            run_all_quality_gates "$tier" || validation_failed=true
+        else
+            log_warning "Quality gates script not found, skipping quality checks"
+        fi
     fi
 
     echo ""

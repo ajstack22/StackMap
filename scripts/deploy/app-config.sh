@@ -109,7 +109,7 @@ export APP_DEPLOYMENT_STATE_DIR=".deployment/state"
 # ============================================
 
 # Test simulator/device names
-export APP_IOS_TEST_PHONE="iPhone 16 Pro Max"
+export APP_IOS_TEST_PHONE="iPhone 16 Pro"
 export APP_IOS_TEST_TABLET="iPad Pro 11-inch (M4)"
 
 # Android test configuration

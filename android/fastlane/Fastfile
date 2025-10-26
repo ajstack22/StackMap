@@ -39,7 +39,7 @@ platform :android do
   # SAFEGUARD #1: Credential Security
   # ========================================
 
-  desc "Store Google Play service account JSON path in macOS Keychain"
+  desc "Store all Android credentials in macOS Keychain"
   desc "Usage: fastlane store_credentials_in_keychain"
   lane :store_credentials_in_keychain do
     UI.important("This will store your credentials securely in macOS Keychain")
@@ -52,14 +52,31 @@ platform :android do
       UI.user_error!("File not found: #{json_key_path}")
     end
 
-    # Store in Keychain
+    # Store Play Store JSON path in Keychain
     sh("security add-generic-password -a 'stackmap-android' -s 'stackmap-play-store-json-path' -w '#{json_key_path}' -U")
 
-    UI.success("Credentials stored in Keychain!")
-    UI.message("Service: stackmap-play-store-json-path")
-    UI.message("Account: stackmap-android")
+    UI.success("Play Store credentials stored!")
+
+    # Prompt for keystore passwords
+    UI.message("")
+    UI.important("Now storing keystore passwords...")
+
+    store_password = UI.password("Enter keystore store password:")
+    key_password = UI.password("Enter keystore key password:")
+
+    # Store keystore passwords in Keychain
+    sh("security add-generic-password -a 'stackmap-android' -s 'stackmap-keystore-store-password' -w '#{store_password}' -U")
+    sh("security add-generic-password -a 'stackmap-android' -s 'stackmap-keystore-key-password' -w '#{key_password}' -U")
+
+    UI.success("All credentials stored in Keychain!")
+    UI.message("")
+    UI.message("Keychain entries:")
+    UI.message("  - stackmap-play-store-json-path (account: stackmap-android)")
+    UI.message("  - stackmap-keystore-store-password (account: stackmap-android)")
+    UI.message("  - stackmap-keystore-key-password (account: stackmap-android)")
     UI.message("")
     UI.message("Fastlane will now read credentials from Keychain automatically")
+    UI.message("You can remove STACKMAP_STORE_PASSWORD and STACKMAP_KEY_PASSWORD from your shell config")
   end
 
   desc "Read Google Play JSON key path from macOS Keychain"
@@ -68,14 +85,46 @@ platform :android do
     keychain_path = read_from_keychain("stackmap-play-store-json-path", "stackmap-android")
 
     if keychain_path && !keychain_path.empty?
-      UI.message("Using JSON key from Keychain: #{keychain_path}")
+      UI.message("Using JSON key from Keychain")
       keychain_path
     elsif ENV["PLAY_STORE_JSON_KEY_PATH"]
-      UI.message("Using JSON key from ENV: #{ENV["PLAY_STORE_JSON_KEY_PATH"]}")
+      UI.message("Using JSON key from ENV")
       ENV["PLAY_STORE_JSON_KEY_PATH"]
     else
       # No credentials found
       UI.user_error!("Google Play JSON key not found. Run: fastlane store_credentials_in_keychain")
+    end
+  end
+
+  desc "Read keystore store password from macOS Keychain"
+  private_lane :get_keystore_store_password do
+    # Try Keychain first
+    keychain_password = read_from_keychain("stackmap-keystore-store-password", "stackmap-android")
+
+    if keychain_password && !keychain_password.empty?
+      UI.message("✅ Using keystore store password from Keychain")
+      keychain_password
+    elsif ENV["STACKMAP_STORE_PASSWORD"]
+      UI.important("⚠️  Using keystore store password from ENV (consider migrating to Keychain)")
+      ENV["STACKMAP_STORE_PASSWORD"]
+    else
+      UI.user_error!("Keystore store password not found. Run: fastlane store_credentials_in_keychain")
+    end
+  end
+
+  desc "Read keystore key password from macOS Keychain"
+  private_lane :get_keystore_key_password do
+    # Try Keychain first
+    keychain_password = read_from_keychain("stackmap-keystore-key-password", "stackmap-android")
+
+    if keychain_password && !keychain_password.empty?
+      UI.message("✅ Using keystore key password from Keychain")
+      keychain_password
+    elsif ENV["STACKMAP_KEY_PASSWORD"]
+      UI.important("⚠️  Using keystore key password from ENV (consider migrating to Keychain)")
+      ENV["STACKMAP_KEY_PASSWORD"]
+    else
+      UI.user_error!("Keystore key password not found. Run: fastlane store_credentials_in_keychain")
     end
   end
 
@@ -101,13 +150,20 @@ platform :android do
     UI.message("Location: app/build/outputs/apk/debug/app-debug.apk")
   end
 
-  desc "Build signed release APK and AAB"
+  desc "Build signed release APK and AAB (production flavor)"
   desc "Usage: fastlane build_release"
   lane :build_release do
-    # Validate environment variables
-    unless ENV["STACKMAP_STORE_PASSWORD"] && ENV["STACKMAP_KEY_PASSWORD"]
-      UI.user_error!("Missing keystore credentials in environment variables")
-    end
+    build_release_flavor(flavor: "prod")
+  end
+
+  desc "Build signed release AAB for a specific flavor"
+  desc "Usage: fastlane build_release_flavor flavor:beta"
+  private_lane :build_release_flavor do |options|
+    flavor = options[:flavor] || "prod"
+
+    # Get keystore passwords from Keychain (SAFEGUARD #1)
+    store_password = get_keystore_store_password
+    key_password = get_keystore_key_password
 
     # SAFEGUARD #3: Metro Cache Invalidation
     UI.message("Clearing Metro bundler cache...")
@@ -123,40 +179,43 @@ platform :android do
 
     sh("rm -rf ./app/build 2>/dev/null || true")
 
-    # Build AAB (required for Play Store)
-    UI.message("Building release AAB with --reset-cache...")
+    # Capitalize flavor for Gradle task (e.g., beta -> Beta)
+    flavor_capitalized = flavor.capitalize
+
+    # Build AAB (required for Play Store) with specific flavor
+    UI.message("Building #{flavor} release AAB...")
     gradle(
-      task: "bundleRelease",
+      task: "bundle#{flavor_capitalized}Release",
       project_dir: "./",
       print_command: false,  # Don't print passwords
       flags: "--no-daemon",
       properties: {
         "MYAPP_RELEASE_STORE_FILE" => "stackmap-release.keystore",
         "MYAPP_RELEASE_KEY_ALIAS" => "stackmap",
-        "MYAPP_RELEASE_STORE_PASSWORD" => ENV["STACKMAP_STORE_PASSWORD"],
-        "MYAPP_RELEASE_KEY_PASSWORD" => ENV["STACKMAP_KEY_PASSWORD"],
+        "MYAPP_RELEASE_STORE_PASSWORD" => store_password,
+        "MYAPP_RELEASE_KEY_PASSWORD" => key_password,
         "reactNativeArchitectures" => "armeabi-v7a,arm64-v8a,x86,x86_64"
       }
     )
 
     # Also build APK for direct distribution
-    UI.message("Building release APK...")
+    UI.message("Building #{flavor} release APK...")
     gradle(
-      task: "assembleRelease",
+      task: "assemble#{flavor_capitalized}Release",
       project_dir: "./",
       print_command: false,
       flags: "--no-daemon",
       properties: {
         "MYAPP_RELEASE_STORE_FILE" => "stackmap-release.keystore",
         "MYAPP_RELEASE_KEY_ALIAS" => "stackmap",
-        "MYAPP_RELEASE_STORE_PASSWORD" => ENV["STACKMAP_STORE_PASSWORD"],
-        "MYAPP_RELEASE_KEY_PASSWORD" => ENV["STACKMAP_KEY_PASSWORD"]
+        "MYAPP_RELEASE_STORE_PASSWORD" => store_password,
+        "MYAPP_RELEASE_KEY_PASSWORD" => key_password
       }
     )
 
-    UI.success("Release builds completed successfully!")
-    UI.message("AAB: app/build/outputs/bundle/release/app-release.aab")
-    UI.message("APK: app/build/outputs/apk/release/app-release.apk")
+    UI.success("#{flavor} release builds completed successfully!")
+    UI.message("AAB: app/build/outputs/bundle/#{flavor}Release/app-#{flavor}-release.aab")
+    UI.message("APK: app/build/outputs/apk/#{flavor}/release/app-#{flavor}-release.apk")
   end
 
   # ========================================
@@ -273,30 +332,94 @@ platform :android do
   end
 
   # ========================================
-  # DEPLOYMENT LANES
-  # SAFEGUARD #4: Basic Retry Logic
+  # HELPER LANE: Generate deployment summary
   # ========================================
 
-  desc "Build and deploy to Google Play Internal Testing"
-  desc "Usage: fastlane beta_android"
-  lane :beta_android do
-    # Step 1: Validate environment
-    validate_signing
+  desc "Generate deployment summary markdown file"
+  private_lane :generate_deployment_summary do |options|
+    platform = options[:platform] || "Android"
+    env = options[:env] || "unknown"
+    version = options[:version] || "unknown"
+    build = options[:build] || "unknown"
+    success = options[:success].nil? ? true : options[:success]
 
-    # Step 2: Check and increment version if needed (SAFEGUARD #2)
-    check_and_increment_version
+    # Create deployments directory if needed
+    deployments_dir = "../../deployments/#{platform.downcase}"
+    sh("mkdir -p #{deployments_dir}")
 
-    # Step 3: Run critical tests (optional - comment out if not needed)
-    UI.message("Running pre-deployment tests...")
-    # test_critical  # Uncomment when tests are ready
+    # Generate filename with timestamp
+    timestamp = Time.now.strftime("%Y-%m-%d_%H-%M-%S")
+    filename = "#{deployments_dir}/#{timestamp}-#{env}-#{version}.md"
 
-    # Step 4: Build release AAB (includes SAFEGUARD #3 - cache clearing)
-    UI.message("Building release AAB...")
-    build_release
+    # Read PENDING_CHANGES.md if available
+    changes = "No changes documented"
+    pending_changes_path = "../../PENDING_CHANGES.md"
+    if File.exist?(pending_changes_path)
+      content = File.read(pending_changes_path, encoding: 'UTF-8')
+      # Strip BOM if present (handles UTF-8 BOM: 0xEF 0xBB 0xBF)
+      content = content.sub(/\A\xEF\xBB\xBF/, '')
 
-    # Step 5: Upload to Play Store Internal Testing with retry logic
-    # SAFEGUARD #4: Basic Retry Logic
-    UI.message("Uploading to Google Play Internal Testing...")
+      # Extract title and changes
+      title_match = content.match(/^## Title:\s*(.+)$/i)
+      changes_match = content.match(/^### Changes Made:\s*\n([\s\S]+?)(?=\n###|\n##|$)/i)
+
+      if title_match && changes_match
+        changes = "**#{title_match[1].strip}**\n\n#{changes_match[1].strip}"
+      end
+    end
+
+    # Get git info
+    git_branch = sh("git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown'").strip
+    git_sha = sh("git rev-parse --short HEAD 2>/dev/null || echo 'unknown'").strip
+
+    # Generate markdown content
+    status_emoji = success ? "✅" : "❌"
+    markdown = <<~MARKDOWN
+      # #{platform} #{env.upcase} Deployment - #{Time.now.strftime("%Y-%m-%d %H:%M:%S")}
+
+      **Status:** #{status_emoji} #{success ? 'Success' : 'Failed'}
+
+      ## Version Info
+      - **Version:** #{version}
+      - **Build:** #{build}
+      - **Platform:** #{platform}
+      - **Environment:** #{env}
+
+      ## Git Info
+      - **Branch:** #{git_branch}
+      - **Commit:** #{git_sha}
+
+      ## Changes
+
+      #{changes}
+
+      ---
+      *Generated by fastlane #{platform.downcase}_#{env}*
+    MARKDOWN
+
+    # Write file
+    File.write(filename, markdown)
+    UI.success("📝 Deployment summary: #{filename}")
+
+    filename
+  end
+
+  # ========================================
+  # HELPER LANE: Upload to Play Store with retry logic
+  # Shared by stage_android and beta_android
+  # ========================================
+
+  private_lane :upload_to_play_store_with_retry do |options|
+    track = options[:track] || 'internal'
+    aab_path = options[:aab_path] || Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
+    build_type = options[:build_type] || 'stage'
+    release_notes = options[:release_notes]  # Optional release notes
+
+    unless File.exist?(aab_path)
+      UI.user_error!("❌ AAB not found at #{aab_path}")
+    end
+
+    UI.message("Uploading to Google Play #{track} track (#{build_type} environment)...")
 
     json_key = get_play_store_json_path  # SAFEGUARD #1: Keychain
 
@@ -305,20 +428,34 @@ platform :android do
     backoff_delays = [30, 60, 120]  # Exponential backoff: 30s, 60s, 120s
 
     begin
-      upload_to_play_store(
-        track: 'internal',
-        aab: 'app/build/outputs/bundle/release/app-release.aab',
+      # Build upload parameters
+      upload_params = {
+        track: track,
+        aab: aab_path,
         skip_upload_apk: true,
         skip_upload_metadata: true,
         skip_upload_images: true,
         skip_upload_screenshots: true,
         release_status: 'draft',  # Safe default - requires manual publish
         json_key: json_key
-      )
+      }
 
-      UI.success("Beta deployment completed!")
-      UI.message("Check Google Play Console to publish the draft release")
-      UI.message("URL: https://play.google.com/console/")
+      # Add release notes if provided (backward compatible)
+      if release_notes
+        upload_params[:release_notes] = { "en-US" => release_notes }
+      end
+
+      upload_to_play_store(upload_params)
+
+      UI.success("🎉 #{build_type.capitalize} deployment completed!")
+      UI.message("")
+      UI.message("Environment: #{build_type.upcase} (using #{build_type}/api endpoint)")
+      UI.message("Distribution: #{track} track")
+      UI.message("")
+      UI.message("Next steps:")
+      UI.message("1. Check Google Play Console to publish the draft release")
+      UI.message("2. URL: https://play.google.com/console/")
+      UI.message("3. Distribute to testers for #{build_type} environment testing")
 
     rescue => ex
       retry_count += 1
@@ -333,6 +470,197 @@ platform :android do
         UI.user_error!("Upload failed after #{max_retries} attempts: #{ex}")
       end
     end
+  end
+
+  desc "Load release notes from PENDING_CHANGES.md"
+  private_lane :load_release_notes_from_file do
+    pending_changes_path = "../../PENDING_CHANGES.md"
+
+    if File.exist?(pending_changes_path)
+      content = File.read(pending_changes_path, encoding: 'UTF-8')
+      # Strip BOM if present (handles UTF-8 BOM: 0xEF 0xBB 0xBF)
+      content = content.sub(/\A\xEF\xBB\xBF/, '')
+
+      # Extract title
+      title_match = content.match(/^## Title:\s*(.+)$/i)
+      title = title_match ? title_match[1].strip : nil
+
+      # Extract changes
+      changes_section = content.match(/^### Changes Made:\s*\n([\s\S]+?)(?=\n###|\n##|$)/i)
+      changes = changes_section ? changes_section[1].strip : nil
+
+      # Build release notes
+      if title && changes
+        release_notes = "#{title}\n\n#{changes}"
+        UI.message("📝 Loaded release notes from PENDING_CHANGES.md")
+        release_notes
+      else
+        UI.message("⚠️  PENDING_CHANGES.md exists but missing title or changes")
+        "Bug fixes and improvements"
+      end
+    else
+      UI.message("⚠️  PENDING_CHANGES.md not found, using default release notes")
+      "Bug fixes and improvements"
+    end
+  end
+
+  # ========================================
+  # DEPLOYMENT LANES
+  # SAFEGUARD #4: Basic Retry Logic (moved to shared helper)
+  # ========================================
+
+  desc "Build and deploy to Google Play Closed Testing (beta environment)"
+  desc "Usage: fastlane beta_android"
+  desc "NOTE: Closed Testing allows wider beta tester groups (vs Internal Testing for stage)"
+  lane :beta_android do
+    UI.message("🚀 Starting beta deployment pipeline (Closed Testing)...")
+
+    # Step 1: Validate environment
+    validate_signing
+
+    # Step 2: Check and increment version if needed (SAFEGUARD #2)
+    check_and_increment_version
+
+    # Step 3: Run critical tests (optional - comment out if not needed)
+    UI.message("Running pre-deployment tests...")
+    # test_critical  # Uncomment when tests are ready
+
+    # Step 4: Build release AAB using BETA flavor (BUILD_TYPE automatically set via buildConfigField)
+    UI.message("Building beta release AAB...")
+    build_release_flavor(flavor: "beta")
+
+    # Step 5: Upload to Play Store Closed Testing using shared helper
+    # Note: aab_path automatically uses GRADLE_AAB_OUTPUT_PATH from lane context (set by gradle action)
+    upload_to_play_store_with_retry(
+      track: 'closed',  # Closed Testing for wider beta groups
+      build_type: 'beta'
+    )
+
+    # Generate deployment summary
+    android_dir = Dir.pwd.end_with?('/fastlane') ? File.expand_path('..', Dir.pwd) : Dir.pwd
+    gradle_file = File.read(File.join(android_dir, "app/build.gradle"))
+    version_name = gradle_file.match(/versionName "(.+)"/)[1]
+    version_code = gradle_file.match(/versionCode (\d+)/)[1]
+
+    generate_deployment_summary(
+      platform: "Android",
+      env: "beta",
+      version: version_name,
+      build: version_code,
+      success: true
+    )
+  end
+
+  desc "Build and deploy to Google Play Internal Testing (stage environment)"
+  desc "Usage: fastlane stage_android"
+  lane :stage_android do
+    UI.message("🚀 Starting stage deployment pipeline (Internal track)...")
+
+    # Step 1: Validate environment
+    validate_signing
+
+    # Step 2: Check and increment version if needed (SAFEGUARD #2)
+    check_and_increment_version
+
+    # Step 3: Run critical tests (optional - comment out if not needed)
+    UI.message("Running pre-deployment tests...")
+    # test_critical  # Uncomment when tests are ready
+
+    # Step 4: Build release AAB using STAGE flavor (BUILD_TYPE automatically set via buildConfigField)
+    UI.message("Building stage release AAB...")
+    build_release_flavor(flavor: "stage")
+
+    # Step 5: Upload to Play Store Internal Testing using shared helper
+    # Note: aab_path automatically uses GRADLE_AAB_OUTPUT_PATH from lane context (set by gradle action)
+    upload_to_play_store_with_retry(
+      track: 'internal',
+      build_type: 'stage'
+    )
+
+    # Generate deployment summary
+    android_dir = Dir.pwd.end_with?('/fastlane') ? File.expand_path('..', Dir.pwd) : Dir.pwd
+    gradle_file = File.read(File.join(android_dir, "app/build.gradle"))
+    version_name = gradle_file.match(/versionName "(.+)"/)[1]
+    version_code = gradle_file.match(/versionCode (\d+)/)[1]
+
+    generate_deployment_summary(
+      platform: "Android",
+      env: "stage",
+      version: version_name,
+      build: version_code,
+      success: true
+    )
+  end
+
+  desc "Build and install qual debug APK to local emulator/device"
+  desc "Usage: fastlane qual_android"
+  lane :qual_android do
+    UI.message("🚀 Building qual debug APK for local testing...")
+
+    # SAFEGUARD #3: Metro Cache Invalidation
+    UI.message("Clearing Metro bundler cache...")
+    sh("rm -rf ../../node_modules/.cache 2>/dev/null || true")
+
+    # Clean build directory to ensure fresh build
+    UI.message("Cleaning build directory...")
+    gradle(
+      task: "clean",
+      project_dir: "./",  # Current directory (android)
+      flags: "--no-daemon"
+    )
+
+    # Build with proper flags
+    UI.message("Building qual debug APK...")
+    gradle(
+      task: "assembleQualDebug",
+      project_dir: "./",  # Current directory (android)
+      flags: "--no-daemon",  # Prevent Gradle daemon memory issues
+      print_command: true
+    )
+
+    # Verify APK was built (handle both running from android/ and android/fastlane/)
+    if Dir.pwd.end_with?('/fastlane')
+      # Running from android/fastlane/
+      apk_path = "../app/build/outputs/apk/qual/debug/app-qual-debug.apk"
+    else
+      # Running from android/
+      apk_path = "app/build/outputs/apk/qual/debug/app-qual-debug.apk"
+    end
+
+    # Convert to absolute path for reliability
+    apk_path = File.expand_path(apk_path)
+
+    unless File.exist?(apk_path)
+      UI.user_error!("Build failed: APK not found at #{apk_path}")
+    end
+
+    UI.success("✅ Qual APK built successfully!")
+    UI.message("APK location: #{apk_path}")
+
+    # Check for connected devices
+    devices = sh("adb devices 2>/dev/null | grep -E 'device$|emulator' | wc -l").strip.to_i
+
+    if devices > 0
+      UI.message("📱 Installing to connected device/emulator...")
+
+      begin
+        sh("adb install -r '#{apk_path}'")
+        UI.success("✅ Qual APK installed!")
+      rescue => ex
+        UI.important("⚠️ Installation failed, attempting uninstall and reinstall...")
+        sh("adb uninstall com.stackmapnative.qual 2>/dev/null || true")
+        sh("adb install '#{apk_path}'")
+        UI.success("✅ Qual APK installed after cleanup!")
+      end
+    else
+      UI.important("⚠️ No Android devices connected")
+      UI.message("Connect a device or start an emulator, then run:")
+      UI.message("  adb install -r '#{apk_path}'")
+    end
+
+    UI.message("")
+    UI.message("Package: com.stackmapnative.qual")
+    UI.message("Environment: QUAL (using qual/api endpoint)")
   end
 
   desc "Publish the current draft release to internal testing"
@@ -398,6 +726,57 @@ platform :android do
     end
   end
 
+  desc "Build and deploy to Google Play Production (full release)"
+  desc "Usage: fastlane prod_android"
+  lane :prod_android do
+    UI.message("🚀 Starting production deployment pipeline...")
+
+    # Step 1: Validate environment
+    validate_signing
+
+    # Step 2: Check and increment version if needed
+    check_and_increment_version
+
+    # Step 3: Build release AAB using PROD flavor
+    UI.message("Building prod release AAB...")
+    build_release_flavor(flavor: "prod")
+
+    # Step 4: Load release notes
+    release_notes = load_release_notes_from_file
+
+    # Step 5: Upload to Play Store Production using shared helper
+    # Note: aab_path automatically uses GRADLE_AAB_OUTPUT_PATH from lane context (set by gradle action)
+    upload_to_play_store_with_retry(
+      track: 'production',
+      build_type: 'prod',
+      release_notes: release_notes
+    )
+
+    # Generate deployment summary
+    android_dir = Dir.pwd.end_with?('/fastlane') ? File.expand_path('..', Dir.pwd) : Dir.pwd
+    gradle_file = File.read(File.join(android_dir, "app/build.gradle"))
+    version_name = gradle_file.match(/versionName "(.+)"/)[1]
+    version_code = gradle_file.match(/versionCode (\d+)/)[1]
+
+    generate_deployment_summary(
+      platform: "Android",
+      env: "prod",
+      version: version_name,
+      build: version_code,
+      success: true
+    )
+
+    UI.success("🎉 Production deployment complete!")
+    UI.message("")
+    UI.message("Environment: PROD")
+    UI.message("Bundle ID: com.stackmapnative")
+    UI.message("App Name: StackMap")
+    UI.message("")
+    UI.message("Next steps:")
+    UI.message("1. Check Google Play Console: https://play.google.com/console/")
+    UI.message("2. Review and publish the release")
+  end
+
   # ========================================
   # UTILITY LANES
   # ========================================
@@ -413,13 +792,9 @@ platform :android do
       UI.user_error!("Release keystore not found at: #{keystore_path}")
     end
 
-    unless ENV["STACKMAP_STORE_PASSWORD"]
-      UI.user_error!("STACKMAP_STORE_PASSWORD environment variable not set")
-    end
-
-    unless ENV["STACKMAP_KEY_PASSWORD"]
-      UI.user_error!("STACKMAP_KEY_PASSWORD environment variable not set")
-    end
+    # Validate credentials (from Keychain or ENV)
+    get_keystore_store_password
+    get_keystore_key_password
 
     UI.success("Signing configuration validated!")
     UI.message("Keystore: #{keystore_path}")

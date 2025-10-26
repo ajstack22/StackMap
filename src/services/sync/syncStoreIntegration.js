@@ -17,6 +17,8 @@ import { useUserStore, useSettingsStore, useLibraryStore } from '../../stores';
 import { normalizeSyncData } from '../../utils/dataNormalizer';
 import nacl from 'tweetnacl';
 import { encodeBase64, decodeBase64, encodeUTF8, decodeUTF8 } from 'tweetnacl-util';
+// Import build configuration for API URL
+import { API_URL } from '../../config/buildConfig';
 
 class SyncStoreIntegration {
   constructor() {
@@ -730,9 +732,9 @@ class SyncStoreIntegration {
       if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
           if (__DEV__) {
-            
+
           }
-          const mockUrl = `https://stackmap.app?share=${accessToken}`;
+          const mockUrl = `${API_URL.replace('/api/sync', '')}?share=${accessToken}`;
           return {
             share_id: 'mock-' + Date.now(),
             access_token: accessToken,
@@ -823,8 +825,8 @@ class SyncStoreIntegration {
       combined.set(encrypted, nonce.length);
       const encryptedData = encodeBase64(combined);
 
-      // Use the same API URL as minimalSync for consistency
-      const SHARE_API_URL = minimalSync.API_BASE || 'https://stackmap.app/api/sync';
+      // Use the same API URL as minimalSync (which uses buildConfig)
+      const SHARE_API_URL = minimalSync.API_BASE;
       const requestBody = {
         sync_id: minimalSync.syncId,
         user_id: userId,
@@ -1024,10 +1026,9 @@ class SyncStoreIntegration {
         device_id: deviceId
       };
       
-      // Try to delete from BOTH environments to ensure data is truly gone
+      // Delete from current environment (determined by buildConfig)
       const environments = [
-        { name: 'QUAL', url: 'https://stackmap.app/qual/api/sync/delete.php' },
-        { name: 'Production', url: 'https://stackmap.app/api/sync/delete.php' }
+        { name: 'Current Environment', url: `${API_URL}/delete.php` }
       ];
       
       let deletedFromAny = false;
@@ -1081,8 +1082,8 @@ class SyncStoreIntegration {
    */
   async deleteShare(shareId) {
     try {
-      // Use the same API URL as minimalSync for consistency
-      const SHARE_API_URL = minimalSync.API_BASE || 'https://stackmap.app/api/sync';
+      // Use the same API URL as minimalSync (which uses buildConfig)
+      const SHARE_API_URL = minimalSync.API_BASE;
       const deleteUrl = `${SHARE_API_URL}/delete_share.php`;
       
       const response = await fetch(deleteUrl, {
@@ -1205,16 +1206,8 @@ class SyncStoreIntegration {
    * Get API URL
    */
   getApiUrl() {
-    // This method is deprecated - API URL is determined dynamically based on environment
-    // Mobile: Uses minimalSyncService.js which detects debug/release
-    // Web: Uses window.location to detect qual vs prod
-    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
-      const pathname = window.location.pathname;
-      if (pathname.includes('/qual/')) {
-        return 'https://stackmap.app/qual/api/sync/';
-      }
-    }
-    return 'https://stackmap.app/api/sync/';
+    // Use centralized buildConfig for API URL
+    return API_URL;
   }
 
   /**
