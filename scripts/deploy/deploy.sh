@@ -158,6 +158,18 @@ fi
 # Export version for use throughout deployment
 export DEPLOYMENT_VERSION
 
+# Commit version changes for beta/prod (required for clean directory check)
+if [ "$TIER" = "beta" ] || [ "$TIER" = "prod" ]; then
+    if [ -f "$PROJECT_ROOT/package.json" ] && [ -f "$PROJECT_ROOT/app.json" ] && [ -f "$PROJECT_ROOT/src/utils/version.js" ]; then
+        if ! git diff --quiet package.json app.json src/utils/version.js 2>/dev/null; then
+            log_step "Committing version changes..."
+            git add package.json app.json src/utils/version.js
+            git commit -m "Bump version to $DEPLOYMENT_VERSION for $TIER deployment" -m "🤖 Generated with [Claude Code](https://claude.com/claude-code)" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
+            log_success "Version changes committed"
+        fi
+    fi
+fi
+
 # ============================================
 # Display Deployment Plan
 # ============================================
