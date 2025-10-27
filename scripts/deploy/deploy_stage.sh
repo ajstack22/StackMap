@@ -204,6 +204,22 @@ else
 fi
 echo ""
 
+# Update mobile versions (iOS and Android) before building
+if [ "$DEPLOY_IOS" = true ] || [ "$DEPLOY_ANDROID" = true ]; then
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "📱 Updating Mobile App Versions"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+
+    if "$SCRIPTS_ROOT/update-mobile-versions.sh"; then
+        echo -e "${GREEN}✅ Mobile versions updated${NC}"
+    else
+        echo -e "${RED}❌ Failed to update mobile versions${NC}"
+        exit 1
+    fi
+    echo ""
+fi
+
 # Track deployment status
 DEPLOYMENT_STATUS=""
 
