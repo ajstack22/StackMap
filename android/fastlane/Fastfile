@@ -436,7 +436,7 @@ platform :android do
         skip_upload_metadata: true,
         skip_upload_images: true,
         skip_upload_screenshots: true,
-        release_status: 'draft',  # Safe default - requires manual publish
+        release_status: build_type == 'stage' ? 'completed' : 'draft',  # Auto-publish stage (internal validation), draft for beta (requires review)
         json_key: json_key
       }
 
@@ -452,10 +452,17 @@ platform :android do
       UI.message("Environment: #{build_type.upcase} (using #{build_type}/api endpoint)")
       UI.message("Distribution: #{track} track")
       UI.message("")
-      UI.message("Next steps:")
-      UI.message("1. Check Google Play Console to publish the draft release")
-      UI.message("2. URL: https://play.google.com/console/")
-      UI.message("3. Distribute to testers for #{build_type} environment testing")
+      if build_type == 'stage'
+        UI.message("Next steps:")
+        UI.message("1. Release is live on internal track")
+        UI.message("2. Install from Play Store (internal testers only)")
+        UI.message("3. Validate #{build_type} environment testing")
+      else
+        UI.message("Next steps:")
+        UI.message("1. Check Google Play Console to publish the draft release")
+        UI.message("2. URL: https://play.google.com/console/")
+        UI.message("3. Distribute to testers for #{build_type} environment testing")
+      end
 
     rescue => ex
       retry_count += 1
