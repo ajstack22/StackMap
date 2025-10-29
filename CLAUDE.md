@@ -105,6 +105,10 @@ StackMap uses the **Atlas Framework** for structured development workflows. Choo
 ./scripts/deploy.sh qual --android       # Deploy Android only
 ./scripts/deploy.sh beta --all           # Deploy all platforms (default)
 
+# Performance options (QUAL tier):
+./scripts/deploy.sh qual --all           # Parallel builds ENABLED (default, ~50% faster)
+./scripts/deploy.sh qual --all --no-parallel  # Sequential builds (for debugging)
+
 # ⚠️ IMPORTANT: Always use ./scripts/deploy.sh (master script)
 # - Handles validation, locking, and verification
 # - Delegates to tier-specific scripts (qual_deploy.sh, deploy_stage.sh, deploy_beta.sh, prod_deploy.sh)

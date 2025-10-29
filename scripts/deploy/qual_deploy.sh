@@ -61,6 +61,7 @@ DEPLOY_WEB=false
 DEPLOY_IOS=false
 DEPLOY_ANDROID=false
 DEPLOY_ALL=false
+PARALLEL_BUILDS=true  # Default to parallel builds for speed
 
 if [ $# -eq 0 ]; then
     DEPLOY_ALL=true
@@ -80,9 +81,12 @@ for arg in "$@"; do
         --all)
             DEPLOY_ALL=true
             ;;
+        --no-parallel)
+            PARALLEL_BUILDS=false
+            ;;
         *)
             echo "Unknown option: $arg"
-            echo "Usage: $0 [--web] [--ios] [--android] [--all]"
+            echo "Usage: $0 [--web] [--ios] [--android] [--all] [--no-parallel]"
             exit 1
             ;;
     esac
@@ -174,50 +178,11 @@ else
     echo ""
 fi
 
-# Deploy Web (qual uses dedicated qual environment)
-if [ "$DEPLOY_WEB" = true ]; then
-    update_status_page "web" "in_progress"
+# ============================================
+# Build Functions for Parallel Execution
+# ============================================
 
-    echo "🌐 Deploying Web Qual..."
-    echo "Deploying to qual environment ($APP_URL_QUAL)"
-    echo "Qual web uses qual/api endpoint (qual database)"
-    echo ""
-
-    # Build web for qual
-    echo "📦 Building web bundle for qual..."
-    NODE_ENV=production npm run build:web
-
-    if [ ! -f "$APP_WEB_INDEX_FILE" ]; then
-        echo -e "${RED}❌ Web build failed - no index.html generated${NC}"
-        update_status_page "web" "failed"
-        exit 1
-    fi
-
-    echo -e "${GREEN}✅ Web build complete${NC}"
-    echo ""
-
-    # Deploy to qual using deployment infrastructure (in parent scripts directory)
-    if [ -f "$SCRIPTS_ROOT/deploy-with-tracking.sh" ]; then
-        "$SCRIPTS_ROOT/deploy-with-tracking.sh" qual
-    else
-        echo -e "${RED}❌ deploy-with-tracking.sh not found${NC}"
-        echo "   Cannot deploy web qual without deployment script"
-        update_status_page "web" "failed"
-        exit 1
-    fi
-
-    DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n  ✅ Web: $APP_URL_QUAL (uses qual/api)"
-    update_status_page "web" "success"
-    echo -e "${GREEN}✅ Web qual deployed${NC}"
-    echo ""
-else
-    update_status_page "web" "skipped"
-fi
-
-# Deploy iOS to simulators
-if [ "$DEPLOY_IOS" = true ]; then
-    update_status_page "ios" "in_progress"
-
+build_ios_qual() {
     echo "🍎 Deploying iOS Qual to Simulators..."
     echo "This will build and deploy to iOS simulators"
     echo "iOS will use qual/api endpoint (qual database)"
@@ -245,18 +210,11 @@ if [ "$DEPLOY_IOS" = true ]; then
     fi
     echo ""
 
-    DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n  ✅ iOS: Simulators (qual/api)"
-    update_status_page "ios" "success"
     echo -e "${GREEN}✅ iOS qual deployment complete${NC}"
-    echo ""
-else
-    update_status_page "ios" "skipped"
-fi
+    return 0
+}
 
-# Deploy Android to emulators/devices
-if [ "$DEPLOY_ANDROID" = true ]; then
-    update_status_page "android" "in_progress"
-
+build_android_qual() {
     echo "🤖 Deploying Android Qual to Devices..."
     echo "This will build and deploy to connected Android devices/emulators"
     echo "Android will use qual/api endpoint (qual database)"
@@ -280,7 +238,6 @@ if [ "$DEPLOY_ANDROID" = true ]; then
     else
         cd ..
         echo -e "${RED}❌ Android qual build failed${NC}"
-        update_status_page "android" "failed"
         exit 1
     fi
     echo ""
@@ -319,13 +276,157 @@ if [ "$DEPLOY_ANDROID" = true ]; then
         echo -e "${YELLOW}⚠️  No Android devices connected${NC}"
         echo "   Connect a device or start an emulator to test"
     fi
-
-    DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n  ✅ Android: Devices/Emulators (qual/api)"
-    update_status_page "android" "success"
-    echo -e "${GREEN}✅ Android qual deployment complete${NC}"
     echo ""
+
+    echo -e "${GREEN}✅ Android qual deployment complete${NC}"
+    return 0
+}
+
+# ============================================
+# Deploy Web
+# ============================================
+
+# Deploy Web (qual uses dedicated qual environment)
+if [ "$DEPLOY_WEB" = true ]; then
+    echo "🌐 Deploying Web Qual..."
+    echo "Deploying to qual environment ($APP_URL_QUAL)"
+    echo "Qual web uses qual/api endpoint (qual database)"
+    echo ""
+
+    # Build web for qual
+    echo "📦 Building web bundle for qual..."
+    NODE_ENV=production npm run build:web
+
+    if [ ! -f "$APP_WEB_INDEX_FILE" ]; then
+        echo -e "${RED}❌ Web build failed - no index.html generated${NC}"
+        exit 1
+    fi
+
+    echo -e "${GREEN}✅ Web build complete${NC}"
+    echo ""
+
+    # Deploy to qual using deployment infrastructure (in parent scripts directory)
+    if [ -f "$SCRIPTS_ROOT/deploy-with-tracking.sh" ]; then
+        "$SCRIPTS_ROOT/deploy-with-tracking.sh" qual
+    else
+        echo -e "${RED}❌ deploy-with-tracking.sh not found${NC}"
+        echo "   Cannot deploy web qual without deployment script"
+        exit 1
+    fi
+
+    DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n  ✅ Web: $APP_URL_QUAL (uses qual/api)"
+    echo -e "${GREEN}✅ Web qual deployed${NC}"
+    echo ""
+fi
+
+# ============================================
+# Deploy Mobile (iOS and Android)
+# ============================================
+
+# Run parallel builds if both platforms requested and parallel mode enabled
+if [ "$DEPLOY_IOS" = true ] && [ "$DEPLOY_ANDROID" = true ] && [ "$PARALLEL_BUILDS" = true ]; then
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "⚡ Running iOS and Android builds in PARALLEL"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+
+    # Create temp files for build outputs
+    IOS_LOG="/tmp/stackmap-ios-qual-$(date +%s).log"
+    ANDROID_LOG="/tmp/stackmap-android-qual-$(date +%s).log"
+
+    # Start timestamp
+    PARALLEL_START=$(date +%s)
+
+    # Run iOS build in background
+    echo "🍎 Starting iOS build (background)..."
+    ( build_ios_qual > "$IOS_LOG" 2>&1; exit $? ) &
+    IOS_PID=$!
+
+    # Run Android build in background
+    echo "🤖 Starting Android build (background)..."
+    ( build_android_qual > "$ANDROID_LOG" 2>&1; exit $? ) &
+    ANDROID_PID=$!
+
+    echo ""
+    echo "⏳ Waiting for parallel builds to complete..."
+    echo "   iOS PID: $IOS_PID"
+    echo "   Android PID: $ANDROID_PID"
+    echo ""
+
+    # Wait for both builds
+    IOS_EXIT=0
+    ANDROID_EXIT=0
+
+    wait $IOS_PID || IOS_EXIT=$?
+    wait $ANDROID_PID || ANDROID_EXIT=$?
+
+    # Calculate time
+    PARALLEL_END=$(date +%s)
+    PARALLEL_TIME=$((PARALLEL_END - PARALLEL_START))
+
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "📊 Parallel Build Results (Total: ${PARALLEL_TIME}s)"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    if [ $IOS_EXIT -eq 0 ]; then
+        echo -e "  ${GREEN}✅ iOS: SUCCESS${NC}"
+        DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n  ✅ iOS: Simulators (qual/api)"
+    else
+        echo -e "  ${RED}❌ iOS: FAILED${NC}"
+        echo "     Log: $IOS_LOG"
+    fi
+
+    if [ $ANDROID_EXIT -eq 0 ]; then
+        echo -e "  ${GREEN}✅ Android: SUCCESS${NC}"
+        DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n  ✅ Android: Devices/Emulators (qual/api)"
+    else
+        echo -e "  ${RED}❌ Android: FAILED${NC}"
+        echo "     Log: $ANDROID_LOG"
+    fi
+
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+
+    # Show logs if either failed
+    if [ $IOS_EXIT -ne 0 ]; then
+        echo ""
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "🍎 iOS Build Output (last 50 lines):"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        tail -50 "$IOS_LOG"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    fi
+
+    if [ $ANDROID_EXIT -ne 0 ]; then
+        echo ""
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "🤖 Android Build Output (last 50 lines):"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        tail -50 "$ANDROID_LOG"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    fi
+
+    # Fail if either build failed
+    if [ $IOS_EXIT -ne 0 ] || [ $ANDROID_EXIT -ne 0 ]; then
+        echo -e "${RED}❌ Some parallel builds failed${NC}"
+        exit 1
+    fi
+
+# Run sequential builds (fallback or single platform)
 else
-    update_status_page "android" "skipped"
+    # Deploy iOS to simulators
+    if [ "$DEPLOY_IOS" = true ]; then
+        build_ios_qual
+        DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n  ✅ iOS: Simulators (qual/api)"
+    fi
+
+    # Deploy Android to emulators/devices
+    if [ "$DEPLOY_ANDROID" = true ]; then
+        build_android_qual
+        DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n  ✅ Android: Devices/Emulators (qual/api)"
+    fi
 fi
 
 # Calculate deployment time
