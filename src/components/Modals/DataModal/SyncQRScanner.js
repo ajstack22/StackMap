@@ -1,24 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Modal, TouchableOpacity, Platform, StyleSheet } from 'react-native';
-import { ModalButton } from '../../ModalUtilities';
+import React from 'react';
+import { Modal, Platform, StyleSheet, View, Text } from 'react-native';
 
-// Platform-specific QR scanner imports
-let QRCodeScanner = null;
-let Html5QrcodeScanner = null;
+// Platform-specific QR scanner components
+// This wrapper pattern avoids React hooks violations by splitting
+// mobile and web implementations into separate components
+let MobileQRScanner = null;
+let WebQRScanner = null;
 
 if (Platform.OS !== 'web') {
-  try {
-    QRCodeScanner = require('react-native-qrcode-scanner').default;
-  } catch (error) {
-    console.warn('QR code scanner not available on this platform');
-  }
+  MobileQRScanner = require('./MobileQRScanner').default;
 } else {
-  try {
-    const { Html5Qrcode } = require('html5-qrcode');
-    Html5QrcodeScanner = Html5Qrcode;
-  } catch (error) {
-    console.warn('HTML5 QR code scanner not available');
-  }
+  WebQRScanner = require('./WebQRScanner').default;
 }
 
 /**
@@ -65,162 +57,45 @@ const parseSyncKey = (scannedData) => {
   throw new Error('Invalid sync key format. Expected a 32-character hexadecimal string or StackMap sync URL.');
 };
 
+/**
+ * Platform-aware QR Scanner wrapper component
+ *
+ * This component acts as a router that delegates to platform-specific
+ * implementations to avoid React hooks violations. The hooks from
+ * react-native-vision-camera MUST be called unconditionally, which is
+ * impossible in a cross-platform component. By splitting into separate
+ * components, we ensure proper hook usage on each platform.
+ */
 const SyncQRScanner = ({ visible, onClose, onScanSuccess, theme }) => {
-  const [error, setError] = useState(null);
-  const [isScanning, setIsScanning] = useState(true);
-  const [html5Scanner, setHtml5Scanner] = useState(null);
-
-  // Web-specific QR scanner setup
-  useEffect(() => {
-    if (Platform.OS === 'web' && visible && Html5QrcodeScanner) {
-      const scanner = new Html5QrcodeScanner('qr-reader', {
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-      });
-
-      setHtml5Scanner(scanner);
-
-      return () => {
-        if (scanner) {
-          scanner.clear().catch(err => console.warn('Error clearing scanner:', err));
-        }
-      };
-    }
-  }, [visible]);
-
-  useEffect(() => {
-    if (Platform.OS === 'web' && html5Scanner && visible) {
-      html5Scanner.render(
-        (decodedText) => handleScan(decodedText),
-        (errorMessage) => {
-          // Silent - scanner continuously scans
-        }
-      );
-    }
-  }, [html5Scanner, visible]);
-
-  const handleScan = (data) => {
-    if (!data) return;
-
-    try {
-      const syncKey = parseSyncKey(data);
-      setIsScanning(false);
-      onScanSuccess(syncKey);
-      onClose();
-    } catch (err) {
-      setError(err.message);
-      setIsScanning(false);
-    }
-  };
-
-  const handleError = (err) => {
-    console.error('QR Scanner error:', err);
-    setError('Failed to access camera. Please check permissions.');
-    setIsScanning(false);
-  };
-
-  const handleRetry = () => {
-    setError(null);
-    setIsScanning(true);
-  };
-
-  const renderMobileScanner = () => {
-    if (!QRCodeScanner) {
-      return (
-        <View style={styles.scannerError}>
-          <Text style={styles.scannerErrorText}>
-            QR code scanner is not available on this platform
-          </Text>
-        </View>
-      );
-    }
-
-    if (error) {
-      return (
-        <View style={styles.scannerError}>
-          <Text style={styles.scannerErrorText}>{error}</Text>
-          <TouchableOpacity
-            style={[styles.retryButton, { backgroundColor: theme.primary }]}
-            onPress={handleRetry}
-          >
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-
-    return (
-      <QRCodeScanner
-        onRead={({ data }) => handleScan(data)}
-        reactivate={isScanning}
-        reactivateTimeout={500}
-        showMarker={true}
-        containerStyle={styles.scannerContainer}
-        cameraStyle={styles.camera}
-        topContent={
-          <View style={styles.scannerHeader}>
-            <Text style={styles.scannerTitle}>Scan Sync QR Code</Text>
-            <Text style={styles.scannerInstructions}>
-              Position the QR code within the frame
-            </Text>
+  // Render platform-specific scanner
+  const renderScanner = () => {
+    if (Platform.OS === 'web') {
+      if (!WebQRScanner) {
+        return (
+          <View style={styles.container}>
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>
+                QR code scanner is not available in this browser
+              </Text>
+            </View>
           </View>
-        }
-        bottomContent={
-          <ModalButton
-            theme={theme}
-            variant="secondary"
-            label="Cancel"
-            onPress={onClose}
-            fullWidth
-          />
-        }
-      />
-    );
-  };
-
-  const renderWebScanner = () => {
-    if (!Html5QrcodeScanner) {
-      return (
-        <View style={styles.scannerError}>
-          <Text style={styles.scannerErrorText}>
-            QR code scanner is not available in this browser
-          </Text>
-        </View>
-      );
+        );
+      }
+      return <WebQRScanner onScanSuccess={onScanSuccess} onClose={onClose} theme={theme} />;
+    } else {
+      if (!MobileQRScanner) {
+        return (
+          <View style={styles.container}>
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>
+                QR code scanner is not available on this platform
+              </Text>
+            </View>
+          </View>
+        );
+      }
+      return <MobileQRScanner onScanSuccess={onScanSuccess} onClose={onClose} theme={theme} />;
     }
-
-    if (error) {
-      return (
-        <View style={styles.scannerError}>
-          <Text style={styles.scannerErrorText}>{error}</Text>
-          <TouchableOpacity
-            style={[styles.retryButton, { backgroundColor: theme.primary }]}
-            onPress={handleRetry}
-          >
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.webScannerContainer}>
-        <View style={styles.scannerHeader}>
-          <Text style={styles.scannerTitle}>Scan Sync QR Code</Text>
-          <Text style={styles.scannerInstructions}>
-            Allow camera access and position the QR code within the frame
-          </Text>
-        </View>
-        <div id="qr-reader" style={{ width: '100%', maxWidth: 500 }}></div>
-        <ModalButton
-          theme={theme}
-          variant="secondary"
-          label="Cancel"
-          onPress={onClose}
-          fullWidth
-        />
-      </View>
-    );
   };
 
   return (
@@ -231,7 +106,7 @@ const SyncQRScanner = ({ visible, onClose, onScanSuccess, theme }) => {
       onRequestClose={onClose}
     >
       <View style={[styles.container, { backgroundColor: theme.background }]}>
-        {Platform.OS === 'web' ? renderWebScanner() : renderMobileScanner()}
+        {renderScanner()}
       </View>
     </Modal>
   );
@@ -241,54 +116,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scannerContainer: {
-    flex: 1,
-  },
-  camera: {
-    flex: 1,
-  },
-  webScannerContainer: {
-    flex: 1,
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scannerHeader: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  scannerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 8,
-  },
-  scannerInstructions: {
-    fontSize: 16,
-    color: '#000',
-    textAlign: 'center',
-  },
-  scannerError: {
+  errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
-  scannerErrorText: {
+  errorText: {
     fontSize: 16,
     color: '#000',
     textAlign: 'center',
-    marginBottom: 20,
-  },
-  retryButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });
 
