@@ -74,7 +74,31 @@ const SyncStatus = ({
     return 'Sync active';
   };
 
-  // Render sync enabled header
+  // Render compact sync status card (combines header + status)
+  const renderCompactSyncStatus = () => {
+    const statusIcon = getSyncStatusIcon();
+    const statusText = getSyncStatusText();
+
+    return (
+      <View style={styles.compactStatusCard}>
+        <View style={styles.compactStatusLeft}>
+          <Icon
+            name={statusIcon.icon}
+            size={24}
+            color={statusIcon.color}
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.compactStatusTitle}>Sync Enabled</Text>
+            <Text style={styles.compactStatusSubtitle}>
+              {statusText}
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  // Render sync enabled header (legacy - kept for compatibility)
   const renderSyncEnabledHeader = () => (
     <View style={styles.standardTabContainer}>
       <Icon name="cloud-done" size={48} color={theme.primary} />
@@ -163,6 +187,7 @@ const SyncStatus = ({
   );
 
   return {
+    renderCompactSyncStatus,
     renderSyncEnabledHeader,
     renderSyncStatusInfo,
     renderSyncProgress,

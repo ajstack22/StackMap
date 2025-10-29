@@ -1,181 +1,184 @@
-## Title: Atlas Skills System - Core Implementation (Phase 1)
+## Title: Sync QR Code Scanner Implementation - Complete Sync Flow Enhancement
 
 ### Changes Made:
 
-**Core Skills Created (4/5 complete)**:
-- ✅ `atlas-meta/` - Orchestrator skill with intelligent tier routing
-  - Decision tree for automatic workflow selection
-  - StackMap-specific rules integration
-  - Escalation logic
-  - Resource: tier-selector.md (comprehensive decision matrix)
+**Core QR Scanner Component**:
+- ✅ Created `SyncQRScanner.js` - Universal QR scanning component
+  - Platform-specific implementations:
+    - iOS/Android: `react-native-qrcode-scanner` + `react-native-camera`
+    - Web: `html5-qrcode` library
+  - Smart URL parsing supporting multiple environments:
+    - Production: `stackmap.app/?sync=<key>`
+    - Beta: `stackmap.app/beta/?sync=<key>`
+    - Stage: `stackmap.app/stage/?sync=<key>`
+    - Qual: `stackmap.app/qual/?sync=<key>`
+    - Direct key: 32-character hexadecimal string
+  - Validation: `/^[a-f0-9]{32}$/i` regex for sync keys
+  - Error handling with retry functionality
+  - Graceful fallbacks for unsupported platforms
 
-- ✅ `atlas-standard/` - 5-phase workflow for most tasks (DEFAULT, 80% use case)
-  - Research → Plan → Implement → Review → Deploy phases
-  - Resource: research-patterns.md (templates for common scenarios)
-  - Script: validate-standard.sh (automated quality checks)
-  - Handles bugs, small features, refactors (2-5 files, 30-60 min)
+**QR Code Display Restoration**:
+- ✅ `RecoveryPhrase.js` - Restored production QR code display
+  - QR code always visible (200x200px, high contrast)
+  - Copy Key button (copies sync key to clipboard)
+  - Copy URL button (copies full sync URL with current environment)
+  - Show/Hide toggle for sync key text
+  - Security warnings and instructions
+  - Environment-aware URL generation (prod/beta/stage/qual)
 
-- ✅ `atlas-quick/` - 2-phase workflow for trivial changes
-  - Make Change → Deploy phases
-  - Handles typos, colors, config updates (1 file, 5-15 min)
+**DataModal Integration**:
+- ✅ `SyncManagement.js` - Added QR scanner to "Restore from Sync Key" flow
+  - "Scan QR Code" button below manual entry field
+  - Scanned key auto-populates recovery phrase input
+  - Seamless modal transition (scanner → restore flow)
 
-- ✅ `atlas-iterative/` - 3-phase workflow with peer review cycle
-  - Make Change → Peer Review (cycle) → Deploy phases
-  - Handles style tweaks, simple refactors needing validation (1-2 files, 15-30 min)
+**Onboarding Integration**:
+- ✅ `SyncImportScreen.js` - Added QR scanner to "Join Sync" flow
+  - "Scan QR Code" button in sync setup screen
+  - Scanned key auto-populates sync key input
+  - Consistent UX with DataModal scanner
 
-- ⏳ `atlas-full/` - 9-phase workflow for complex features (IN PROGRESS)
+**Styling Updates**:
+- ✅ `styles.js` - Added QR-related styles
+  - `qrCodeContainer` - QR code display wrapper
+  - `scannerContainer`, `scannerHeader`, `scannerTitle` - Scanner UI
+  - `scannerError`, `retryButton` - Error states
+  - `keyActionButtonRow` - Button layout for Copy Key/URL
+  - `keyToggleContainer` - Show/Hide key toggle
 
-**Documentation**:
-- ✅ Comprehensive `atlas-skills/README.md` (4,500+ lines)
-  - Architecture overview
-  - Skill summaries with examples
-  - Decision trees and escalation rules
-  - StackMap integration details
-  - Troubleshooting guide
-  - Best practices and success metrics
+**Testing**:
+- ✅ Created `SyncQRScanner.test.js` (25 comprehensive tests)
+  - URL parsing for all environments (prod/beta/stage/qual)
+  - Direct sync key validation
+  - Error handling (invalid URLs, malformed keys, empty data)
+  - Edge cases (spaces, case sensitivity, missing sync param)
 
-**Agent Skills (Phase 2 - Planned)**:
-- ⏳ atlas-agent-peer-reviewer (Opus model for deep analysis)
-- ⏳ atlas-agent-developer (Implementation & troubleshooting)
-- ⏳ atlas-agent-product-manager (Story creation & validation)
-- ⏳ atlas-agent-devops (Deployment & infrastructure)
-- ⏳ atlas-agent-security (Security audits)
+**Platform Permissions**:
+- ✅ iOS: Added camera permission to `Info.plist`
+  - `NSCameraUsageDescription`: "StackMap needs camera access to scan sync QR codes"
+- ✅ Android: Added permissions to `AndroidManifest.xml`
+  - `CAMERA` permission for QR scanning
+  - `VIBRATE` permission for scan feedback (fixes crash on successful scan)
+
+**Dependencies**:
+- ✅ Added QR scanning libraries:
+  - `html5-qrcode@^2.3.8` (Web QR scanning)
+  - `react-native-qrcode-scanner@^1.5.5` (Mobile QR scanning)
+  - `react-native-camera@^4.2.1` (Camera access for mobile)
+  - `react-native-qrcode-svg@^6.3.15` (QR code generation - already present)
+
+**Android Build Fixes**:
+- ✅ Fixed TLS handshake errors with `patch-package`
+  - Root cause: `@react-native-clipboard/clipboard` v1.16.3 had outdated Gradle plugin (3.2.1)
+  - Solution: Created automated patch removing buildscript block
+  - Added `postinstall` script for automatic patch application
+  - Documented fix in `docs/troubleshooting/android-tls-build-fix.md`
+- ✅ Fixed product flavor conflict with `react-native-camera`
+  - Added `missingDimensionStrategy 'react-native-camera', 'general'` to build.gradle
+- ✅ Updated simulator configuration in `app-config.sh`
+  - Changed from "iPhone 16 Pro" to "iPhone 15 Pro Max"
+  - Changed from "iPad Pro 11-inch (M4)" to "iPad Pro 12.9-inch"
+  - Matches actual running simulators
+
+**Babel Configuration**:
+- ✅ Added missing dev dependency: `babel-plugin-transform-inline-environment-variables`
+  - Required by babel.config.js but was not in package.json
 
 ### Key Benefits:
 
-**1. Token Efficiency (12x improvement)**:
-- Before: 5,000+ tokens loaded upfront (all Atlas docs)
-- After: 400 tokens loaded progressively (meta → tier → resources)
+**User Experience**:
+- One-tap sync setup via QR code scanning
+- No manual typing of 32-character hex keys
+- Cross-device sync made trivial (scan code on Device A, share to Device B)
+- Works across all platforms (iOS, Android, Web)
 
-**2. Progressive Disclosure**:
-- Load only what's needed for current phase
-- Expand to resources on demand
-- Invoke agents when required
+**Technical Robustness**:
+- Environment-aware URL generation (respects qual/stage/beta/prod)
+- Validates sync keys before accepting
+- Graceful error handling with retry functionality
+- Platform-specific optimizations
 
-**3. Composability**:
-- Mix and match workflow tiers
-- Invoke agent skills as needed
-- Reusable across projects
+**Security**:
+- Camera permissions properly requested
+- QR codes never expose raw keys (always URL-encoded)
+- Validation prevents malformed keys from being processed
 
-**4. Maintainability**:
-- Single source of truth per tier/agent
-- Update one SKILL.md vs. multiple docs
-- Version control for workflow changes
+### Testing Verification (QUAL):
 
-**5. Shareability**:
-- Copy atlas-skills/ to other projects
-- Community can adopt/contribute
-- Published as reusable Claude Skills
+**Platforms Tested**:
+- ✅ Web (qual): https://stackmap.app/qual
+  - QR code displays correctly in DataModal
+  - Scanner works in both DataModal and Onboarding
+- ✅ iOS: iPhone 15 Pro Max & iPad Pro 12.9-inch simulators
+  - QR code generation works
+  - Scanner functional in both flows
+- ✅ Android: Physical device (R5CXC3F2VQE)
+  - QR scanning in onboarding flow working
+  - No crashes after VIBRATE permission fix
 
-### Architecture Highlights:
+**Test Scenarios**:
+- Scanning production QR codes
+- Scanning beta/qual/stage QR codes
+- Direct sync key entry (fallback)
+- Error handling (invalid codes, camera denied)
+- Cross-environment sync (qual → prod URLs work)
 
-**Skill Structure**:
-```
-atlas-skills/
-├── atlas-meta/              # Router (50 tokens)
-│   ├── SKILL.md
-│   └── resources/
-├── atlas-standard/          # Most common (200 tokens)
-│   ├── SKILL.md
-│   ├── resources/
-│   └── scripts/
-└── [other tiers...]
-```
+### Files Modified (22 files):
 
-**Progressive Loading**:
-1. atlas-meta (tiny orchestrator)
-2. Tier-specific skill (only what's needed)
-3. Resources (loaded on demand)
-4. Agent skills (invoked when required)
+**New Files Created**:
+- `src/components/Modals/DataModal/SyncQRScanner.js`
+- `src/components/Modals/DataModal/__tests__/SyncQRScanner.test.js`
+- `patches/@react-native-clipboard+clipboard+1.16.3.patch` (391KB)
+- `docs/troubleshooting/android-tls-build-fix.md`
 
-### Usage Examples:
+**Modified Files**:
+- `src/components/Modals/DataModal/RecoveryPhrase.js` (QR display restoration)
+- `src/components/Modals/DataModal/SyncManagement.js` (scanner integration)
+- `src/components/Modals/DataModal/styles.js` (QR styles)
+- `src/components/Onboarding/OnboardingUserCentered/screens/SyncImportScreen.js` (scanner in onboarding)
+- `android/app/src/main/AndroidManifest.xml` (CAMERA + VIBRATE permissions)
+- `android/app/build.gradle` (product flavor fix, version bump)
+- `ios/StackMapNative/Info.plist` (camera permission)
+- `package.json` (dependencies + postinstall script)
+- `package-lock.json` (lockfile updates)
+- `scripts/deploy/app-config.sh` (simulator names)
+- Version files (app.json, src/utils/version.js, buildConfig.js, constants/index.js)
 
-**Automatic routing**:
-```
-User: "Fix sync icon bug"
-→ atlas-meta analyzes → routes to atlas-standard
-→ Executes 5-phase workflow
-```
+**Untouched Files** (verified intentionally):
+- All other DataModal files (no regressions)
+- Sync service logic (unchanged)
+- Store architecture (unchanged)
 
-**Explicit tier**:
-```
-User: "Fix typo. Use Atlas Quick."
-→ atlas-quick executes 2-phase workflow
-```
+### Deployment Notes:
 
-### Integration with StackMap:
+**Version**: 2025.10.29.5 (QUAL)
+**Deployment Tier**: QUAL → STAGE → BETA → PROD
+**Risk Level**: Low (additive feature, no breaking changes)
+**Rollback Plan**: Revert commit, sync still works with manual key entry
 
-All skills include StackMap-specific rules:
-- Field naming (text/icon, not name/emoji)
-- Store updates (use store-specific methods)
-- Platform testing (iOS, Android, Web)
-- Deployment (PENDING_CHANGES.md → deploy script)
-- Design rules (no gray text, Typography component)
+**Pre-Stage Checklist**:
+- ✅ QUAL deployment successful (web, iOS, Android)
+- ✅ Physical device testing completed
+- ✅ All tests passing (25 new tests)
+- ✅ No console errors or warnings
+- ✅ Camera permissions working correctly
+- ✅ Cross-platform QR scanning verified
 
-### Validation & Quality Gates:
+**Post-Stage Verification**:
+- Test QR scanning on internal team devices
+- Verify sync works with scanned keys
+- Check iOS TestFlight build includes camera permission
+- Confirm Android internal track build functional
 
-- **validate-standard.sh**: Type checking, linting, tests, anti-pattern detection
-- **quality-gates.sh** (planned): Comprehensive checks for Full workflow
-- Automated enforcement via deployment scripts
+### Related Documentation:
 
-### Next Steps (Phase 2):
-
-1. Complete atlas-full skill (9-phase workflow)
-2. Create 5 agent skills (peer-reviewer, developer, PM, devops, security)
-3. Update CLAUDE.md to reference Atlas Skills
-4. Team training and documentation
-5. Migration from legacy Atlas docs
-
-### Technical Details:
-
-- **Format**: Claude Skills (YAML frontmatter + Markdown)
-- **Scripts**: Bash validation/deployment automation
-- **Resources**: Markdown reference docs loaded progressively
-- **Integration**: Works with existing StackMap deployment infrastructure
-
-### Testing Plan:
-
-1. Test core skills on 10 real StackMap tasks
-2. Validate token efficiency metrics
-3. Compare time-to-completion vs. legacy Atlas
-4. Gather team feedback on usability
-5. Iterate based on findings
-
-### Success Metrics:
-
-- **Token efficiency**: 80%+ reduction ✅ (12x improvement achieved)
-- **Adoption**: Target 90% team usage within 3 months
-- **Quality**: 50%+ reduction in post-deployment defects
-- **Time**: 20%+ faster task completion
+- Android TLS Fix: `docs/troubleshooting/android-tls-build-fix.md`
+- Sync System: `docs/sync/README.md`
+- Field Conventions: `docs/features/field-conventions.md`
 
 ---
 
-## Portability & Installation Notes:
-
-**Current State**: StackMap-Specific Implementation
-- Skills contain embedded StackMap conventions (field naming, stores, deployment)
-- Located in project directory: `/atlas-skills/` (version controlled with project)
-- NOT easily portable to other projects without customization
-
-**Installation Approach**: Project Directory (Recommended)
-- ✅ Skills versioned with code (git)
-- ✅ Team gets skills automatically
-- ✅ Can evolve with project needs
-- ❌ Not global (project-specific only)
-
-**Future Portability** (~5 hours of work):
-- Extract generic workflow core
-- Create project config template (`.atlas/conventions.md`)
-- Publish portable version to GitHub
-- Other projects can customize with their conventions
-
-**For now**: Skills are StackMap-optimized, located in project repo
-**See**: `atlas-skills/PORTABILITY_AND_INSTALLATION.md` for full details
-
----
-
-**Status**: ✅ Phase 1 Complete (Core Skills), ✅ Phase 2 Complete (Agent Skills + Full)
-**Total**: 10 skills, 30 files, ~33,000 lines
-**Ready for**: Testing with real tasks, team review, feedback iteration
-**Backward compatible**: Legacy Atlas docs remain in place during transition
-**Portability**: StackMap-specific now, generic version planned (5 hours)
+**Status**: ✅ Tested on QUAL (all platforms), Ready for STAGE deployment
+**Impact**: High value (major UX improvement), Low risk (additive feature)
+**Breaking Changes**: None
+**Migration Required**: None (users can continue using manual key entry)

@@ -4,7 +4,7 @@ import { Text, TextInput } from '../../../Typography';
 import { styles } from '../styles';
 import { DEFAULT_USER_ICON } from '../../../../constants';
 
-const quickEmojis = ['👤', '👨', '👩', '👧', '👦', '🦸'];
+const quickEmojis = ['🐶', '🦊', '🎨', '⚽', '🚀', '🌟'];
 
 const UserSetupScreen = ({
   theme,

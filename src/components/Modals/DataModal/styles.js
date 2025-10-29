@@ -1109,4 +1109,105 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: 'bold',
   },
+
+  // Collapsible section styles
+  collapsibleSection: {
+    marginTop: SPACING.md,
+  },
+  collapsibleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    backgroundColor: '#f5f5f5',
+    borderRadius: RADIUS.medium,
+    marginBottom: SPACING.sm,
+  },
+  collapsibleHeaderText: {
+    fontSize: 15,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    color: '#666',
+  },
+  collapsibleContent: {
+    gap: SPACING.sm,
+    paddingTop: SPACING.sm,
+  },
+  compactStatusCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8f9fa',
+    borderRadius: RADIUS.medium,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  compactStatusLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    flex: 1,
+  },
+  compactStatusTitle: {
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontWeight: Platform.OS === 'ios' ? '600' : '700',
+    color: '#000',
+  },
+  compactStatusSubtitle: {
+    fontSize: 13,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
+    marginTop: 2,
+  },
+  // QR Scanner styles
+  scannerContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  scannerHeader: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  scannerTitle: {
+    fontSize: 24,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontWeight: Platform.OS === 'ios' ? '600' : '700',
+    color: '#000',
+    marginBottom: 8,
+  },
+  scannerInstructions: {
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#000',
+    textAlign: 'center',
+  },
+  scannerError: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  scannerErrorText: {
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#000',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontWeight: Platform.OS === 'ios' ? '600' : '700',
+  },
+  scannerButtonContainer: {
+    marginTop: 20,
+    width: '100%',
+  },
 });

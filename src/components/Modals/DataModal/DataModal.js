@@ -172,7 +172,8 @@ const DataModal = ({
   const recoveryPhrase = RecoveryPhrase({
     theme,
     showToast,
-    syncRecoveryPhrase: syncState.syncRecoveryPhrase
+    syncRecoveryPhrase: syncState.syncRecoveryPhrase,
+    syncEnabled: syncState.syncEnabled
   });
 
   // SyncQRCode will be used for individual QR code generation as needed
@@ -747,10 +748,9 @@ const DataModal = ({
         syncManagement.renderSyncDisabled()
       ) : (
         <View style={styles.section}>
-          {syncStatus.renderSyncEnabledHeader()}
+          {syncStatus.renderCompactSyncStatus()}
           {recoveryPhrase.renderRecoveryPhraseDisplay()}
           {syncManagement.renderSyncControls()}
-          {syncStatus.renderSyncStatusInfo()}
           {recoveryPhrase.renderSecurityWarnings()}
         </View>
       )}

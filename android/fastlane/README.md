@@ -21,7 +21,7 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 [bundle exec] fastlane android store_credentials_in_keychain
 ```
 
-Store Google Play service account JSON path in macOS Keychain
+Store all Android credentials in macOS Keychain
 
 Usage: fastlane store_credentials_in_keychain
 

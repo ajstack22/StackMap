@@ -1,10 +1,11 @@
 // @ts-check
 import React, { useState, useEffect } from 'react';
 import { Text } from '../../Typography';
-import { View, Platform } from 'react-native';
+import { View, Platform, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
 import { FormInput, ModalButton } from '../../ModalUtilities';
+import SyncQRScanner from './SyncQRScanner';
 import {
   handleEnableSync,
   handleRestoreSync,
@@ -21,6 +22,7 @@ import {
  * - Restoring from recovery phrase
  * - Manual sync operations
  * - Sync error handling
+ * - QR code scanning for sync restoration
  */
 const SyncManagement = ({
   theme,
@@ -41,6 +43,11 @@ const SyncManagement = ({
   showDeleteServerDataConfirm,
   setShowDeleteServerDataConfirm
 }) => {
+  // State for collapsible Advanced Options section
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+
+  // State for QR scanner modal
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
   // Handle sync enable - creates new sync
   const handleSyncEnable = () => handleEnableSync({
@@ -139,6 +146,15 @@ const SyncManagement = ({
                 inputStyle={styles.recoveryInput}
                 theme={theme}
               />
+              <ModalButton
+                theme={theme}
+                variant="secondary"
+                label="Scan QR Code"
+                icon="qr-code-scanner"
+                onPress={() => setShowQRScanner(true)}
+                fullWidth
+                style={{ marginTop: 12 }}
+              />
             </View>
           </>
         )}
@@ -192,15 +208,28 @@ const SyncManagement = ({
           </View>
         )}
       </View>
+
+      {/* QR Scanner Modal */}
+      <SyncQRScanner
+        visible={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+        onScanSuccess={(syncKey) => {
+          setRecoveryInput(syncKey);
+          setShowQRScanner(false);
+          showToast({ message: 'QR code scanned successfully!', type: 'success' });
+        }}
+        theme={theme}
+      />
     </View>
   );
 
   // Render sync enabled controls
   const renderSyncControls = () => (
     <View style={styles.inPanelButtonContainer}>
+      {/* Primary Action: Sync Now */}
       <ModalButton
         theme={theme}
-        variant="secondary"
+        variant="primary"
         label="Sync Now"
         icon="sync"
         onPress={handleSyncManual}
@@ -208,35 +237,54 @@ const SyncManagement = ({
         fullWidth
       />
 
-      <ModalButton
-        theme={theme}
-        variant="danger"
-        label="Disable Sync"
-        icon="sync-disabled"
-        onPress={() => {
-          if (Platform.OS === 'ios') {
-            showSyncConfirmation('disable', handleSyncDisable);
-          } else {
-            setShowDisableSyncConfirm(true);
-          }
-        }}
-        fullWidth
-      />
+      {/* Collapsible Advanced Options */}
+      <View style={styles.collapsibleSection}>
+        <TouchableOpacity
+          style={styles.collapsibleHeader}
+          onPress={() => setShowAdvancedOptions(!showAdvancedOptions)}
+        >
+          <Text style={styles.collapsibleHeaderText}>Advanced Options</Text>
+          <Icon
+            name={showAdvancedOptions ? 'expand-less' : 'expand-more'}
+            size={20}
+            color="#666"
+          />
+        </TouchableOpacity>
 
-      <ModalButton
-        theme={theme}
-        variant="danger"
-        label="Delete Server Data"
-        icon="delete-forever"
-        onPress={() => {
-          if (Platform.OS === 'ios') {
-            showSyncConfirmation('delete', handleServerDataDelete);
-          } else {
-            setShowDeleteServerDataConfirm(true);
-          }
-        }}
-        fullWidth
-      />
+        {showAdvancedOptions && (
+          <View style={styles.collapsibleContent}>
+            <ModalButton
+              theme={theme}
+              variant="danger"
+              label="Disable Sync"
+              icon="sync-disabled"
+              onPress={() => {
+                if (Platform.OS === 'ios') {
+                  showSyncConfirmation('disable', handleSyncDisable);
+                } else {
+                  setShowDisableSyncConfirm(true);
+                }
+              }}
+              fullWidth
+            />
+
+            <ModalButton
+              theme={theme}
+              variant="danger"
+              label="Delete Server Data"
+              icon="delete-forever"
+              onPress={() => {
+                if (Platform.OS === 'ios') {
+                  showSyncConfirmation('delete', handleServerDataDelete);
+                } else {
+                  setShowDeleteServerDataConfirm(true);
+                }
+              }}
+              fullWidth
+            />
+          </View>
+        )}
+      </View>
     </View>
   );
 

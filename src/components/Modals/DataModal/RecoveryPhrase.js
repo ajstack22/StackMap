@@ -1,8 +1,9 @@
 // @ts-check
-import React from 'react';
+import React, { useState } from 'react';
 import { Text } from '../../Typography';
 import { View, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import QRCode from 'react-native-qrcode-svg';
 import { styles } from './styles';
 import { ModalButton } from '../../ModalUtilities';
 
@@ -10,13 +11,18 @@ import { ModalButton } from '../../ModalUtilities';
  * RecoveryPhrase component handles recovery phrase functionality including:
  * - Recovery phrase display with proper formatting
  * - Copy to clipboard functionality
+ * - QR code display for sync URL
+ * - Show/hide toggle for sync key
+ * - Copy Key and Copy URL buttons
  * - Security warnings and instructions
  */
 const RecoveryPhrase = ({
   theme,
   showToast,
-  syncRecoveryPhrase
+  syncRecoveryPhrase,
+  syncEnabled
 }) => {
+  const [showRecoveryPhrase, setShowRecoveryPhrase] = useState(true);
 
   // Safe clipboard copy helper
   const copyToClipboard = async (text, successMessage) => {
@@ -62,49 +68,115 @@ const RecoveryPhrase = ({
     }
   };
 
-  // Render recovery phrase display
+  // Render recovery phrase display with QR code (production UI)
   const renderRecoveryPhraseDisplay = () => {
     if (!syncRecoveryPhrase || syncRecoveryPhrase.startsWith('ERROR:')) {
       return null;
     }
 
     return (
-      <View style={styles.shareSection}>
-        <Text style={styles.shareSectionTitle}>Your Sync Key</Text>
-        <Text style={styles.shareFieldHelper}>
-          Keep this key safe. You'll need it to sync with other devices.
-        </Text>
-
-        <View style={styles.recoveryPhraseContainer}>
-          <Text style={styles.syncKeyText} selectable>
-            {syncRecoveryPhrase}
+      <View style={styles.recoveryPhraseCard}>
+        <View style={styles.syncKeyHeader}>
+          <Icon name="warning" size={20} color="#ff9800" />
+          <Text style={styles.recoveryPhraseWarning}>
+            Save this sync key! You'll need it to sync other devices.
           </Text>
         </View>
 
-        <View style={styles.syncKeyActions}>
+        {/* Key text with toggle */}
+        {showRecoveryPhrase && (
+          <View style={styles.recoveryPhraseContainer}>
+            <Text style={styles.recoveryPhrase} selectable>
+              {syncRecoveryPhrase || (
+                syncEnabled
+                  ? 'Recovery phrase unavailable. Try refreshing the browser or disable and re-enable sync.'
+                  : 'Loading sync key...'
+              )}
+            </Text>
+          </View>
+        )}
+
+        {/* Toggle button for key visibility */}
+        <View style={styles.keyToggleContainer}>
           <ModalButton
             theme={theme}
             variant="secondary"
-            label="Copy Key"
-            icon="content-copy"
-            onPress={() => copyToClipboard(syncRecoveryPhrase, 'Recovery phrase copied!')}
+            label={showRecoveryPhrase ? 'Hide Key' : 'Show Key'}
+            icon={showRecoveryPhrase ? "visibility-off" : "visibility"}
+            onPress={() => setShowRecoveryPhrase(!showRecoveryPhrase)}
             compact
           />
         </View>
 
-        <View style={styles.shareInstructions}>
-          <View style={styles.shareInstructionItem}>
-            <Icon name="warning" size={16} color="#ff9800" />
-            <Text style={styles.shareInstructionText}>
-              Store this key securely. If you lose it, you won't be able to sync with other devices.
-            </Text>
-          </View>
-          <View style={styles.shareInstructionItem}>
-            <Icon name="info" size={16} color="#2196f3" />
-            <Text style={styles.shareInstructionText}>
-              To add another device: Open StackMap → Settings → Sync → Join Sync → Enter this recovery phrase.
-            </Text>
-          </View>
+        {/* Action buttons - Always visible */}
+        <View style={styles.keyActionButtonRow}>
+          <ModalButton
+            theme={theme}
+            variant="primary"
+            label="Copy Key"
+            icon="content-copy"
+            onPress={() => {
+              if (!syncRecoveryPhrase) {
+                showToast({ message: 'Sync key not available', type: 'error' });
+                return;
+              }
+              copyToClipboard(syncRecoveryPhrase, 'Sync key copied!');
+            }}
+            style={styles.syncActionButton}
+          />
+          <ModalButton
+            theme={theme}
+            variant="primary"
+            label="Copy URL"
+            icon="link"
+            onPress={() => {
+              if (!syncRecoveryPhrase) {
+                showToast({ message: 'Sync key not available', type: 'error' });
+                return;
+              }
+              let syncUrl;
+              if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                const basePath = window.location.pathname.endsWith('/')
+                  ? window.location.pathname
+                  : window.location.pathname + '/';
+                syncUrl = `${window.location.origin}${basePath}?sync=${encodeURIComponent(
+                  syncRecoveryPhrase,
+                )}`;
+              } else {
+                syncUrl = `https://stackmap.app/?sync=${encodeURIComponent(
+                  syncRecoveryPhrase,
+                )}`;
+              }
+              copyToClipboard(syncUrl, 'Sync URL copied!');
+            }}
+            style={styles.syncActionButton}
+          />
+        </View>
+
+        {/* QR Code - Always visible */}
+        <View style={styles.qrCodeContainer}>
+          <QRCode
+            value={(() => {
+              if (!syncRecoveryPhrase) {
+                return 'https://stackmap.app';
+              }
+              if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                const basePath = window.location.pathname.endsWith('/')
+                  ? window.location.pathname
+                  : window.location.pathname + '/';
+                return `${window.location.origin}${basePath}?sync=${encodeURIComponent(
+                  syncRecoveryPhrase,
+                )}`;
+              } else {
+                return `https://stackmap.app/?sync=${encodeURIComponent(
+                  syncRecoveryPhrase,
+                )}`;
+              }
+            })()}
+            size={200}
+            backgroundColor="#ffffff"
+            color="#000000"
+          />
         </View>
       </View>
     );
@@ -112,20 +184,11 @@ const RecoveryPhrase = ({
 
   // Render security warnings
   const renderSecurityWarnings = () => (
-    <View style={styles.shareSection}>
-      <Text style={styles.shareSectionTitle}>Security Notes</Text>
-
+    <View style={[styles.shareSection, { paddingTop: 0, marginTop: 16 }]}>
       <View style={styles.shareInstructionItem}>
-        <Icon name="security" size={16} color="#4caf50" />
-        <Text style={styles.shareInstructionText}>
-          Your data is encrypted end-to-end. Only you can decrypt it with your recovery phrase.
-        </Text>
-      </View>
-
-      <View style={styles.shareInstructionItem}>
-        <Icon name="info" size={16} color="#2196f3" />
-        <Text style={styles.shareInstructionText}>
-          Keep your recovery phrase safe. Anyone with it can access your sync data.
+        <Icon name="security" size={14} color="#4caf50" />
+        <Text style={[styles.shareInstructionText, { fontSize: 12, color: '#666' }]}>
+          End-to-end encrypted - only you can decrypt your data
         </Text>
       </View>
     </View>

@@ -41,7 +41,7 @@ export const COMMON_EMOJIS = [
 ];
 
 // Default user icon
-export const DEFAULT_USER_ICON = '😀';
+export const DEFAULT_USER_ICON = '🐶';
 
 // Default activity emoji
 export const DEFAULT_ACTIVITY_EMOJI = '🎯';

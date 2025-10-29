@@ -49,7 +49,7 @@ describe('constants/index', () => {
     });
 
     it('should be the expected emoji', () => {
-      expect(DEFAULT_USER_ICON).toBe('😀');
+      expect(DEFAULT_USER_ICON).toBe('🐶');
     });
 
     it('should be included in COMMON_EMOJIS', () => {

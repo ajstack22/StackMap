@@ -159,7 +159,7 @@ function getApiUrl(buildType) {
   // Map build types to API URLs
   const apiUrls = {
     qual: 'https://stackmap.app/qual/api/sync',
-    stage: 'https://stackmap.app/stage/api/sync',
+    stage: 'https://stackmap.app/qual/api/sync',  // Stage uses qual API (no separate stage deployment)
     beta: 'https://stackmap.app/beta/api/sync',
     prod: 'https://stackmap.app/api/sync'
   };
