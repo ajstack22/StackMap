@@ -15,6 +15,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { DEFAULT_USER_ICON } from '../../../constants';
 import syncService from '../../../services/sync';
 import minimalSync from '../../../services/sync/minimalSyncService';
+import syncStoreIntegration from '../../../services/sync/syncStoreIntegration';
 import { useAppStore, useUserStore, useSettingsStore } from '../../../stores';
 import { generateSecureRandomString } from '../../../utils/secureId';
 import { sanitizeUsers, sanitizeUser } from '../../../utils/validation';
@@ -359,48 +360,121 @@ const OnboardingUserCentered = ({
         throw new Error('Valid 32-character recovery phrase is required');
       }
 
+      // PHASE 1 DIAGNOSTIC: Set isSyncing flag to prevent race condition
+      console.log('[PHASE1] Setting isSyncing=true before data import');
+      if (syncStoreIntegration) {
+        syncStoreIntegration.isSyncing = true;
+      }
+
       // Join sync using recovery phrase only
       const result = await minimalSync.joinSync(recoveryPhrase);
 
       if (result && result.success) {
-        // Extract and sanitize users from synced data if available
+        // Extract users from synced data if available
         if (result.data && result.data.users) {
-          // First sanitize the entire users object
-          const sanitizedUsersObj = sanitizeUsers(result.data.users);
+          // CRITICAL: Do NOT sanitize sync data!
+          // Sync data is TRUSTED - encrypted from user's own device
+          // sanitizeUsers() destroys the days field causing catastrophic data loss
+          // Only validate required fields to prevent crashes
+          try {
+            const syncedUsers = Object.values(result.data.users || {})
+              .filter(user => {
+                // Validate structure without destroying data
+                if (!user || typeof user !== 'object') {
+                  console.warn('[OnboardingSync] Invalid user: not an object');
+                  return false;
+                }
 
-          // Then extract and further sanitize individual users
-          const syncedUsers = Object.values(sanitizedUsersObj)
-            .filter(user => !user.deleted)
-            .map(user => sanitizeUser({
-              id: user.id,
-              name: user.name,
-              icon: user.icon || user.emoji || '👤'
-            }))
-            .filter(user => user !== null); // Remove any invalid users
+                // Required fields check
+                if (!user.id || typeof user.id !== 'string') {
+                  console.warn('[OnboardingSync] Invalid user missing id:', {
+                    hasId: !!user.id,
+                    idType: typeof user.id
+                  });
+                  return false;
+                }
 
-          if (syncedUsers.length > 0) {
-            setUsers(syncedUsers);
-            setImportResult(result);
-            setUserJourney(prev => ({ ...prev, syncEnabled: true }));
-            // Add delay to ensure state is fully updated before navigation
-            await new Promise(resolve => setTimeout(resolve, 100));
-            // Skip to completion since users are already set up
-            animateStepTransition('complete');
-            return;
+                if (!user.name || typeof user.name !== 'string') {
+                  console.warn('[OnboardingSync] Invalid user missing name:', {
+                    userId: user.id,
+                    hasName: !!user.name,
+                    nameType: typeof user.name
+                  });
+                  return false;
+                }
+
+                // Skip deleted users
+                if (user.deleted) {
+                  console.log('[OnboardingSync] Skipping deleted user:', user.id);
+                  return false;
+                }
+
+                return true;
+              });
+
+            // Log successful import for debugging
+            console.log('[OnboardingSync] Successfully imported users:', {
+              count: syncedUsers.length,
+              users: syncedUsers.map(u => ({
+                id: u.id,
+                name: u.name,
+                hasIcon: !!u.icon,
+                hasDays: !!u.days,
+                hasActivities: !!u.activities,
+                daysKeys: u.days ? Object.keys(u.days) : [],
+                activitiesType: typeof u.activities
+              }))
+            });
+
+            if (syncedUsers.length > 0) {
+              setUsers(syncedUsers);
+              setImportResult(result);
+              setUserJourney(prev => ({ ...prev, syncEnabled: true }));
+
+              // PHASE 1 DIAGNOSTIC: Wait for AsyncStorage flush, then reset flag
+              console.log('[PHASE1] Waiting 2000ms for AsyncStorage flush...');
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              console.log('[PHASE1] Resetting isSyncing=false after flush');
+              if (syncStoreIntegration) {
+                syncStoreIntegration.isSyncing = false;
+              }
+
+              // Skip to completion since users are already set up
+              animateStepTransition('complete');
+              return;
+            }
+          } catch (error) {
+            console.error('[OnboardingSync] Error processing sync data:', error);
+            // PHASE 1 DIAGNOSTIC: Reset flag on error
+            if (syncStoreIntegration) {
+              syncStoreIntegration.isSyncing = false;
+            }
+            throw new Error('Failed to import sync data. Please try again.');
           }
         }
 
         // No users in sync data, proceed to user setup
         setImportResult(result);
         setUserJourney(prev => ({ ...prev, syncEnabled: true }));
-        // Add delay to ensure state is fully updated before navigation
-        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // PHASE 1 DIAGNOSTIC: Wait for AsyncStorage flush, then reset flag
+        console.log('[PHASE1] Waiting 2000ms for AsyncStorage flush...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        console.log('[PHASE1] Resetting isSyncing=false after flush');
+        if (syncStoreIntegration) {
+          syncStoreIntegration.isSyncing = false;
+        }
+
         animateStepTransition('syncSuccess');
       } else {
         throw new Error('Failed to import sync data');
       }
     } catch (error) {
       setImportError(error.message || 'Failed to import sync data');
+      // PHASE 1 DIAGNOSTIC: Ensure flag is reset on any error
+      if (syncStoreIntegration) {
+        syncStoreIntegration.isSyncing = false;
+      }
     } finally {
       setIsImporting(false);
     }
@@ -408,14 +482,36 @@ const OnboardingUserCentered = ({
 
   // Complete onboarding
   const completeOnboarding = async () => {
-    const onboardingData = {
-      users,
-      pin: userJourney.pinEnabled ? pin : null,
-      syncEnabled: userJourney.syncEnabled,
-      recoveryPhrase: userJourney.syncEnabled ? (generatedSyncCode || recoveryPhrase) : null,
-    };
+    // CRITICAL FIX: When joining sync, wrap users in importedData structure
+    // App.js expects onboardingData.importedData.users (line 1123)
+    // NOT onboardingData.users (which triggers starter card creation)
+    if (importResult && importResult.data) {
+      // This is a sync import - use the correct structure
+      const onboardingData = {
+        importedData: importResult.data, // Contains users, currentUser, library, etc.
+        pin: userJourney.pinEnabled ? pin : null,
+        syncEnabled: userJourney.syncEnabled,
+        recoveryPhrase: userJourney.syncEnabled ? (generatedSyncCode || recoveryPhrase) : null,
+      };
 
-    onComplete(onboardingData);
+      console.log('[OnboardingSync] Completing onboarding with importedData:', {
+        userCount: Object.keys(importResult.data.users || {}).length,
+        hasCurrentUser: !!importResult.data.currentUser,
+        hasLibrary: !!importResult.data.library
+      });
+
+      onComplete(onboardingData);
+    } else {
+      // Regular onboarding (not sync import)
+      const onboardingData = {
+        users,
+        pin: userJourney.pinEnabled ? pin : null,
+        syncEnabled: userJourney.syncEnabled,
+        recoveryPhrase: userJourney.syncEnabled ? (generatedSyncCode || recoveryPhrase) : null,
+      };
+
+      onComplete(onboardingData);
+    }
   };
 
   // Render current step content

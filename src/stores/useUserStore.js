@@ -60,11 +60,32 @@ const storage = {
     storageWriteTimer = setTimeout(async () => {
       if (pendingWrite) {
         try {
+          // PHASE 1 CHECKPOINT 3: AsyncStorage timing verification
+          const writeStartTime = Date.now();
+          console.log('[CHECKPOINT3] AsyncStorage write starting:', {
+            storageName: pendingWrite.name,
+            dataSize: JSON.stringify(pendingWrite.value).length,
+            timestamp: writeStartTime
+          });
+
           await AsyncStorage.setItem(
             pendingWrite.name,
             JSON.stringify(pendingWrite.value),
           );
+
+          const writeEndTime = Date.now();
+          const writeDuration = writeEndTime - writeStartTime;
+          console.log('[CHECKPOINT3] AsyncStorage write completed:', {
+            storageName: pendingWrite.name,
+            duration: writeDuration,
+            timestamp: writeEndTime
+          });
+
+          if (writeDuration > 500) {
+            console.warn('[CHECKPOINT3] WARNING: AsyncStorage write took', writeDuration, 'ms (>500ms threshold)');
+          }
         } catch (error) {
+          console.error('[CHECKPOINT3] AsyncStorage write failed:', error);
         }
         pendingWrite = null;
       }
@@ -104,29 +125,17 @@ const useUserStore = create(
 
             const sanitizedUser = { ...user };
 
-            // Fix user name if it's not a string
+            // Trust dataNormalizer.js for name normalization (sync data path)
+            // For non-sync data, validate but preserve original value for debugging
             if (!sanitizedUser.name || typeof sanitizedUser.name !== 'string') {
-              if (
-                typeof sanitizedUser.name === 'object' &&
-                sanitizedUser.name !== null
-              ) {
-                // Try to extract string from object
-                if (
-                  sanitizedUser.name.name &&
-                  typeof sanitizedUser.name.name === 'string'
-                ) {
-                  sanitizedUser.name = sanitizedUser.name.name;
-                } else if (
-                  sanitizedUser.name.text &&
-                  typeof sanitizedUser.name.text === 'string'
-                ) {
-                  sanitizedUser.name = sanitizedUser.name.text;
-                } else {
-                  sanitizedUser.name = 'User';
-                }
-              } else {
-                sanitizedUser.name = 'User';
-              }
+              console.warn(
+                '[useUserStore] User name is invalid:',
+                userId,
+                sanitizedUser.name,
+                '- should be normalized before setUsers()'
+              );
+              // Preserve original value rather than defaulting to 'User'
+              // This allows debugging which normalization step failed
             }
 
             // Ensure icon field exists
@@ -145,7 +154,36 @@ const useUserStore = create(
             sanitizedUsers[userId] = sanitizedUser;
           });
 
+          // PHASE 1 CHECKPOINT 2: Store setUsers() verification
+          console.log('[CHECKPOINT2] Store setUsers() called:', {
+            userCount: Object.keys(sanitizedUsers).length,
+            userIds: Object.keys(sanitizedUsers),
+            sampleUserId: Object.keys(sanitizedUsers)[0],
+            sampleUser: sanitizedUsers[Object.keys(sanitizedUsers)[0]]
+              ? {
+                  id: sanitizedUsers[Object.keys(sanitizedUsers)[0]].id,
+                  name: sanitizedUsers[Object.keys(sanitizedUsers)[0]].name,
+                  hasIcon: !!sanitizedUsers[Object.keys(sanitizedUsers)[0]].icon,
+                  hasDays: !!sanitizedUsers[Object.keys(sanitizedUsers)[0]].days,
+                  daysKeys: sanitizedUsers[Object.keys(sanitizedUsers)[0]].days
+                    ? Object.keys(sanitizedUsers[Object.keys(sanitizedUsers)[0]].days)
+                    : []
+                }
+              : null,
+            timestamp: Date.now()
+          });
+
           set({ users: sanitizedUsers }, false, 'setUsers');
+
+          // PHASE 1 CHECKPOINT 2B: Verify store updated successfully
+          setTimeout(() => {
+            const currentUsers = get().users;
+            console.log('[CHECKPOINT2B] Store updated verification (after set):', {
+              storeUserCount: Object.keys(currentUsers).length,
+              match: Object.keys(currentUsers).length === Object.keys(sanitizedUsers).length,
+              timestamp: Date.now()
+            });
+          }, 0);
         },
         setCurrentUser: userId =>
           set({ currentUser: userId }, false, 'setCurrentUser'),

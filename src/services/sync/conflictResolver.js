@@ -326,9 +326,14 @@ class ConflictResolver {
         merged[day] = localDay;
       } else {
         // Merge activities for this day
+        // Explicitly exclude activities from spread to prevent override
+        const { activities: _localAct, ...localWithoutActivities } = localDay;
+        const { activities: _remoteAct, ...remoteWithoutActivities } = remoteDay;
+
         merged[day] = {
-          ...localDay,
-          ...remoteDay,
+          ...localWithoutActivities,
+          ...remoteWithoutActivities,
+          // Explicitly merge activities - guaranteed not overridden by spread
           activities: this.mergeActivitiesArray(
             localDay.activities || [],
             remoteDay.activities || []

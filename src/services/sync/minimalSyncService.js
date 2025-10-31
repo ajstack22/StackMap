@@ -429,6 +429,24 @@ class MinimalSyncService {
         if (result.latest_record && result.latest_record.encrypted_blob) {
           // We have data - decrypt and use it
           const decodedData = encryptionService.decryptData(result.latest_record.encrypted_blob);
+
+          // PHASE 1 CHECKPOINT 1: Post-decrypt verification
+          console.log('[CHECKPOINT1] Post-decrypt data structure:', {
+            hasUsers: !!decodedData?.users,
+            userCount: decodedData?.users ? Object.keys(decodedData.users).length : 0,
+            sampleUserId: decodedData?.users ? Object.keys(decodedData.users)[0] : null,
+            sampleUser: decodedData?.users && Object.keys(decodedData.users)[0]
+              ? {
+                  id: decodedData.users[Object.keys(decodedData.users)[0]].id,
+                  name: decodedData.users[Object.keys(decodedData.users)[0]].name,
+                  hasIcon: !!decodedData.users[Object.keys(decodedData.users)[0]].icon,
+                  hasDays: !!decodedData.users[Object.keys(decodedData.users)[0]].days,
+                  daysKeys: decodedData.users[Object.keys(decodedData.users)[0]].days
+                    ? Object.keys(decodedData.users[Object.keys(decodedData.users)[0]].days)
+                    : []
+                }
+              : null
+          });
           
           // Store it locally
           const dataToStore = {

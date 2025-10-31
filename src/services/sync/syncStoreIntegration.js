@@ -143,14 +143,14 @@ class SyncStoreIntegration {
     const userState = useUserStore.getState();
     const libraryState = useLibraryStore.getState();
     const settingsState = useSettingsStore.getState();
-    
+
     const state = {
       // Users is an object, not array
       users: userState.users || {},
       currentUser: userState.currentUser,
       currentDay: userState.currentDay,
       userContextData: userState.userContextData || {},
-      
+
       // Library data - match actual store structure
       library: libraryState.library || {
         activities: [],
@@ -158,10 +158,10 @@ class SyncStoreIntegration {
         templates: [],
         userAddedActivityIds: []
       },
-      
+
       // Settings
       settings: settingsState || {},
-      
+
       // Include metadata for conflict resolution
       metadata: {
         lastModified: Date.now(),
@@ -171,15 +171,44 @@ class SyncStoreIntegration {
       }
     };
 
+    // PHASE 1 CHECKPOINT 4: getCurrentState() verification before push
+    console.log('[CHECKPOINT4] getCurrentState() before push:', {
+      hasUsers: !!state.users,
+      userCount: state.users ? Object.keys(state.users).length : 0,
+      userIds: state.users ? Object.keys(state.users) : [],
+      sampleUserId: state.users && Object.keys(state.users)[0] ? Object.keys(state.users)[0] : null,
+      sampleUser: state.users && Object.keys(state.users)[0]
+        ? {
+            id: state.users[Object.keys(state.users)[0]].id,
+            name: state.users[Object.keys(state.users)[0]].name,
+            hasIcon: !!state.users[Object.keys(state.users)[0]].icon,
+            hasDays: !!state.users[Object.keys(state.users)[0]].days,
+            daysKeys: state.users[Object.keys(state.users)[0]].days
+              ? Object.keys(state.users[Object.keys(state.users)[0]].days)
+              : []
+          }
+        : null,
+      timestamp: Date.now()
+    });
+
     // Normalize the data to ensure field consistency
     const normalized = normalizeSyncData(state);
-    
+
     // Preserve metadata after normalization
     if (!normalized.metadata) {
       normalized.metadata = state.metadata;
     }
-    
-    
+
+    // PHASE 1 CHECKPOINT 4B: Verify normalization didn't corrupt data
+    console.log('[CHECKPOINT4B] After normalization:', {
+      hasUsers: !!normalized.users,
+      userCount: normalized.users ? Object.keys(normalized.users).length : 0,
+      match: state.users && normalized.users
+        ? Object.keys(state.users).length === Object.keys(normalized.users).length
+        : false,
+      timestamp: Date.now()
+    });
+
     return normalized;
   }
 
@@ -194,13 +223,13 @@ class SyncStoreIntegration {
     try {
       // Normalize incoming data
       const normalized = normalizeSyncData(syncedData);
-      
+
       // Update stores using proper methods
       // Users is an object, not array
       if (normalized.users && typeof normalized.users === 'object') {
         useUserStore.getState().setUsers(normalized.users);
       }
-      
+
       // Set other user store properties
       if (normalized.currentUser) {
         useUserStore.getState().setCurrentUser(normalized.currentUser);
@@ -211,7 +240,7 @@ class SyncStoreIntegration {
       if (normalized.userContextData) {
         useUserStore.getState().setUserContextData(normalized.userContextData);
       }
-      
+
       // Update library store - handle both object and array formats
       if (normalized.library) {
         if (typeof normalized.library === 'object' && !Array.isArray(normalized.library)) {
@@ -227,18 +256,18 @@ class SyncStoreIntegration {
           });
         }
       }
-      
+
       // Update settings
       if (normalized.settings) {
         useSettingsStore.getState().updateSettings(normalized.settings);
       }
-      
-      // Force immediate persistence
+
+      // Force immediate persistence (after batched updates complete)
       await this.flushStores();
-      
+
       // Create backup as failsafe
       await this.createBackup(normalized);
-      
+
     } catch (error) {
       throw error;
     } finally {
