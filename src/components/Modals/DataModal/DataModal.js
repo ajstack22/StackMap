@@ -30,8 +30,18 @@ import SyncQRCode from './SyncQRCode';
 
 // Import platform-specific modules moved to DataImport.js
 
-// Extracted component for individual share card to reduce nesting
-const ActiveShareCard = React.memo(({ share, onDelete, styles }) => {
+/**
+ * @typedef {Object} ActiveShareCardProps
+ * @property {Object} share - Share object with shareId, recipientName, expiresAt, shareNote
+ * @property {Function} onDelete - Callback to delete share
+ * @property {Object} styles - Style object from DataModal
+ */
+
+/**
+ * Individual share card component
+ * @param {ActiveShareCardProps} props
+ */
+const ActiveShareCard = React.memo(/** @type {React.FC<ActiveShareCardProps>} */(({ share, onDelete, styles }) => {
   return (
     <View key={share.shareId} style={styles.activeShareCard}>
       <View style={styles.activeShareInfo}>
@@ -60,11 +70,23 @@ const ActiveShareCard = React.memo(({ share, onDelete, styles }) => {
       </TouchableOpacity>
     </View>
   );
-});
+}));
 ActiveShareCard.displayName = 'ActiveShareCard';
 
-// Extracted component for user shares section to reduce nesting
-const UserSharesSection = React.memo(({ userId, user, shares, onDeleteShare, styles }) => {
+/**
+ * @typedef {Object} UserSharesSectionProps
+ * @property {string} userId - User ID
+ * @property {Object} user - User object
+ * @property {Array} shares - Array of share objects
+ * @property {Function} onDeleteShare - Callback to delete a share
+ * @property {Object} styles - Style object from DataModal
+ */
+
+/**
+ * User shares section component showing all shares for a user
+ * @param {UserSharesSectionProps} props
+ */
+const UserSharesSection = React.memo(/** @type {React.FC<UserSharesSectionProps>} */(({ userId, user, shares, onDeleteShare, styles }) => {
   return (
     <View key={userId} style={styles.userSharesContainer}>
       <View style={styles.userSharesHeader}>
@@ -86,7 +108,7 @@ const UserSharesSection = React.memo(({ userId, user, shares, onDeleteShare, sty
       ))}
     </View>
   );
-});
+}));
 UserSharesSection.displayName = 'UserSharesSection';
 
 const DataModal = ({
