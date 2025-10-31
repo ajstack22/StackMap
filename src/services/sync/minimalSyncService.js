@@ -21,6 +21,7 @@ import conflictResolver from './conflictResolver';
 import encryptionService from './encryptionServiceFixed';
 // Import build configuration for API URL
 import { getCurrentApiUrl } from '../../config/buildConfig';
+import { logError } from '../../utils/logger';
 
 class MinimalSyncService {
   constructor() {
@@ -994,9 +995,7 @@ class MinimalSyncService {
     } catch (error) {
       // Gracefully handle pullData exceptions
       // Log the error but don't throw - this is called from intervals
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[Sync] pullAndNotify error:', error);
-      }
+      logError('[Sync] pullAndNotify error:', error);
     }
   }
   

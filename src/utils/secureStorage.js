@@ -1,6 +1,7 @@
 // @ts-check
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import { logError } from './logger';
 
 let Keychain = null;
 // Only load Keychain on iOS - Android will use AsyncStorage fallback
@@ -135,7 +136,7 @@ export const removeSecurePin = async () => {
       // Set PIN disabled flag successfully
     } catch (e) {
       // Failed to set disabled flag
-      console.error('[SecureStorage] Failed to set disabled flag:', e);
+      logError('[SecureStorage] Failed to set disabled flag:', e);
     }
 
     // Android: Use AsyncStorage
@@ -146,7 +147,7 @@ export const removeSecurePin = async () => {
         // Android: Removed PIN from AsyncStorage
       } catch (e) {
         // Android: Failed to remove PIN
-        console.error('[SecureStorage] Android: Failed to remove PIN:', e);
+        logError('[SecureStorage] Android: Failed to remove PIN:', e);
       }
       // Return true if either operation succeeded (to allow UI update)
       return disabledFlagSet || pinRemoved;
@@ -162,7 +163,7 @@ export const removeSecurePin = async () => {
           // iOS: Removed PIN from AsyncStorage fallback
         } catch (e) {
           // iOS: Failed to remove PIN from AsyncStorage
-          console.error('[SecureStorage] iOS: Failed to remove PIN from AsyncStorage:', e);
+          logError('[SecureStorage] iOS: Failed to remove PIN from AsyncStorage:', e);
         }
         // Return true if either operation succeeded (to allow UI update)
         return disabledFlagSet || pinRemoved;
@@ -190,13 +191,13 @@ export const removeSecurePin = async () => {
         }
       } catch (e) {
         // iOS: Keychain failed, use AsyncStorage fallback
-        console.error('[SecureStorage] iOS: Keychain operation failed:', e);
+        logError('[SecureStorage] iOS: Keychain operation failed:', e);
         try {
           await AsyncStorage.removeItem('@stackmap_pin');
           pinRemoved = true;
         } catch (e2) {
           // iOS: Failed to remove from AsyncStorage
-          console.error('[SecureStorage] iOS: AsyncStorage fallback also failed:', e2);
+          logError('[SecureStorage] iOS: AsyncStorage fallback also failed:', e2);
         }
       }
     }
@@ -206,7 +207,7 @@ export const removeSecurePin = async () => {
     return disabledFlagSet || pinRemoved;
   } catch (error) {
     // Critical error in removeSecurePin
-    console.error('[SecureStorage] Critical error in removeSecurePin:', error);
+    logError('[SecureStorage] Critical error in removeSecurePin:', error);
 
     // Even on error, try to ensure the disabled flag is set
     try {
@@ -214,7 +215,7 @@ export const removeSecurePin = async () => {
       disabledFlagSet = true;
     } catch (e) {
       // Failed to set disabled flag in catch
-      console.error('[SecureStorage] Failed to set disabled flag in error handler:', e);
+      logError('[SecureStorage] Failed to set disabled flag in error handler:', e);
     }
 
     // Return true if we at least managed to set the disabled flag (to allow UI update)

@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logWarn } from '../utils/logger';
 // Deep merge utility to replace lodash
 const deepMerge = (target, source) => {
   const output = { ...target };
@@ -128,7 +129,7 @@ const useUserStore = create(
             // Trust dataNormalizer.js for name normalization (sync data path)
             // For non-sync data, validate but preserve original value for debugging
             if (!sanitizedUser.name || typeof sanitizedUser.name !== 'string') {
-              console.warn(
+              logWarn(
                 '[useUserStore] User name is invalid:',
                 userId,
                 sanitizedUser.name,

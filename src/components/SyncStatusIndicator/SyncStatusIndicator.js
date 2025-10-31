@@ -10,6 +10,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import syncService from '../../services/sync';
 import { styles } from './styles';
+import { logWarn } from '../../utils/logger';
 
 const SyncStatusIndicator = ({
   theme,
@@ -145,9 +146,7 @@ const SyncStatusIndicator = ({
       await syncService.retryFailed();
     } catch (error) {
       // Retry failures are handled internally by sync service
-      if (__DEV__) {
-        console.warn('[SyncStatus] Retry failed:', error.message);
-      }
+      logWarn('[SyncStatus] Retry failed:', error.message);
     }
   };
 

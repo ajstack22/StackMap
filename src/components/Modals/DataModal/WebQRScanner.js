@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Html5Qrcode } from 'html5-qrcode';
 import { ModalButton } from '../../ModalUtilities';
 import { parseSyncKey } from './SyncQRScanner';
+import { logWarn, logError } from '../../../utils/logger';
 
 /**
  * Web-specific QR Scanner using html5-qrcode
@@ -20,7 +21,7 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
 
     return () => {
       if (scanner) {
-        scanner.clear().catch(err => console.warn('Error clearing scanner:', err));
+        scanner.clear().catch(err => logWarn('Error clearing scanner:', err));
       }
     };
   }, []);
@@ -39,7 +40,7 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
           // Silent - scanner continuously scans
         }
       ).catch(err => {
-        console.error('Failed to start scanner:', err);
+        logError('Failed to start scanner:', err);
         setError('Failed to start camera. Please check camera permissions.');
       });
     }

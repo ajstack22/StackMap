@@ -1,5 +1,6 @@
 import React from 'react';
 import QRCode from 'qrcode';
+import { logError } from './logger';
 
 const QRCodeComponent = ({
   value,
@@ -21,9 +22,7 @@ const QRCodeComponent = ({
       })
         .then(url => setDataUrl(url))
         .catch((error) => {
-          if (__DEV__) {
-            console.error('[QRCode] Failed to generate QR code:', error);
-          }
+          logError('[QRCode] Failed to generate QR code:', error);
           setDataUrl('');
         });
     }

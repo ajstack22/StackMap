@@ -15,6 +15,7 @@ import CategoryTabs from './CategoryTabs';
 import SkinToneSelector from './SkinToneSelector';
 import { CUSTOM_IMAGES } from './constants';
 import { styles } from './styles';
+import { logError } from '../../utils/logger';
 
 // Lazy-loaded emoji data - will be loaded asynchronously
 let cachedEmojiData = null;
@@ -54,7 +55,7 @@ const loadEmojiData = async () => {
         categories: cachedEmojiCategories,
       };
     } catch (error) {
-      console.error('Failed to load emoji data:', error);
+      logError('Failed to load emoji data:', error);
       loadingPromise = null;
       throw error;
     }
@@ -73,18 +74,18 @@ const createEmojiSearchIndex = (emojiData) => {
         ...emoji.unified.split('-').map(u => parseInt(u, 16)),
       );
 
-      // Index by short names, keywords, and category
-      const searchTerms = [
-        ...(emoji.short_names || []),
-        ...(emoji.keywords || []),
-        emoji.category,
-      ];
-
+      // Build search index with normalized lowercase terms
       searchIndex[emojiChar] = {
         emoji: emojiChar,
         shortNames: emoji.short_names || [],
-        keywords: emoji.keywords || [],
         category: emoji.category,
+        searchTerms: [
+          ...(emoji.short_names || []),
+          emoji.short_name,
+          emoji.name,
+          emoji.category,
+          emoji.subcategory
+        ].filter(Boolean).map(t => String(t).toLowerCase())
       };
     }
   });
@@ -187,7 +188,7 @@ const EmojiPickerMain = ({
             setIsLoading(false);
           }
         } catch (error) {
-          console.error('Failed to initialize emoji data:', error);
+          logError('Failed to initialize emoji data:', error);
           if (isMounted) {
             setIsLoading(false);
           }
@@ -204,10 +205,6 @@ const EmojiPickerMain = ({
 
   // Initialize categories with custom images
   useEffect(() => {
-    if (Object.keys(emojiCategories).length === 0) {
-      return;
-    }
-
     const categories = { ...emojiCategories };
 
     if (showCustomImages) {
@@ -227,7 +224,7 @@ const EmojiPickerMain = ({
       key => typeof key === 'string' && key.trim().length > 0
     );
     setCategoryKeys(validKeys);
-  }, [showCustomImages, isLoading]);
+  }, [showCustomImages, emojiCategories]);
 
   // Filter items based on search
   useEffect(() => {
