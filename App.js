@@ -4633,7 +4633,7 @@ Users: ${userNames} (${userCount} total)
                 theme={theme}
                 displayMode={displayMode}
               />
-          ) : (numColumns > 1) ? (
+          ) : numColumns > 1 ? (
               <>
                 {Platform.OS === 'android' &&
                   console.warn(
@@ -4839,7 +4839,6 @@ Users: ${userNames} (${userCount} total)
                 }
               />
             )}
-          )}
         </View>
 
         {/* Edit Mode Toolbar - when banner is at bottom, toolbar goes to top */}
