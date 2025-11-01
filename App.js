@@ -320,7 +320,6 @@ const App = () => {
   const [activityEmoji, setActivityEmoji] = useState(DEFAULT_ACTIVITY_EMOJI);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showEditToolbar, setShowEditToolbar] = useState(false);
-  const [showEditModeList, setShowEditModeList] = useState(false);
   const [editToolbarMoreExpanded, setEditToolbarMoreExpanded] = useState(false);
 
   // User management state
@@ -950,7 +949,6 @@ const App = () => {
     // Run animations directly (InteractionManager removed - was causing delays)
     if (isEditMode) {
       // Entering edit mode
-      setShowEditModeList(true);
       setShowEditToolbar(true);
 
       const animation = Animated.parallel([
@@ -1018,7 +1016,6 @@ const App = () => {
       animation.start(({ finished }) => {
         if (finished) {
           log('[App] Edit mode exit animation completed');
-          setShowEditModeList(false);
           setShowEditToolbar(false);
           setEditToolbarMoreExpanded(false);
         } else {
@@ -4581,18 +4578,12 @@ Users: ${userNames} (${userCount} total)
             return null;
           })()}
 
-          {/* Edit Mode List - Positioned absolutely for crossfade */}
-          {showEditModeList && (
+          {/* Conditional rendering - show either edit mode or regular content */}
+          {isEditMode ? (
             <Animated.View
-              pointerEvents={isEditMode ? 'auto' : 'none'}
               style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
+                flex: 1,
                 opacity: editListFadeAnim,
-                zIndex: isEditMode ? 1 : 0, // Lower z-index so toolbar can be on top
               }}
             >
               <EditModeList
@@ -4676,17 +4667,15 @@ Users: ${userNames} (${userCount} total)
                 displayMode={displayMode}
               />
             </Animated.View>
-          )}
-
-          {/* Regular Content - Also animated for crossfade */}
-          <Animated.View
-            pointerEvents={isEditMode ? 'none' : 'auto'}
-            style={{
-              flex: 1,
-              opacity: contentFadeAnim,
-            }}
-          >
-            {numColumns > 1 ? (
+          ) : (
+            /* Regular Content */
+            <Animated.View
+              style={{
+                flex: 1,
+                opacity: contentFadeAnim,
+              }}
+            >
+              {numColumns > 1 ? (
               <>
                 {Platform.OS === 'android' &&
                   console.warn(
@@ -4892,7 +4881,8 @@ Users: ${userNames} (${userCount} total)
                 }
               />
             )}
-          </Animated.View>
+            </Animated.View>
+          )}
         </View>
 
         {/* Edit Mode Toolbar - when banner is at bottom, toolbar goes to top */}
