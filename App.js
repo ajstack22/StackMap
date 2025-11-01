@@ -1,5 +1,5 @@
 // @ts-check
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -16,11 +16,13 @@ import {
   ActivityIndicator,
   AppState,
   Modal,
+  InteractionManager,
 } from 'react-native';
 import { ANIMATION_DURATION } from './src/constants/animations';
 import { DIMENSIONS } from './src/constants/spacing';
 import { Z_INDEX } from './src/constants/zIndex';
 import { EmptyState, LoadingSpinner } from './src/components/shared';
+import { log, logError } from './src/utils/logger';
 
 
 // Capture sync URL data immediately before React renders
@@ -276,6 +278,32 @@ const App = () => {
   // Removed - now using Zustand store
   const [isEditMode, setIsEditMode] = useState(false);
 
+  // Add new state for tracking store hydration
+  const [isStoreHydrated, setIsStoreHydrated] = useState(() => {
+    // Synchronously check if store is already hydrated
+    const currentUsers = useAppStore.getState().users;
+    const hasCompletedOnboarding = useAppStore.getState().hasCompletedOnboarding;
+    return hasCompletedOnboarding && Object.keys(currentUsers).length > 0;
+  });
+
+  // Subscribe to store changes to detect when hydration completes
+  useEffect(() => {
+    // If already hydrated, no need to subscribe
+    if (isStoreHydrated) return;
+
+    // Subscribe to store changes
+    const unsubscribe = useAppStore.subscribe(
+      (state) => {
+        // Only set hydrated if we have actual data
+        if (state.hasCompletedOnboarding && Object.keys(state.users).length > 0) {
+          setIsStoreHydrated(true);
+        }
+      }
+    );
+
+    return () => unsubscribe();
+  }, [isStoreHydrated]);
+
   // Derive current user's activities from the store
   const activities =
     (currentUser && users[currentUser]?.days?.[currentDay]?.activities) || [];
@@ -384,6 +412,11 @@ const App = () => {
   const [editIconsOpacity] = useState(() => new Animated.Value(0));
   const [contentFadeAnim] = useState(() => new Animated.Value(1));
   const [editListFadeAnim] = useState(() => new Animated.Value(0));
+
+  // Animation refs for managing in-flight animations
+  const enterAnimationRef = useRef(null);
+  const exitAnimationRef = useRef(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // ScrollView refs for forcing measurement on Android
 
@@ -555,13 +588,13 @@ const App = () => {
       if (zustandData) {
         try {
           const parsed = JSON.parse(zustandData);
-          console.log('[App] Zustand persisted state:', {
+          log('[App] Zustand persisted state', {
             hasCompletedOnboarding: parsed?.state?.hasCompletedOnboarding,
             usersCount: Object.keys(parsed?.state?.users || {}).length,
           });
         } catch (e) {
           if (__DEV__) {
-            console.error('[App] Error parsing Zustand data:', e);
+            logError('[App] Error parsing Zustand data', e);
           }
         }
       }
@@ -904,74 +937,117 @@ const App = () => {
 
   // Animate edit mode transition
   useEffect(() => {
+    // Cancel any in-flight animations
+    if (enterAnimationRef.current) {
+      enterAnimationRef.current.stop();
+      enterAnimationRef.current = null;
+    }
+    if (exitAnimationRef.current) {
+      exitAnimationRef.current.stop();
+      exitAnimationRef.current = null;
+    }
+
+    // Run animations directly (InteractionManager removed - was causing delays)
     if (isEditMode) {
-      // Entering edit mode with simpler animation for better performance
+      // Entering edit mode
       setShowEditModeList(true);
       setShowEditToolbar(true);
-      
-      // Simple parallel animation without staggered list items for iOS performance
-      Animated.parallel([
-        // Fade out regular content
+
+      const animation = Animated.parallel([
+        Animated.timing(editListFadeAnim, {
+          toValue: 1,
+          duration: 200,  // Consistent across all platforms per peer-reviewer
+          useNativeDriver: true,
+        }),
         Animated.timing(contentFadeAnim, {
           toValue: 0,
           duration: 200,
           useNativeDriver: true,
         }),
-        // Fade in edit list
-        Animated.timing(editListFadeAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        // Rotate edit mode icon
         Animated.timing(editModeIconRotation, {
           toValue: 1,
-          duration: 300,
+          duration: 200,
           useNativeDriver: Platform.OS !== 'web',
         }),
-        // Slide in toolbar
         Animated.timing(editModeToolbarTranslate, {
           toValue: 0,
-          duration: 250,
+          duration: 200,
           useNativeDriver: true,
         }),
-      ]).start();
-      
+      ]);
+
+      enterAnimationRef.current = animation;
+
+      animation.start(({ finished }) => {
+        if (finished) {
+          log('[App] Edit mode enter animation completed');
+        } else {
+          log('[App] Edit mode enter animation interrupted');
+        }
+
+        enterAnimationRef.current = null;
+        setIsTransitioning(false);
+      });
     } else {
-      // Exiting edit mode with simpler animation
-      Animated.parallel([
-        // Fade out edit list
+      // Exiting edit mode
+      const animation = Animated.parallel([
         Animated.timing(editListFadeAnim, {
           toValue: 0,
-          duration: 150,
+          duration: 200,
           useNativeDriver: true,
         }),
-        // Fade in regular content
         Animated.timing(contentFadeAnim, {
           toValue: 1,
           duration: 200,
           useNativeDriver: true,
         }),
-        // Rotate edit mode icon back
         Animated.timing(editModeIconRotation, {
           toValue: 0,
-          duration: 300,
+          duration: 200,
           useNativeDriver: Platform.OS !== 'web',
         }),
-        // Slide out toolbar
         Animated.timing(editModeToolbarTranslate, {
           toValue: 100,
           duration: 200,
           useNativeDriver: true,
         }),
-      ]).start(() => {
-        // Hide toolbar and list after animation completes
-        setShowEditToolbar(false);
-        setShowEditModeList(false);
-        setEditToolbarMoreExpanded(false);
+      ]);
+
+      exitAnimationRef.current = animation;
+
+      animation.start(({ finished }) => {
+        if (finished) {
+          log('[App] Edit mode exit animation completed');
+          setShowEditModeList(false);
+          setShowEditToolbar(false);
+          setEditToolbarMoreExpanded(false);
+        } else {
+          log('[App] Edit mode exit animation interrupted');
+        }
+
+        exitAnimationRef.current = null;
+        setIsTransitioning(false);
       });
     }
+
+    // Cleanup on unmount or mode change
+    return () => {
+      // Stop any running animations and clear refs
+      if (enterAnimationRef.current) {
+        enterAnimationRef.current.stop();
+        enterAnimationRef.current = null;
+      }
+      if (exitAnimationRef.current) {
+        exitAnimationRef.current.stop();
+        exitAnimationRef.current = null;
+      }
+
+      setIsTransitioning(false);
+    };
   }, [isEditMode]);
+
+  // Note: Safety timeout removed - animation refs handle cleanup properly
+  // The timeout was causing false positives on slow emulators
 
   // Handle PIN input
   useEffect(() => {
@@ -4508,6 +4584,7 @@ Users: ${userNames} (${userCount} total)
           {/* Edit Mode List - Positioned absolutely for crossfade */}
           {showEditModeList && (
             <Animated.View
+              pointerEvents={isEditMode ? 'auto' : 'none'}
               style={{
                 position: 'absolute',
                 top: 0,
@@ -4603,6 +4680,7 @@ Users: ${userNames} (${userCount} total)
 
           {/* Regular Content - Also animated for crossfade */}
           <Animated.View
+            pointerEvents={isEditMode ? 'none' : 'auto'}
             style={{
               flex: 1,
               opacity: contentFadeAnim,
@@ -5034,8 +5112,15 @@ Users: ${userNames} (${userCount} total)
         <FAB
           icon={isEditMode ? 'edit-off' : 'edit'}
           onPress={() => {
+            if (isTransitioning) {
+              log('[App] Edit mode toggle blocked - animation in progress');
+              return;
+            }
+
+            setIsTransitioning(true);
 
             if (isEditMode) {
+              log('[App] Exiting edit mode');
               setIsEditMode(false);
               // Switch to today when exiting edit mode
               if (currentDay !== 'today') {
@@ -5049,7 +5134,9 @@ Users: ${userNames} (${userCount} total)
                 setPinInput('');
                 setConfirmPin('');
                 setShowPinModal(true);
+                setIsTransitioning(false); // Reset since we're not animating yet
               } else {
+                log('[App] Entering edit mode');
                 setIsEditMode(true);
               }
             }
@@ -5622,7 +5709,7 @@ Users: ${userNames} (${userCount} total)
   // }
 
   // Don't render until store is hydrated
-  if (!isHydrated) {
+  if (!isHydrated || (hasCompletedOnboarding && !isStoreHydrated)) {
     return (
       <View
         style={{

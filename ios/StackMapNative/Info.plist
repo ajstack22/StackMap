@@ -19,11 +19,11 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>25.10.29</string>
+	<string>25.10.31</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>251029006</string>
+	<string>251031005</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
@@ -37,10 +37,10 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>StackMap needs camera access to scan sync QR codes</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>StackMap does not use the microphone but the camera library requires this permission</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>StackMap does not use your location but the camera library requires this permission</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>StackMap does not use the microphone but the camera library requires this permission</string>
 	<key>RCTNewArchEnabled</key>
 	<false/>
 	<key>UIAppFonts</key>

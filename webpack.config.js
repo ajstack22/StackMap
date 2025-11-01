@@ -104,6 +104,10 @@ module.exports = {
       'react-native-safe-area-context': path.resolve(__dirname, 'src/utils/SafeArea.web.js'),
       'react-native-vector-icons/MaterialIcons$': path.resolve(__dirname, 'src/utils/VectorIcons.web.js'),
       'react-native-vector-icons/MaterialIcons': path.resolve(__dirname, 'src/utils/VectorIcons.web.js'),
+      // Mock vision-camera dependencies (not needed for web)
+      'react-native-reanimated': path.resolve(__dirname, 'src/utils/react-native-web-modules/mocks.js'),
+      '@shopify/react-native-skia': path.resolve(__dirname, 'src/utils/react-native-web-modules/mocks.js'),
+      'react-native-worklets-core': path.resolve(__dirname, 'src/utils/react-native-web-modules/mocks.js'),
     },
   },
   plugins: [

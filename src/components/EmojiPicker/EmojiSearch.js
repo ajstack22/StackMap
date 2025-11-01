@@ -64,7 +64,7 @@ export const performEmojiSearch = (searchQuery, emojiCategories, emojiSearchInde
       if (typeof item === 'string') {
         // For emojis, check if search terms match
         const emojiInfo = emojiSearchIndex[item];
-        if (emojiInfo) {
+        if (emojiInfo && emojiInfo.searchTerms) {
           const matches = emojiInfo.searchTerms.some(term =>
             term.includes(query),
           );

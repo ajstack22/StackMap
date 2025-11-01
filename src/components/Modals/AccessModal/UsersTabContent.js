@@ -5,7 +5,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
 import ConfirmModal from '../../Modals/ConfirmModal';
 import AddUserModal from '../../Modals/AddUserModal/AddUserModal';
-import { DEFAULT_USER_ICON } from '../../../constants';
+import { DEFAULT_USER_ICON, COLORS } from '../../../constants';
 
 const UsersTabContent = ({
   theme,
@@ -112,7 +112,10 @@ const UsersTabContent = ({
                 key={userId}
                 style={[
                   styles.userItem,
-                  currentUser === userId && styles.userItemActive,
+                  currentUser === userId && {
+                    backgroundColor: `${theme.primary}15`,
+                    borderColor: theme.primary,
+                  },
                 ]}
                 onPress={() => handleUserSelect(userId)}
               >
@@ -122,14 +125,25 @@ const UsersTabContent = ({
                 <Text
                   style={[
                     styles.userItemName,
-                    currentUser === userId && styles.userItemNameActive,
+                    currentUser === userId && {
+                      fontWeight: '600',
+                      color: theme.primary,
+                      fontFamily: 'ComicRelief-Bold',
+                    },
                   ]}
                 >
                   {user.name ? String(user.name) : 'User'}
                 </Text>
                 {currentUser === userId && (
-                  <View style={styles.enabledBadge}>
-                    <Text style={styles.enabledText}>Active</Text>
+                  <View
+                    style={[
+                      styles.enabledBadge,
+                      { backgroundColor: `${theme.primary}20` },
+                    ]}
+                  >
+                    <Text style={[styles.enabledText, { color: theme.primary }]}>
+                      Active
+                    </Text>
                   </View>
                 )}
                 <View style={styles.userActions}>
@@ -154,7 +168,7 @@ const UsersTabContent = ({
                       style={styles.iconButton}
                       onPress={() => handleUserDelete(userId, user.name)}
                     >
-                      <Icon name="delete" size={20} color="#e53e3e" />
+                      <Icon name="delete" size={20} color={COLORS.semantic.error} />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -189,9 +203,9 @@ const UsersTabContent = ({
         title="Delete User"
         message={`Are you sure you want to delete ${userToDelete?.name}? This will permanently remove the user and all their activity cards.`}
         confirmText="Delete"
-        confirmButtonColor="#e53e3e"
+        confirmButtonColor={COLORS.semantic.error}
         icon="delete"
-        iconColor="#e53e3e"
+        iconColor={COLORS.semantic.error}
       />
 
       {/* Add/Edit User Modal */}

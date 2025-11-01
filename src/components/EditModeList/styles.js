@@ -32,9 +32,6 @@ const baseStyles = {
       },
       web: {
         boxShadow: `0 1px 3px ${COLORS.opacity.blackOverlay10}`,
-        // Smooth transitions for web
-        transition: 'all 0.25s ease-in-out',
-        willChange: 'transform',
       },
     }),
   },

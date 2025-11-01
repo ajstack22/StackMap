@@ -71,7 +71,7 @@ export const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: COLORS.gray[400],
     marginVertical: SPACING.md,
   },
   sectionTitle: {
@@ -104,11 +104,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  userItemActive: {
-    backgroundColor: '#f0f9ff',
-    borderColor: COLORS.info,
+    borderBottomColor: COLORS.gray[200],
   },
   userItemEmoji: {
     fontSize: 24,
@@ -120,11 +116,6 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-  },
-  userItemNameActive: {
-    fontWeight: '600',
-    color: COLORS.info,
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   userActions: {
     flexDirection: 'row',
@@ -193,14 +184,12 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   enabledBadge: {
-    backgroundColor: '#e6fffa',
     paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
     borderRadius: RADIUS.round,
     marginRight: SPACING.sm,
   },
   enabledText: {
-    color: COLORS.success,
     fontSize: 12,
     fontWeight: '600',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
