@@ -4,6 +4,15 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import RecoveryPhrase from '../RecoveryPhrase';
 import syncService from '../../../../services/sync';
 
+// Mock QRCode component
+jest.mock('react-native-qrcode-svg', () => {
+  const React = require('react');
+  return {
+    __esModule: true,
+    default: (props) => React.createElement('QRCode', props),
+  };
+});
+
 // Mock the sync service
 jest.mock('../../../../services/sync', () => ({
   getRecoveryPhrase: jest.fn(),

@@ -3,7 +3,7 @@ module.exports = {
   testEnvironment: 'node',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|react-native-vector-icons|react-native-svg|react-native-pager-view|react-native-safe-area-context|react-native-gesture-handler)/)',
+    'node_modules/(?!(react-native|@react-native|react-native-vector-icons|react-native-svg|react-native-pager-view|react-native-safe-area-context|react-native-gesture-handler|react-native-qrcode-svg)/)',
   ],
   moduleNameMapper: {
     '\\.svg': '<rootDir>/__mocks__/svgMock.js',
