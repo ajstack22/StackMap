@@ -536,10 +536,11 @@ platform :android do
     UI.message("Building beta release AAB...")
     build_release_flavor(flavor: "beta")
 
-    # Step 5: Upload to Play Store Internal Testing using shared helper
+    # Step 5: Upload to Play Store Closed Testing using shared helper
     # Note: aab_path automatically uses GRADLE_AAB_OUTPUT_PATH from lane context (set by gradle action)
+    # Note: You must create the "Closed" track in Google Play Console > Release > Testing > Closed testing first
     upload_to_play_store_with_retry(
-      track: 'internal',  # Internal Testing track (beta testing)
+      track: 'alpha',  # Closed Testing track (default closed testing track name)
       build_type: 'beta'
     )
 
