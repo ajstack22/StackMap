@@ -211,6 +211,14 @@ if [ "$DEPLOY_IOS" = true ] || [ "$DEPLOY_ANDROID" = true ]; then
 
     if "$SCRIPTS_ROOT/update-mobile-versions.sh"; then
         echo -e "${GREEN}✅ Mobile versions updated${NC}"
+
+        # Commit mobile version changes to maintain clean git state
+        if ! git diff --quiet android/app/build.gradle ios/StackMapNative/Info.plist 2>/dev/null; then
+            echo "📝 Committing mobile version updates..."
+            git add android/app/build.gradle ios/StackMapNative/Info.plist
+            git commit -m "Build: Update mobile version codes for beta deployment" -m "🤖 Generated with [Claude Code](https://claude.com/claude-code)" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
+            echo -e "${GREEN}✅ Mobile version changes committed${NC}"
+        fi
     else
         echo -e "${RED}❌ Failed to update mobile versions${NC}"
         exit 1
