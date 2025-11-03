@@ -146,17 +146,20 @@ const useUserStore = create(
 
             const sanitizedUser = { ...user };
 
-            // Trust dataNormalizer.js for name normalization (sync data path)
-            // For non-sync data, validate but preserve original value for debugging
-            if (!sanitizedUser.name || typeof sanitizedUser.name !== 'string') {
-              logWarn(
-                '[useUserStore] User name is invalid:',
-                userId,
-                sanitizedUser.name,
-                '- should be normalized before setUsers()'
-              );
-              // Preserve original value rather than defaulting to 'User'
-              // This allows debugging which normalization step failed
+            // Normalize user name - handle various malformed formats
+            if (sanitizedUser.name && typeof sanitizedUser.name === 'object') {
+              // Extract string from objects like {name: "John"} or {text: "John"}
+              if (sanitizedUser.name.name && typeof sanitizedUser.name.name === 'string') {
+                sanitizedUser.name = sanitizedUser.name.name;
+              } else if (sanitizedUser.name.text && typeof sanitizedUser.name.text === 'string') {
+                sanitizedUser.name = sanitizedUser.name.text;
+              } else {
+                // Empty object or object without name/text property
+                sanitizedUser.name = 'User';
+              }
+            } else if (!sanitizedUser.name || typeof sanitizedUser.name !== 'string') {
+              // null, undefined, array, or non-string - default to 'User'
+              sanitizedUser.name = 'User';
             }
 
             // Ensure icon field exists
