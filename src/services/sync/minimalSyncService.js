@@ -36,13 +36,11 @@ class MinimalSyncService {
     this.onDataReceived = null; // Callback for when new data arrives
 
     // Load existing sync ID on initialization
-    // Using setTimeout to prevent blocking the constructor and ensure AsyncStorage is ready
-    // This pattern was proven to work in the old syncService
-    setTimeout(() => {
-      this.loadExistingSyncId().then(() => {
-      }).catch(error => {
-      });
-    }, 1000); // 1 second delay, same as old syncService
+    // No artificial delay needed - just make it non-blocking
+    this.loadExistingSyncId().catch(error => {
+      console.error('[Sync] Failed to load existing sync ID:', error);
+      this.isEnabled = false; // Ensure clean state on error
+    });
 
     // Use centralized build configuration for API URL
     // Call at runtime to allow environment changes in tests
@@ -86,35 +84,60 @@ class MinimalSyncService {
   async loadExistingSyncId() {
     try {
       const storedSyncId = await AsyncStorage.getItem('@minimal_sync_id');
+
       if (storedSyncId) {
         this.syncId = storedSyncId;
-        
-        // Try to load the recovery phrase
-        const storedPhrase = await AsyncStorage.getItem(`@sync_phrase_${storedSyncId}`) || 
-                           await AsyncStorage.getItem('@sync_phrase');
+
+        let storedPhrase, storedData;
+
+        // Platform-specific optimization
+        if (Platform.OS === 'ios') {
+          // Sequential for iOS to avoid AsyncStorage performance issues
+          const phraseWithId = await AsyncStorage.getItem(`@sync_phrase_${storedSyncId}`);
+          storedPhrase = phraseWithId || await AsyncStorage.getItem('@sync_phrase');
+          storedData = await AsyncStorage.getItem('@minimal_sync_data');
+        } else {
+          // Parallel for Android/Web is safe and faster
+          const [phraseWithId, phraseGeneric, data] = await Promise.all([
+            AsyncStorage.getItem(`@sync_phrase_${storedSyncId}`),
+            AsyncStorage.getItem('@sync_phrase'),
+            AsyncStorage.getItem('@minimal_sync_data')
+          ]);
+          storedPhrase = phraseWithId || phraseGeneric;
+          storedData = data;
+        }
+
         if (storedPhrase) {
           this.recoveryPhrase = storedPhrase;
-          
+
           // CRITICAL: Re-initialize encryption with the loaded phrase
           await this.initializeEncryption(storedPhrase, storedSyncId);
-          
+
           // CRITICAL: Set isEnabled flag after successfully loading sync
           this.isEnabled = true;
         } else {
-          
+          console.warn('[Sync] No recovery phrase found, clearing sync ID');
           this.syncId = null; // Clear sync ID if we can't decrypt
+          this.isEnabled = false;
         }
-        
-        // Also check if we have stored data
-        const storedData = await AsyncStorage.getItem('@minimal_sync_data');
+
+        // Check stored data
         if (storedData) {
-          const parsed = JSON.parse(storedData);
-          // Found existing sync data from previous session
+          try {
+            const parsed = JSON.parse(storedData);
+            console.log('[Sync] Found existing sync data from previous session');
+          } catch (e) {
+            console.error('[Sync] Failed to parse stored data:', e);
+          }
         }
       } else {
-        // No existing sync ID found
+        console.log('[Sync] No existing sync ID found');
+        this.isEnabled = false;
       }
     } catch (error) {
+      console.error('[Sync] Error loading existing sync ID:', error);
+      this.isEnabled = false; // Ensure clean state
+      throw error; // Re-throw to be caught by caller
     }
   }
 
@@ -949,16 +972,22 @@ class MinimalSyncService {
     if (this.pullInterval) {
       clearInterval(this.pullInterval);
     }
-    
-    
-    // Do an immediate pull
-    this.pullAndNotify();
-    
-    // Then set up interval (every 30 seconds)
+
+    console.log('[Sync] Starting periodic pull (first pull in 30 seconds)');
+
+    // DON'T pull immediately - let app finish loading
+    // First pull will happen after interval delay
     this.pullInterval = setInterval(() => {
       const now = new Date().toLocaleTimeString();
+      console.log(`[Sync] Periodic pull at ${now}`);
       this.pullAndNotify();
     }, this.pullIntervalDuration);
+  }
+
+  // Add new method for manual immediate pull (when needed)
+  async pullImmediately() {
+    console.log('[Sync] Manual immediate pull requested');
+    return await this.pullAndNotify();
   }
   
   /**

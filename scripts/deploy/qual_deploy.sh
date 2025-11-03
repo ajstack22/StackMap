@@ -118,22 +118,20 @@ echo ""
 DEPLOYMENT_STATUS=""
 DEPLOYMENT_START=$(date +%s)
 
-# Generate deployment status page
-generate_status_page "qual" "$CURRENT_VERSION"
+# HTML status page generation removed (v2025.11.01)
 
 # Validation complete (qual doesn't have strict validation)
-update_status_page "validation" "success"
+# HTML status page update removed (v2025.11.01)
 
-# Update quality gate results on status page (they ran in master script)
+# Update quality gate results (they ran in master script)
 if [ -f "$SCRIPT_DIR/lib/quality-status.sh" ]; then
     source "$SCRIPT_DIR/lib/quality-status.sh"
     update_quality_status_from_results "qual"
-    # Regenerate status page with quality results
-    _update_status_page_html "qual" "$CURRENT_VERSION" "yellow"
+    # HTML status page regeneration removed (v2025.11.01)
 fi
 
 # Mark tests as skipped (qual doesn't run test suite)
-update_status_page "tests" "skipped"
+# HTML status page update removed (v2025.11.01)
 
 # Run health scan (qual-specific)
 echo ""
@@ -168,8 +166,7 @@ if [ -f "$SCRIPTS_ROOT/testing/test-health-report.sh" ]; then
         OVERALL_STATUS="UNKNOWN"
     fi
 
-    # Update scan results in status page
-    update_scan_results "$SMOKE_PASSED" "$SMOKE_FAILED" "$CRITICAL_PASSED" "$CRITICAL_FAILED" "$IMPORTANT_PASSED" "$IMPORTANT_TOTAL" "$UI_PASSED" "$UI_FAILED" "$OVERALL_STATUS"
+    # HTML status page scan results update removed (v2025.11.01)
 
     echo "✅ Health scan complete: $OVERALL_STATUS"
     echo ""
@@ -260,15 +257,20 @@ build_android_qual() {
         for DEVICE in $DEVICES; do
             MODEL=$(adb -s $DEVICE shell getprop ro.product.model 2>/dev/null | tr -d '\r')
             echo "📱 Installing qual variant on $MODEL ($DEVICE)..."
-            if adb -s $DEVICE install -r "$QUAL_APK_PATH" 2>/dev/null; then
+            # Try installation with better error visibility
+            INSTALL_OUTPUT=$(adb -s $DEVICE install -r "$QUAL_APK_PATH" 2>&1)
+            if echo "$INSTALL_OUTPUT" | grep -q "Success"; then
                 echo -e "${GREEN}✅ Installed on $MODEL${NC}"
             else
-                echo "  Uninstalling old version first..."
+                echo "  Installation failed, trying uninstall first..."
+                echo "  Error: $(echo "$INSTALL_OUTPUT" | grep -i "error\|fail" | head -1)"
                 adb -s $DEVICE uninstall "$QUAL_PACKAGE" 2>/dev/null || true
-                if adb -s $DEVICE install "$QUAL_APK_PATH"; then
+                INSTALL_OUTPUT=$(adb -s $DEVICE install "$QUAL_APK_PATH" 2>&1)
+                if echo "$INSTALL_OUTPUT" | grep -q "Success"; then
                     echo -e "${GREEN}✅ Installed on $MODEL${NC}"
                 else
                     echo -e "${YELLOW}⚠️  Failed to install on $MODEL (non-blocking)${NC}"
+                    echo "     Error: $(echo "$INSTALL_OUTPUT" | grep -i "error\|fail" | head -1)"
                 fi
             fi
         done
@@ -435,9 +437,7 @@ DEPLOYMENT_TIME=$((DEPLOYMENT_END - DEPLOYMENT_START))
 DEPLOYMENT_MINUTES=$((DEPLOYMENT_TIME / 60))
 DEPLOYMENT_SECONDS=$((DEPLOYMENT_TIME % 60))
 
-# Finalize and open status page
-finalize_status_page
-open_status_page
+# HTML status page finalization removed (v2025.11.01)
 
 # Generate qual deployment report
 echo ""

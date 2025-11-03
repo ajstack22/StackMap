@@ -136,13 +136,10 @@ echo ""
 DEPLOYMENT_START=$(date +%s)
 
 # Generate deployment status page
-generate_status_page "stage" "$STAGE_VERSION"
 
 # Mark validation as complete
-update_status_page "validation" "success"
 
 # Web always skipped for stage (mobile-only)
-update_status_page "web" "skipped"
 
 # Run test suite (warn only, don't block)
 echo ""
@@ -151,7 +148,6 @@ echo "🧪 Running Stage Test Suite (warnings only)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-update_status_page "tests" "in_progress"
 
 TEST_WARNINGS=""
 
@@ -195,12 +191,10 @@ if [ -n "$TEST_WARNINGS" ]; then
     echo -e "${YELLOW}⚠️  Test Warnings (not blocking):${NC}"
     echo -e "$TEST_WARNINGS"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    update_status_page "tests" "failed"
 else
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "✅ All tests passed"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    update_status_page "tests" "success"
 fi
 echo ""
 
@@ -225,7 +219,6 @@ DEPLOYMENT_STATUS=""
 
 # Deploy iOS to TestFlight
 if [ "$DEPLOY_IOS" = true ]; then
-    update_status_page "ios" "in_progress"
 
     echo "🍎 Deploying iOS Stage to TestFlight..."
     echo "This will upload to TestFlight Internal Testing"
@@ -258,24 +251,22 @@ if [ "$DEPLOY_IOS" = true ]; then
         echo "  • Build errors: Check Xcode project configuration"
         echo "  • Certificate issues: Run 'cd ios && fastlane match' to sync certificates"
         cd ..
-        update_status_page "ios" "failed"
         exit 1
     fi
 
     cd ..
 
     DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n  ✅ iOS: TestFlight Internal Testing (stage/api)"
-    update_status_page "ios" "success"
     echo -e "${GREEN}✅ iOS stage deployed to TestFlight${NC}"
     echo -e "${GREEN}   Log saved: $LOG_FILE${NC}"
     echo ""
 else
-    update_status_page "ios" "skipped"
+    # HTML status page update removed (v2025.11.01)
+    :  # No-op placeholder
 fi
 
 # Deploy Android to Play Store Internal Testing
 if [ "$DEPLOY_ANDROID" = true ]; then
-    update_status_page "android" "in_progress"
 
     echo "🤖 Deploying Android Stage to Play Store..."
     echo "This will upload to Google Play Internal Testing"
@@ -308,19 +299,18 @@ if [ "$DEPLOY_ANDROID" = true ]; then
         echo "  • Build errors: Run './gradlew clean' and try again"
         echo "  • Service account: Check service account key in macOS Keychain"
         cd ..
-        update_status_page "android" "failed"
         exit 1
     fi
 
     cd ..
 
     DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n  ✅ Android: Play Internal Testing (stage/api)"
-    update_status_page "android" "success"
     echo -e "${GREEN}✅ Android stage deployed to Play Store${NC}"
     echo -e "${GREEN}   Log saved: $LOG_FILE${NC}"
     echo ""
 else
-    update_status_page "android" "skipped"
+    # HTML status page update removed (v2025.11.01)
+    :
 fi
 
 # Calculate deployment time
@@ -330,8 +320,6 @@ DEPLOYMENT_MINUTES=$((DEPLOYMENT_TIME / 60))
 DEPLOYMENT_SECONDS=$((DEPLOYMENT_TIME % 60))
 
 # Finalize and open status page
-finalize_status_page
-open_status_page
 
 # Generate stage deployment report
 echo ""

@@ -52,34 +52,48 @@ class SyncStoreIntegration {
       return;
     }
 
-    
-    // Load existing sync ID into minimalSync first
-    await minimalSync.loadExistingSyncId();
-    
-    // Check if we have an existing sync
-    const syncId = await AsyncStorage.getItem('@minimal_sync_id');
-    
-    if (syncId && minimalSync.encryptionReady) {
-      
-      // Enable periodic sync with our callback
-      minimalSync.enableSync(this.handleDataReceived);
-      
-      // Subscribe to store changes
-      this.subscribeToStores();
-      
-      // Do an initial pull to get latest data
-      try {
-        const pullResult = await minimalSync.pullData();
-        if (pullResult.success && pullResult.data) {
-          await this.handleDataReceived(pullResult.data);
-        }
-      } catch (error) {
+    try {
+      // Load existing sync ID into minimalSync first
+      await minimalSync.loadExistingSyncId();
+
+      // Check if we have an existing sync
+      const syncId = await AsyncStorage.getItem('@minimal_sync_id');
+
+      if (syncId && minimalSync.encryptionReady) {
+        // Subscribe to store changes FIRST
+        this.subscribeToStores();
+
+        // Enable periodic sync with our callback
+        minimalSync.enableSync(this.handleDataReceived);
+
+        // Mark as initialized AFTER setup but BEFORE background pull
+        this.isInitialized = true;
+
+        // Schedule initial pull in background after 500ms
+        setTimeout(async () => {
+          try {
+            console.time('[PERF] Initial sync pull');
+            const pullResult = await minimalSync.pullData();
+            if (pullResult.success && pullResult.data) {
+              await this.handleDataReceived(pullResult.data);
+            }
+            console.timeEnd('[PERF] Initial sync pull');
+          } catch (error) {
+            console.error('[Sync] Initial pull failed:', error);
+            // Don't throw - this is background operation
+          }
+        }, 500);
+
+      } else {
+        console.log('[Sync] No sync configured or encryption not ready');
+        this.isInitialized = true;
       }
-      
-    } else {
+    } catch (error) {
+      console.error('[Sync] Initialization error:', error);
+      // Still mark as initialized to prevent retry loops
+      this.isInitialized = true;
+      throw error; // Re-throw for App.js to handle
     }
-    
-    this.isInitialized = true;
   }
 
   /**

@@ -405,7 +405,7 @@ Integrate iOS and Android tests into quality gates system:
 1. Add run_ios_tests() and run_android_tests() functions to scripts/deploy/lib/quality-gates.sh
 2. Call fastlane test lanes and parse results
 3. Export results to /tmp/stackmap-ios-tests and /tmp/stackmap-android-tests
-4. Update scripts/deploy/lib/status-page-template.html to display mobile test results
+4. (HTML status page removed in v2025.11.01 - display results in console instead)
 5. Integrate into scripts/deploy/qual_deploy.sh when --ios or --android flags used
 
 Use Atlas Iterative workflow.

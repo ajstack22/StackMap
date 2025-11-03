@@ -133,6 +133,7 @@ import {
   PIN_LENGTH,
   TOAST_DURATION,
   isTablet,
+  isTabletLandscape,
   calculateColumns,
   calculateCardWidth,
   getCardHeight,
@@ -366,6 +367,9 @@ const App = () => {
   const [syncPreviewPhrase, setSyncPreviewPhrase] = useState(null);
   const [showOnboardingImport, setShowOnboardingImport] = useState(false);
   const [onboardingImportData, setOnboardingImportData] = useState(null);
+
+  // Sync initialization state for visual feedback
+  const [isSyncInitializing, setIsSyncInitializing] = useState(false);
 
   // Screen dimensions state
   const [screenDimensions, setScreenDimensions] = useState(() => {
@@ -630,18 +634,36 @@ const App = () => {
     // Don't check sync status during onboarding to prevent flashes
     if (showOnboarding || showSetupWizard) return;
 
-    const checkSyncStatus = async () => {
-      // Initialize sync service to properly load existing sync ID
+    const initSync = async () => {
       if (syncService.initialize) {
-        console.log('[App] Initializing sync service...');
-        await syncService.initialize();
+        console.log('[App] Starting background sync initialization...');
+        console.time('[PERF] Sync initialization');
+        setIsSyncInitializing(true);
+
+        // Start init but don't await - let it run in background
+        syncService.initialize()
+          .then(async () => {
+            const enabled = await syncService.isEnabled(); // MUST await
+            useSyncStore.getState().setSyncEnabled(enabled);
+            console.timeEnd('[PERF] Sync initialization');
+            console.log('[App] Sync initialization completed');
+          })
+          .catch(error => {
+            console.error('[App] Sync initialization failed:', error);
+            useSyncStore.getState().setSyncEnabled(false); // Safe fallback
+          })
+          .finally(() => {
+            // Always hide spinner after max 3 seconds
+            setTimeout(() => setIsSyncInitializing(false), 3000);
+          });
+      } else {
+        // Fallback if syncService not available
+        const enabled = await syncService.isEnabled();
+        useSyncStore.getState().setSyncEnabled(enabled);
       }
-      
-      const enabled = await syncService.isEnabled();
-      useSyncStore.getState().setSyncEnabled(enabled);
     };
 
-    checkSyncStatus();
+    initSync();
   }, [isHydrated, showOnboarding, showSetupWizard]);
 
   // AppState listener for mobile - trigger sync when app comes to foreground
@@ -2023,6 +2045,23 @@ const App = () => {
   // Ensure theme is always defined, even if currentTheme is undefined
   const validatedTheme = validateTheme(currentTheme);
   const theme = THEMES[validatedTheme] || THEMES.stackBlue;
+
+  // Apply navigation bar theme color on Android
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      // Dynamically import to avoid issues if not installed
+      import('./src/utils/navigationBarTheme').then(({ setNavigationBarColor, isLightColor }) => {
+        // Check if theme color is light or dark
+        const useLightIcons = !isLightColor(theme.primary); // Use white icons for dark themes
+
+        // Set navigation bar to match theme primary color with appropriate icon color
+        setNavigationBarColor(theme.primary, useLightIcons);
+      }).catch(() => {
+        // Navigation bar theming not available
+        console.log('Navigation bar theming not available');
+      });
+    }
+  }, [theme.primary]);
 
   // Log for debugging
   if (!currentTheme) {
@@ -4673,7 +4712,11 @@ Users: ${userNames} (${userCount} total)
                           justifyContent:
                             Platform.OS === 'web'
                               ? 'center'
-                              : (Platform.OS === 'android' ||
+                              : // Tablet landscape (iOS/Android): Center the 2-column layout
+                              isTabletLandscape() && numColumns === 2
+                              ? 'center'
+                              : // Tablet portrait (iOS/Android): Space evenly
+                              (Platform.OS === 'android' ||
                                   (Platform.OS === 'ios' &&
                                     isTablet(screenDimensions.width))) &&
                                 numColumns === 2
@@ -5339,6 +5382,21 @@ Users: ${userNames} (${userCount} total)
           }
         }}
       />
+
+      {/* Sync Loading Indicator */}
+      {isSyncInitializing && (
+        <View style={[
+          styles.syncLoadingOverlay,
+          bannerPosition === 'bottom' && styles.syncLoadingOverlayWithBottomBanner
+        ]}>
+          <View style={[styles.syncLoadingContainer, { backgroundColor: theme.primary }]}>
+            <ActivityIndicator size="small" color="white" />
+            <Text style={styles.syncLoadingText}>
+              Syncing...
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Data Modal */}
       <DataModal
@@ -6783,6 +6841,38 @@ const styles = StyleSheet.create({
     fontWeight: '700', // Use 700 for better Android rendering
     color: COLORS.text.primary,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
+  },
+  syncLoadingOverlay: {
+    position: 'absolute',
+    bottom: 130, // Higher to avoid overlap with cards
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    zIndex: Z_INDEX.CRITICAL, // Maximum prominence
+    elevation: 999999, // For Android - using numeric value for maximum elevation
+  },
+  syncLoadingOverlayWithBottomBanner: {
+    bottom: 170, // Higher when banner is at bottom
+  },
+  syncLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADIUS.md,
+    // Enhanced shadow for maximum prominence
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  syncLoadingText: {
+    color: 'white',
+    fontSize: TYPOGRAPHY.sizes.md,
+    marginLeft: SPACING.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
 });
 

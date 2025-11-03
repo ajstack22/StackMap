@@ -2,10 +2,19 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 // Debounce timer for storage writes
 let storageWriteTimer = null;
 let pendingWrite = null;
+
+// Platform-specific debounce delays for better performance
+const DEBOUNCE_DELAY = Platform.select({
+  ios: 500,     // iOS has severe AsyncStorage performance issues
+  android: 100, // Android performs better
+  web: 0,       // Web localStorage is synchronous, no debounce needed
+  default: 100
+});
 
 // Storage adapter for React Native AsyncStorage with debounced writes
 const storage = {
@@ -40,18 +49,30 @@ const storage = {
       clearTimeout(storageWriteTimer);
     }
 
-    storageWriteTimer = setTimeout(async () => {
-      if (pendingWrite) {
-        try {
-          await AsyncStorage.setItem(
-            pendingWrite.name,
-            JSON.stringify(pendingWrite.value),
-          );
-        } catch (error) {
+    // Only debounce on native platforms
+    if (DEBOUNCE_DELAY > 0) {
+      storageWriteTimer = setTimeout(async () => {
+        if (pendingWrite) {
+          try {
+            await AsyncStorage.setItem(
+              pendingWrite.name,
+              JSON.stringify(pendingWrite.value),
+            );
+          } catch (error) {
+            // Error writing to AsyncStorage
+          }
+          pendingWrite = null;
         }
+      }, DEBOUNCE_DELAY);
+    } else {
+      // Web: Write immediately (synchronous localStorage)
+      try {
+        await AsyncStorage.setItem(name, JSON.stringify(value));
         pendingWrite = null;
+      } catch (error) {
+        // Error writing to AsyncStorage
       }
-    }, 1000);
+    }
   },
   removeItem: async name => {
     try {

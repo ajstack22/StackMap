@@ -201,9 +201,6 @@ DEPLOYMENT_STATUS=""
 DEPLOYMENT_START=$(date +%s)
 
 # Generate status dashboard
-generate_status_page "beta" "$CURRENT_VERSION"
-update_status_page "validation" "success"
-update_status_page "tests" "skipped"
 
 # Update mobile versions (iOS and Android) before building
 if [ "$DEPLOY_IOS" = true ] || [ "$DEPLOY_ANDROID" = true ]; then
@@ -223,7 +220,6 @@ fi
 
 # Deploy Web (beta uses dedicated beta environment)
 if [ "$DEPLOY_WEB" = true ]; then
-    update_status_page "web" "in_progress"
     echo "🌐 Deploying Web Beta..."
     echo "Deploying to beta environment ($APP_URL_BETA)"
     echo "Beta web uses beta/api endpoint (production database)"
@@ -232,28 +228,25 @@ if [ "$DEPLOY_WEB" = true ]; then
     # Deploy to beta using deployment infrastructure (in parent scripts directory)
     if [ -f "$SCRIPTS_ROOT/deploy-with-tracking.sh" ]; then
         if "$SCRIPTS_ROOT/deploy-with-tracking.sh" beta; then
-            update_status_page "web" "success"
             DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n  ✅ Web: $APP_URL_BETA (uses beta/api)"
             echo -e "${GREEN}✅ Web beta deployed${NC}"
         else
-            update_status_page "web" "failed"
             echo -e "${RED}❌ Web beta deployment failed${NC}"
             exit 1
         fi
     else
-        update_status_page "web" "failed"
         echo -e "${RED}❌ deploy-with-tracking.sh not found${NC}"
         echo "   Cannot deploy web beta without deployment script"
         exit 1
     fi
     echo ""
 else
-    update_status_page "web" "skipped"
+    # HTML status page update removed (v2025.11.01)
+    :
 fi
 
 # Deploy iOS to TestFlight
 if [ "$DEPLOY_IOS" = true ]; then
-    update_status_page "ios" "in_progress"
     echo "🍎 Deploying iOS Beta to TestFlight..."
     echo "This will upload to TestFlight Internal Testing"
     echo "iOS will use beta/api endpoint (production database)"
@@ -270,7 +263,6 @@ if [ "$DEPLOY_IOS" = true ]; then
     # Run fastlane beta_ios with changelog (capture output)
     # BUILD_TYPE=beta is set in Fastfile to configure API endpoint
     if ! fastlane beta_ios changelog:"Beta release $BETA_VERSION" skip_increment:true 2>&1 | tee "$LOG_FILE"; then
-        update_status_page "ios" "failed"
         echo ""
         echo -e "${RED}❌ iOS beta deployment failed${NC}"
         echo ""
@@ -292,18 +284,17 @@ if [ "$DEPLOY_IOS" = true ]; then
 
     cd ..
 
-    update_status_page "ios" "success"
     DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n  ✅ iOS: TestFlight Internal Testing (beta/api)"
     echo -e "${GREEN}✅ iOS beta deployed to TestFlight${NC}"
     echo -e "${GREEN}   Log saved: $LOG_FILE${NC}"
     echo ""
 else
-    update_status_page "ios" "skipped"
+    # HTML status page update removed (v2025.11.01)
+    :
 fi
 
 # Deploy Android to Play Store Internal Testing
 if [ "$DEPLOY_ANDROID" = true ]; then
-    update_status_page "android" "in_progress"
     echo "🤖 Deploying Android Beta to Play Store..."
     echo "This will upload to Google Play Internal Testing"
     echo "Android will use beta/api endpoint (production database)"
@@ -320,7 +311,6 @@ if [ "$DEPLOY_ANDROID" = true ]; then
     # Run fastlane beta_android (capture output)
     # BUILD_TYPE=beta is set in Fastfile to configure API endpoint
     if ! fastlane beta_android 2>&1 | tee "$LOG_FILE"; then
-        update_status_page "android" "failed"
         echo ""
         echo -e "${RED}❌ Android beta deployment failed${NC}"
         echo ""
@@ -342,13 +332,13 @@ if [ "$DEPLOY_ANDROID" = true ]; then
 
     cd ..
 
-    update_status_page "android" "success"
     DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n  ✅ Android: Play Internal Testing (beta/api)"
     echo -e "${GREEN}✅ Android beta deployed to Play Store${NC}"
     echo -e "${GREEN}   Log saved: $LOG_FILE${NC}"
     echo ""
 else
-    update_status_page "android" "skipped"
+    # HTML status page update removed (v2025.11.01)
+    :
 fi
 
 # Calculate deployment time
@@ -358,8 +348,6 @@ DEPLOYMENT_MINUTES=$((DEPLOYMENT_TIME / 60))
 DEPLOYMENT_SECONDS=$((DEPLOYMENT_TIME % 60))
 
 # Finalize and open status dashboard
-finalize_status_page
-open_status_page
 
 # Generate beta deployment report
 echo ""

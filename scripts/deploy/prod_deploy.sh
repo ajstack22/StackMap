@@ -33,7 +33,6 @@ update_mobile_versions() {
 
 # Function to build Android AAB (production)
 build_android_aab() {
-    update_status_page "android" "in_progress"
     echo -e "${YELLOW}📱 Building Android AAB for Production...${NC}"
 
     # Ensure we're in production mode
@@ -57,10 +56,8 @@ build_android_aab() {
         # Copy to a more accessible location with timestamp
         TIMESTAMP=$(date +%Y%m%d-%H%M%S)
         cp "$AAB_PATH" "../stackmap-production-$TIMESTAMP.aab"
-        update_status_page "android" "success"
         echo -e "${GREEN}✅ Copied to: stackmap-production-$TIMESTAMP.aab${NC}"
     else
-        update_status_page "android" "failed"
         echo -e "${RED}❌ AAB build failed${NC}"
         exit 1
     fi
@@ -70,7 +67,6 @@ build_android_aab() {
 
 # Function to build and deploy iOS to production
 deploy_ios_production() {
-    update_status_page "ios" "in_progress"
     echo -e "${YELLOW}📱 Deploying iOS to App Store...${NC}"
 
     # Ensure we're in production mode
@@ -95,7 +91,6 @@ deploy_ios_production() {
     fi
 
     if [ $? -eq 0 ]; then
-        update_status_page "ios" "success"
         echo -e "${GREEN}✅ iOS uploaded to App Store Connect!${NC}"
         echo ""
         echo "📱 Next steps:"
@@ -104,7 +99,6 @@ deploy_ios_production() {
         echo "   3. Submit for review when ready"
         echo "   4. Monitor review status"
     else
-        update_status_page "ios" "failed"
         echo -e "${RED}❌ iOS production deployment failed${NC}"
         cd ..
         exit 1
@@ -115,7 +109,6 @@ deploy_ios_production() {
 
 # Function to deploy web to production
 deploy_web_to_prod() {
-    update_status_page "web" "in_progress"
     echo -e "${YELLOW}🌐 Deploying Web to Production...${NC}"
 
     echo "📦 Creating backup of current production..."
@@ -136,7 +129,6 @@ EOF
         echo "✅ Production updated from qual"
 EOF
 
-    update_status_page "web" "success"
     echo -e "${GREEN}✅ Web deployed to production!${NC}"
     echo "🌐 Production: $APP_URL_PROD"
 }
@@ -210,57 +202,31 @@ case "${1:-menu}" in
     "web")
         CURRENT_VERSION=$(grep '"version":' package.json | head -1 | cut -d'"' -f4)
         DEPLOYMENT_START=$(date +%s)
-        generate_status_page "prod" "$CURRENT_VERSION"
-        update_status_page "validation" "success"
-        update_status_page "tests" "skipped"
-        update_status_page "ios" "skipped"
-        update_status_page "android" "skipped"
         verify_api_urls
         deploy_web_to_prod
-        finalize_status_page
-        open_status_page
         ;;
     "android")
         CURRENT_VERSION=$(grep '"version":' package.json | head -1 | cut -d'"' -f4)
         DEPLOYMENT_START=$(date +%s)
-        generate_status_page "prod" "$CURRENT_VERSION"
-        update_status_page "validation" "success"
-        update_status_page "tests" "skipped"
-        update_status_page "web" "skipped"
-        update_status_page "ios" "skipped"
         verify_api_urls
         update_mobile_versions
         build_android_aab
-        finalize_status_page
-        open_status_page
         ;;
     "ios")
         CURRENT_VERSION=$(grep '"version":' package.json | head -1 | cut -d'"' -f4)
         DEPLOYMENT_START=$(date +%s)
-        generate_status_page "prod" "$CURRENT_VERSION"
-        update_status_page "validation" "success"
-        update_status_page "tests" "skipped"
-        update_status_page "web" "skipped"
-        update_status_page "android" "skipped"
         verify_api_urls
         update_mobile_versions
         deploy_ios_production
-        finalize_status_page
-        open_status_page
         ;;
     "all")
         CURRENT_VERSION=$(grep '"version":' package.json | head -1 | cut -d'"' -f4)
         DEPLOYMENT_START=$(date +%s)
-        generate_status_page "prod" "$CURRENT_VERSION"
-        update_status_page "validation" "success"
-        update_status_page "tests" "skipped"
         verify_api_urls
         update_mobile_versions
         deploy_web_to_prod
         build_android_aab
         deploy_ios_production
-        finalize_status_page
-        open_status_page
         echo
         echo -e "${GREEN}🎉 FULL PRODUCTION DEPLOYMENT COMPLETE!${NC}"
         echo
@@ -275,59 +241,33 @@ case "${1:-menu}" in
             1)
                 CURRENT_VERSION=$(grep '"version":' package.json | head -1 | cut -d'"' -f4)
                 DEPLOYMENT_START=$(date +%s)
-                generate_status_page "prod" "$CURRENT_VERSION"
-                update_status_page "validation" "success"
-                update_status_page "tests" "skipped"
                 verify_api_urls
                 update_mobile_versions
                 deploy_web_to_prod
                 build_android_aab
                 deploy_ios_production
-                finalize_status_page
-                open_status_page
                 echo
                 echo -e "${GREEN}🎉 FULL PRODUCTION DEPLOYMENT COMPLETE!${NC}"
                 ;;
             2)
                 CURRENT_VERSION=$(grep '"version":' package.json | head -1 | cut -d'"' -f4)
                 DEPLOYMENT_START=$(date +%s)
-                generate_status_page "prod" "$CURRENT_VERSION"
-                update_status_page "validation" "success"
-                update_status_page "tests" "skipped"
-                update_status_page "ios" "skipped"
-                update_status_page "android" "skipped"
                 verify_api_urls
                 deploy_web_to_prod
-                finalize_status_page
-                open_status_page
                 ;;
             3)
                 CURRENT_VERSION=$(grep '"version":' package.json | head -1 | cut -d'"' -f4)
                 DEPLOYMENT_START=$(date +%s)
-                generate_status_page "prod" "$CURRENT_VERSION"
-                update_status_page "validation" "success"
-                update_status_page "tests" "skipped"
-                update_status_page "web" "skipped"
-                update_status_page "ios" "skipped"
                 verify_api_urls
                 update_mobile_versions
                 build_android_aab
-                finalize_status_page
-                open_status_page
                 ;;
             4)
                 CURRENT_VERSION=$(grep '"version":' package.json | head -1 | cut -d'"' -f4)
                 DEPLOYMENT_START=$(date +%s)
-                generate_status_page "prod" "$CURRENT_VERSION"
-                update_status_page "validation" "success"
-                update_status_page "tests" "skipped"
-                update_status_page "web" "skipped"
-                update_status_page "android" "skipped"
                 verify_api_urls
                 update_mobile_versions
                 deploy_ios_production
-                finalize_status_page
-                open_status_page
                 ;;
             5)
                 rollback_prod

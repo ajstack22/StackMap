@@ -2,10 +2,19 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 // Debounce timer for storage writes
 let storageWriteTimer = null;
 let pendingWrite = null;
+
+// Platform-specific debounce delays for better performance
+const DEBOUNCE_DELAY = Platform.select({
+  ios: 500,     // iOS has severe AsyncStorage performance issues
+  android: 100, // Android performs better
+  web: 0,       // Web localStorage is synchronous, no debounce needed
+  default: 100
+});
 
 // Storage adapter for React Native AsyncStorage with debounced writes
 const storage = {

@@ -14,6 +14,13 @@ export const isMobile = width => {
   return currentWidth <= 600;
 };
 
+// Tablet landscape detection (uses real-time dimensions)
+export const isTabletLandscape = () => {
+  const { width, height } = Dimensions.get('window');
+  // Tablet landscape: wide enough to be tablet AND wider than tall
+  return width >= 1000 && width > height;
+};
+
 // Font scale multipliers
 export const FONT_SCALE = {
   mobile: 1,
@@ -59,10 +66,10 @@ export const calculateColumns = (width = screenWidth) => {
   }
 
   // Special handling for iOS tablets
-  // Force 2 columns for ALL iPad portrait orientations (11" is ~834px, 13" is ~1032px)
-  // iPad landscape is typically > 1100px wide
-  if (Platform.OS === 'ios' && width >= 768 && width < 1100) {
-    // iPad portrait mode - force 2 columns for both 11" and 13" models
+  // Force 2 columns for ALL iPad orientations to ensure centering works
+  // iPad Mini/11": ~810-1080px, iPad Pro 12.9": ~1024-1366px
+  if (Platform.OS === 'ios' && width >= 768) {
+    // All iPads get 2 columns for consistent centering behavior
     return 2;
   }
 

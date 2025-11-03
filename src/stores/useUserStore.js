@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { logWarn } from '../utils/logger';
 // Deep merge utility to replace lodash
 const deepMerge = (target, source) => {
@@ -24,6 +25,14 @@ import { DEFAULT_USER_ICON } from '../constants';
 // Debounce timer for storage writes
 let storageWriteTimer = null;
 let pendingWrite = null;
+
+// Platform-specific debounce delays for better performance
+const DEBOUNCE_DELAY = Platform.select({
+  ios: 500,     // iOS has severe AsyncStorage performance issues
+  android: 100, // Android performs better
+  web: 0,       // Web localStorage is synchronous, no debounce needed
+  default: 100
+});
 
 // Storage adapter for React Native AsyncStorage with debounced writes
 const storage = {
@@ -58,39 +67,50 @@ const storage = {
       clearTimeout(storageWriteTimer);
     }
 
-    storageWriteTimer = setTimeout(async () => {
-      if (pendingWrite) {
-        try {
-          // PHASE 1 CHECKPOINT 3: AsyncStorage timing verification
-          const writeStartTime = Date.now();
-          console.log('[CHECKPOINT3] AsyncStorage write starting:', {
-            storageName: pendingWrite.name,
-            dataSize: JSON.stringify(pendingWrite.value).length,
-            timestamp: writeStartTime
-          });
+    // Only debounce on native platforms
+    if (DEBOUNCE_DELAY > 0) {
+      storageWriteTimer = setTimeout(async () => {
+        if (pendingWrite) {
+          try {
+            // PHASE 1 CHECKPOINT 3: AsyncStorage timing verification
+            const writeStartTime = Date.now();
+            console.log('[CHECKPOINT3] AsyncStorage write starting:', {
+              storageName: pendingWrite.name,
+              dataSize: JSON.stringify(pendingWrite.value).length,
+              timestamp: writeStartTime
+            });
 
-          await AsyncStorage.setItem(
-            pendingWrite.name,
-            JSON.stringify(pendingWrite.value),
-          );
+            await AsyncStorage.setItem(
+              pendingWrite.name,
+              JSON.stringify(pendingWrite.value),
+            );
 
-          const writeEndTime = Date.now();
-          const writeDuration = writeEndTime - writeStartTime;
-          console.log('[CHECKPOINT3] AsyncStorage write completed:', {
-            storageName: pendingWrite.name,
-            duration: writeDuration,
-            timestamp: writeEndTime
-          });
+            const writeEndTime = Date.now();
+            const writeDuration = writeEndTime - writeStartTime;
+            console.log('[CHECKPOINT3] AsyncStorage write completed:', {
+              storageName: pendingWrite.name,
+              duration: writeDuration,
+              timestamp: writeEndTime
+            });
 
-          if (writeDuration > 500) {
-            console.warn('[CHECKPOINT3] WARNING: AsyncStorage write took', writeDuration, 'ms (>500ms threshold)');
+            if (writeDuration > 500) {
+              console.warn('[CHECKPOINT3] WARNING: AsyncStorage write took', writeDuration, 'ms (>500ms threshold)');
+            }
+          } catch (error) {
+            console.error('[CHECKPOINT3] AsyncStorage write failed:', error);
           }
-        } catch (error) {
-          console.error('[CHECKPOINT3] AsyncStorage write failed:', error);
+          pendingWrite = null;
         }
+      }, DEBOUNCE_DELAY);
+    } else {
+      // Web: Write immediately (synchronous localStorage)
+      try {
+        await AsyncStorage.setItem(name, JSON.stringify(value));
         pendingWrite = null;
+      } catch (error) {
+        console.error('[Storage] Write failed:', error);
       }
-    }, 1000);
+    }
   },
   removeItem: async name => {
     try {

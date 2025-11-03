@@ -399,12 +399,17 @@ const EditModeToolbar = ({
         : 0
       : 0;
 
+  // Calculate bottom offset for navigation bar (Android)
+  const bottomOffset = position === 'bottom' && Platform.OS === 'android'
+    ? (insets.bottom || 0)  // Use nav bar height, with fallback to 0
+    : 0;
+
   return (
     <>
       <View
         style={[
           styles.container,
-          position === 'top' ? styles.topPosition : styles.bottomPosition,
+          position === 'top' ? styles.topPosition : { bottom: bottomOffset },
           {
             backgroundColor: theme.primary,
             paddingTop: topPadding,
