@@ -2046,9 +2046,10 @@ const App = () => {
   const validatedTheme = validateTheme(currentTheme);
   const theme = THEMES[validatedTheme] || THEMES.stackBlue;
 
-  // Apply navigation bar theme color on Android
+  // Apply navigation bar theme color on Android (only after app is fully loaded)
   useEffect(() => {
-    if (Platform.OS === 'android') {
+    // Only theme navigation bar after app is fully hydrated to prevent flashing
+    if (Platform.OS === 'android' && isHydrated && (hasCompletedOnboarding ? isStoreHydrated : true)) {
       // Dynamically import to avoid issues if not installed
       import('./src/utils/navigationBarTheme').then(({ setNavigationBarColor, isLightColor }) => {
         // Check if theme color is light or dark
@@ -2061,7 +2062,7 @@ const App = () => {
         console.log('Navigation bar theming not available');
       });
     }
-  }, [theme.primary]);
+  }, [theme.primary, isHydrated, isStoreHydrated, hasCompletedOnboarding]);
 
   // Log for debugging
   if (!currentTheme) {
