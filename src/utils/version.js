@@ -118,5 +118,5 @@ export const setVersion = async version => {
 
 // Export a static version for builds
 // This will be updated by the build script
-export const BUILD_VERSION = '2025.11.03.15';
+export const BUILD_VERSION = '2025.11.03.16';
 // CRITICAL FIX: Sync data structure mismatch resolved
