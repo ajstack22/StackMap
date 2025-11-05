@@ -39,37 +39,34 @@ update_mobile_versions() {
     echo
 }
 
-# Function to build Android AAB (production)
-build_android_aab() {
-    echo -e "${YELLOW}📱 Building Android AAB for Production...${NC}"
+# Function to build and upload Android to production
+deploy_android_production() {
+    echo -e "${YELLOW}📱 Deploying Android to Google Play Store...${NC}"
 
     # Ensure we're in production mode
     export NODE_ENV=production
-    
-    cd android
-    
-    # Clean previous builds
-    ./gradlew clean
-    
-    # Build release AAB for prod flavor
-    echo "Building release AAB..."
-    ./gradlew bundleProdRelease
 
-    # Check if AAB was created
-    AAB_PATH="app/build/outputs/bundle/prodRelease/app-prod-release.aab"
-    if [ -f "$AAB_PATH" ]; then
-        echo -e "${GREEN}✅ AAB created successfully at:${NC}"
-        echo "   android/$AAB_PATH"
-        
-        # Copy to a more accessible location with timestamp
-        TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-        cp "$AAB_PATH" "../stackmap-production-$TIMESTAMP.aab"
-        echo -e "${GREEN}✅ Copied to: stackmap-production-$TIMESTAMP.aab${NC}"
+    cd android
+
+    # Run fastlane prod_android (builds and uploads to Play Store)
+    echo "Running fastlane production deployment..."
+
+    # Check if PENDING_CHANGES.md exists for release notes
+    if [ -f "../PENDING_CHANGES.md" ]; then
+        echo "📝 Release notes will be loaded from PENDING_CHANGES.md"
+        fastlane prod_android
     else
-        echo -e "${RED}❌ AAB build failed${NC}"
+        echo "⚠️  PENDING_CHANGES.md not found, using default release notes"
+        fastlane prod_android
+    fi
+
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✅ Android deployed to Play Store!${NC}"
+    else
+        echo -e "${RED}❌ Android deployment failed${NC}"
         exit 1
     fi
-    
+
     cd ..
 }
 
@@ -218,7 +215,7 @@ case "${1:-menu}" in
         DEPLOYMENT_START=$(date +%s)
         verify_api_urls
         update_mobile_versions
-        build_android_aab
+        deploy_android_production
         ;;
     "ios")
         CURRENT_VERSION=$(grep '"version":' package.json | head -1 | cut -d'"' -f4)
@@ -233,14 +230,14 @@ case "${1:-menu}" in
         verify_api_urls
         update_mobile_versions
         deploy_web_to_prod
-        build_android_aab
+        deploy_android_production
         deploy_ios_production
         echo
         echo -e "${GREEN}🎉 FULL PRODUCTION DEPLOYMENT COMPLETE!${NC}"
         echo
         echo "📋 Summary:"
         echo "  ✅ Web deployed to $APP_URL_PROD"
-        echo "  ✅ Android AAB ready for Play Store upload"
+        echo "  ✅ Android uploaded to Google Play Store"
         echo "  ✅ iOS uploaded to App Store Connect"
         ;;
     "menu"|"")
@@ -252,7 +249,7 @@ case "${1:-menu}" in
                 verify_api_urls
                 update_mobile_versions
                 deploy_web_to_prod
-                build_android_aab
+                deploy_android_production
                 deploy_ios_production
                 echo
                 echo -e "${GREEN}🎉 FULL PRODUCTION DEPLOYMENT COMPLETE!${NC}"
@@ -268,7 +265,7 @@ case "${1:-menu}" in
                 DEPLOYMENT_START=$(date +%s)
                 verify_api_urls
                 update_mobile_versions
-                build_android_aab
+                deploy_android_production
                 ;;
             4)
                 CURRENT_VERSION=$(grep '"version":' package.json | head -1 | cut -d'"' -f4)
