@@ -51,12 +51,12 @@ build_android_aab() {
     # Clean previous builds
     ./gradlew clean
     
-    # Build release AAB
+    # Build release AAB for prod flavor
     echo "Building release AAB..."
-    ./gradlew bundleRelease
-    
+    ./gradlew bundleProdRelease
+
     # Check if AAB was created
-    AAB_PATH="app/build/outputs/bundle/release/app-release.aab"
+    AAB_PATH="app/build/outputs/bundle/prodRelease/app-prod-release.aab"
     if [ -f "$AAB_PATH" ]; then
         echo -e "${GREEN}✅ AAB created successfully at:${NC}"
         echo "   android/$AAB_PATH"
