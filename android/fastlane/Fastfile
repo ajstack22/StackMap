@@ -436,13 +436,16 @@ platform :android do
         skip_upload_metadata: true,
         skip_upload_images: true,
         skip_upload_screenshots: true,
+        skip_upload_changelogs: true,  # Skip changelogs - add manually in Play Console
         release_status: build_type == 'stage' ? 'completed' : 'draft',  # Auto-publish stage (internal validation), draft for beta (requires review)
         json_key: json_key
       }
 
-      # Add release notes if provided (backward compatible)
+      # Note: release_notes is not a valid parameter for upload_to_play_store
+      # Release notes must be added manually in Play Console or via metadata directory structure
       if release_notes
-        upload_params[:release_notes] = { "en-US" => release_notes }
+        UI.message("📝 Release notes loaded (add manually in Play Console):")
+        UI.message(release_notes)
       end
 
       upload_to_play_store(upload_params)
