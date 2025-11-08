@@ -7,12 +7,13 @@ import { logWarn, logError } from '../../../utils/logger';
 
 /**
  * Web-specific QR Scanner using html5-qrcode
- * Fixed version with proper refs and promise tracking
+ * Fixed version with proper refs, promise tracking, and camera permission handling
  */
 const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
   const [error, setError] = useState(null);
   const [hasScanned, setHasScanned] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [permissionDenied, setPermissionDenied] = useState(false);
 
   // Use refs to avoid stale closures and track scanner state
   const scannerRef = useRef(null);
@@ -20,13 +21,59 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
   const startPromiseRef = useRef(null);
   const hasUnmountedRef = useRef(false);
 
+  // Check for camera permissions first
+  const checkCameraPermission = async () => {
+    try {
+      // Check if navigator.mediaDevices is available (HTTPS required)
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        logError('Camera API not available. HTTPS required.');
+        throw new Error('Camera access requires HTTPS. Please use a secure connection.');
+      }
+
+      // Try to get camera permission
+      logWarn('Requesting camera permission...');
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+        audio: false
+      });
+
+      // Stop the stream immediately - we just needed to check permission
+      stream.getTracks().forEach(track => track.stop());
+      logWarn('Camera permission granted');
+      return true;
+    } catch (err) {
+      logError('Camera permission error:', err);
+
+      // Determine the type of error
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setPermissionDenied(true);
+        throw new Error('Camera permission denied. Please allow camera access in your browser settings.');
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        throw new Error('No camera found. Please connect a camera and try again.');
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        throw new Error('Camera is already in use by another application. Please close other apps using the camera.');
+      } else if (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError') {
+        throw new Error('Camera does not support the required settings.');
+      } else if (err.message && err.message.includes('HTTPS')) {
+        throw err;
+      } else {
+        throw new Error(`Camera access failed: ${err.message || err.name || 'Unknown error'}`);
+      }
+    }
+  };
+
   // Initialize scanner when component mounts
   useEffect(() => {
     const initScanner = async () => {
       try {
+        // Check camera permission first
+        await checkCameraPermission();
+
         // Create scanner instance
+        logWarn('Creating Html5Qrcode instance...');
         const scanner = new Html5Qrcode('qr-reader');
         scannerRef.current = scanner;
+        logWarn('Scanner instance created successfully');
 
         // Only start if component hasn't unmounted
         if (!hasUnmountedRef.current) {
@@ -34,15 +81,19 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
         }
       } catch (err) {
         logError('Failed to initialize scanner:', err);
-        setError('Failed to initialize camera scanner');
-        setIsInitializing(false);
+        if (!hasUnmountedRef.current) {
+          setError(err.message || 'Failed to initialize camera scanner');
+          setIsInitializing(false);
+        }
       }
     };
 
-    initScanner();
+    // Add a small delay to ensure DOM is ready
+    const timer = setTimeout(initScanner, 100);
 
     // Cleanup function
     return () => {
+      clearTimeout(timer);
       hasUnmountedRef.current = true;
 
       const cleanup = async () => {
@@ -99,18 +150,33 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
           return;
         }
 
-        logWarn('Starting scanner...');
+        logWarn('Starting camera scanner...');
+
+        // Get available cameras first
+        try {
+          const cameras = await Html5Qrcode.getCameras();
+          logWarn(`Found ${cameras.length} camera(s):`, cameras);
+
+          if (cameras.length === 0) {
+            throw new Error('No cameras found on this device');
+          }
+        } catch (err) {
+          logError('Error getting cameras:', err);
+          throw new Error('Failed to access camera list. Please ensure camera permissions are granted.');
+        }
 
         // Create and store the start promise
         const startPromise = scannerRef.current.start(
-          { facingMode: "environment" },
+          { facingMode: "environment" }, // Use back camera if available
           {
             fps: 10,
             qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0,
+            disableFlip: false,
           },
           (decodedText) => handleScan(decodedText),
           (errorMessage) => {
-            // Silent - scanner continuously scans
+            // Silent - scanner continuously scans, these are normal scan failures
           }
         );
 
@@ -130,7 +196,19 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
       } catch (err) {
         logError('Failed to start scanner:', err);
         if (!hasUnmountedRef.current) {
-          setError('Failed to start camera. Please check camera permissions.');
+          let errorMessage = 'Failed to start camera. ';
+
+          if (err.message && err.message.includes('Permission')) {
+            errorMessage += 'Please check camera permissions in your browser settings.';
+          } else if (err.message && err.message.includes('No cameras')) {
+            errorMessage += err.message;
+          } else if (err.message && err.message.includes('NotAllowed')) {
+            errorMessage += 'Camera access was denied. Please allow camera access and try again.';
+          } else {
+            errorMessage += err.message || 'Please check camera permissions and try again.';
+          }
+
+          setError(errorMessage);
         }
         startPromiseRef.current = null;
         isRunningRef.current = false;
@@ -189,6 +267,7 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
   const handleRetry = () => {
     setError(null);
     setHasScanned(false);
+    setPermissionDenied(false);
     isRunningRef.current = false; // Reset scanner state for retry
   };
 
@@ -198,11 +277,32 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
     onClose();
   };
 
+  const handleOpenSettings = () => {
+    // Provide browser-specific instructions
+    const userAgent = navigator.userAgent.toLowerCase();
+    let instructions = '';
+
+    if (userAgent.includes('chrome')) {
+      instructions = 'Chrome: Click the camera icon in the address bar or go to Settings > Privacy and security > Site settings > Camera';
+    } else if (userAgent.includes('firefox')) {
+      instructions = 'Firefox: Click the lock icon in the address bar and adjust camera permissions';
+    } else if (userAgent.includes('safari')) {
+      instructions = 'Safari: Go to Safari > Settings > Websites > Camera and allow access for this site';
+    } else if (userAgent.includes('brave')) {
+      instructions = 'Brave: Click the lock icon in the address bar or go to Settings > Privacy and security > Site settings > Camera';
+    } else {
+      instructions = 'Please check your browser settings to allow camera access for this website';
+    }
+
+    alert(instructions);
+  };
+
   if (isInitializing) {
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Initializing camera...</Text>
+          <Text style={styles.loadingSubtext}>Please allow camera access when prompted</Text>
         </View>
       </View>
     );
@@ -213,11 +313,19 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
       <View style={styles.container}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
+          {permissionDenied && (
+            <TouchableOpacity
+              style={[styles.settingsButton, { backgroundColor: theme.primary }]}
+              onPress={handleOpenSettings}
+            >
+              <Text style={styles.settingsButtonText}>How to Enable Camera</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             style={[styles.retryButton, { backgroundColor: theme.primary }]}
             onPress={handleRetry}
           >
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <Text style={styles.retryButtonText}>Try Again</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.secondaryButton, { borderColor: theme.primary }]}
@@ -269,6 +377,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000',
     textAlign: 'center',
+    marginBottom: 8,
+  },
+  loadingSubtext: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
   },
   scannerHeader: {
     padding: 20,
@@ -298,12 +412,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    maxWidth: 400,
   },
   errorText: {
     fontSize: 16,
     color: '#000',
     textAlign: 'center',
     marginBottom: 20,
+    lineHeight: 22,
+  },
+  settingsButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginBottom: 12,
+    minWidth: 200,
+    alignItems: 'center',
+  },
+  settingsButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   retryButton: {
     paddingVertical: 12,
