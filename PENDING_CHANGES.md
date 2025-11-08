@@ -1,3 +1,57 @@
+## Fix: Web QR scanner comprehensive fix with refs and error boundary
+
+### Changes Made:
+- Complete rewrite of WebQRScanner component with proper refs and promise tracking
+- Added QRScannerErrorBoundary component to catch errors and prevent white screens
+- Replaced React state with refs to avoid stale closures in async operations
+- Added promise tracking to wait for start() completion before stop()
+- Added hasUnmountedRef to prevent state updates after unmount
+- Added "Initializing camera..." loading state
+- Wrapped WebQRScanner in error boundary in SyncQRScanner component
+
+### Technical Details:
+- **Root cause analysis**:
+  1. No error boundary → uncaught errors caused white screen
+  2. Race condition: stop() called before/during start() promise resolution
+  3. Stale closure: cleanup function captured wrong scanner reference
+  4. State sync issues with async library operations
+
+- **Comprehensive solution**:
+  - `scannerRef`: Stores scanner instance (avoids stale closures)
+  - `isRunningRef`: Tracks actual running state (not React state)
+  - `startPromiseRef`: Tracks pending start() operations
+  - `hasUnmountedRef`: Prevents operations after unmount
+  - Error boundary catches any uncaught errors
+  - Proper async/await sequencing in cleanup
+
+### Files Changed:
+- `/src/components/Modals/DataModal/WebQRScanner.js` - Complete rewrite with refs
+- `/src/components/Modals/DataModal/QRScannerErrorBoundary.js` - New error boundary
+- `/src/components/Modals/DataModal/SyncQRScanner.js` - Added error boundary wrapper
+
+### Testing:
+- Test scanning a valid QR code from web onboarding
+- Verify no "Cannot stop" errors in console
+- Test rapid open/close of scanner
+- Test retry flow after errors
+- Verify error boundary shows friendly error UI instead of white screen
+- Test camera permission denial handling
+
+### User Impact:
+- **Fixed**: No more white screen crashes when scanning QR codes
+- **Fixed**: Proper cleanup prevents camera from staying active
+- **Improved**: Loading state while camera initializes
+- **Improved**: Friendly error UI with retry option
+- **Breaking Changes**: None
+- **Migration Required**: None
+
+### Deployment Notes:
+- Critical fix for web platform QR scanning stability
+- No backend changes required
+- Fully backward compatible
+
+---
+
 ## Fix: iPad Pro 12.9" landscape centering (STORY-002 update)
 
 ### Changes Made:

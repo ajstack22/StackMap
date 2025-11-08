@@ -162,16 +162,22 @@ deploy_to_server() {
     
     # Deploy to server based on environment
     if [[ "$DEPLOY_ENV" == "qual" ]]; then
-        echo "📡 Triggering qual server pull..."
-        ssh "$APP_SSH_HOST" "cd $APP_SSH_QUAL_DIR && git fetch && git reset --hard origin/${BRANCH_NAME}" || {
+        echo "📡 Uploading files to qual server via rsync..."
+        rsync -avz --delete \
+            index.html manifest.json service-worker.js workbox-*.js bundle.*.js \
+            fonts/ icons/ .htaccess \
+            "$APP_SSH_HOST:$APP_SSH_QUAL_DIR/" || {
             echo -e "${RED}❌ ERROR: Failed to deploy to qual server${NC}"
             git checkout main
             exit 1
         }
         echo -e "${GREEN}✅ Deployed to: $APP_URL_QUAL/${NC}"
     elif [[ "$DEPLOY_ENV" == "beta" ]]; then
-        echo "📡 Triggering beta server pull..."
-        ssh "$APP_SSH_HOST" "cd $APP_SSH_BETA_DIR && git fetch && git reset --hard origin/${BRANCH_NAME}" || {
+        echo "📡 Uploading files to beta server via rsync..."
+        rsync -avz --delete \
+            index.html manifest.json service-worker.js workbox-*.js bundle.*.js \
+            fonts/ icons/ .htaccess \
+            "$APP_SSH_HOST:$APP_SSH_BETA_DIR/" || {
             echo -e "${RED}❌ ERROR: Failed to deploy to beta server${NC}"
             git checkout main
             exit 1

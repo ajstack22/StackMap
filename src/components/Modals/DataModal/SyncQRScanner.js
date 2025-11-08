@@ -6,11 +6,13 @@ import { Modal, Platform, StyleSheet, View, Text } from 'react-native';
 // mobile and web implementations into separate components
 let MobileQRScanner = null;
 let WebQRScanner = null;
+let QRScannerErrorBoundary = null;
 
 if (Platform.OS !== 'web') {
   MobileQRScanner = require('./MobileQRScanner').default;
 } else {
   WebQRScanner = require('./WebQRScanner').default;
+  QRScannerErrorBoundary = require('./QRScannerErrorBoundary').default;
 }
 
 /**
@@ -79,6 +81,14 @@ const SyncQRScanner = ({ visible, onClose, onScanSuccess, theme }) => {
               </Text>
             </View>
           </View>
+        );
+      }
+      // Wrap WebQRScanner in error boundary to catch any errors
+      if (QRScannerErrorBoundary) {
+        return (
+          <QRScannerErrorBoundary onClose={onClose} theme={theme}>
+            <WebQRScanner onScanSuccess={onScanSuccess} onClose={onClose} theme={theme} />
+          </QRScannerErrorBoundary>
         );
       }
       return <WebQRScanner onScanSuccess={onScanSuccess} onClose={onClose} theme={theme} />;
