@@ -14,34 +14,56 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
   const [hasScanned, setHasScanned] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [debugInfo, setDebugInfo] = useState('');
 
   // Use refs to avoid stale closures and track scanner state
   const scannerRef = useRef(null);
   const isRunningRef = useRef(false);
   const startPromiseRef = useRef(null);
   const hasUnmountedRef = useRef(false);
+  const containerMountedRef = useRef(false);
+
+  // Add debug logging
+  const addDebugInfo = (info) => {
+    console.log(`[QR Scanner Debug] ${info}`);
+    setDebugInfo(prev => prev + '\n' + info);
+  };
 
   // Check for camera permissions first
   const checkCameraPermission = async () => {
     try {
+      addDebugInfo('Checking camera permissions...');
+
       // Check if navigator.mediaDevices is available (HTTPS required)
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        addDebugInfo('ERROR: Camera API not available (HTTPS required?)');
         logError('Camera API not available. HTTPS required.');
         throw new Error('Camera access requires HTTPS. Please use a secure connection.');
       }
 
+      addDebugInfo('Camera API is available');
+
       // Try to get camera permission
       logWarn('Requesting camera permission...');
+      addDebugInfo('Requesting camera access...');
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
         audio: false
       });
 
+      addDebugInfo('Camera access granted successfully');
+
       // Stop the stream immediately - we just needed to check permission
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach(track => {
+        addDebugInfo(`Stopping track: ${track.label}`);
+        track.stop();
+      });
+
       logWarn('Camera permission granted');
       return true;
     } catch (err) {
+      addDebugInfo(`Camera permission error: ${err.name} - ${err.message}`);
       logError('Camera permission error:', err);
 
       // Determine the type of error
@@ -62,24 +84,60 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
     }
   };
 
+  // Wait for DOM element to be ready
+  const waitForElement = async (elementId, maxAttempts = 10) => {
+    addDebugInfo(`Waiting for DOM element #${elementId}...`);
+    for (let i = 0; i < maxAttempts; i++) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        addDebugInfo(`Found element #${elementId} on attempt ${i + 1}`);
+        // Also check if element has dimensions
+        const rect = element.getBoundingClientRect();
+        addDebugInfo(`Element dimensions: ${rect.width}x${rect.height}`);
+        if (rect.width > 0 && rect.height > 0) {
+          return element;
+        } else {
+          addDebugInfo('Element has no dimensions yet, waiting...');
+        }
+      }
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    throw new Error(`Element #${elementId} not found after ${maxAttempts} attempts`);
+  };
+
   // Initialize scanner when component mounts
   useEffect(() => {
     const initScanner = async () => {
       try {
+        addDebugInfo('Starting scanner initialization...');
+
         // Check camera permission first
         await checkCameraPermission();
 
+        // Wait for the DOM element to be ready
+        await waitForElement('qr-reader');
+
         // Create scanner instance
+        addDebugInfo('Creating Html5Qrcode instance...');
         logWarn('Creating Html5Qrcode instance...');
-        const scanner = new Html5Qrcode('qr-reader');
-        scannerRef.current = scanner;
-        logWarn('Scanner instance created successfully');
+
+        try {
+          const scanner = new Html5Qrcode('qr-reader');
+          scannerRef.current = scanner;
+          addDebugInfo('Scanner instance created successfully');
+          logWarn('Scanner instance created successfully');
+        } catch (scannerErr) {
+          addDebugInfo(`Failed to create scanner: ${scannerErr.message}`);
+          throw new Error(`Scanner creation failed: ${scannerErr.message}`);
+        }
 
         // Only start if component hasn't unmounted
         if (!hasUnmountedRef.current) {
+          addDebugInfo('Component still mounted, ready to start scanning');
           setIsInitializing(false);
         }
       } catch (err) {
+        addDebugInfo(`Initialization failed: ${err.message}`);
         logError('Failed to initialize scanner:', err);
         if (!hasUnmountedRef.current) {
           setError(err.message || 'Failed to initialize camera scanner');
@@ -88,8 +146,8 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
       }
     };
 
-    // Add a small delay to ensure DOM is ready
-    const timer = setTimeout(initScanner, 100);
+    // Add a delay to ensure DOM is fully ready
+    const timer = setTimeout(initScanner, 500);
 
     // Cleanup function
     return () => {
@@ -146,26 +204,35 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
       try {
         // Don't start if already running
         if (isRunningRef.current) {
+          addDebugInfo('Scanner already running, skipping start');
           logWarn('Scanner already running, skipping start');
           return;
         }
 
+        addDebugInfo('Starting camera scanner...');
         logWarn('Starting camera scanner...');
 
         // Get available cameras first
         try {
+          addDebugInfo('Getting camera list...');
           const cameras = await Html5Qrcode.getCameras();
+          addDebugInfo(`Found ${cameras.length} camera(s)`);
+          cameras.forEach((camera, index) => {
+            addDebugInfo(`Camera ${index}: ${camera.label || camera.id}`);
+          });
           logWarn(`Found ${cameras.length} camera(s):`, cameras);
 
           if (cameras.length === 0) {
             throw new Error('No cameras found on this device');
           }
         } catch (err) {
+          addDebugInfo(`Error getting cameras: ${err.message}`);
           logError('Error getting cameras:', err);
           throw new Error('Failed to access camera list. Please ensure camera permissions are granted.');
         }
 
         // Create and store the start promise
+        addDebugInfo('Calling scanner.start()...');
         const startPromise = scannerRef.current.start(
           { facingMode: "environment" }, // Use back camera if available
           {
@@ -174,7 +241,10 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
             aspectRatio: 1.0,
             disableFlip: false,
           },
-          (decodedText) => handleScan(decodedText),
+          (decodedText) => {
+            addDebugInfo(`QR code detected: ${decodedText.substring(0, 20)}...`);
+            handleScan(decodedText);
+          },
           (errorMessage) => {
             // Silent - scanner continuously scans, these are normal scan failures
           }
@@ -187,6 +257,7 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
         // Only mark as running if component hasn't unmounted
         if (!hasUnmountedRef.current) {
           isRunningRef.current = true;
+          addDebugInfo('Scanner started successfully and is running');
           logWarn('Scanner started successfully');
         }
 
@@ -194,6 +265,7 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
         startPromiseRef.current = null;
 
       } catch (err) {
+        addDebugInfo(`Failed to start scanner: ${err.message}`);
         logError('Failed to start scanner:', err);
         if (!hasUnmountedRef.current) {
           let errorMessage = 'Failed to start camera. ';
@@ -268,6 +340,7 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
     setError(null);
     setHasScanned(false);
     setPermissionDenied(false);
+    setDebugInfo('');
     isRunningRef.current = false; // Reset scanner state for retry
   };
 
@@ -297,12 +370,26 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
     alert(instructions);
   };
 
+  // Callback when container is mounted
+  useEffect(() => {
+    containerMountedRef.current = true;
+    return () => {
+      containerMountedRef.current = false;
+    };
+  }, []);
+
   if (isInitializing) {
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Initializing camera...</Text>
           <Text style={styles.loadingSubtext}>Please allow camera access when prompted</Text>
+          {debugInfo && (
+            <View style={styles.debugContainer}>
+              <Text style={styles.debugTitle}>Debug Info:</Text>
+              <Text style={styles.debugText}>{debugInfo}</Text>
+            </View>
+          )}
         </View>
       </View>
     );
@@ -333,6 +420,12 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
           >
             <Text style={[styles.secondaryButtonText, { color: theme.primary }]}>Cancel</Text>
           </TouchableOpacity>
+          {debugInfo && (
+            <View style={styles.debugContainer}>
+              <Text style={styles.debugTitle}>Debug Info:</Text>
+              <Text style={styles.debugText}>{debugInfo}</Text>
+            </View>
+          )}
         </View>
       </View>
     );
@@ -346,7 +439,17 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
           Allow camera access and position the QR code within the frame
         </Text>
       </View>
-      <div id="qr-reader" style={{ width: '100%', maxWidth: 500, margin: '20px auto' }}></div>
+      <div
+        id="qr-reader"
+        style={{
+          width: '100%',
+          maxWidth: 500,
+          minHeight: 400,
+          margin: '20px auto',
+          backgroundColor: '#f0f0f0',
+          border: '2px dashed #ccc'
+        }}
+      ></div>
       <View style={styles.buttonContainer}>
         <ModalButton
           theme={theme}
@@ -356,6 +459,12 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
           fullWidth
         />
       </View>
+      {debugInfo && (
+        <View style={styles.debugContainer}>
+          <Text style={styles.debugTitle}>Debug Info:</Text>
+          <Text style={styles.debugText}>{debugInfo}</Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -412,7 +521,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    maxWidth: 400,
+    maxWidth: 600,
   },
   errorText: {
     fontSize: 16,
@@ -458,6 +567,26 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  debugContainer: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 5,
+    maxWidth: '100%',
+    width: 500,
+  },
+  debugTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: '#000',
+  },
+  debugText: {
+    fontSize: 12,
+    color: '#333',
+    fontFamily: 'monospace',
+    whiteSpace: 'pre-wrap',
   },
 });
 
