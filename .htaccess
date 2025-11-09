@@ -7,27 +7,27 @@ DirectoryIndex index.html
 # Enable RewriteEngine for SPA routing
 RewriteEngine On
 
-# Handle new secure share URLs - /share/[id] format (various formats)
-RewriteRule ^share/([A-Za-z0-9\-_]+)/?$ index.html [L,NC]
-RewriteRule ^qual/share/([A-Za-z0-9\-_]+)/?$ index.html [L,NC]
+# Set the base for rewrites in the /beta/ subdirectory
+RewriteBase /beta/
 
-# Handle new secure sync URLs - /sync/[invite] format (XXXX-XXXX or hex)
+# Handle new secure share URLs - /beta/share/[id] format (XXXX-XXXX or hex)
+RewriteRule ^share/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)/?$ index.html [L,NC]
+
+# Handle new secure sync URLs - /beta/sync/[invite] format (XXXX-XXXX or hex)
 RewriteRule ^sync/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)/?$ index.html [L,NC]
-RewriteRule ^qual/sync/([A-Z0-9]{4}-[A-Z0-9]{4}|[a-fA-F0-9]+)/?$ index.html [L,NC]
 
 # Redirect old share format to migration page (temporary)
 RewriteCond %{QUERY_STRING} ^share=([^&]+)$
-RewriteRule ^/?$ /share-migrate.html?token=%1 [R=302,L]
+RewriteRule ^/?$ share-migrate.html?token=%1 [R=302,L]
 
 # Redirect old sync format to migration page (temporary)
 RewriteCond %{QUERY_STRING} ^sync=([^&]+)$
-RewriteRule ^/?$ /sync-migrate.html?phrase=%1 [R=302,L]
+RewriteRule ^/?$ sync-migrate.html?phrase=%1 [R=302,L]
 
 # Handle SPA routing - redirect all non-file requests to index.html
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_URI} !^/api/
-RewriteCond %{REQUEST_URI} !^/qual/api/
+RewriteCond %{REQUEST_URI} !^/beta/api/
 RewriteRule ^.*$ index.html [L]
 
 # Security Headers with CSP that allows Google Fonts
