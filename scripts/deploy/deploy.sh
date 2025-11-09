@@ -238,6 +238,13 @@ log_header "📦 Running Deployment"
 # This prevents direct execution of tier scripts bypassing validation
 export VALIDATED_BY_MASTER="true"
 
+# Detect if we're running in a non-interactive context
+# This prevents hanging on input prompts in automated environments
+if [ ! -t 0 ] || [ ! -t 1 ] || [ -n "$CI" ] || [ -n "$AUTOMATED" ]; then
+    export DEPLOYMENT_NON_INTERACTIVE="true"
+    log_info "Detected non-interactive environment - prompts will be disabled"
+fi
+
 DEPLOYMENT_SUCCESS=false
 
 case "$TIER" in

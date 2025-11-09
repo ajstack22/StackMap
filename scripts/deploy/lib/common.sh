@@ -236,11 +236,24 @@ get_git_status_clean() {
 # ============================================
 
 is_interactive() {
-    # Check if we're in an interactive terminal
+    # Force non-interactive if explicitly set
+    if [ "$DEPLOYMENT_NON_INTERACTIVE" = "true" ]; then
+        log_info "Non-interactive mode forced via DEPLOYMENT_NON_INTERACTIVE"
+        return 1
+    fi
+
+    # Check multiple conditions for interactive terminal
     # Returns 0 if interactive, 1 if non-interactive (CI/CD)
-    if [ -t 0 ] && [ -t 1 ]; then
+    local stdin_tty=$([[ -t 0 ]] && echo "yes" || echo "no")
+    local stdout_tty=$([[ -t 1 ]] && echo "yes" || echo "no")
+    local has_ps1=$([[ -n "$PS1" ]] && echo "yes" || echo "no")
+    local ci_env="${CI:-not_set}"
+    local automated="${AUTOMATED:-not_set}"
+
+    if [ -t 0 ] && [ -t 1 ] && [ -n "$PS1" ] && [ -z "$CI" ] && [ -z "$AUTOMATED" ]; then
         return 0  # Interactive
     else
+        log_info "Non-interactive mode detected (stdin_tty=$stdin_tty, stdout_tty=$stdout_tty, PS1=$has_ps1, CI=$ci_env, AUTOMATED=$automated)"
         return 1  # Non-interactive
     fi
 }
@@ -321,14 +334,23 @@ handle_uncommitted_changes() {
     echo "  3) Cancel deployment"
     echo ""
 
-    read -p "Choose an option (1-3): " -n 1 -r
+    # Add timeout to prevent hanging in pseudo-interactive environments
+    if ! read -t 30 -p "Choose an option (1-3): " -n 1 -r; then
+        echo ""
+        log_warning "Input timeout after 30 seconds - defaulting to option 3 (cancel)"
+        REPLY=3
+    fi
     echo
 
     case $REPLY in
         1)
             # Get custom commit message
             echo ""
-            read -p "Enter commit message (or press Enter for default): " custom_message
+            if ! read -t 30 -p "Enter commit message (or press Enter for default): " custom_message; then
+                echo ""
+                log_warning "Input timeout - using default message"
+                custom_message=""
+            fi
 
             if [ -z "$custom_message" ]; then
                 custom_message="Pre-deployment changes for $tier"
