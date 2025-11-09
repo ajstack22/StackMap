@@ -16,13 +16,14 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [debugInfo, setDebugInfo] = useState('');
   const [containerReady, setContainerReady] = useState(false);
+  const [scannerVisible, setScannerVisible] = useState(false);
 
   // Use refs to avoid stale closures and track scanner state
   const scannerRef = useRef(null);
   const isRunningRef = useRef(false);
   const startPromiseRef = useRef(null);
   const hasUnmountedRef = useRef(false);
-  const containerRef = useRef(null);
+  const overlayRef = useRef(null);
 
   // Add debug logging
   const addDebugInfo = (info) => {
@@ -90,45 +91,100 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
     if (Platform.OS === 'web' && !error) {
       addDebugInfo('Creating scanner container element...');
 
-      // Create a div element directly in the body temporarily for testing
-      const tempDiv = document.createElement('div');
-      tempDiv.id = 'qr-reader-temp';
-      tempDiv.style.position = 'fixed';
-      tempDiv.style.top = '50%';
-      tempDiv.style.left = '50%';
-      tempDiv.style.transform = 'translate(-50%, -50%)';
-      tempDiv.style.width = '90%';
-      tempDiv.style.maxWidth = '500px';
-      tempDiv.style.height = '400px';
-      tempDiv.style.backgroundColor = '#f0f0f0';
-      tempDiv.style.border = '2px solid #333';
-      tempDiv.style.zIndex = '10000';
-      document.body.appendChild(tempDiv);
+      // Create an overlay container
+      const overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.right = '0';
+      overlay.style.bottom = '0';
+      overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+      overlay.style.zIndex = '999999';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
 
-      addDebugInfo(`Created temporary div with id: qr-reader-temp`);
+      // Create the scanner container
+      const scannerContainer = document.createElement('div');
+      scannerContainer.id = 'qr-reader-temp';
+      scannerContainer.style.width = '90%';
+      scannerContainer.style.maxWidth = '500px';
+      scannerContainer.style.height = '500px';
+      scannerContainer.style.backgroundColor = '#fff';
+      scannerContainer.style.borderRadius = '10px';
+      scannerContainer.style.padding = '20px';
+      scannerContainer.style.position = 'relative';
+
+      // Add a close button to the overlay
+      const closeBtn = document.createElement('button');
+      closeBtn.innerHTML = '✕';
+      closeBtn.style.position = 'absolute';
+      closeBtn.style.top = '10px';
+      closeBtn.style.right = '10px';
+      closeBtn.style.width = '40px';
+      closeBtn.style.height = '40px';
+      closeBtn.style.borderRadius = '50%';
+      closeBtn.style.border = 'none';
+      closeBtn.style.backgroundColor = '#ff4444';
+      closeBtn.style.color = '#fff';
+      closeBtn.style.fontSize = '20px';
+      closeBtn.style.cursor = 'pointer';
+      closeBtn.style.zIndex = '1000000';
+      closeBtn.onclick = () => {
+        if (onClose) onClose();
+      };
+
+      // Add title
+      const title = document.createElement('div');
+      title.innerHTML = 'Scan QR Code';
+      title.style.textAlign = 'center';
+      title.style.fontSize = '18px';
+      title.style.fontWeight = 'bold';
+      title.style.marginBottom = '10px';
+      title.style.color = '#333';
+
+      // Add the video container
+      const videoContainer = document.createElement('div');
+      videoContainer.id = 'qr-reader';
+      videoContainer.style.width = '100%';
+      videoContainer.style.height = 'calc(100% - 40px)';
+      videoContainer.style.border = '2px solid #333';
+      videoContainer.style.borderRadius = '5px';
+      videoContainer.style.overflow = 'hidden';
+
+      // Assemble the elements
+      scannerContainer.appendChild(closeBtn);
+      scannerContainer.appendChild(title);
+      scannerContainer.appendChild(videoContainer);
+      overlay.appendChild(scannerContainer);
+      document.body.appendChild(overlay);
+
+      overlayRef.current = overlay;
+
+      addDebugInfo(`Created scanner overlay with video container`);
 
       // Wait a moment for the div to be fully rendered
       setTimeout(() => {
-        const checkElement = document.getElementById('qr-reader-temp');
+        const checkElement = document.getElementById('qr-reader');
         if (checkElement) {
           const rect = checkElement.getBoundingClientRect();
-          addDebugInfo(`Temp element ready with dimensions: ${rect.width}x${rect.height}`);
+          addDebugInfo(`Video container ready with dimensions: ${rect.width}x${rect.height}`);
           setContainerReady(true);
+          setScannerVisible(true);
         } else {
-          addDebugInfo('ERROR: Could not find temp element after creation');
+          addDebugInfo('ERROR: Could not find video container after creation');
         }
       }, 100);
 
       return () => {
-        // Cleanup temp div
-        const tempDiv = document.getElementById('qr-reader-temp');
-        if (tempDiv && tempDiv.parentNode) {
-          tempDiv.parentNode.removeChild(tempDiv);
-          addDebugInfo('Removed temporary scanner container');
+        // Cleanup overlay
+        if (overlayRef.current && overlayRef.current.parentNode) {
+          overlayRef.current.parentNode.removeChild(overlayRef.current);
+          addDebugInfo('Removed scanner overlay');
         }
       };
     }
-  }, [error]);
+  }, [error, onClose]);
 
   // Initialize scanner when component mounts
   useEffect(() => {
@@ -143,8 +199,8 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
         // Check camera permission first
         await checkCameraPermission();
 
-        // Use the temporary div element
-        const elementId = 'qr-reader-temp';
+        // Use the video container element
+        const elementId = 'qr-reader';
         const element = document.getElementById(elementId);
 
         if (!element) {
@@ -277,6 +333,10 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
             qrbox: { width: 250, height: 250 },
             aspectRatio: 1.0,
             disableFlip: false,
+            videoConstraints: {
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            }
           },
           (decodedText) => {
             addDebugInfo(`QR code detected: ${decodedText.substring(0, 20)}...`);
@@ -295,6 +355,20 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
         if (!hasUnmountedRef.current) {
           isRunningRef.current = true;
           addDebugInfo('Scanner started successfully and is running');
+
+          // Make sure the video is visible
+          setTimeout(() => {
+            const video = document.querySelector('#qr-reader video');
+            if (video) {
+              video.style.width = '100%';
+              video.style.height = '100%';
+              video.style.objectFit = 'cover';
+              addDebugInfo('Video element styled');
+            } else {
+              addDebugInfo('WARNING: Could not find video element');
+            }
+          }, 500);
+
           logWarn('Scanner started successfully');
         }
 
@@ -379,6 +453,7 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
     setPermissionDenied(false);
     setDebugInfo('');
     setContainerReady(false);
+    setScannerVisible(false);
     isRunningRef.current = false; // Reset scanner state for retry
   };
 
@@ -466,16 +541,21 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
       <View style={styles.scannerHeader}>
         <Text style={styles.scannerTitle}>Scan Sync QR Code</Text>
         <Text style={styles.scannerInstructions}>
-          Allow camera access and position the QR code within the frame
-        </Text>
-        <Text style={styles.scannerNote}>
-          The camera view will appear in a popup window
+          {scannerVisible
+            ? 'Camera view is active in the overlay window'
+            : 'Allow camera access and position the QR code within the frame'}
         </Text>
       </View>
-      {/* Scanner is rendered in a temporary div element created above */}
+      {/* Scanner is rendered in an overlay */}
       <View style={styles.placeholderContainer}>
-        <Text style={styles.placeholderText}>Camera view is active</Text>
-        <Text style={styles.placeholderSubtext}>Position your QR code in front of the camera</Text>
+        <Text style={styles.placeholderText}>
+          {scannerVisible ? 'Scanner Active' : 'Preparing Scanner...'}
+        </Text>
+        <Text style={styles.placeholderSubtext}>
+          {scannerVisible
+            ? 'Look for the camera overlay window on your screen'
+            : 'Please wait...'}
+        </Text>
       </View>
       <View style={styles.buttonContainer}>
         <ModalButton
@@ -538,12 +618,6 @@ const styles = StyleSheet.create({
     color: '#000',
     textAlign: 'center',
     marginBottom: 4,
-  },
-  scannerNote: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    fontStyle: 'italic',
   },
   placeholderContainer: {
     width: '100%',
