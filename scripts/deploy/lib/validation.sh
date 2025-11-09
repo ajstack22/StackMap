@@ -105,39 +105,24 @@ validate_git_status() {
 
     log_step "Checking git status..."
 
-    if get_git_status_clean; then
-        log_success "Working directory is clean"
-        return 0
-    else
-        local uncommitted_count=$(git status --porcelain | wc -l | tr -d ' ')
-        log_warning "Found $uncommitted_count uncommitted changes"
-
-        # Different behavior by tier
-        case "$tier" in
-            qual)
-                log_info "Continuing with deployment (qual allows uncommitted changes)"
-                return 0
-                ;;
-            stage)
-                log_info "Continuing with deployment (stage allows uncommitted changes)"
-                return 0
-                ;;
-            beta)
-                log_error "Beta deployment requires clean working directory"
-                git status --short
-                return 1
-                ;;
-            prod)
-                log_error "Production deployment requires clean working directory"
-                git status --short
-                return 1
-                ;;
-            *)
-                log_warning "Unknown tier: $tier"
-                return 0
-                ;;
-        esac
-    fi
+    # Use the new handle_uncommitted_changes function based on tier
+    case "$tier" in
+        qual|stage)
+            # Qual and stage allow uncommitted changes, just handle them gracefully
+            handle_uncommitted_changes "$tier" "false"
+            return $?
+            ;;
+        beta|prod)
+            # Beta and prod require clean working directory or user action
+            handle_uncommitted_changes "$tier" "true"
+            return $?
+            ;;
+        *)
+            log_warning "Unknown tier: $tier"
+            handle_uncommitted_changes "$tier" "false"
+            return $?
+            ;;
+    esac
 }
 
 # ============================================

@@ -85,15 +85,8 @@ if [ "$DEPLOY_ALL" = true ]; then
     DEPLOY_ANDROID=true
 fi
 
-# Check for uncommitted changes (beta requires clean working directory)
-if [[ -n $(git status --porcelain) ]]; then
-    echo -e "${RED}❌ Uncommitted changes detected${NC}"
-    echo "Beta deployment requires a clean working directory."
-    echo "Please commit or stash your changes before deploying to beta."
-    echo ""
-    git status --short
-    exit 1
-fi
+# Git validation is now handled by the master script's validation phase
+# which includes interactive prompts for handling uncommitted changes
 
 # Get version from master script (already incremented) or from package.json
 if [ -z "$DEPLOYMENT_VERSION" ]; then

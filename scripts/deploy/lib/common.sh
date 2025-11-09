@@ -232,6 +232,138 @@ get_git_status_clean() {
 }
 
 # ============================================
+# Interactive Git Functions
+# ============================================
+
+is_interactive() {
+    # Check if we're in an interactive terminal
+    # Returns 0 if interactive, 1 if non-interactive (CI/CD)
+    if [ -t 0 ] && [ -t 1 ]; then
+        return 0  # Interactive
+    else
+        return 1  # Non-interactive
+    fi
+}
+
+commit_uncommitted_changes() {
+    local tier="$1"
+    local commit_message="${2:-Automated commit for $tier deployment}"
+
+    log_step "Committing changes..."
+
+    # Add all changes
+    if ! git add -A; then
+        log_error "Failed to stage changes"
+        return 1
+    fi
+
+    # Create commit with deployment message
+    local full_message="$commit_message
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+    if ! git commit -m "$full_message"; then
+        log_error "Failed to commit changes"
+        return 1
+    fi
+
+    log_success "Changes committed successfully"
+
+    # Ask about pushing
+    if is_interactive; then
+        if confirm_action "Push changes to remote?"; then
+            log_step "Pushing to remote..."
+            if git push; then
+                log_success "Changes pushed to remote"
+            else
+                log_warning "Push failed - you may need to push manually later"
+            fi
+        else
+            log_info "Skipping push - remember to push changes later"
+        fi
+    fi
+
+    return 0
+}
+
+handle_uncommitted_changes() {
+    local tier="$1"
+    local require_clean="${2:-false}"  # Whether clean status is required
+
+    # Check if there are uncommitted changes
+    if get_git_status_clean; then
+        return 0  # No uncommitted changes
+    fi
+
+    # Show what's changed
+    log_warning "Uncommitted changes detected:"
+    echo ""
+    git status --short
+    echo ""
+
+    # In CI/CD or if not required to be clean, just warn
+    if ! is_interactive; then
+        if [ "$require_clean" = "true" ]; then
+            log_error "Cannot proceed with uncommitted changes in non-interactive mode"
+            return 1
+        else
+            log_warning "Proceeding with uncommitted changes (non-interactive mode)"
+            return 0
+        fi
+    fi
+
+    # Interactive mode - ask user what to do
+    echo "Options:"
+    echo "  1) Commit and continue"
+    echo "  2) Continue without committing"
+    echo "  3) Cancel deployment"
+    echo ""
+
+    read -p "Choose an option (1-3): " -n 1 -r
+    echo
+
+    case $REPLY in
+        1)
+            # Get custom commit message
+            echo ""
+            read -p "Enter commit message (or press Enter for default): " custom_message
+
+            if [ -z "$custom_message" ]; then
+                custom_message="Pre-deployment changes for $tier"
+            fi
+
+            if commit_uncommitted_changes "$tier" "$custom_message"; then
+                log_success "Changes committed, continuing deployment"
+                return 0
+            else
+                log_error "Failed to commit changes"
+                return 1
+            fi
+            ;;
+        2)
+            if [ "$require_clean" = "true" ]; then
+                log_error "Cannot proceed with uncommitted changes for $tier deployment"
+                log_info "Beta and production deployments require a clean git state"
+                return 1
+            else
+                log_warning "Continuing with uncommitted changes"
+                return 0
+            fi
+            ;;
+        3)
+            log_info "Deployment cancelled by user"
+            exit 0
+            ;;
+        *)
+            log_error "Invalid option"
+            return 1
+            ;;
+    esac
+}
+
+# ============================================
 # Platform Detection
 # ============================================
 
@@ -378,6 +510,7 @@ export -f get_timestamp get_timestamp_compact get_date_compact
 export -f confirm_deployment confirm_action
 export -f check_file_exists check_dir_exists check_command_exists
 export -f get_git_branch get_git_commit get_git_status_clean
+export -f is_interactive commit_uncommitted_changes handle_uncommitted_changes
 export -f is_macos is_linux
 export -f format_duration array_contains
 export -f acquire_deployment_lock release_deployment_lock
