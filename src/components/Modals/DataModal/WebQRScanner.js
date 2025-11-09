@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Html5Qrcode } from 'html5-qrcode';
 import { ModalButton } from '../../ModalUtilities';
 import { parseSyncKey } from './SyncQRScanner';
@@ -15,13 +15,14 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [debugInfo, setDebugInfo] = useState('');
+  const [containerReady, setContainerReady] = useState(false);
 
   // Use refs to avoid stale closures and track scanner state
   const scannerRef = useRef(null);
   const isRunningRef = useRef(false);
   const startPromiseRef = useRef(null);
   const hasUnmountedRef = useRef(false);
-  const containerMountedRef = useRef(false);
+  const containerRef = useRef(null);
 
   // Add debug logging
   const addDebugInfo = (info) => {
@@ -84,29 +85,57 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
     }
   };
 
-  // Wait for DOM element to be ready
-  const waitForElement = async (elementId, maxAttempts = 10) => {
-    addDebugInfo(`Waiting for DOM element #${elementId}...`);
-    for (let i = 0; i < maxAttempts; i++) {
-      const element = document.getElementById(elementId);
-      if (element) {
-        addDebugInfo(`Found element #${elementId} on attempt ${i + 1}`);
-        // Also check if element has dimensions
-        const rect = element.getBoundingClientRect();
-        addDebugInfo(`Element dimensions: ${rect.width}x${rect.height}`);
-        if (rect.width > 0 && rect.height > 0) {
-          return element;
+  // Create container element for scanner
+  useEffect(() => {
+    if (Platform.OS === 'web' && !error) {
+      addDebugInfo('Creating scanner container element...');
+
+      // Create a div element directly in the body temporarily for testing
+      const tempDiv = document.createElement('div');
+      tempDiv.id = 'qr-reader-temp';
+      tempDiv.style.position = 'fixed';
+      tempDiv.style.top = '50%';
+      tempDiv.style.left = '50%';
+      tempDiv.style.transform = 'translate(-50%, -50%)';
+      tempDiv.style.width = '90%';
+      tempDiv.style.maxWidth = '500px';
+      tempDiv.style.height = '400px';
+      tempDiv.style.backgroundColor = '#f0f0f0';
+      tempDiv.style.border = '2px solid #333';
+      tempDiv.style.zIndex = '10000';
+      document.body.appendChild(tempDiv);
+
+      addDebugInfo(`Created temporary div with id: qr-reader-temp`);
+
+      // Wait a moment for the div to be fully rendered
+      setTimeout(() => {
+        const checkElement = document.getElementById('qr-reader-temp');
+        if (checkElement) {
+          const rect = checkElement.getBoundingClientRect();
+          addDebugInfo(`Temp element ready with dimensions: ${rect.width}x${rect.height}`);
+          setContainerReady(true);
         } else {
-          addDebugInfo('Element has no dimensions yet, waiting...');
+          addDebugInfo('ERROR: Could not find temp element after creation');
         }
-      }
-      await new Promise(resolve => setTimeout(resolve, 200));
+      }, 100);
+
+      return () => {
+        // Cleanup temp div
+        const tempDiv = document.getElementById('qr-reader-temp');
+        if (tempDiv && tempDiv.parentNode) {
+          tempDiv.parentNode.removeChild(tempDiv);
+          addDebugInfo('Removed temporary scanner container');
+        }
+      };
     }
-    throw new Error(`Element #${elementId} not found after ${maxAttempts} attempts`);
-  };
+  }, [error]);
 
   // Initialize scanner when component mounts
   useEffect(() => {
+    if (!containerReady || error) {
+      return;
+    }
+
     const initScanner = async () => {
       try {
         addDebugInfo('Starting scanner initialization...');
@@ -114,15 +143,23 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
         // Check camera permission first
         await checkCameraPermission();
 
-        // Wait for the DOM element to be ready
-        await waitForElement('qr-reader');
+        // Use the temporary div element
+        const elementId = 'qr-reader-temp';
+        const element = document.getElementById(elementId);
+
+        if (!element) {
+          throw new Error(`Element #${elementId} not found`);
+        }
+
+        const rect = element.getBoundingClientRect();
+        addDebugInfo(`Using element #${elementId} with dimensions: ${rect.width}x${rect.height}`);
 
         // Create scanner instance
         addDebugInfo('Creating Html5Qrcode instance...');
         logWarn('Creating Html5Qrcode instance...');
 
         try {
-          const scanner = new Html5Qrcode('qr-reader');
+          const scanner = new Html5Qrcode(elementId);
           scannerRef.current = scanner;
           addDebugInfo('Scanner instance created successfully');
           logWarn('Scanner instance created successfully');
@@ -146,8 +183,8 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
       }
     };
 
-    // Add a delay to ensure DOM is fully ready
-    const timer = setTimeout(initScanner, 500);
+    // Add a small delay to ensure everything is ready
+    const timer = setTimeout(initScanner, 200);
 
     // Cleanup function
     return () => {
@@ -192,7 +229,7 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
 
       cleanup();
     };
-  }, []);
+  }, [containerReady, error]);
 
   // Start scanning when scanner is ready
   useEffect(() => {
@@ -341,6 +378,7 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
     setHasScanned(false);
     setPermissionDenied(false);
     setDebugInfo('');
+    setContainerReady(false);
     isRunningRef.current = false; // Reset scanner state for retry
   };
 
@@ -369,14 +407,6 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
 
     alert(instructions);
   };
-
-  // Callback when container is mounted
-  useEffect(() => {
-    containerMountedRef.current = true;
-    return () => {
-      containerMountedRef.current = false;
-    };
-  }, []);
 
   if (isInitializing) {
     return (
@@ -438,18 +468,15 @@ const WebQRScanner = ({ onScanSuccess, onClose, theme }) => {
         <Text style={styles.scannerInstructions}>
           Allow camera access and position the QR code within the frame
         </Text>
+        <Text style={styles.scannerNote}>
+          The camera view will appear in a popup window
+        </Text>
       </View>
-      <div
-        id="qr-reader"
-        style={{
-          width: '100%',
-          maxWidth: 500,
-          minHeight: 400,
-          margin: '20px auto',
-          backgroundColor: '#f0f0f0',
-          border: '2px dashed #ccc'
-        }}
-      ></div>
+      {/* Scanner is rendered in a temporary div element created above */}
+      <View style={styles.placeholderContainer}>
+        <Text style={styles.placeholderText}>Camera view is active</Text>
+        <Text style={styles.placeholderSubtext}>Position your QR code in front of the camera</Text>
+      </View>
       <View style={styles.buttonContainer}>
         <ModalButton
           theme={theme}
@@ -510,6 +537,35 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000',
     textAlign: 'center',
+    marginBottom: 4,
+  },
+  scannerNote: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  placeholderContainer: {
+    width: '100%',
+    maxWidth: 500,
+    height: 200,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 20,
+    borderWidth: 2,
+    borderColor: '#ddd',
+    borderStyle: 'dashed',
+  },
+  placeholderText: {
+    fontSize: 18,
+    color: '#666',
+    marginBottom: 8,
+  },
+  placeholderSubtext: {
+    fontSize: 14,
+    color: '#999',
   },
   buttonContainer: {
     marginTop: 20,
