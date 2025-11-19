@@ -25,9 +25,7 @@ class RedisRateLimitStore {
         this.fallbackStore = new Map(); // In-memory fallback when Redis is unavailable
     }
 
-    /**
-     * Increment rate limit counter
-     */
+
     async incr(key) {
         try {
             const result = await rateLimiter.checkLimit(
@@ -47,9 +45,7 @@ class RedisRateLimitStore {
         }
     }
 
-    /**
-     * Fallback in-memory rate limiting
-     */
+
     inMemoryIncr(key) {
         const now = Date.now();
         const windowMs = 60000; // 1 minute
@@ -78,17 +74,13 @@ class RedisRateLimitStore {
         };
     }
 
-    /**
-     * Decrement rate limit counter (not used by express-rate-limit)
-     */
+
     async decrement(key) {
         // Not implemented as express-rate-limit doesn't use this
         return;
     }
 
-    /**
-     * Reset rate limit counter
-     */
+
     async resetKey(key) {
         try {
             await RedisCache.del(`${this.prefix}${key}`);
@@ -108,9 +100,7 @@ const rateLimitStore = new RedisRateLimitStore();
  * Key generator functions for different rate limiting strategies
  */
 const keyGenerators = {
-    /**
-     * IP-based rate limiting with proper IPv6 support using ipKeyGenerator helper
-     */
+
     ip: (req) => {
         // Get IP from various sources, with validation
         let ip = req.ip ||
@@ -152,9 +142,7 @@ const keyGenerators = {
         }
     },
 
-    /**
-     * User-based rate limiting with validation
-     */
+
     user: (req) => {
         if (req.user && req.user.id) {
             // Validate user ID format to prevent injection
@@ -168,27 +156,20 @@ const keyGenerators = {
         return keyGenerators.ip(req);
     },
 
-    /**
-     * Endpoint-based rate limiting
-     */
+
     endpoint: (req) => {
         const baseKey = req.user ? keyGenerators.user(req) : keyGenerators.ip(req);
         const endpoint = req.route ? req.route.path : req.path;
         return `${baseKey}:endpoint:${endpoint}`;
     },
 
-    /**
-     * Method-based rate limiting
-     */
+
     method: (req) => {
         const baseKey = req.user ? keyGenerators.user(req) : keyGenerators.ip(req);
         return `${baseKey}:method:${req.method}`;
     }
 };
 
-/**
- * Secure rate limiting skip function with proper validation
- */
 const skipRateLimit = (req) => {
     // Only allow health checks to skip rate limiting
     if (req.path === '/api/dev/v1/health' || req.path === '/api/dev/v1/health/ping') {
@@ -210,10 +191,6 @@ const skipRateLimit = (req) => {
     return false;
 };
 
-/**
- * Rate limit exceeded handler (modern v7+ syntax)
- * Handles both logging and response when rate limit is exceeded
- */
 const handleRateLimitExceeded = (req, res, next, options) => {
     const identifier = req.user ? req.user.id : req.ip;
 
@@ -244,9 +221,6 @@ const handleRateLimitExceeded = (req, res, next, options) => {
     res.status(429).json(options.message);
 };
 
-/**
- * Create rate limiter with custom configuration
- */
 const createRateLimiter = (config) => {
     return rateLimit({
         windowMs: config.windowMs,
@@ -266,49 +240,31 @@ const createRateLimiter = (config) => {
     });
 };
 
-/**
- * Global rate limiter (applied to all requests)
- */
 const globalRateLimit = createRateLimiter({
     ...RATE_LIMIT_CONFIG.global,
     keyGenerator: keyGenerators.ip
 });
 
-/**
- * Read operation rate limiter
- */
 const readRateLimit = createRateLimiter({
     ...RATE_LIMIT_CONFIG.read,
     keyGenerator: keyGenerators.user
 });
 
-/**
- * Write operation rate limiter
- */
 const writeRateLimit = createRateLimiter({
     ...RATE_LIMIT_CONFIG.write,
     keyGenerator: keyGenerators.user
 });
 
-/**
- * Admin operation rate limiter
- */
 const adminRateLimit = createRateLimiter({
     ...RATE_LIMIT_CONFIG.admin,
     keyGenerator: keyGenerators.user
 });
 
-/**
- * Authentication rate limiter
- */
 const authRateLimit = createRateLimiter({
     ...RATE_LIMIT_CONFIG.auth,
     keyGenerator: keyGenerators.ip
 });
 
-/**
- * Dynamic rate limiting middleware based on request type
- */
 const dynamicRateLimit = (req, res, next) => {
     // Determine which rate limiter to apply based on request
     let limiter = globalRateLimit;
@@ -329,17 +285,11 @@ const dynamicRateLimit = (req, res, next) => {
     return limiter(req, res, next);
 };
 
-/**
- * Rate limiting middleware that applies appropriate limits
- */
 const rateLimitMiddleware = (req, res, next) => {
     // Apply dynamic rate limiting
     return dynamicRateLimit(req, res, next);
 };
 
-/**
- * Get rate limit status for a user/IP
- */
 const getRateLimitStatus = async (identifier, type = 'ip') => {
     try {
         const key = `${type}:${identifier}`;
@@ -366,9 +316,6 @@ const getRateLimitStatus = async (identifier, type = 'ip') => {
     }
 };
 
-/**
- * Reset rate limit for a user/IP (admin function)
- */
 const resetRateLimit = async (identifier, type = 'ip') => {
     try {
         const key = `${type}:${identifier}`;
@@ -383,15 +330,10 @@ const resetRateLimit = async (identifier, type = 'ip') => {
     }
 };
 
-/**
- * Get rate limiting statistics
- */
 const getRateLimitStats = async () => {
     try {
         // Get current rate limit data from Redis
         const patterns = [
-            'rate_limit:ip:*',
-            'rate_limit:user:*',
             'rate_limit:endpoint:*'
         ];
 
@@ -421,9 +363,6 @@ const getRateLimitStats = async () => {
     }
 };
 
-/**
- * Middleware to add rate limit headers to response
- */
 const addRateLimitHeaders = (req, res, next) => {
     const originalSend = res.send;
 
@@ -443,9 +382,6 @@ const addRateLimitHeaders = (req, res, next) => {
     next();
 };
 
-/**
- * Create custom rate limiter for specific endpoints
- */
 const createCustomRateLimit = (options) => {
     const config = {
         windowMs: options.windowMs || 60000, // 1 minute default

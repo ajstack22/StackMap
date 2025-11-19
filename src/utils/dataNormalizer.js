@@ -4,14 +4,7 @@
  * Critical for preventing sync inconsistencies
  */
 
-/**
- * Normalize activity fields to use standard naming
- * Activities should use 'text' and 'icon' (not 'name', 'title', or 'emoji')
- *
- * @description Normalizes activity fields to standardized names (text/icon)
- * @param {Object} activity - Activity object to normalize
- * @returns {Object} Normalized activity with standard field names
- */
+
 export const normalizeActivity = (activity) => {
   if (!activity) return activity;
 
@@ -26,11 +19,7 @@ export const normalizeActivity = (activity) => {
   return normalized;
 };
 
-/**
- * @description Helper to normalize activity text field
- * @param {Object} activity - Activity object to modify
- * @private
- */
+
 const normalizeActivityTextField = (activity) => {
   // Early return if text already exists
   if (activity.text) return;
@@ -48,11 +37,7 @@ const normalizeActivityTextField = (activity) => {
   }
 };
 
-/**
- * @description Helper to normalize activity icon field
- * @param {Object} activity - Activity object to modify
- * @private
- */
+
 const normalizeActivityIconField = (activity) => {
   // Handle icon field normalization
   if (!activity.icon && activity.emoji) {
@@ -65,14 +50,7 @@ const normalizeActivityIconField = (activity) => {
   }
 };
 
-/**
- * Normalize user fields to use standard naming
- * Users should use 'name' (string) and 'icon' (not 'emoji')
- *
- * @description Normalizes user fields to standardized format
- * @param {Object} user - User object to normalize
- * @returns {Object} Normalized user with standard field names
- */
+
 export const normalizeUser = (user) => {
   if (!user) return user;
 
@@ -90,11 +68,7 @@ export const normalizeUser = (user) => {
   return normalized;
 };
 
-/**
- * @description Helper to normalize user name field to string
- * @param {Object} user - User object to modify
- * @private
- */
+
 const normalizeUserNameField = (user) => {
   // Handle object type name field
   if (user.name && typeof user.name === 'object') {
@@ -108,12 +82,7 @@ const normalizeUserNameField = (user) => {
   }
 };
 
-/**
- * @description Extract string name from object
- * @param {Object} nameObj - Object containing name data
- * @returns {string} Extracted name or default
- * @private
- */
+
 const extractNameFromObject = (nameObj) => {
   if (nameObj.name && typeof nameObj.name === 'string') {
     return nameObj.name;
@@ -126,11 +95,7 @@ const extractNameFromObject = (nameObj) => {
   return 'User';
 };
 
-/**
- * @description Helper to normalize user icon field
- * @param {Object} user - User object to modify
- * @private
- */
+
 const normalizeUserIconField = (user) => {
   // Set icon from emoji if not present
   if (!user.icon) {
@@ -143,11 +108,7 @@ const normalizeUserIconField = (user) => {
   }
 };
 
-/**
- * @description Helper to normalize user days and activities
- * @param {Object} user - User object to modify
- * @private
- */
+
 const normalizeUserDays = (user) => {
   if (!user.days) return;
 
@@ -212,13 +173,7 @@ export const normalizeSyncData = (data) => {
   return normalized;
 };
 
-/**
- * Check if data needs normalization
- *
- * @description Checks if sync data contains old field names that need normalization
- * @param {Object} data - Data object to check
- * @returns {boolean} True if normalization is needed
- */
+
 export const needsNormalization = (data) => {
   if (!data) return false;
 
@@ -235,12 +190,7 @@ export const needsNormalization = (data) => {
   return false;
 };
 
-/**
- * @description Check if users section needs normalization
- * @param {Object} users - Users object to check
- * @returns {boolean} True if normalization needed
- * @private
- */
+
 const checkUsersNeedNormalization = (users) => {
   if (!users) return false;
 
@@ -261,23 +211,13 @@ const checkUsersNeedNormalization = (users) => {
   return false;
 };
 
-/**
- * @description Check if individual user needs normalization
- * @param {Object} user - User object to check
- * @returns {boolean} True if user has old field names
- * @private
- */
+
 const userNeedsNormalization = (user) => {
   if (!user) return false;
   return user.emoji || (user.name && typeof user.name === 'object');
 };
 
-/**
- * @description Check if user activities need normalization
- * @param {Object} days - Days object containing activities
- * @returns {boolean} True if activities have old field names
- * @private
- */
+
 const userActivitiesNeedNormalization = (days) => {
   if (!days) return false;
 
@@ -293,12 +233,7 @@ const userActivitiesNeedNormalization = (days) => {
   return false;
 };
 
-/**
- * @description Check if library needs normalization
- * @param {Object} library - Library object to check
- * @returns {boolean} True if normalization needed
- * @private
- */
+
 const checkLibraryNeedsNormalization = (library) => {
   if (!library) return false;
 
@@ -319,12 +254,7 @@ const checkLibraryNeedsNormalization = (library) => {
   return false;
 };
 
-/**
- * @description Check if categories need normalization
- * @param {Object|Array} categories - Categories to check
- * @returns {boolean} True if normalization needed
- * @private
- */
+
 const categoriesNeedNormalization = (categories) => {
   // Handle array format
   if (Array.isArray(categories)) {
@@ -350,12 +280,7 @@ const categoriesNeedNormalization = (categories) => {
   return false;
 };
 
-/**
- * @description Check if activities array needs normalization
- * @param {Array} activities - Activities array to check
- * @returns {boolean} True if any activity has old field names
- * @private
- */
+
 const activitiesArrayNeedsNormalization = (activities) => {
   return activities.some(activity =>
     activity.name || activity.title || activity.emoji

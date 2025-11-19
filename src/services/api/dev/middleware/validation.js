@@ -19,73 +19,55 @@ const { MetricsCollector } = require('../utils/metrics');
  * Custom Joi validation rules
  */
 const customValidators = {
-    /**
-     * Validate sync ID format (32 character hex)
-     */
+
     syncId: Joi.string()
         .pattern(VALIDATION_PATTERNS.syncId)
         .length(32),
 
-    /**
-     * Validate user ID format
-     */
+
     userId: Joi.string()
         .pattern(VALIDATION_PATTERNS.userId)
         .min(1)
         .max(50),
 
-    /**
-     * Validate device ID format
-     */
+
     deviceId: Joi.string()
         .pattern(VALIDATION_PATTERNS.deviceId)
         .min(1)
         .max(100),
 
-    /**
-     * Validate timestamp format
-     */
+
     timestamp: Joi.alternatives().try(
         Joi.date().iso(),
         Joi.string().pattern(VALIDATION_PATTERNS.timestamp)
     ),
 
-    /**
-     * Validate metric name format
-     */
+
     metricName: Joi.string()
         .pattern(VALIDATION_PATTERNS.metricName)
         .min(1)
         .max(100),
 
-    /**
-     * Validate IP address
-     */
+
     ipAddress: Joi.alternatives().try(
         Joi.string().pattern(VALIDATION_PATTERNS.ipv4),
         Joi.string().pattern(VALIDATION_PATTERNS.ipv6)
     ),
 
-    /**
-     * Validate endpoint path
-     */
+
     endpointPath: Joi.string()
         .pattern(VALIDATION_PATTERNS.apiEndpoint)
         .min(1)
         .max(200),
 
-    /**
-     * Validate pagination parameters
-     */
+
     pagination: Joi.object({
         page: Joi.number().integer().min(1).max(1000).default(1),
         limit: Joi.number().integer().min(1).max(100).default(20),
         offset: Joi.number().integer().min(0).max(10000).optional()
     }),
 
-    /**
-     * Validate labels object (for metrics)
-     */
+
     labels: Joi.object().pattern(
         Joi.string().pattern(/^[a-zA-Z][a-zA-Z0-9_]{0,49}$/),
         Joi.alternatives().try(
@@ -96,49 +78,27 @@ const customValidators = {
     ).max(10)
 };
 
-/**
- * Helper functions to get schemas without circular references
- */
+
 const getTimestampSchema = () => Joi.alternatives().try(
     Joi.date().iso(),
     Joi.string().pattern(VALIDATION_PATTERNS.timestamp)
 );
 
-const getTimeRangeSchema = () => Joi.object({
-    start: getTimestampSchema().optional(),
-    end: getTimestampSchema().optional(),
-    period: Joi.string().valid('1h', '6h', '24h', '7d', '30d').optional()
-}).or('period', 'start');
 
-const getPaginationSchema = () => Joi.object({
-    page: Joi.number().integer().min(1).max(1000).default(1),
-    limit: Joi.number().integer().min(1).max(100).default(20),
-    offset: Joi.number().integer().min(0).max(10000).optional()
-});
-
-/**
- * Common validation schemas
- */
 const commonSchemas = {
-    /**
-     * Request ID header validation
-     */
+
     requestId: Joi.object({
         'x-request-id': Joi.string().uuid().optional()
     }).unknown(true),
 
-    /**
-     * Authentication header validation
-     */
+
     authHeaders: Joi.object({
         authorization: Joi.string()
             .pattern(/^Bearer\s+[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/)
             .required()
     }).unknown(true),
 
-    /**
-     * Content type validation
-     */
+
     jsonContentType: Joi.object({
         'content-type': Joi.string()
             .valid('application/json')
@@ -147,9 +107,7 @@ const commonSchemas = {
     }).unknown(true)
 };
 
-/**
- * Endpoint-specific validation schemas
- */
+
 const endpointSchemas = {
     health: {
         getSystemHealth: {
@@ -302,9 +260,7 @@ const endpointSchemas = {
     }
 };
 
-/**
- * Validation middleware factory
- */
+
 const createValidationMiddleware = (schema, options = {}) => {
     const {
         allowUnknown = false,
@@ -432,9 +388,7 @@ const createValidationMiddleware = (schema, options = {}) => {
     };
 };
 
-/**
- * Pre-built validation middleware for common use cases
- */
+
 const validationMiddleware = {
     // Health endpoints
     health: {
@@ -483,13 +437,9 @@ const validationMiddleware = {
     }
 };
 
-/**
- * Generic validation helper functions
- */
+
 const validationHelpers = {
-    /**
-     * Validate single value against schema
-     */
+
     validateValue: async (value, schema) => {
         try {
             return await schema.validateAsync(value);
@@ -498,25 +448,19 @@ const validationHelpers = {
         }
     },
 
-    /**
-     * Create custom validation schema
-     */
+
     createSchema: (schemaDefinition) => {
         return Joi.object(schemaDefinition);
     },
 
-    /**
-     * Combine multiple schemas
-     */
+
     combineSchemas: (...schemas) => {
         return schemas.reduce((combined, schema) => {
             return combined.concat(schema);
         }, Joi.object());
     },
 
-    /**
-     * Add conditional validation
-     */
+
     addConditionalValidation: (baseSchema, condition, thenSchema, otherwiseSchema) => {
         // Using callback function syntax to avoid SonarCloud S7739
         // Joi's .when() accepts a function that returns the schema

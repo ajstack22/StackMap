@@ -32,9 +32,7 @@ const queryStats = {
     slowQueryThreshold: 1000 // 1 second
 };
 
-/**
- * Initialize database connection pool
- */
+
 const initializeDatabase = async () => {
     try {
         const config = getDatabaseConfig();
@@ -77,9 +75,7 @@ const initializeDatabase = async () => {
     }
 };
 
-/**
- * Setup pool event handlers
- */
+
 const setupPoolEventHandlers = () => {
     if (!dbPool) return;
 
@@ -101,9 +97,7 @@ const setupPoolEventHandlers = () => {
     });
 };
 
-/**
- * Close database connection pool
- */
+
 const closeDatabase = async () => {
     try {
         if (dbPool) {
@@ -117,9 +111,7 @@ const closeDatabase = async () => {
     }
 };
 
-/**
- * Check database health
- */
+
 const isDatabaseHealthy = async () => {
     try {
         if (!dbPool || !isConnected) {
@@ -142,9 +134,7 @@ const isDatabaseHealthy = async () => {
  * Database Query Interface
  */
 class DatabaseQuery {
-    /**
-     * Execute a SELECT query with performance monitoring
-     */
+
     static async select(query, params = []) {
         const startTime = Date.now();
         let connection = null;
@@ -188,9 +178,7 @@ class DatabaseQuery {
         }
     }
 
-    /**
-     * Execute an INSERT query
-     */
+
     static async insert(query, params = []) {
         const startTime = Date.now();
         let connection = null;
@@ -235,9 +223,7 @@ class DatabaseQuery {
         }
     }
 
-    /**
-     * Execute an UPDATE query
-     */
+
     static async update(query, params = []) {
         const startTime = Date.now();
         let connection = null;
@@ -282,9 +268,7 @@ class DatabaseQuery {
         }
     }
 
-    /**
-     * Execute a DELETE query
-     */
+
     static async delete(query, params = []) {
         const startTime = Date.now();
         let connection = null;
@@ -328,9 +312,7 @@ class DatabaseQuery {
         }
     }
 
-    /**
-     * Execute a transaction
-     */
+
     static async transaction(queries) {
         let connection = null;
 
@@ -374,9 +356,7 @@ class DatabaseQuery {
         }
     }
 
-    /**
-     * Get database statistics
-     */
+
     static async getStats() {
         try {
             if (!dbPool || !isConnected) {
@@ -403,9 +383,7 @@ class DatabaseQuery {
         }
     }
 
-    /**
-     * Update query performance statistics
-     */
+
     static updateQueryStats(responseTime, isError) {
         queryStats.totalQueries++;
 
@@ -424,9 +402,7 @@ class DatabaseQuery {
         );
     }
 
-    /**
-     * Sanitize query for logging (remove sensitive data)
-     */
+
     static sanitizeQuery(query) {
         // Remove potential passwords and sensitive data from logs
         return query
@@ -445,9 +421,7 @@ class PreparedStatementCache {
         this.maxSize = maxSize;
     }
 
-    /**
-     * Get or create prepared statement
-     */
+
     async getStatement(connection, query) {
         if (this.cache.has(query)) {
             return this.cache.get(query);
@@ -465,9 +439,7 @@ class PreparedStatementCache {
         return statement;
     }
 
-    /**
-     * Clear cache
-     */
+
     clear() {
         this.cache.clear();
     }
@@ -480,9 +452,7 @@ const preparedStatementCache = new PreparedStatementCache();
  * Migration utilities
  */
 const MigrationUtils = {
-    /**
-     * Check if table exists
-     */
+
     async tableExists(tableName) {
         try {
             const query = `
@@ -500,9 +470,7 @@ const MigrationUtils = {
         }
     },
 
-    /**
-     * Get table schema
-     */
+
     async getTableSchema(tableName) {
         try {
             const query = `

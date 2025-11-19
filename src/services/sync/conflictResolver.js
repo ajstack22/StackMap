@@ -13,9 +13,7 @@ class ConflictResolver {
     this.enableLogging = true;
   }
 
-  /**
-   * Main merge function - combines local and remote data
-   */
+
   mergeStates(local, remote) {
     this.mergeLog = [];
     
@@ -52,14 +50,7 @@ class ConflictResolver {
     return merged;
   }
 
-  /**
-   * @description Merge users with per-user granular merge
-   * @param {Object} localUsers - Local users object
-   * @param {Object} remoteUsers - Remote users object
-   * @param {Object} localMeta - Local metadata
-   * @param {Object} remoteMeta - Remote metadata
-   * @returns {Object} Merged users object
-   */
+
   mergeUsers(localUsers, remoteUsers, localMeta, remoteMeta) {
     // Handle edge cases first
     const edgeResult = this.handleUserEdgeCases(localUsers, remoteUsers);
@@ -75,13 +66,7 @@ class ConflictResolver {
     return this.performDetailedUserMerge(localUsers, remoteUsers, localMeta, remoteMeta);
   }
 
-  /**
-   * @description Handle edge cases where one or both user sets are missing
-   * @param {Object} localUsers - Local users
-   * @param {Object} remoteUsers - Remote users
-   * @returns {Object|null} Users object or null to continue
-   * @private
-   */
+
   handleUserEdgeCases(localUsers, remoteUsers) {
     if (!localUsers && !remoteUsers) return {};
 
@@ -98,15 +83,7 @@ class ConflictResolver {
     return null; // Continue with normal merge
   }
 
-  /**
-   * @description Check if timestamps indicate one side should win entirely
-   * @param {Object} localUsers - Local users
-   * @param {Object} remoteUsers - Remote users
-   * @param {Object} localMeta - Local metadata
-   * @param {Object} remoteMeta - Remote metadata
-   * @returns {Object|null} Users object or null to continue
-   * @private
-   */
+
   checkUserTimestamps(localUsers, remoteUsers, localMeta, remoteMeta) {
     const localUserTime = localMeta?.fieldTimestamps?.users || 0;
     const remoteUserTime = remoteMeta?.fieldTimestamps?.users || 0;
@@ -129,15 +106,7 @@ class ConflictResolver {
     return null; // Continue with detailed merge
   }
 
-  /**
-   * @description Perform detailed user-by-user merge
-   * @param {Object} localUsers - Local users
-   * @param {Object} remoteUsers - Remote users
-   * @param {Object} localMeta - Local metadata
-   * @param {Object} remoteMeta - Remote metadata
-   * @returns {Object} Merged users
-   * @private
-   */
+
   performDetailedUserMerge(localUsers, remoteUsers, localMeta, remoteMeta) {
     const merged = {};
     const allUserIds = new Set([
@@ -157,16 +126,7 @@ class ConflictResolver {
     return merged;
   }
 
-  /**
-   * @description Merge a single user
-   * @param {Object} localUser - Local user data
-   * @param {Object} remoteUser - Remote user data
-   * @param {string} userId - User ID
-   * @param {Object} localMeta - Local metadata
-   * @param {Object} remoteMeta - Remote metadata
-   * @returns {Object} Merged user
-   * @private
-   */
+
   mergeUser(localUser, remoteUser, userId, localMeta, remoteMeta) {
     // User only exists remotely
     if (!localUser && remoteUser) {
@@ -191,15 +151,7 @@ class ConflictResolver {
     return null;
   }
   
-  /**
-   * @description Merge individual user with activity preservation
-   * @param {Object} localUser - Local user data
-   * @param {Object} remoteUser - Remote user data
-   * @param {string} userId - User ID
-   * @param {Object} localMeta - Local metadata
-   * @param {Object} remoteMeta - Remote metadata
-   * @returns {Object} Merged user data
-   */
+
   mergeIndividualUser(localUser, remoteUser, userId, localMeta, remoteMeta) {
     // Determine base user from timestamps
     const mergedUser = this.selectBaseUser(localUser, remoteUser, userId);
@@ -217,14 +169,7 @@ class ConflictResolver {
     return mergedUser;
   }
 
-  /**
-   * @description Select base user based on modification timestamps
-   * @param {Object} localUser - Local user
-   * @param {Object} remoteUser - Remote user
-   * @param {string} userId - User ID for logging
-   * @returns {Object} Base user object
-   * @private
-   */
+
   selectBaseUser(localUser, remoteUser, userId) {
     const localModified = localUser.lastModified || 0;
     const remoteModified = remoteUser.lastModified || 0;
@@ -243,13 +188,7 @@ class ConflictResolver {
     return { ...localUser };
   }
 
-  /**
-   * @description Check if user properties need merging
-   * @param {Object} localUser - Local user
-   * @param {Object} remoteUser - Remote user
-   * @returns {boolean} True if properties should be merged
-   * @private
-   */
+
   shouldMergeUserProperties(localUser, remoteUser) {
     const localModified = localUser.lastModified || 0;
     const remoteModified = remoteUser.lastModified || 0;
@@ -258,15 +197,7 @@ class ConflictResolver {
     return localModified === remoteModified;
   }
 
-  /**
-   * @description Merge user name and icon properties
-   * @param {Object} mergedUser - User object to update
-   * @param {Object} localUser - Local user
-   * @param {Object} remoteUser - Remote user
-   * @param {Object} localMeta - Local metadata
-   * @param {Object} remoteMeta - Remote metadata
-   * @private
-   */
+
   mergeUserProperties(mergedUser, localUser, remoteUser, localMeta, remoteMeta) {
     // Check if name or icon differs
     const hasPropertyDifference =
@@ -286,13 +217,7 @@ class ConflictResolver {
     }
   }
 
-  /**
-   * @description Merge user activities from both sources
-   * @param {Object} mergedUser - User object to update
-   * @param {Object} localUser - Local user
-   * @param {Object} remoteUser - Remote user
-   * @private
-   */
+
   mergeUserActivities(mergedUser, localUser, remoteUser) {
     if (!localUser.days && !remoteUser.days) return;
 
@@ -302,9 +227,7 @@ class ConflictResolver {
     );
   }
   
-  /**
-   * Merge user days and activities additively
-   */
+
   mergeUserDays(localDays, remoteDays) {
     if (!localDays && !remoteDays) return {};
     if (!localDays) return remoteDays;
@@ -345,9 +268,7 @@ class ConflictResolver {
     return merged;
   }
   
-  /**
-   * Merge activities arrays - additive with deduplication
-   */
+
   mergeActivitiesArray(localActivities, remoteActivities) {
     const merged = [...localActivities];
     const existingIds = new Set(localActivities.map(a => a.id));
@@ -373,9 +294,7 @@ class ConflictResolver {
     return merged;
   }
 
-  /**
-   * Merge activities - More granular, activity by activity
-   */
+
   mergeActivities(localActivities, remoteActivities, localMeta, remoteMeta) {
     if (!localActivities && !remoteActivities) return {};
     if (!localActivities) {
@@ -428,9 +347,7 @@ class ConflictResolver {
     return merged;
   }
 
-  /**
-   * Merge settings - LWW for entire settings object
-   */
+
   mergeSettings(localSettings, remoteSettings, localMeta, remoteMeta) {
     if (!localSettings && !remoteSettings) return {};
     if (!localSettings) {
@@ -459,9 +376,7 @@ class ConflictResolver {
     }
   }
 
-  /**
-   * Merge library - Granular merge preserving all data
-   */
+
   mergeLibrary(localLibrary, remoteLibrary, localMeta, remoteMeta) {
     if (!localLibrary && !remoteLibrary) return {};
     if (!localLibrary) {
@@ -537,9 +452,7 @@ class ConflictResolver {
     return merged;
   }
   
-  /**
-   * Merge library categories additively
-   */
+
   mergeLibraryCategories(localCategories, remoteCategories) {
     if (!localCategories) return remoteCategories || [];
     if (!remoteCategories) return localCategories;
@@ -562,9 +475,7 @@ class ConflictResolver {
     return merged;
   }
   
-  /**
-   * Merge library templates additively
-   */
+
   mergeLibraryTemplates(localTemplates, remoteTemplates) {
     if (!localTemplates) return remoteTemplates || [];
     if (!remoteTemplates) return localTemplates;
@@ -582,9 +493,7 @@ class ConflictResolver {
     return merged;
   }
   
-  /**
-   * Merge library activities additively
-   */
+
   mergeLibraryActivities(localActivities, remoteActivities) {
     if (!localActivities) return remoteActivities || [];
     if (!remoteActivities) return localActivities;
@@ -602,9 +511,7 @@ class ConflictResolver {
     return merged;
   }
 
-  /**
-   * Merge metadata
-   */
+
   mergeMetadata(localMeta, remoteMeta) {
     const now = Date.now();
     
@@ -634,9 +541,7 @@ class ConflictResolver {
     };
   }
 
-  /**
-   * Deterministic tiebreaker using device IDs
-   */
+
   tiebreaker(localDeviceId, remoteDeviceId) {
     if (!localDeviceId && !remoteDeviceId) return 'local';
     if (!localDeviceId) return 'remote';
@@ -646,9 +551,7 @@ class ConflictResolver {
     return localDeviceId < remoteDeviceId ? 'local' : 'remote';
   }
 
-  /**
-   * Add metadata to a state if it doesn't have it
-   */
+
   addMetadata(state) {
     if (!state) return this.createEmptyState();
     
@@ -669,9 +572,7 @@ class ConflictResolver {
     return state;
   }
 
-  /**
-   * Create an empty state with metadata
-   */
+
   createEmptyState() {
     const now = Date.now();
     return {
@@ -692,9 +593,7 @@ class ConflictResolver {
     };
   }
 
-  /**
-   * Generate a simple device ID
-   */
+
   generateDeviceId() {
     // Use crypto.getRandomValues for secure ID generation
     if (typeof global !== 'undefined' && global.crypto?.getRandomValues) {
@@ -717,9 +616,7 @@ class ConflictResolver {
     }
   }
 
-  /**
-   * Log merge decision
-   */
+
   log(message) {
     if (this.enableLogging) {
       this.mergeLog.push({
@@ -729,25 +626,19 @@ class ConflictResolver {
     }
   }
 
-  /**
-   * Log merge summary
-   */
+
   logSummary() {
     if (this.enableLogging && this.mergeLog.length > 0) {
       // Could add merge statistics logging here if needed
     }
   }
 
-  /**
-   * Get the merge log for debugging
-   */
+
   getMergeLog() {
     return this.mergeLog;
   }
 
-  /**
-   * Clear the merge log
-   */
+
   clearLog() {
     this.mergeLog = [];
   }

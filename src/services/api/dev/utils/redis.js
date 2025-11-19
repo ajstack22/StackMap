@@ -22,9 +22,7 @@ let isConnected = false;
 let connectionRetries = 0;
 const maxRetries = 5;
 
-/**
- * Connect to Redis
- */
+
 const connectRedis = async () => {
     try {
         const config = getRedisConfig();
@@ -71,9 +69,7 @@ const connectRedis = async () => {
     }
 };
 
-/**
- * Disconnect from Redis
- */
+
 const disconnectRedis = async () => {
     try {
         if (redisClient) {
@@ -88,9 +84,7 @@ const disconnectRedis = async () => {
     }
 };
 
-/**
- * Check if Redis is connected and healthy
- */
+
 const isRedisHealthy = async () => {
     try {
         if (!redisClient || !isConnected) {
@@ -110,9 +104,7 @@ const isRedisHealthy = async () => {
  * Redis Cache Interface
  */
 class RedisCache {
-    /**
-     * Get value from cache
-     */
+
     static async get(key) {
         try {
             if (!isConnected || !redisClient) {
@@ -127,9 +119,7 @@ class RedisCache {
         }
     }
 
-    /**
-     * Set value in cache with TTL
-     */
+
     static async set(key, value, ttl = CACHE_TTL.API_RESPONSE_FAST) {
         try {
             if (!isConnected || !redisClient) {
@@ -145,9 +135,7 @@ class RedisCache {
         }
     }
 
-    /**
-     * Delete key from cache
-     */
+
     static async del(key) {
         try {
             if (!isConnected || !redisClient) {
@@ -162,9 +150,7 @@ class RedisCache {
         }
     }
 
-    /**
-     * Check if key exists
-     */
+
     static async exists(key) {
         try {
             if (!isConnected || !redisClient) {
@@ -179,9 +165,7 @@ class RedisCache {
         }
     }
 
-    /**
-     * Set key expiration
-     */
+
     static async expire(key, ttl) {
         try {
             if (!isConnected || !redisClient) {
@@ -196,9 +180,7 @@ class RedisCache {
         }
     }
 
-    /**
-     * Increment counter
-     */
+
     static async incr(key, amount = 1) {
         try {
             if (!isConnected || !redisClient) {
@@ -213,9 +195,7 @@ class RedisCache {
         }
     }
 
-    /**
-     * Get multiple keys
-     */
+
     static async mget(keys) {
         try {
             if (!isConnected || !redisClient || !keys.length) {
@@ -230,9 +210,7 @@ class RedisCache {
         }
     }
 
-    /**
-     * Set multiple keys
-     */
+
     static async mset(keyValues, ttl = CACHE_TTL.API_RESPONSE_FAST) {
         try {
             if (!isConnected || !redisClient || !keyValues.length) {
@@ -260,9 +238,7 @@ class RedisCache {
         }
     }
 
-    /**
-     * Get keys matching pattern using secure SCAN command
-     */
+
     static async keys(pattern) {
         try {
             if (!isConnected || !redisClient) {
@@ -305,9 +281,7 @@ class RedisCache {
         }
     }
 
-    /**
-     * Delete keys matching pattern
-     */
+
     static async deletePattern(pattern) {
         try {
             if (!isConnected || !redisClient) {
@@ -327,9 +301,7 @@ class RedisCache {
         }
     }
 
-    /**
-     * Get cache statistics
-     */
+
     static async getStats() {
         try {
             if (!isConnected || !redisClient) {
@@ -352,9 +324,7 @@ class RedisCache {
         }
     }
 
-    /**
-     * Parse Redis INFO response
-     */
+
     static parseRedisInfo(info) {
         const result = {};
         const lines = info.split('\r\n');
@@ -376,9 +346,7 @@ class RedisCache {
  * Cache wrapper with automatic fallback
  */
 const cacheWrapper = {
-    /**
-     * Get from cache with fallback function
-     */
+
     async getOrSet(key, fallbackFn, ttl = CACHE_TTL.API_RESPONSE_FAST) {
         try {
             // Try to get from cache first
@@ -405,9 +373,7 @@ const cacheWrapper = {
         }
     },
 
-    /**
-     * Invalidate cache entries by pattern
-     */
+
     async invalidate(pattern) {
         try {
             const deleted = await RedisCache.deletePattern(pattern);
@@ -424,9 +390,7 @@ const cacheWrapper = {
  * Rate limiting using Redis
  */
 const rateLimiter = {
-    /**
-     * Check rate limit for identifier
-     */
+
     async checkLimit(identifier, limit, windowMs) {
         try {
             if (!isConnected || !redisClient) {

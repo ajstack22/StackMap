@@ -5,15 +5,7 @@
  * Extracted from syncUtils.js and related modal components
  */
 
-/**
- * Validate sync operation parameters
- * Checks if sync enable/restore parameters are valid
- *
- * @param {Object} params - Sync operation parameters
- * @param {string} params.type - Operation type ('enable', 'restore', 'disable')
- * @param {string} [params.recoveryPhrase] - Recovery phrase for restore operations
- * @returns {{isValid: boolean, error?: string}} Validation result
- */
+
 export const validateSyncOperationParams = (params) => {
   if (!params || typeof params !== 'object' || Array.isArray(params)) {
     return {
@@ -62,19 +54,7 @@ export const validateSyncOperationParams = (params) => {
   return { isValid: true };
 };
 
-/**
- * Generate sync operation result
- * Creates standardized result object for sync operations
- *
- * @param {Object} params - Result parameters
- * @param {boolean} params.success - Whether operation succeeded
- * @param {string} [params.message] - Success/error message
- * @param {string} [params.syncId] - Generated sync ID (for successful enable/restore)
- * @param {string} [params.recoveryPhrase] - Recovery phrase (for successful enable)
- * @param {boolean} [params.isNewSync] - Whether this created a new sync
- * @param {Object} [params.data] - Additional operation data
- * @returns {Object} Standardized sync operation result
- */
+
 export const createSyncOperationResult = (params) => {
   const {
     success,
@@ -115,14 +95,7 @@ const FIELD_VALIDATORS = {
   'lastSyncTime': (value) => ({ valid: value === null || (typeof value === 'number' && value >= 0), error: 'must be a positive number or null' })
 };
 
-/**
- * Validate sync state update
- * Ensures sync state updates have valid structure
- *
- * @description Validates and sanitizes sync state update objects
- * @param {Object} stateUpdate - State update object
- * @returns {{isValid: boolean, error?: string, sanitized?: Object}} Validation result
- */
+
 export const validateSyncStateUpdate = (stateUpdate) => {
   // Early return for invalid input
   if (!isValidStateUpdateObject(stateUpdate)) {
@@ -135,22 +108,12 @@ export const validateSyncStateUpdate = (stateUpdate) => {
   return validateAndSanitizeFields(stateUpdate);
 };
 
-/**
- * @description Check if state update is a valid object
- * @param {*} stateUpdate - Value to check
- * @returns {boolean} True if valid object
- * @private
- */
+
 const isValidStateUpdateObject = (stateUpdate) => {
   return stateUpdate && typeof stateUpdate === 'object' && !Array.isArray(stateUpdate);
 };
 
-/**
- * @description Validate and sanitize state update fields
- * @param {Object} stateUpdate - State update to process
- * @returns {{isValid: boolean, error?: string, sanitized?: Object}} Result
- * @private
- */
+
 const validateAndSanitizeFields = (stateUpdate) => {
   const sanitized = {};
   const errors = [];
@@ -188,15 +151,7 @@ const validateAndSanitizeFields = (stateUpdate) => {
   };
 };
 
-/**
- * Calculate sync retry delay
- * Implements exponential backoff for sync retry attempts
- *
- * @param {number} attemptCount - Current attempt number (1-based)
- * @param {number} baseDelay - Base delay in milliseconds (default: 1000)
- * @param {number} maxDelay - Maximum delay in milliseconds (default: 30000)
- * @returns {number} Delay in milliseconds
- */
+
 export const calculateSyncRetryDelay = (attemptCount, baseDelay = 1000, maxDelay = 30000) => {
   if (typeof attemptCount !== 'number' || attemptCount < 1) {
     return baseDelay;
@@ -217,13 +172,7 @@ export const calculateSyncRetryDelay = (attemptCount, baseDelay = 1000, maxDelay
   return Math.min(delay, maxDelay);
 };
 
-/**
- * Validate sync preview data
- * Checks sync preview data structure from SyncPreviewModal
- *
- * @param {Object} previewData - Preview data to validate
- * @returns {{isValid: boolean, error?: string, summary?: Object}} Validation result
- */
+
 export const validateSyncPreviewData = (previewData) => {
   if (!previewData || typeof previewData !== 'object' || Array.isArray(previewData)) {
     return {
@@ -301,14 +250,7 @@ const SANITIZATION_PATTERNS = [
   { pattern: /\b[A-Za-z0-9]{17,}\b/g, replacement: '[REDACTED_TOKEN]' } // API tokens (17+ alphanumeric) - must be last
 ];
 
-/**
- * Sanitize sync error messages
- * Removes sensitive information from error messages
- *
- * @description Sanitizes error messages by removing sensitive data
- * @param {string} errorMessage - Raw error message
- * @returns {string} Sanitized error message
- */
+
 export const sanitizeSyncErrorMessage = (errorMessage) => {
   // Handle invalid input
   if (!isValidErrorMessage(errorMessage)) {
@@ -322,22 +264,12 @@ export const sanitizeSyncErrorMessage = (errorMessage) => {
   return validateSanitizedMessage(sanitized);
 };
 
-/**
- * @description Check if error message is valid string
- * @param {*} errorMessage - Message to validate
- * @returns {boolean} True if valid string with content
- * @private
- */
+
 const isValidErrorMessage = (errorMessage) => {
   return typeof errorMessage === 'string' && errorMessage.trim().length > 0;
 };
 
-/**
- * @description Get default error message based on input type
- * @param {*} errorMessage - Original message
- * @returns {string} Default error message
- * @private
- */
+
 const getDefaultErrorMessage = (errorMessage) => {
   if (typeof errorMessage !== 'string') {
     return 'Unknown sync error';
@@ -345,12 +277,7 @@ const getDefaultErrorMessage = (errorMessage) => {
   return 'Sync operation failed';
 };
 
-/**
- * @description Apply all sanitization patterns to message
- * @param {string} message - Message to sanitize
- * @returns {string} Sanitized message
- * @private
- */
+
 const applySanitizationPatterns = (message) => {
   let sanitized = message;
 
@@ -365,12 +292,7 @@ const applySanitizationPatterns = (message) => {
   return sanitized;
 };
 
-/**
- * @description Sanitize URLs while preserving domain info
- * @param {string} message - Message containing URLs
- * @returns {string} Message with sanitized URLs
- * @private
- */
+
 const sanitizeUrls = (message) => {
   return message.replace(/https?:\/\/[^\s]+/g, (match) => {
     try {
@@ -382,12 +304,7 @@ const sanitizeUrls = (message) => {
   });
 };
 
-/**
- * @description Validate sanitized message has content
- * @param {string} sanitized - Sanitized message
- * @returns {string} Valid message or default
- * @private
- */
+
 const validateSanitizedMessage = (sanitized) => {
   const trimmed = sanitized.trim();
 
@@ -402,10 +319,7 @@ const validateSanitizedMessage = (sanitized) => {
   return trimmed;
 };
 
-/**
- * Validate expiration hours parameter
- * @private
- */
+
 const validateExpirationHours = (expirationHours, normalized, errors) => {
   if (expirationHours !== undefined) {
     if (typeof expirationHours !== 'number' || expirationHours <= 0 || expirationHours > 8760) {
@@ -416,10 +330,7 @@ const validateExpirationHours = (expirationHours, normalized, errors) => {
   }
 };
 
-/**
- * Validate max uses parameter
- * @private
- */
+
 const validateMaxUses = (maxUses, normalized, errors) => {
   if (maxUses !== undefined) {
     if (typeof maxUses !== 'number' || maxUses < 1 || maxUses > 100) {
@@ -430,10 +341,7 @@ const validateMaxUses = (maxUses, normalized, errors) => {
   }
 };
 
-/**
- * Validate description parameter
- * @private
- */
+
 const validateDescription = (description, normalized, errors) => {
   if (description !== undefined) {
     if (typeof description !== 'string') {
@@ -449,16 +357,7 @@ const validateDescription = (description, normalized, errors) => {
   }
 };
 
-/**
- * Validate device invite parameters
- * Checks parameters for device invite creation
- *
- * @param {Object} params - Invite parameters
- * @param {number} [params.expirationHours] - Hours until expiration
- * @param {number} [params.maxUses] - Maximum number of uses
- * @param {string} [params.description] - Invite description
- * @returns {{isValid: boolean, error?: string, normalized?: Object}} Validation result
- */
+
 export const validateDeviceInviteParams = (params = {}) => {
   const normalized = {
     expirationHours: 24,
@@ -494,17 +393,7 @@ const RATE_LIMIT_INTERVALS = {
   default: 5000      // Default interval
 };
 
-/**
- * Check if sync operation is rate limited
- * Implements basic rate limiting for sync operations
- *
- * @description Checks if sufficient time has passed since last operation
- * @param {Object} params - Rate limit parameters
- * @param {number} params.lastOperationTime - Timestamp of last operation
- * @param {number} [params.minIntervalMs] - Minimum interval between operations (default: 5000ms)
- * @param {string} [params.operationType] - Type of operation for specific limits
- * @returns {{isRateLimited: boolean, waitTimeMs?: number}} Rate limit result
- */
+
 export const checkSyncOperationRateLimit = (params) => {
   const { lastOperationTime, minIntervalMs = 5000, operationType = 'default' } = params;
 
@@ -526,33 +415,17 @@ export const checkSyncOperationRateLimit = (params) => {
   return checkAgainstInterval(timeSinceLastOp, interval);
 };
 
-/**
- * @description Validate timestamp
- * @param {*} timestamp - Timestamp to validate
- * @returns {boolean} True if valid timestamp
- * @private
- */
+
 const isValidTimestamp = (timestamp) => {
   return typeof timestamp === 'number' && timestamp > 0;
 };
 
-/**
- * @description Calculate time since given timestamp
- * @param {number} timestamp - Past timestamp
- * @returns {number} Milliseconds since timestamp
- * @private
- */
+
 const calculateTimeSince = (timestamp) => {
   return Date.now() - timestamp;
 };
 
-/**
- * @description Get interval for operation type
- * @param {string} operationType - Type of operation
- * @param {number} customInterval - Custom interval if default not found
- * @returns {number} Interval in milliseconds
- * @private
- */
+
 const getIntervalForOperation = (operationType, customInterval) => {
   // Use custom interval if provided and operation type is default or unknown
   if (customInterval && (operationType === 'default' || !RATE_LIMIT_INTERVALS[operationType])) {
@@ -561,13 +434,7 @@ const getIntervalForOperation = (operationType, customInterval) => {
   return RATE_LIMIT_INTERVALS[operationType] || RATE_LIMIT_INTERVALS.default;
 };
 
-/**
- * @description Check if time is within rate limit interval
- * @param {number} timeSince - Time since last operation
- * @param {number} interval - Required interval
- * @returns {{isRateLimited: boolean, waitTimeMs?: number}} Result
- * @private
- */
+
 const checkAgainstInterval = (timeSince, interval) => {
   if (timeSince < interval) {
     return {

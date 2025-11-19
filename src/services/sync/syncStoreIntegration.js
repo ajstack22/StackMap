@@ -16,7 +16,7 @@ import encryptionService from './encryptionServiceFixed';
 import { useUserStore, useSettingsStore, useLibraryStore } from '../../stores';
 import { normalizeSyncData } from '../../utils/dataNormalizer';
 import nacl from 'tweetnacl';
-import { encodeBase64, decodeBase64, encodeUTF8, decodeUTF8 } from 'tweetnacl-util';
+import { encodeBase64, decodeBase64, decodeUTF8 } from 'tweetnacl-util';
 // Import build configuration for API URL
 import { API_URL } from '../../config/buildConfig';
 
@@ -44,9 +44,7 @@ class SyncStoreIntegration {
     this.handleStoreChange = this.handleStoreChange.bind(this);
   }
 
-  /**
-   * Initialize sync integration
-   */
+
   async initialize() {
     if (this.isInitialized) {
       return;
@@ -72,33 +70,26 @@ class SyncStoreIntegration {
         // Schedule initial pull in background after 500ms
         setTimeout(async () => {
           try {
-            console.time('[PERF] Initial sync pull');
             const pullResult = await minimalSync.pullData();
             if (pullResult.success && pullResult.data) {
               await this.handleDataReceived(pullResult.data);
             }
-            console.timeEnd('[PERF] Initial sync pull');
           } catch (error) {
-            console.error('[Sync] Initial pull failed:', error);
             // Don't throw - this is background operation
           }
         }, 500);
 
       } else {
-        console.log('[Sync] No sync configured or encryption not ready');
         this.isInitialized = true;
       }
     } catch (error) {
-      console.error('[Sync] Initialization error:', error);
       // Still mark as initialized to prevent retry loops
       this.isInitialized = true;
       throw error; // Re-throw for App.js to handle
     }
   }
 
-  /**
-   * Subscribe to store changes for automatic sync
-   */
+
   subscribeToStores() {
     
     // Subscribe to all stores with field tracking
@@ -121,9 +112,7 @@ class SyncStoreIntegration {
     this.unsubscribers = [unsubUser, unsubSettings, unsubLibrary];
   }
 
-  /**
-   * Handle store changes - debounced push
-   */
+
   handleStoreChange(field = null) {
     // Don't sync if we're currently receiving data
     if (this.isSyncing) {
@@ -150,9 +139,7 @@ class SyncStoreIntegration {
     }, 1000); // 1 second debounce for pulls
   }
 
-  /**
-   * Get current state from all stores
-   */
+
   getCurrentState() {
     const userState = useUserStore.getState();
     const libraryState = useLibraryStore.getState();
@@ -185,26 +172,6 @@ class SyncStoreIntegration {
       }
     };
 
-    // PHASE 1 CHECKPOINT 4: getCurrentState() verification before push
-    console.log('[CHECKPOINT4] getCurrentState() before push:', {
-      hasUsers: !!state.users,
-      userCount: state.users ? Object.keys(state.users).length : 0,
-      userIds: state.users ? Object.keys(state.users) : [],
-      sampleUserId: state.users && Object.keys(state.users)[0] ? Object.keys(state.users)[0] : null,
-      sampleUser: state.users && Object.keys(state.users)[0]
-        ? {
-            id: state.users[Object.keys(state.users)[0]].id,
-            name: state.users[Object.keys(state.users)[0]].name,
-            hasIcon: !!state.users[Object.keys(state.users)[0]].icon,
-            hasDays: !!state.users[Object.keys(state.users)[0]].days,
-            daysKeys: state.users[Object.keys(state.users)[0]].days
-              ? Object.keys(state.users[Object.keys(state.users)[0]].days)
-              : []
-          }
-        : null,
-      timestamp: Date.now()
-    });
-
     // Normalize the data to ensure field consistency
     const normalized = normalizeSyncData(state);
 
@@ -213,22 +180,10 @@ class SyncStoreIntegration {
       normalized.metadata = state.metadata;
     }
 
-    // PHASE 1 CHECKPOINT 4B: Verify normalization didn't corrupt data
-    console.log('[CHECKPOINT4B] After normalization:', {
-      hasUsers: !!normalized.users,
-      userCount: normalized.users ? Object.keys(normalized.users).length : 0,
-      match: state.users && normalized.users
-        ? Object.keys(state.users).length === Object.keys(normalized.users).length
-        : false,
-      timestamp: Date.now()
-    });
-
     return normalized;
   }
 
-  /**
-   * Apply synced state to stores
-   */
+
   async applyState(syncedData) {
     
     // Set flag to prevent change detection during update
@@ -292,9 +247,7 @@ class SyncStoreIntegration {
     }
   }
 
-  /**
-   * Force flush all store persistence
-   */
+
   async flushStores() {
     
     // Flush each store's persist middleware
@@ -315,9 +268,7 @@ class SyncStoreIntegration {
     await Promise.all(flushPromises);
   }
 
-  /**
-   * Create backup of synced data
-   */
+
   async createBackup(data) {
     try {
       await AsyncStorage.setItem('@sync_state_backup', JSON.stringify({
@@ -328,9 +279,7 @@ class SyncStoreIntegration {
     }
   }
 
-  /**
-   * Restore from backup if needed
-   */
+
   async restoreFromBackup() {
     try {
       const backup = await AsyncStorage.getItem('@sync_state_backup');
@@ -352,9 +301,7 @@ class SyncStoreIntegration {
     return false;
   }
 
-  /**
-   * Handle data received from sync
-   */
+
   async handleDataReceived(syncedData) {
     
     // Get current state for conflict resolution
@@ -379,9 +326,7 @@ class SyncStoreIntegration {
     }
   }
 
-  /**
-   * Push current state to sync
-   */
+
   async pushCurrentState() {
     // Rate limit pushes (5 second minimum between pushes)
     const now = Date.now();
@@ -416,9 +361,7 @@ class SyncStoreIntegration {
     }
   }
 
-  /**
-   * Create new sync with current state
-   */
+
   async createSync() {
     
     const currentState = this.getCurrentState();
@@ -446,16 +389,12 @@ class SyncStoreIntegration {
     }
   }
 
-  /**
-   * Create method alias (for DataModal compatibility)
-   */
+
   async create() {
     return this.createSync();
   }
 
-  /**
-   * Join existing sync
-   */
+
   async joinSync(recoveryPhrase) {
     
     const result = await minimalSync.joinSync(recoveryPhrase);
@@ -504,9 +443,7 @@ class SyncStoreIntegration {
     }
   }
 
-  /**
-   * Disable sync
-   */
+
   disableSync() {
     
     // Disable minimal sync
@@ -527,9 +464,7 @@ class SyncStoreIntegration {
     this.isInitialized = false;
   }
 
-  /**
-   * Clear all sync data
-   */
+
   async clearAll() {
     
     this.disableSync();
@@ -539,9 +474,7 @@ class SyncStoreIntegration {
     this.lastPushTime = 0;
   }
 
-  /**
-   * Get sync status
-   */
+
   getSyncStatus() {
     return {
       isEnabled: minimalSync.isEnabled,
@@ -555,19 +488,14 @@ class SyncStoreIntegration {
   // Compatibility methods for existing app usage
   // ============================================
 
-  /**
-   * Check if sync is enabled (async for compatibility)
-   */
+
   async isEnabled() {
     // Check both if sync is enabled AND if we have a sync ID
     const result = minimalSync.isEnabled && !!minimalSync.syncId;
     return result;
   }
 
-  /**
-   * Enable sync (compatibility method)
-   * If a recovery phrase is provided, create a new sync with it
-   */
+
   async enable(recoveryPhrase = null) {
     if (recoveryPhrase) {
       // Joining existing sync with the provided recovery phrase
@@ -582,17 +510,13 @@ class SyncStoreIntegration {
     return true;
   }
 
-  /**
-   * Disable sync (compatibility method)
-   */
+
   async disable() {
     this.disableSync();
     return true;
   }
 
-  /**
-   * Initialize for import (used by onboarding)
-   */
+
   async initializeForImport(recoveryPhrase) {
     
     // Join the sync with the recovery phrase
@@ -605,16 +529,12 @@ class SyncStoreIntegration {
     return true;
   }
 
-  /**
-   * Generate sync ID from recovery phrase (for preview)
-   */
+
   async generateSyncId(recoveryPhrase) {
     return minimalSync.generateSyncId(recoveryPhrase);
   }
 
-  /**
-   * Pull data without enabling sync (for preview)
-   */
+
   async pullWithoutEnabling(syncId) {
     
     // Temporarily set sync ID for the pull
@@ -641,9 +561,7 @@ class SyncStoreIntegration {
     }
   }
 
-  /**
-   * Pull latest data (compatibility method)
-   */
+
   async pullLatestData() {
     
     if (!minimalSync.syncId) {
@@ -661,19 +579,14 @@ class SyncStoreIntegration {
     return result;
   }
 
-  /**
-   * Initialize encryption (for onboarding)
-   */
+
   async initializeEncryption(recoveryPhrase, syncId) {
     // CRITICAL: Set the syncId on minimalSync so pullData works
     minimalSync.syncId = syncId;
     await minimalSync.initializeEncryption(recoveryPhrase, syncId);
   }
   
-  /**
-   * Pull data directly (for onboarding preview)
-   * @param {boolean} forceFullPull - If true, pulls all data ignoring timestamps (for initial sync)
-   */
+
   async pullData(forceFullPull = false) {
     
     // Direct pass-through to minimalSync for onboarding preview
@@ -681,25 +594,19 @@ class SyncStoreIntegration {
     return await minimalSync.pullData(forceFullPull);
   }
   
-  /**
-   * Check for auto-update shares (stub for compatibility)
-   */
+
   async hasAutoUpdateShares(userId) {
     // Not implemented in new system yet
     return false;
   }
 
-  /**
-   * Update active shares (stub for compatibility)
-   */
+
   async updateActiveShares(userId) {
     // Not implemented in new system yet
     return true;
   }
 
-  /**
-   * Generate share token for secure sharing (V2 legacy format)
-   */
+
   generateShareToken(isAutoUpdate = false) {
     // For V3, generate both ID and key
     const { shareId, encryptionKey } = this.generateV3ShareComponents();
@@ -710,9 +617,7 @@ class SyncStoreIntegration {
     return encryptionKey;
   }
   
-  /**
-   * Generate V3 share ID and key components
-   */
+
   generateV3ShareComponents() {
     // Generate a short ID (8 chars hex)
     const idBytes = nacl.randomBytes(4);
@@ -738,9 +643,7 @@ class SyncStoreIntegration {
     return { shareId, encryptionKey };
   }
 
-  /**
-   * Create share link (stub for compatibility)
-   */
+
   async createShareLink(userId, options = {}) {
     if (!minimalSync.isEnabled || !minimalSync.syncId) {
       throw new Error('Sync must be enabled to create share links');

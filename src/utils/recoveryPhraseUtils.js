@@ -32,13 +32,7 @@ export const generateRecoveryPhrase = () => {
   return result;
 };
 
-/**
- * Validate if a string is a valid recovery phrase format
- * Checks for exact 32-character hexadecimal string
- *
- * @param {string} phrase - The phrase to validate
- * @returns {{isValid: boolean, error?: string}} Validation result
- */
+
 export const isValidRecoveryPhrase = (phrase) => {
   if (!phrase || typeof phrase !== 'string') {
     return { isValid: false, error: 'Recovery phrase is required' };
@@ -132,13 +126,7 @@ export const parseSyncKey = (syncKeyOrUrl) => {
   return null;
 };
 
-/**
- * Format recovery phrase for display with proper spacing
- * Adds spaces every 8 characters for readability
- *
- * @param {string} phrase - The recovery phrase to format
- * @returns {string} Formatted phrase with spaces
- */
+
 export const formatRecoveryPhraseDisplay = (phrase) => {
   if (!phrase || typeof phrase !== 'string') {
     return '';
@@ -154,15 +142,7 @@ export const formatRecoveryPhraseDisplay = (phrase) => {
   return cleaned.match(/.{1,8}/g)?.join(' ') || phrase;
 };
 
-/**
- * Create device invite URL from recovery phrase and invite code
- * Constructs the full URL format for sharing
- *
- * @param {string} recoveryPhrase - The recovery phrase
- * @param {string} inviteCode - The temporary invite code
- * @param {string} baseUrl - Base URL (defaults to stackmap.app)
- * @returns {string} Complete invite URL
- */
+
 export const createInviteUrl = (recoveryPhrase, inviteCode, baseUrl = 'https://stackmap.app') => {
   if (!recoveryPhrase || !inviteCode) {
     throw new Error('Recovery phrase and invite code are required');
@@ -176,10 +156,7 @@ export const createInviteUrl = (recoveryPhrase, inviteCode, baseUrl = 'https://s
   return `${baseUrl}/sync/${inviteCode}#${recoveryPhrase}`;
 };
 
-/**
- * Validate URL format clipboard content
- * @returns {{isValid: boolean, type: 'url' | 'invalid', error?: string}}
- */
+
 const validateUrlContent = (trimmed) => {
   const parsed = parseSyncKey(trimmed);
   if (!parsed?.recoveryPhrase) {
@@ -192,10 +169,7 @@ const validateUrlContent = (trimmed) => {
     : /** @type {{isValid: boolean, type: 'invalid', error: string}} */ ({ isValid: false, type: 'invalid', error: phraseValidation.error });
 };
 
-/**
- * Validate key format clipboard content
- * @returns {{isValid: boolean, type: 'key' | 'invalid', error?: string}}
- */
+
 const validateKeyContent = (trimmed) => {
   const parsed = parseSyncKey(trimmed);
   if (!parsed?.recoveryPhrase) {
@@ -208,13 +182,7 @@ const validateKeyContent = (trimmed) => {
     : /** @type {{isValid: boolean, type: 'invalid', error: string}} */ ({ isValid: false, type: 'invalid', error: phraseValidation.error });
 };
 
-/**
- * Validate clipboard content for sync operations
- * Checks if clipboard content is a valid sync key or URL
- *
- * @param {string} content - Clipboard content to validate
- * @returns {{isValid: boolean, type: 'url' | 'key' | 'phrase' | 'invalid', error?: string}}
- */
+
 export const validateClipboardSyncContent = (content) => {
   if (!content || typeof content !== 'string') {
     return { isValid: false, type: 'invalid', error: 'No content provided' };
@@ -245,13 +213,7 @@ export const validateClipboardSyncContent = (content) => {
   };
 };
 
-/**
- * Extract recovery phrase from any valid sync content
- * Handles URLs, keys, or direct phrases
- *
- * @param {string} content - The content to extract from
- * @returns {string | null} The recovery phrase or null if invalid
- */
+
 export const extractRecoveryPhrase = (content) => {
   const validation = validateClipboardSyncContent(content);
   if (!validation.isValid) {
@@ -289,13 +251,7 @@ export const generateInviteCode = (length = 8) => {
   return result;
 };
 
-/**
- * Calculate expiration time for invite codes
- * Returns timestamp for when an invite should expire
- *
- * @param {number} hoursFromNow - Hours until expiration
- * @returns {number} Expiration timestamp in milliseconds
- */
+
 export const calculateInviteExpiration = (hoursFromNow = 24) => {
   if (typeof hoursFromNow !== 'number' || hoursFromNow <= 0) {
     throw new Error('Hours must be a positive number');
@@ -304,13 +260,7 @@ export const calculateInviteExpiration = (hoursFromNow = 24) => {
   return Date.now() + (hoursFromNow * 60 * 60 * 1000);
 };
 
-/**
- * Check if an invite has expired
- * Compares current time with expiration timestamp
- *
- * @param {number} expirationTimestamp - When the invite expires
- * @returns {boolean} True if expired
- */
+
 export const isInviteExpired = (expirationTimestamp) => {
   if (typeof expirationTimestamp !== 'number') {
     return true; // Treat invalid timestamps as expired
@@ -319,13 +269,7 @@ export const isInviteExpired = (expirationTimestamp) => {
   return Date.now() > expirationTimestamp;
 };
 
-/**
- * Format remaining time until expiration
- * Returns human-readable time remaining
- *
- * @param {number} expirationTimestamp - When the invite expires
- * @returns {string} Time remaining or "Expired"
- */
+
 export const formatTimeUntilExpiration = (expirationTimestamp) => {
   if (typeof expirationTimestamp !== 'number') {
     return 'Invalid expiration';

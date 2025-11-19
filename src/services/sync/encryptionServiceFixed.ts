@@ -103,9 +103,7 @@ class FixedEncryptionService {
   public syncId: string | null = null;
   private keyCache: { [key: string]: DerivedKey } = {};
 
-  /**
-   * Generate a random recovery phrase
-   */
+
   generateRecoveryPhrase(): string {
     const seedBytes = nacl.randomBytes(16);
     return Array.from(seedBytes)
@@ -113,9 +111,7 @@ class FixedEncryptionService {
       .join('');
   }
 
-  /**
-   * Derive encryption key from recovery phrase
-   */
+
   async deriveKeyFromPhrase(
     recoveryPhrase: string,
     salt: Uint8Array | string | null = null,
@@ -163,9 +159,7 @@ class FixedEncryptionService {
     return result;
   }
 
-  /**
-   * Initialize encryption with recovery phrase
-   */
+
   async initialize(
     recoveryPhrase: string,
     syncId: string,
@@ -184,9 +178,7 @@ class FixedEncryptionService {
     return { salt };
   }
 
-  /**
-   * Encrypt data using nacl secretbox
-   */
+
   encryptData(data: any): string {
     if (!this.masterKey) {
       throw new Error('Encryption not initialized');
@@ -245,9 +237,7 @@ class FixedEncryptionService {
     return encodeBase64(result);
   }
 
-  /**
-   * Extract and parse metadata from decrypted data
-   */
+
   private extractMetadata(decrypted: Uint8Array): { metadata: EncryptionMetadata; dataBytes: Uint8Array } | null {
     if (decrypted.length <= 4) {
       return null;
@@ -274,9 +264,7 @@ class FixedEncryptionService {
     }
   }
 
-  /**
-   * Parse data with metadata (version 2+)
-   */
+
   private parseWithMetadata(decrypted: Uint8Array): any {
     const result = this.extractMetadata(decrypted);
     if (!result) {
@@ -299,9 +287,7 @@ class FixedEncryptionService {
     return JSON.parse(dataStr);
   }
 
-  /**
-   * Parse data in legacy format (no metadata)
-   */
+
   private parseLegacyFormat(decrypted: Uint8Array): any {
     try {
       const decryptedStr = decodeUTF8(decrypted);
@@ -314,9 +300,7 @@ class FixedEncryptionService {
     }
   }
 
-  /**
-   * Decrypt data using nacl secretbox
-   */
+
   decryptData(encryptedData: string): any {
     if (!this.masterKey) {
       throw new Error('Encryption not initialized');
@@ -352,9 +336,7 @@ class FixedEncryptionService {
     return this.parseLegacyFormat(decrypted);
   }
 
-  /**
-   * Store recovery phrase securely
-   */
+
   async storeRecoveryPhrase(phrase: string, syncId?: string): Promise<void> {
     try {
       const key = syncId ? `@sync_phrase_${syncId}` : '@sync_phrase';
@@ -364,9 +346,7 @@ class FixedEncryptionService {
     }
   }
 
-  /**
-   * Get stored recovery phrase
-   */
+
   async getStoredRecoveryPhrase(syncId?: string): Promise<string | null> {
     try {
       const key = syncId ? `@sync_phrase_${syncId}` : '@sync_phrase';
@@ -376,9 +356,7 @@ class FixedEncryptionService {
     }
   }
 
-  /**
-   * Clear encryption data
-   */
+
   async clear(): Promise<void> {
     this.masterKey = null;
     this.syncId = null;
@@ -390,9 +368,7 @@ class FixedEncryptionService {
     }
   }
 
-  /**
-   * Generate a device-specific ID
-   */
+
   async getDeviceId(): Promise<string> {
     try {
       let deviceId = await AsyncStorage.getItem('device_id');
@@ -415,18 +391,14 @@ class FixedEncryptionService {
     }
   }
 
-  /**
-   * Get device name
-   */
+
   getDeviceName(): string {
     const platform = Platform.OS;
     const timestamp = new Date().toISOString().split('T')[0];
     return `${platform}_${timestamp}`;
   }
 
-  /**
-   * Test encryption/decryption
-   */
+
   testEncryption(): boolean {
     try {
       const testData = { test: 'data', timestamp: Date.now() };

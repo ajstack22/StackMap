@@ -35,9 +35,7 @@ class MetricsStore {
         this.startTime = Date.now();
     }
 
-    /**
-     * Increment a counter metric
-     */
+
     incrementCounter(name, value = 1, labels = {}) {
         const key = this.buildMetricKey(name, labels);
         const current = this.counters.get(key) || 0;
@@ -47,9 +45,7 @@ class MetricsStore {
         this.persistMetric(name, current + value, METRIC_TYPES.COUNTER, labels);
     }
 
-    /**
-     * Set a gauge metric
-     */
+
     setGauge(name, value, labels = {}) {
         const key = this.buildMetricKey(name, labels);
         this.gauges.set(key, value);
@@ -58,9 +54,7 @@ class MetricsStore {
         this.persistMetric(name, value, METRIC_TYPES.GAUGE, labels);
     }
 
-    /**
-     * Record a histogram value
-     */
+
     recordHistogram(name, value, labels = {}) {
         const key = this.buildMetricKey(name, labels);
         const histogram = this.histograms.get(key) || {
@@ -71,15 +65,18 @@ class MetricsStore {
             buckets: {}
         };
 
-        histogram.count++;
-        histogram.sum += value;
-        histogram.min = Math.min(histogram.min, value);
-        histogram.max = Math.max(histogram.max, value);
+        const metricValue = typeof value === 'number' ? value : parseFloat(value);
+        if (!isNaN(metricValue)) {
+            histogram.count++;
+            histogram.sum += metricValue;
+            histogram.min = Math.min(histogram.min, metricValue);
+            histogram.max = Math.max(histogram.max, metricValue);
+        }
 
         // Add to buckets (predefined buckets for response times)
         const buckets = [1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000];
         buckets.forEach(bucket => {
-            if (value <= bucket) {
+            if (metricValue <= bucket) {
                 histogram.buckets[bucket] = (histogram.buckets[bucket] || 0) + 1;
             }
         });
@@ -93,9 +90,7 @@ class MetricsStore {
         });
     }
 
-    /**
-     * Record a summary value
-     */
+
     recordSummary(name, value, labels = {}) {
         const key = this.buildMetricKey(name, labels);
         const summary = this.summaries.get(key) || {
@@ -131,11 +126,17 @@ class MetricsStore {
         }
     }
 
-    /**
-     * Build metric key with labels
-     */
+
     buildMetricKey(name, labels) {
-        const labelStr = Object.entries(labels)
+        // Ensure labels are safe for key construction to prevent injection-like issues
+        const safeLabels = Object.fromEntries(
+            Object.entries(labels).map(([k, v]) => [
+                String(k).replace(/[{}=,]/g, '_'), // Sanitize keys
+                String(v).replace(/[{}=,]/g, '_')  // Sanitize values
+            ])
+        );
+
+        const labelStr = Object.entries(safeLabels)
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([k, v]) => `${k}=${v}`)
             .join(',');
@@ -143,16 +144,16 @@ class MetricsStore {
         return labelStr ? `${name}{${labelStr}}` : name;
     }
 
-    /**
-     * Persist metric to database (async, non-blocking)
-     */
+
     async persistMetric(name, value, type, labels) {
         try {
             // Don't block the main thread
             setImmediate(async () => {
+                // Ensure labels are stored as a string, and prevent direct object injection into SQL
+                const safeLabels = JSON.stringify(labels);
                 await DatabaseQuery.insert(
                     'INSERT INTO dev_api_metrics (metric_name, metric_value, metric_type, labels) VALUES (?, ?, ?, ?)',
-                    [name, value, type, JSON.stringify(labels)]
+                    [name, value, type, safeLabels]
                 );
             });
         } catch (error) {
@@ -161,9 +162,7 @@ class MetricsStore {
         }
     }
 
-    /**
-     * Get all metrics
-     */
+
     getAllMetrics() {
         return {
             counters: Object.fromEntries(this.counters),
@@ -174,9 +173,7 @@ class MetricsStore {
         };
     }
 
-    /**
-     * Reset all metrics
-     */
+
     reset() {
         this.counters.clear();
         this.gauges.clear();
@@ -227,9 +224,7 @@ const Metrics = {
  * Metrics collection interface
  */
 const MetricsCollector = {
-    /**
-     * Record API request
-     */
+
     recordAPIRequest(method, endpoint, statusCode, duration, responseSize = 0) {
         const labels = { method, endpoint, status: statusCode.toString() };
 
@@ -249,9 +244,7 @@ const MetricsCollector = {
         }
     },
 
-    /**
-     * Record database query
-     */
+
     recordDatabaseQuery(operation, table, duration, success = true) {
         const labels = { operation, table };
 
@@ -263,9 +256,7 @@ const MetricsCollector = {
         }
     },
 
-    /**
-     * Record Redis operation
-     */
+
     recordRedisOperation(operation, duration, success = true, cacheHit = null) {
         const labels = { operation };
 
@@ -279,9 +270,7 @@ const MetricsCollector = {
         }
     },
 
-    /**
-     * Record system metrics
-     */
+
     recordSystemMetrics() {
         const usage = process.memoryUsage();
         const cpuUsage = process.cpuUsage();
@@ -295,9 +284,7 @@ const MetricsCollector = {
         metricsStore.setGauge(Metrics.CPU_USAGE, cpuPercent);
     },
 
-    /**
-     * Record sync operation
-     */
+
     recordSyncOperation(operation, success = true, dataSize = 0) {
         const labels = { operation };
 
@@ -312,9 +299,7 @@ const MetricsCollector = {
         }
     },
 
-    /**
-     * Set active users count
-     */
+
     setActiveUsers(count) {
         metricsStore.setGauge(Metrics.ACTIVE_USERS, count);
     }
@@ -324,9 +309,7 @@ const MetricsCollector = {
  * Metrics aggregation and analysis
  */
 const MetricsAnalyzer = {
-    /**
-     * Get API performance summary
-     */
+
     async getAPIPerformanceSummary(timeRange = '1h') {
         try {
             const cacheKey = `${CACHE_KEYS.ADMIN_METRICS}:api_performance:${timeRange}`;
@@ -370,9 +353,7 @@ const MetricsAnalyzer = {
         }
     },
 
-    /**
-     * Get error rate analysis
-     */
+
     async getErrorRateAnalysis(timeRange = '1h') {
         try {
             const timeFilter = this.getTimeFilter(timeRange);
@@ -401,9 +382,7 @@ const MetricsAnalyzer = {
         }
     },
 
-    /**
-     * Get resource usage trends
-     */
+
     async getResourceUsageTrends(timeRange = '24h') {
         try {
             const timeFilter = this.getTimeFilter(timeRange);
@@ -437,9 +416,7 @@ const MetricsAnalyzer = {
         }
     },
 
-    /**
-     * Get time filter for SQL queries
-     */
+
     getTimeFilter(timeRange) {
         const now = new Date();
         const ranges = {
@@ -453,9 +430,7 @@ const MetricsAnalyzer = {
         return ranges[timeRange] || ranges['1h'];
     },
 
-    /**
-     * Process performance results
-     */
+
     processPerformanceResults(results) {
         const endpoints = {};
 
@@ -487,9 +462,7 @@ const MetricsAnalyzer = {
         return Object.values(endpoints).sort((a, b) => b.requests - a.requests);
     },
 
-    /**
-     * Process error results
-     */
+
     processErrorResults(results) {
         const summary = {
             totalRequests: 0,
@@ -500,7 +473,7 @@ const MetricsAnalyzer = {
 
         results.forEach(row => {
             const endpoint = row.endpoint || 'unknown';
-            const status = parseInt(row.status);
+            const status = parseInt(row.status, 10);
             const count = row.count;
 
             if (!summary.endpoints[endpoint]) {
@@ -533,9 +506,7 @@ const MetricsAnalyzer = {
         return summary;
     },
 
-    /**
-     * Process resource results
-     */
+
     processResourceResults(results) {
         const trends = {};
 

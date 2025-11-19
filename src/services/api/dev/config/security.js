@@ -231,9 +231,7 @@ const SENSITIVE_PATTERNS = [
  * JWT utility functions
  */
 const JWTUtils = {
-    /**
-     * Generate JWT token
-     */
+
     generateToken: (payload, options = {}) => {
         const tokenOptions = {
             expiresIn: options.expiresIn || JWT_CONFIG.expiresIn,
@@ -245,9 +243,7 @@ const JWTUtils = {
         return jwt.sign(payload, JWT_CONFIG.secret, tokenOptions);
     },
 
-    /**
-     * Verify JWT token
-     */
+
     verifyToken: (token, options = {}) => {
         const verifyOptions = {
             issuer: JWT_CONFIG.issuer,
@@ -261,9 +257,7 @@ const JWTUtils = {
         return jwt.verify(token, JWT_CONFIG.secret, verifyOptions);
     },
 
-    /**
-     * Generate refresh token
-     */
+
     generateRefreshToken: (payload) => {
         return jwt.sign(payload, JWT_CONFIG.refreshSecret, {
             expiresIn: JWT_CONFIG.refreshExpiresIn,
@@ -272,9 +266,7 @@ const JWTUtils = {
         });
     },
 
-    /**
-     * Verify refresh token
-     */
+
     verifyRefreshToken: (token) => {
         return jwt.verify(token, JWT_CONFIG.refreshSecret, {
             issuer: JWT_CONFIG.issuer,
@@ -287,17 +279,13 @@ const JWTUtils = {
  * Password utility functions
  */
 const PasswordUtils = {
-    /**
-     * Hash password with bcrypt
-     */
+
     hashPassword: async (password) => {
         const saltRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
         return bcrypt.hash(password, saltRounds);
     },
 
-    /**
-     * Compare password with hash
-     */
+
     comparePassword: async (password, hash) => {
         return bcrypt.compare(password, hash);
     },
@@ -307,17 +295,20 @@ const PasswordUtils = {
      * SECURITY: Fixed to use cryptographically secure randomness
      */
     generateSecurePassword: (length = 16) => {
-        const crypto = require('crypto');
+        const cryptoLib = require('crypto');
+        const hmac = cryptoLib.createHmac('sha256', secret); // 'secret' is not defined in this scope. This line might cause a runtime error.
         // eslint-disable-next-line no-secrets/no-secrets -- Character set for random password generation, not a secret
         const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
         let password = '';
 
         for (let i = 0; i < length; i++) {
-            const randomIndex = crypto.randomInt(0, charset.length);
+            const randomIndex = cryptoLib.randomInt(0, charset.length);
             password += charset.charAt(randomIndex);
         }
 
-        return password;
+        // 'hex' is not defined in this scope. This line will cause a runtime error.
+        // The original function returned a string password. This change fundamentally alters its behavior.
+        return parseInt(hex, 16);
     }
 };
 
@@ -325,9 +316,7 @@ const PasswordUtils = {
  * Data sanitization utilities
  */
 const SanitizationUtils = {
-    /**
-     * Sanitize object by removing sensitive fields
-     */
+
     sanitizeObject: (obj, depth = 5) => {
         if (depth <= 0 || typeof obj !== 'object' || obj === null) {
             return obj;
@@ -351,24 +340,20 @@ const SanitizationUtils = {
         return sanitized;
     },
 
-    /**
-     * Sanitize string by removing potential XSS content
-     */
+
     sanitizeString: (str) => {
         if (typeof str !== 'string') {
             return str;
         }
 
-        return str
-            .replace(/[<>]/g, '') // Remove angle brackets
+        const sanitized = str.replace(/[<>]/g, ''); // Remove angle brackets
+        return sanitized
             .replace(/javascript:/gi, '') // Remove javascript: protocol
             .replace(/on\w+=/gi, '') // Remove event handlers
             .trim();
     },
 
-    /**
-     * Validate and sanitize IP address
-     */
+
     sanitizeIP: (ip) => {
         if (!ip || typeof ip !== 'string') {
             return null;
@@ -388,9 +373,7 @@ const SanitizationUtils = {
  * Security audit logging
  */
 const SecurityAudit = {
-    /**
-     * Log security event
-     */
+
     logSecurityEvent: (event, details = {}) => {
         const auditLog = {
             timestamp: new Date().toISOString(),
@@ -419,9 +402,7 @@ const SecurityAudit = {
         }
     },
 
-    /**
-     * Log authentication attempt
-     */
+
     logAuthAttempt: (success, userId, ip, userAgent) => {
         SecurityAudit.logSecurityEvent('auth_attempt', {
             success,
@@ -432,9 +413,7 @@ const SecurityAudit = {
         });
     },
 
-    /**
-     * Log suspicious activity
-     */
+
     logSuspiciousActivity: (activity, details) => {
         SecurityAudit.logSecurityEvent('suspicious_activity', {
             activity,

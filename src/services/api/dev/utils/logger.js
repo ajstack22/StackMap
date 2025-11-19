@@ -62,9 +62,7 @@ class Logger {
         }
     }
 
-    /**
-     * Initialize file logging
-     */
+
     initializeFileLogging() {
         try {
             // Ensure log directory exists
@@ -90,9 +88,7 @@ class Logger {
         }
     }
 
-    /**
-     * Rotate log files if they exceed size limit
-     */
+
     rotateLogsIfNeeded() {
         try {
             if (!this.currentLogFile || !fs.existsSync(this.currentLogFile)) {
@@ -117,9 +113,7 @@ class Logger {
         }
     }
 
-    /**
-     * Clean up old log files
-     */
+
     cleanupOldLogFiles() {
         try {
             const logFiles = fs.readdirSync(this.config.logDir)
@@ -143,16 +137,12 @@ class Logger {
         }
     }
 
-    /**
-     * Check if log level should be logged
-     */
+
     shouldLog(level) {
         return LOG_LEVELS[level] <= LOG_LEVELS[this.config.level];
     }
 
-    /**
-     * Format log message
-     */
+
     formatMessage(level, message, metadata = {}) {
         const timestamp = new Date().toISOString();
 
@@ -179,9 +169,7 @@ class Logger {
         }
     }
 
-    /**
-     * Write log message
-     */
+
     writeLog(level, message, metadata = {}) {
         if (!this.shouldLog(level)) {
             return;
@@ -203,9 +191,7 @@ class Logger {
         }
     }
 
-    /**
-     * Log error message
-     */
+
     error(message, metadata = {}) {
         // Include stack trace for errors
         if (metadata.error && metadata.error instanceof Error) {
@@ -216,30 +202,22 @@ class Logger {
         this.writeLog('error', message, metadata);
     }
 
-    /**
-     * Log warning message
-     */
+
     warn(message, metadata = {}) {
         this.writeLog('warn', message, metadata);
     }
 
-    /**
-     * Log info message
-     */
+
     info(message, metadata = {}) {
         this.writeLog('info', message, metadata);
     }
 
-    /**
-     * Log debug message
-     */
+
     debug(message, metadata = {}) {
         this.writeLog('debug', message, metadata);
     }
 
-    /**
-     * Log API request
-     */
+
     logRequest(req, res, responseTime) {
         const metadata = {
             method: req.method,
@@ -266,9 +244,7 @@ class Logger {
         }
     }
 
-    /**
-     * Log security event
-     */
+
     logSecurity(event, details = {}) {
         this.warn(`Security Event: ${event}`, {
             event,
@@ -277,9 +253,7 @@ class Logger {
         });
     }
 
-    /**
-     * Log performance metric
-     */
+
     logPerformance(metric, value, tags = {}) {
         this.info(`Performance: ${metric}`, {
             metric,
@@ -289,9 +263,7 @@ class Logger {
         });
     }
 
-    /**
-     * Close logger and clean up resources
-     */
+
     close() {
         if (this.logFileStream) {
             this.logFileStream.end();
@@ -305,9 +277,7 @@ class Logger {
  */
 const logger = new Logger();
 
-/**
- * Express middleware for request logging
- */
+
 const requestLogger = (req, res, next) => {
     const startTime = Date.now();
 
@@ -322,9 +292,7 @@ const requestLogger = (req, res, next) => {
     next();
 };
 
-/**
- * Create child logger with additional context
- */
+
 const createChildLogger = (context = {}) => {
     return {
         error: (message, metadata = {}) => logger.error(message, { ...context, ...metadata }),

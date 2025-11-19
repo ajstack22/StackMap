@@ -1,7 +1,4 @@
-/**
- * Integration Test Helpers for StackMap
- * Provides utilities for setting up test environments and mock data
- */
+
 
 import { renderHook, act } from '@testing-library/react-hooks';
 import useUserStore from '../../stores/useUserStore';
@@ -9,10 +6,7 @@ import useLibraryStore from '../../stores/useLibraryStore';
 import useSettingsStore from '../../stores/useSettingsStore';
 import useSyncStore from '../../stores/useSyncStore';
 
-/**
- * Reset all stores to their initial state
- * Call this in beforeEach for clean test isolation
- */
+
 export const resetAllStores = () => {
   act(() => {
     // Reset user store
@@ -58,18 +52,12 @@ export const resetAllStores = () => {
   });
 };
 
-/**
- * Wait for async operations to complete
- * @param {number} ms - milliseconds to wait
- */
+
 export const waitFor = (ms = 0) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
-/**
- * Create a mock user with all required fields
- * @param {object} overrides - properties to override
- */
+
 export const createMockUser = (overrides = {}) => {
   const defaultUser = {
     id: 'test-user-1',
@@ -101,10 +89,7 @@ export const createMockUser = (overrides = {}) => {
   };
 };
 
-/**
- * Create a mock activity with all required fields
- * @param {object} overrides - properties to override
- */
+
 export const createMockActivity = (overrides = {}) => {
   return {
     id: `activity-${Date.now()}-${Math.random()}`,
@@ -116,10 +101,7 @@ export const createMockActivity = (overrides = {}) => {
   };
 };
 
-/**
- * Create a mock library category with activities
- * @param {object} overrides - properties to override
- */
+
 export const createMockCategory = (overrides = {}) => {
   return {
     id: `category-${Date.now()}`,
@@ -133,10 +115,7 @@ export const createMockCategory = (overrides = {}) => {
   };
 };
 
-/**
- * Create a complete mock library structure
- * @param {object} overrides - properties to override
- */
+
 export const createMockLibrary = (overrides = {}) => {
   return {
     categories: [
@@ -148,10 +127,7 @@ export const createMockLibrary = (overrides = {}) => {
   };
 };
 
-/**
- * Set up a complete test environment with user, library, and settings
- * @param {object} config - configuration options
- */
+
 export const setupTestEnvironment = (config = {}) => {
   const {
     user = createMockUser(),
@@ -197,13 +173,9 @@ export const setupTestEnvironment = (config = {}) => {
   return { user: users ? Object.values(users)[0] : user, users, library, settings, sync };
 };
 
-/**
- * Simulate user interactions for testing workflows
- */
+
 export const userInteractions = {
-  /**
-   * Add an activity to a user's day
-   */
+
   addActivityToDay: (userId, day, activity) => {
     act(() => {
       const userStore = useUserStore.getState();
@@ -223,9 +195,7 @@ export const userInteractions = {
     });
   },
 
-  /**
-   * Complete an activity for a user
-   */
+
   completeActivity: (userId, day, activityId) => {
     act(() => {
       const userStore = useUserStore.getState();
@@ -247,18 +217,14 @@ export const userInteractions = {
     });
   },
 
-  /**
-   * Change user theme
-   */
+
   changeTheme: (themeName) => {
     act(() => {
       useSettingsStore.getState().updateSettings({ currentTheme: themeName });
     });
   },
 
-  /**
-   * Enable sync for user
-   */
+
   enableSync: (syncId = 'test-sync-id') => {
     act(() => {
       useSyncStore.getState().updateSyncState({
@@ -269,22 +235,16 @@ export const userInteractions = {
   }
 };
 
-/**
- * Assertion helpers for common test patterns
- */
+
 export const assertions = {
-  /**
-   * Assert user has activity
-   */
+
   userHasActivity: (userId, day, activityText) => {
     const user = useUserStore.getState().users[userId];
     const activities = user?.days?.[day]?.activities || [];
     return activities.some(activity => activity.text === activityText);
   },
 
-  /**
-   * Assert activity is completed
-   */
+
   activityIsCompleted: (userId, day, activityId) => {
     const user = useUserStore.getState().users[userId];
     const activities = user?.days?.[day]?.activities || [];
@@ -292,29 +252,21 @@ export const assertions = {
     return activity?.completed === true;
   },
 
-  /**
-   * Assert library has category
-   */
+
   libraryHasCategory: (categoryName) => {
     const library = useLibraryStore.getState().library;
     return library.categories.some(category => category.name === categoryName);
   },
 
-  /**
-   * Assert sync is enabled
-   */
+
   syncIsEnabled: () => {
     return useSyncStore.getState().syncEnabled === true;
   }
 };
 
-/**
- * Performance measurement utilities
- */
+
 export const performance = {
-  /**
-   * Measure execution time of a function
-   */
+
   measureTime: async (fn, description) => {
     const start = Date.now();
     const result = await fn();
@@ -325,9 +277,7 @@ export const performance = {
     return { result, duration };
   },
 
-  /**
-   * Assert operation completes within time limit
-   */
+
   assertPerformance: async (fn, maxMs, description) => {
     const { duration } = await performance.measureTime(fn, description);
     expect(duration).toBeLessThan(maxMs);

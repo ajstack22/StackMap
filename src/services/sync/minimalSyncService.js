@@ -124,10 +124,9 @@ class MinimalSyncService {
         // Check stored data
         if (storedData) {
           try {
-            const parsed = JSON.parse(storedData);
-            console.log('[Sync] Found existing sync data from previous session');
+            JSON.parse(storedData);
           } catch (e) {
-            console.error('[Sync] Failed to parse stored data:', e);
+            // Failed to parse stored data
           }
         }
       } else {
@@ -182,9 +181,7 @@ class MinimalSyncService {
     this.lastRequest[action] = Date.now();
   }
   
-  /**
-   * Check for recovery phrase in URL fragment and clear it
-   */
+
   checkForRecoveryPhrase() {
     // Only run on web platform - window.location doesn't exist on React Native
     if (typeof window === 'undefined') {
@@ -226,9 +223,7 @@ class MinimalSyncService {
     }
   }
 
-  /**
-   * Add metadata to data if it doesn't have it
-   */
+
   addMetadata(data) {
     const now = Date.now();
 
@@ -262,9 +257,7 @@ class MinimalSyncService {
     };
   }
 
-  /**
-   * Generate sync ID from recovery phrase (same as existing sync)
-   */
+
   async generateSyncId(recoveryPhrase) {
 
     // eslint-disable-next-line no-secrets/no-secrets -- Public salt for sync ID derivation, not a secret
@@ -282,9 +275,7 @@ class MinimalSyncService {
     return syncId;
   }
 
-  /**
-   * Initialize encryption for sync
-   */
+
   async initializeEncryption(recoveryPhrase, syncId) {
     // eslint-disable-next-line no-secrets/no-secrets -- Public salt for client-side KDF, not a secret
     const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
@@ -309,9 +300,7 @@ class MinimalSyncService {
     
   }
 
-  /**
-   * Create a new sync group with test data
-   */
+
   async createSync(testData) {
     
     try {
@@ -408,9 +397,7 @@ class MinimalSyncService {
     }
   }
 
-  /**
-   * Join an existing sync group
-   */
+
   async joinSync(recoveryPhrase) {
     
     // Clean recovery phrase (remove any spaces for consistency)
@@ -455,22 +442,7 @@ class MinimalSyncService {
           const decodedData = encryptionService.decryptData(result.latest_record.encrypted_blob);
 
           // PHASE 1 CHECKPOINT 1: Post-decrypt verification
-          console.log('[CHECKPOINT1] Post-decrypt data structure:', {
-            hasUsers: !!decodedData?.users,
-            userCount: decodedData?.users ? Object.keys(decodedData.users).length : 0,
-            sampleUserId: decodedData?.users ? Object.keys(decodedData.users)[0] : null,
-            sampleUser: decodedData?.users && Object.keys(decodedData.users)[0]
-              ? {
-                  id: decodedData.users[Object.keys(decodedData.users)[0]].id,
-                  name: decodedData.users[Object.keys(decodedData.users)[0]].name,
-                  hasIcon: !!decodedData.users[Object.keys(decodedData.users)[0]].icon,
-                  hasDays: !!decodedData.users[Object.keys(decodedData.users)[0]].days,
-                  daysKeys: decodedData.users[Object.keys(decodedData.users)[0]].days
-                    ? Object.keys(decodedData.users[Object.keys(decodedData.users)[0]].days)
-                    : []
-                }
-              : null
-          });
+    
           
           // Store it locally
           const dataToStore = {
@@ -483,7 +455,7 @@ class MinimalSyncService {
           
           // Immediately verify storage
           const verify = await AsyncStorage.getItem('@minimal_sync_data');
-          const parsed = verify ? JSON.parse(verify) : null;
+          if (verify) JSON.parse(verify);
           
           // Store sync ID and recovery phrase for persistence
           await AsyncStorage.setItem('@minimal_sync_id', this.syncId);
@@ -562,9 +534,7 @@ class MinimalSyncService {
     }
   }
 
-  /**
-   * Get current data from local storage
-   */
+
   async getCurrentData() {
     
     const stored = await AsyncStorage.getItem('@minimal_sync_data');
@@ -576,9 +546,7 @@ class MinimalSyncService {
     return null;
   }
 
-  /**
-   * Update metadata for changed fields
-   */
+
   updateMetadata(newData, oldData) {
     const now = Date.now();
     const metadata = oldData?.metadata || {};
@@ -613,9 +581,7 @@ class MinimalSyncService {
     };
   }
 
-  /**
-   * Push updated data
-   */
+
   async pushData(newData) {
     
     if (!this.syncId) {
@@ -686,10 +652,7 @@ class MinimalSyncService {
     }
   }
 
-  /**
-   * Validate pull request prerequisites
-   * @private
-   */
+
   async validatePullRequest() {
     // Ensure device ID is initialized
     if (!this.deviceId) {
@@ -708,10 +671,7 @@ class MinimalSyncService {
     return { valid: true };
   }
 
-  /**
-   * Get pull context (timestamp and local data)
-   * @private
-   */
+
   async getPullContext(forceFullPull) {
     let lastTimestamp = 0;
     let localData = null;
@@ -741,10 +701,7 @@ class MinimalSyncService {
     return { lastTimestamp, localData };
   }
 
-  /**
-   * Fetch data from server
-   * @private
-   */
+
   async fetchServerData(lastTimestamp) {
     // Ensure all values are valid strings before URL construction
     if (!this.syncId || !this.deviceId) {
@@ -765,10 +722,7 @@ class MinimalSyncService {
     return response;
   }
 
-  /**
-   * Read response text with iOS fallback
-   * @private
-   */
+
   async readResponseSafely(response) {
     let responseText;
     try {
@@ -793,10 +747,7 @@ class MinimalSyncService {
     return { success: true, responseText };
   }
 
-  /**
-   * Parse JSON response safely
-   * @private
-   */
+
   parseJsonSafely(responseText) {
     // Check if response looks like JSON before parsing
     if (!responseText || (!responseText.startsWith('{') && !responseText.startsWith('['))) {
@@ -857,7 +808,7 @@ class MinimalSyncService {
       finalData = conflictResolver.mergeStates(localData, remoteData);
 
       // Log merge summary
-      const mergeLog = conflictResolver.getMergeLog();
+      
     } else {
       // Initial sync or no local data - use remote directly
       finalData = remoteData;
@@ -884,7 +835,7 @@ class MinimalSyncService {
     await AsyncStorage.setItem('@minimal_sync_data', JSON.stringify(dataToStore));
 
     // Verify storage
-    const verify = await AsyncStorage.getItem('@minimal_sync_data');
+    await AsyncStorage.getItem('@minimal_sync_data');
   }
 
   /**

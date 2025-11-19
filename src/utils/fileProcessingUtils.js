@@ -5,13 +5,7 @@
  * Extracted from DataImport, DataExport, and related modal components
  */
 
-/**
- * Extract file extension from filename
- * Safely extracts file extension regardless of path format
- *
- * @param {string} filename - The filename to process
- * @returns {string} File extension in lowercase (without dot)
- */
+
 export const getFileExtension = (filename) => {
   if (!filename || typeof filename !== 'string') {
     return '';
@@ -25,14 +19,7 @@ export const getFileExtension = (filename) => {
   return filename.slice(lastDotIndex + 1).toLowerCase();
 };
 
-/**
- * Validate file type for import operations
- * Checks if file type is supported for import
- *
- * @param {string} filename - The filename to validate
- * @param {string[]} allowedExtensions - Allowed file extensions (default: ['json'])
- * @returns {{isValid: boolean, extension: string, error?: string}}
- */
+
 export const validateFileType = (filename, allowedExtensions = ['json']) => {
   const extension = getFileExtension(filename);
 
@@ -58,15 +45,7 @@ export const validateFileType = (filename, allowedExtensions = ['json']) => {
   };
 };
 
-/**
- * Generate export filename with timestamp
- * Creates consistent filename format for exports
- *
- * @param {string} prefix - Filename prefix (default: 'stackmap-export')
- * @param {Date} [timestamp] - Custom timestamp (default: current time)
- * @param {boolean} includeTime - Whether to include time in filename (default: true)
- * @returns {string} Generated filename
- */
+
 export const generateExportFilename = (prefix = 'stackmap-export', timestamp, includeTime = true) => {
   const date = timestamp || new Date();
 
@@ -127,14 +106,7 @@ export const parseStackMapFilename = (filename) => {
   };
 };
 
-/**
- * Calculate file size display string
- * Converts bytes to human-readable format
- *
- * @param {number} bytes - File size in bytes
- * @param {number} decimals - Number of decimal places (default: 1)
- * @returns {string} Human-readable size string
- */
+
 export const formatFileSize = (bytes, decimals = 1) => {
   if (typeof bytes !== 'number' || bytes < 0) {
     return '0 B';
@@ -157,14 +129,7 @@ export const formatFileSize = (bytes, decimals = 1) => {
   return `${(bytes / Math.pow(k, i)).toFixed(dm)} ${sizes[i]}`;
 };
 
-/**
- * Validate file size limits
- * Checks if file size is within acceptable limits
- *
- * @param {number} bytes - File size in bytes
- * @param {number} maxSizeMB - Maximum size in MB (default: 10)
- * @returns {{isValid: boolean, size: string, error?: string}}
- */
+
 export const validateFileSize = (bytes, maxSizeMB = 10) => {
   const sizeString = formatFileSize(bytes);
 
@@ -192,13 +157,7 @@ export const validateFileSize = (bytes, maxSizeMB = 10) => {
   };
 };
 
-/**
- * Extract file info from File object or file metadata
- * Normalizes file information from different sources
- *
- * @param {Object} file - File object or metadata
- * @returns {{name: string, size: number, type?: string, lastModified?: number}}
- */
+
 export const extractFileInfo = (file) => {
   if (!file || typeof file !== 'object') {
     return {
@@ -295,10 +254,7 @@ export const validateJsonFileContent = (content) => {
   };
 };
 
-/**
- * Add version information to preview
- * @private
- */
+
 const addVersionInfo = (fileData, details, warnings) => {
   if (fileData.version) {
     details.push(`Version: ${fileData.version}`);
@@ -307,10 +263,7 @@ const addVersionInfo = (fileData, details, warnings) => {
   }
 };
 
-/**
- * Add user count to preview
- * @private
- */
+
 const addUserInfo = (fileData, details, warnings) => {
   if (fileData.users) {
     const userCount = Object.keys(fileData.users).length;
@@ -322,10 +275,7 @@ const addUserInfo = (fileData, details, warnings) => {
   }
 };
 
-/**
- * Add library information to preview
- * @private
- */
+
 const addLibraryInfo = (fileData, details) => {
   if (fileData.library && fileData.library.categories) {
     const categoryCount = Array.isArray(fileData.library.categories)
@@ -336,10 +286,7 @@ const addLibraryInfo = (fileData, details) => {
   }
 };
 
-/**
- * Add activity cards and settings to preview
- * @private
- */
+
 const addActivityAndSettingsInfo = (fileData, details) => {
   if (fileData.activityCards) {
     details.push(`Activity cards: ${fileData.activityCards.length}`);
@@ -350,10 +297,7 @@ const addActivityAndSettingsInfo = (fileData, details) => {
   }
 };
 
-/**
- * Generate summary text for preview
- * @private
- */
+
 const generatePreviewSummary = (fileData) => {
   const userCount = fileData.users ? Object.keys(fileData.users).length : 0;
   const hasLibrary = !!(fileData.library && fileData.library.categories);
@@ -366,13 +310,7 @@ const generatePreviewSummary = (fileData) => {
   return summary;
 };
 
-/**
- * Generate file preview information
- * Creates display-friendly preview of file contents
- *
- * @param {Object} fileData - Parsed file data
- * @returns {{summary: string, details: string[], warnings: string[]}}
- */
+
 export const generateFilePreview = (fileData) => {
   if (!fileData || typeof fileData !== 'object') {
     return {
@@ -402,14 +340,7 @@ export const generateFilePreview = (fileData) => {
   };
 };
 
-/**
- * Sanitize filename for safe export
- * Removes invalid characters and ensures valid filename
- *
- * @param {string} filename - Original filename
- * @param {string} defaultName - Default name if original is invalid
- * @returns {string} Sanitized filename
- */
+
 export const sanitizeFilename = (filename, defaultName = 'export') => {
   if (!filename || typeof filename !== 'string') {
     return `${defaultName}.json`;
@@ -437,14 +368,7 @@ export const sanitizeFilename = (filename, defaultName = 'export') => {
   return sanitized;
 };
 
-/**
- * Generate unique filename if file already exists
- * Adds incrementing number to avoid filename conflicts
- *
- * @param {string} baseFilename - Base filename
- * @param {string[]} existingFilenames - Array of existing filenames
- * @returns {string} Unique filename
- */
+
 export const generateUniqueFilename = (baseFilename, existingFilenames = []) => {
   if (!existingFilenames.includes(baseFilename)) {
     return baseFilename;
