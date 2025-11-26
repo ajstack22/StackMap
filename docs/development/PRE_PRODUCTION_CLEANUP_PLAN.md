@@ -80,7 +80,7 @@ logger.log('[Sync] Data received'); // Only logs in dev
 4. OnboardingUserCentered/index.js (18 instances) - Phase 1 diagnostics
 5. ContextModal.js (39 instances)
 6. DataModal.js (35 instances)
-7. ActivityLibrary.js (24 instances)
+7. ~~ActivityLibrary.js (24 instances)~~ - REMOVED (replaced by ActivityManagementModal)
 8. encryptionServiceFixed.ts (65 instances)
 
 **Estimated Effort**: 2-3 hours

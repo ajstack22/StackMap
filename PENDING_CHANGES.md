@@ -1,3 +1,160 @@
+## Cleanup: Remove dead ActivityLibrary code (44 files)
+
+### Changes Made:
+
+- Deleted entire `src/components/ActivityLibrary/` folder (44 files) - dead code replaced by ActivityManagementModal
+- Moved `EMPTY_CATEGORIES` constant to `src/constants/index.js`
+- Removed `ActivityLibrary` component usage from App.js (~95 lines of unused JSX)
+- Removed `showActivityLibrary` state that was never set to true
+- Updated component exports in `src/components/index.js`
+- Cleaned up documentation references
+
+### Technical Details:
+
+- **Evidence of dead code**: `setShowActivityLibrary(true)` was never called anywhere in the codebase
+- **Replacement**: The library UI now uses `ActivityManagementModal/LibraryTabContent.js`
+- **Preserved**: `EMPTY_CATEGORIES` constant moved to constants file for continued use
+- **Files deleted**: 44 files including components, tests, snapshots, and documentation
+
+### Files Changed:
+
+- `/src/constants/index.js` - Added EMPTY_CATEGORIES constant
+- `/App.js` - Removed ActivityLibrary import, state, and component usage
+- `/src/components/index.js` - Removed ActivityLibrary export
+- `/docs/architecture/MODAL_DATA_FLOWS.md` - Updated ActivityLibrary reference
+- `/docs/TEST_TIERS.md` - Removed ActivityLibrary test references
+- `/docs/TESTING_STRATEGY.md` - Removed ActivityLibrary references
+- `/docs/development/PRE_PRODUCTION_CLEANUP_PLAN.md` - Marked as removed
+- `/docs/development/WAVE1_EXECUTION_CHECKLIST.md` - Marked as removed
+- `/CLAUDE.md` - Updated EMPTY_CATEGORIES location reference
+- Deleted `/docs/bugs/ACTIVITY_CARD_LAYOUT_BUG.md` (obsolete)
+- Deleted `/docs/platform/component-naming-conventions.md` (obsolete)
+- Deleted `/src/components/ActivityLibrary/` (44 files)
+
+### Testing:
+
+- ✅ `npm run typecheck` passes
+- ✅ `npm test` passes (58 suites, 1639 tests)
+- ✅ `npm run build:web` compiles successfully
+- Activity Library modal still works via ActivityManagementModal
+
+### User Impact:
+
+- **No functional changes** - dead code removal only
+- **Reduced bundle size** - 44 unused files removed
+- **Breaking Changes**: None
+- **Migration Required**: None
+
+### Deployment Notes:
+
+- Technical debt cleanup - no user-facing changes
+- Activity Library functionality preserved via ActivityManagementModal
+- Safe for all platforms (iOS, Android, Web)
+
+---
+
+## Feat: Library activity reordering with sync support
+
+### Changes Made:
+
+- Added up/down arrow buttons to reorder activities within library groups
+- Activities can now be moved up or down within their category using arrow buttons
+- Order is preserved across sync to other devices via `sortIndex` and `sortIndexModifiedAt` fields
+- Reordering is only available in "My Library" tab (not StackMap Library which is read-only)
+
+### Technical Details:
+
+- **Data Model**: Added `sortIndex` (position) and `sortIndexModifiedAt` (timestamp) to library activities
+- **UI**: Up/down arrow buttons appear on left side of each activity card in My Library
+- **Sync**: Conflict resolution uses Last-Write-Wins on `sortIndexModifiedAt` timestamp
+- **Migration**: Existing activities without sortIndex get their array position assigned via normalizer
+
+### Files Changed:
+
+- `/src/components/ActivityLibrary/CategoryActions.js` - Added `handleReorderActivity`, `handleMoveActivityUp`, `handleMoveActivityDown`
+- `/src/components/ActivityLibrary/LibraryActivityGrid.js` - Added `onMoveUp`, `onMoveDown`, `isReorderable` props
+- `/src/components/ActivityLibrary/LibraryActivityCard.js` - Added reorder buttons UI
+- `/src/components/ActivityLibrary/CategorySectionComponent.js` - Wired up reorder handlers
+- `/src/components/ActivityLibrary/ActivityLibrary.js` - Connected handlers from CategoryActions to CategorySection
+- `/src/services/sync/conflictResolver.js` - Added `mergeLibraryActivitiesWithPosition` for position-aware merge
+- `/src/utils/dataNormalizer.js` - Added `normalizeActivitySortIndexes` for migration
+
+### Testing:
+
+- Open Activity Library > My Library tab
+- Verify up/down arrows appear on each activity in your groups
+- Move activities up/down and verify order persists after app restart
+- Sync to another device and verify order is preserved
+- Test conflict resolution: reorder on both devices, verify newer timestamp wins
+
+### User Impact:
+
+- **New Feature**: Users can reorder activities within library groups
+- **Use Case**: Create "template days" where order matters for "Add All" functionality
+- **Breaking Changes**: None
+- **Migration Required**: None - handled automatically
+
+### Deployment Notes:
+
+- New feature - no backend changes required
+- Fully backward compatible (old data gets sortIndex via normalizer)
+- Mixed sync compatible (old devices ignore sortIndex, new device always wins on position)
+- Safe for all platforms (iOS, Android, Web)
+
+---
+
+## Feat: Custom activity library groups - choose category when saving to library
+
+### Changes Made:
+
+- Added CategoryPickerModal that appears when clicking "Add to Library" in edit mode
+- Users can now choose which library group to save activities to (not just "My Templates")
+- Added ability to create new library groups inline when saving an activity
+- Modal shows all existing groups with activity counts, sorted alphabetically with My Templates first
+
+### Technical Details:
+
+- New component: `src/components/Modals/CategoryPickerModal/` (CategoryPickerModal.js, styles.js, index.js)
+- Modified `App.js`:
+  - Added `showCategoryPickerModal` and `pendingLibraryActivity` state
+  - Added `handleShowCategoryPicker()` to trigger the modal
+  - Modified `addActivityToLibrary()` to accept categoryId, categoryName, and isNewCategory params
+  - Added `handleCategorySelected()` to handle selection from modal
+  - Fixed race condition: new categories are created in same state update as adding activity
+- Changed EditModeList `onLibrary` prop to use `handleShowCategoryPicker` instead of direct add
+
+### Files Changed:
+
+- `/src/components/Modals/CategoryPickerModal/CategoryPickerModal.js` - New modal component
+- `/src/components/Modals/CategoryPickerModal/styles.js` - Modal styling
+- `/src/components/Modals/CategoryPickerModal/index.js` - Export
+- `/App.js` - State management and library functions
+
+### Testing:
+
+- Enter edit mode and click the bookmark icon on any activity
+- Verify modal shows with existing categories and "Create New Group" option
+- Select an existing category and verify activity is saved there
+- Create a new group and verify both group creation and activity save work
+- Check toast message shows correct category name
+- Test on iOS, Android, and Web
+
+### User Impact:
+
+- **New Feature**: Users can organize saved activities into custom groups
+- **Improved**: No longer limited to just "My Templates" folder
+- **Improved**: Can create new groups on the fly while saving
+- **Breaking Changes**: None
+- **Migration Required**: None
+
+### Deployment Notes:
+
+- New feature - no backend changes required
+- Fully backward compatible
+- Safe for all platforms (iOS, Android, Web)
+
+---
+
 ## Docs: Update license documentation for all production dependencies
 
 ### Changes Made:

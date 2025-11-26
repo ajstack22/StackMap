@@ -70,3 +70,13 @@ export const getCustomImageSource = imageName => {
   // Images have been archived - return null
   return null;
 };
+
+// Default empty categories for library initialization
+export const EMPTY_CATEGORIES = [
+  {
+    id: 'my-templates',
+    name: 'My Templates',
+    icon: '⭐',
+    activities: [],
+  },
+];

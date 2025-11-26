@@ -163,7 +163,7 @@ deploy_to_server() {
     # Deploy to server based on environment
     if [[ "$DEPLOY_ENV" == "qual" ]]; then
         echo "📡 Uploading files to qual server via rsync..."
-        rsync -avz --delete \
+        rsync -avz --delete --exclude 'api/' \
             index.html manifest.json service-worker.js workbox-*.js bundle.*.js \
             fonts/ icons/ .htaccess \
             "$APP_SSH_HOST:$APP_SSH_QUAL_DIR/" || {
@@ -174,7 +174,7 @@ deploy_to_server() {
         echo -e "${GREEN}✅ Deployed to: $APP_URL_QUAL/${NC}"
     elif [[ "$DEPLOY_ENV" == "beta" ]]; then
         echo "📡 Uploading files to beta server via rsync..."
-        rsync -avz --delete \
+        rsync -avz --delete --exclude 'api/' \
             index.html manifest.json service-worker.js workbox-*.js bundle.*.js \
             fonts/ icons/ .htaccess \
             "$APP_SSH_HOST:$APP_SSH_BETA_DIR/" || {
@@ -195,7 +195,28 @@ deploy_to_server() {
     
     # Return to main branch
     git checkout main
-    
+
+    # Verify API health after deployment
+    echo -e "${YELLOW}🔍 Verifying API health...${NC}"
+    local API_URL
+    case "$DEPLOY_ENV" in
+        "qual") API_URL="https://stackmap.app/qual/api/sync/health.php" ;;
+        "beta") API_URL="https://stackmap.app/beta/api/sync/health.php" ;;
+        "prod") API_URL="https://stackmap.app/api/sync/health.php" ;;
+    esac
+
+    local HEALTH_RESPONSE=$(curl -s "$API_URL" 2>/dev/null)
+    if echo "$HEALTH_RESPONSE" | grep -q '"status":"healthy"'; then
+        echo -e "${GREEN}✅ API health check passed: $API_URL${NC}"
+    else
+        echo -e "${RED}⚠️  WARNING: API health check failed!${NC}"
+        echo "URL: $API_URL"
+        echo "Response: $HEALTH_RESPONSE"
+        echo ""
+        echo "The API may not be set up correctly on the server."
+        echo "Check: /public_html/${DEPLOY_ENV}/api/sync/ directory exists with config.php"
+    fi
+
     echo -e "${GREEN}🎉 Deployment complete!${NC}"
 }
 

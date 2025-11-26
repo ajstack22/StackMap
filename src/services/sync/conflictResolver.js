@@ -456,22 +456,105 @@ class ConflictResolver {
   mergeLibraryCategories(localCategories, remoteCategories) {
     if (!localCategories) return remoteCategories || [];
     if (!remoteCategories) return localCategories;
-    
+
     // Handle both array and object formats
     const localArray = Array.isArray(localCategories) ? localCategories : [];
     const remoteArray = Array.isArray(remoteCategories) ? remoteCategories : [];
-    
-    const merged = [...localArray];
-    const existingIds = new Set(localArray.map(c => c.id || c.name));
-    
+
+    // Create a map of local categories by ID for quick lookup
+    const localCategoryMap = new Map(
+      localArray.map(c => [c.id || c.name, c])
+    );
+
+    const merged = [];
+    const processedIds = new Set();
+
+    // Process local categories first, merging activities from remote if matching
+    localArray.forEach(localCategory => {
+      const categoryId = localCategory.id || localCategory.name;
+      const remoteCategory = remoteArray.find(c => (c.id || c.name) === categoryId);
+
+      if (remoteCategory) {
+        // Category exists in both - merge activities within it
+        const mergedActivities = this.mergeLibraryActivitiesWithPosition(
+          localCategory.activities || [],
+          remoteCategory.activities || []
+        );
+        merged.push({
+          ...localCategory,
+          activities: mergedActivities
+        });
+        this.log(`  Merged category: ${localCategory.name} (${mergedActivities.length} activities)`);
+      } else {
+        // Only in local
+        merged.push(localCategory);
+      }
+      processedIds.add(categoryId);
+    });
+
+    // Add categories that only exist in remote
     remoteArray.forEach(category => {
       const categoryId = category.id || category.name;
-      if (!existingIds.has(categoryId)) {
+      if (!processedIds.has(categoryId)) {
         merged.push(category);
         this.log(`  Added category: ${category.name}`);
       }
     });
-    
+
+    return merged;
+  }
+
+
+  /**
+   * Merge library activities with position-aware conflict resolution.
+   * Uses sortIndex and sortIndexModifiedAt for ordering.
+   */
+  mergeLibraryActivitiesWithPosition(localActivities, remoteActivities) {
+    if (!localActivities || !localActivities.length) return remoteActivities || [];
+    if (!remoteActivities || !remoteActivities.length) return localActivities;
+
+    // Create a map of activities by ID
+    const activityMap = new Map();
+
+    // Add all local activities
+    localActivities.forEach(activity => {
+      activityMap.set(activity.id, activity);
+    });
+
+    // Merge remote activities
+    remoteActivities.forEach(remoteActivity => {
+      const existingActivity = activityMap.get(remoteActivity.id);
+
+      if (!existingActivity) {
+        // New activity from remote - add it
+        activityMap.set(remoteActivity.id, remoteActivity);
+        this.log(`    Added activity: ${getActivityText(remoteActivity)}`);
+      } else {
+        // Activity exists in both - check sortIndexModifiedAt for position
+        const localSortTime = existingActivity.sortIndexModifiedAt || 0;
+        const remoteSortTime = remoteActivity.sortIndexModifiedAt || 0;
+
+        if (remoteSortTime > localSortTime) {
+          // Remote has newer sort position - use remote's sortIndex
+          activityMap.set(remoteActivity.id, {
+            ...existingActivity,
+            sortIndex: remoteActivity.sortIndex,
+            sortIndexModifiedAt: remoteActivity.sortIndexModifiedAt
+          });
+          this.log(`    Updated position: ${getActivityText(remoteActivity)}`);
+        }
+        // If local is newer or equal, keep local (already in map)
+      }
+    });
+
+    // Convert back to array and sort by sortIndex
+    const merged = Array.from(activityMap.values());
+    merged.sort((a, b) => {
+      const aIndex = a.sortIndex ?? Infinity;
+      const bIndex = b.sortIndex ?? Infinity;
+      return aIndex - bIndex;
+    });
+
     return merged;
   }
   

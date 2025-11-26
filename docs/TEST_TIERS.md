@@ -71,7 +71,6 @@
 **Failures logged but don't block deployment**
 
 ### Component Tests
-- ℹ️ `components/ActivityLibrary/__tests__/*.test.js` (16 files)
 - ℹ️ `components/EditModeList/__tests__/*.test.js`
 - ℹ️ `components/EditModeToolbar/__tests__/EditModeToolbar.test.js`
 - ℹ️ `components/EmojiPicker/__tests__/*.test.js`

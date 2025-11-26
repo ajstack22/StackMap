@@ -178,6 +178,32 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  activityContentWithReorder: {
+    flex: 1,
+  },
+  reorderButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 8,
+    gap: 2,
+  },
+  reorderButton: {
+    padding: 2,
+  },
+  reorderCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reorderCircleDisabled: {
+    backgroundColor: '#f5f5f5',
+    borderColor: '#eee',
+  },
   activityEmoji: {
     fontSize: 24,
     fontFamily: TYPOGRAPHY.fontFamily.regular,

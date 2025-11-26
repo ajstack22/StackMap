@@ -122,7 +122,9 @@ This document maps common data flow patterns for modals in StackMap. These are *
 - Form validation logic
 - Keyboard handling
 
-## 6. ActivityLibrary
+## 6. ActivityManagementModal (Library Tab)
+
+**Note:** The legacy ActivityLibrary component was removed and replaced by ActivityManagementModal's LibraryTabContent.
 
 ### Props
 - `visible`: boolean - Controls modal visibility
@@ -139,7 +141,6 @@ This document maps common data flow patterns for modals in StackMap. These are *
 - **State**: Edit mode, search, category management
 
 ### Dependencies
-- DraggableFlatList for reordering
 - Search functionality
 - Category CRUD operations
 - ConfirmModal for deletions

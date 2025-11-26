@@ -120,15 +120,74 @@ const LibraryTabContent = ({
     showToast({ message: 'Activity deleted!' });
   };
 
+  // Reorder activity within a category
+  const handleMoveActivity = (categoryId, fromIndex, toIndex) => {
+    if (fromIndex === toIndex) return;
 
-  const renderActivity = (activity, categoryId) => {
+    const now = Date.now();
+    const updatedCategories = localCategories.map(cat => {
+      if (cat.id !== categoryId) return cat;
+
+      const activities = [...cat.activities];
+      const [removed] = activities.splice(fromIndex, 1);
+      activities.splice(toIndex, 0, removed);
+
+      // Update sortIndex and timestamp for sync
+      const updatedActivities = activities.map((activity, index) => ({
+        ...activity,
+        sortIndex: index,
+        sortIndexModifiedAt: now,
+      }));
+
+      return { ...cat, activities: updatedActivities };
+    });
+
+    setLocalCategories(updatedCategories);
+    onSaveCategories(updatedCategories);
+  };
+
+
+  const renderActivity = (activity, categoryId, index, totalCount) => {
     const isSystemProvided = stackMapLibrary?.activityGroups?.some(
       g => g.id === categoryId,
     );
+    const isFirst = index === 0;
+    const isLast = index === totalCount - 1;
 
     return (
       <View style={styles.activityItem}>
-        <View style={styles.activityContent}>
+        {/* Reorder buttons - only for user's library (not system provided) */}
+        {!isSystemProvided && (
+          <View style={styles.reorderButtons}>
+            <TouchableOpacity
+              onPress={() => handleMoveActivity(categoryId, index, index - 1)}
+              disabled={isFirst}
+              style={styles.reorderButton}
+            >
+              <View style={[styles.reorderCircle, isFirst && styles.reorderCircleDisabled]}>
+                <Icon
+                  name="arrow-upward"
+                  size={14}
+                  color={isFirst ? '#ccc' : theme.primary}
+                />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleMoveActivity(categoryId, index, index + 1)}
+              disabled={isLast}
+              style={styles.reorderButton}
+            >
+              <View style={[styles.reorderCircle, isLast && styles.reorderCircleDisabled]}>
+                <Icon
+                  name="arrow-downward"
+                  size={14}
+                  color={isLast ? '#ccc' : theme.primary}
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
+        <View style={[styles.activityContent, !isSystemProvided && styles.activityContentWithReorder]}>
           <Text style={styles.activityEmoji}>
             {getActivityIcon(activity)}
           </Text>
@@ -272,9 +331,9 @@ const LibraryTabContent = ({
 
         {isExpanded && (
           <View style={styles.activitiesList}>
-            {category.activities?.map(activity => (
+            {category.activities?.map((activity, index) => (
               <View key={activity.id}>
-                {renderActivity(activity, category.id)}
+                {renderActivity(activity, category.id, index, category.activities.length)}
               </View>
             ))}
           </View>

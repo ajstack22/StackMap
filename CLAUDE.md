@@ -115,7 +115,10 @@ StackMap uses the **Atlas Framework** for structured development workflows. Choo
 # - Direct execution of tier scripts is blocked
 ```
 **Four-Tier Strategy:** QUAL (multiple/day) → STAGE (internal validation) → BETA (1-2/week) → PROD (weekly/bi-weekly)
-**API Endpoints:** stackmap.app/qual/api (QUAL), stackmap.app/stage/api (STAGE, shares Qual DB), stackmap.app/beta/api (BETA, Prod DB), stackmap.app/api (PROD)
+**API Endpoints:**
+- QUAL/STAGE: `stackmap.app/qual/api/sync` → `stachblx_stackmap_sync_qual` DB
+- BETA/PROD: `stackmap.app/beta/api/sync` and `stackmap.app/api/sync` → `stachblx_stackmap_sync` DB
+- Server paths: `/public_html/{qual,beta}/api/sync/` (config.php has DB creds, not in git)
 **Commit Messages:** Update `PENDING_CHANGES.md` before deploying for descriptive commit messages
 **iOS Production:** Now fully automated! No manual Xcode steps required - builds, uploads, and prepares for review
 **iOS Bundle IDs:** Single bundle ID (`app.stackmap`) for stage/beta/prod, differentiated via TestFlight groups. QUAL uses `app.stackmap.qual` for local testing only.
@@ -248,7 +251,7 @@ StackMap uses the **Atlas Framework** for structured development workflows. Choo
 ## 🐛 QUICK FIXES
 
 ### "My Templates category not found"
-Initialize EMPTY_CATEGORIES with default category in ActivityLibrary.js
+EMPTY_CATEGORIES constant is defined in src/constants/index.js with default category
 
 ### Bundle not found on web
 Files must be copied to root directory, not served from web/build/

@@ -177,7 +177,6 @@ npm run test:coverage
 **Pattern:** `(components/.*/__tests__|__tests__/workflows|services/api/dev/tests/integration|constants/__tests__)`
 
 **Components:**
-- ℹ️ ActivityLibrary (16 test files)
 - ℹ️ EditModeList, EditModeToolbar
 - ℹ️ EmojiPicker, FAB, Logo, Typography
 - ℹ️ Modals (DataExport, DataImport, SyncManagement)

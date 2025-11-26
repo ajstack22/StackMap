@@ -13,7 +13,6 @@ const AddTabContent = ({
   theme,
   categories = [],
   onAddActivity,
-  onSaveToLibrary,
   showToast,
   loading,
   prefilledActivity = null,
@@ -24,9 +23,7 @@ const AddTabContent = ({
   const [activityDescription, setActivityDescription] = useState('');
   const [activityIcon, setActivityIcon] = useState(DEFAULT_ACTIVITY_EMOJI);
   const [activityTime, setActivityTime] = useState('');
-  // Always use 'my-templates' for now since we're not implementing custom categories yet
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [saveToLibrary, setSaveToLibrary] = useState(false);
   const [errors, setErrors] = useState({});
 
   // Prefill form when coming from library
@@ -83,65 +80,10 @@ const AddTabContent = ({
     // Add to current day
     await onAddActivity(activityData);
 
-    // Optionally save to library (always to My Templates)
-    if (saveToLibrary) {
-      await onSaveToLibrary(activityData, 'my-templates');
-    }
-
     // Close the modal
     if (onClose) {
       onClose();
     }
-  };
-
-  const handleSaveAndContinue = async () => {
-    if (!validateForm()) {
-      showToast({ message: 'Please fix the errors', type: 'error' });
-      return;
-    }
-
-    // Generate enhanced activity ID with device ID
-    const deviceId = await (async () => {
-      try {
-        const encryptionService = (
-          await import('../../../services/sync/encryptionServiceFixed')
-        ).default;
-        return await encryptionService.getDeviceId();
-      } catch (error) {
-        return 'unknown';
-      }
-    })();
-
-    const activityData = {
-      id: `${deviceId}-${Date.now()}-${generateSecureRandomString(9)}`,
-      text: activityText.trim(),
-      description: activityDescription.trim(),
-      icon: activityIcon,
-      completed: false,
-      pinned: false,
-      ...(activityTime && { time: activityTime }),
-    };
-
-    // Add to current day
-    await onAddActivity(activityData);
-
-    // Optionally save to library (always to My Templates)
-    if (saveToLibrary) {
-      await onSaveToLibrary(activityData, 'my-templates');
-    }
-
-    // Reset form for next activity
-    resetForm();
-    showToast({ message: 'Activity added! Add another one.' });
-  };
-
-  const resetForm = () => {
-    setActivityText('');
-    setActivityDescription('');
-    setActivityIcon(DEFAULT_ACTIVITY_EMOJI);
-    setActivityTime('');
-    setErrors({});
-    // Don't reset category or saveToLibrary preference
   };
 
   const handleEmojiSelect = icon => {
@@ -229,64 +171,7 @@ const AddTabContent = ({
             {/* Divider */}
             <View style={styles.divider} />
 
-            {/* Save to Library */}
-            <View style={styles.formSection}>
-              <TouchableOpacity
-                style={styles.checkboxContainer}
-                onPress={() => setSaveToLibrary(!saveToLibrary)}
-              >
-                <View
-                  style={[
-                    styles.checkbox,
-                    saveToLibrary && styles.checkboxChecked,
-                  ]}
-                >
-                  {saveToLibrary && (
-                    <Icon name="check" size={16} color="white" />
-                  )}
-                </View>
-                <Text style={styles.checkboxLabel}>Save to My Templates</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Divider */}
-            <View style={styles.divider} />
-
-            {/* Quick Templates */}
-            <View style={styles.formSection}>
-              <Text style={[styles.formLabel, { marginBottom: 12 }]}>
-                Quick Templates
-              </Text>
-              <View style={styles.quickTemplates}>
-                {[
-                  { icon: '🏃', text: 'Exercise' },
-                  { icon: '📚', text: 'Reading' },
-                  { icon: '🧹', text: 'Chores' },
-                  { icon: '🎮', text: 'Play Time' },
-                ].map((template, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.quickTemplate}
-                    onPress={() => {
-                      setActivityText(template.text);
-                      setActivityIcon(template.icon);
-                    }}
-                  >
-                    <Text style={styles.quickTemplateIcon}>
-                      {template.icon}
-                    </Text>
-                    <Text style={styles.quickTemplateText}>
-                      {template.text}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* Divider */}
-            <View style={styles.divider} />
-
-            {/* Action Buttons */}
+            {/* Action Button */}
             <View style={[styles.formSection, { marginBottom: 0 }]}>
               <TouchableOpacity
                 style={[
@@ -298,19 +183,6 @@ const AddTabContent = ({
               >
                 <Icon name="check" size={20} color="white" />
                 <Text style={styles.actionButtonText}>Add Activity</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.actionButton, styles.secondaryButton]}
-                onPress={handleSaveAndContinue}
-                disabled={loading}
-              >
-                <Icon name="add" size={20} color={theme.primary} />
-                <Text
-                  style={[styles.actionButtonText, { color: theme.primary }]}
-                >
-                  Add & Continue
-                </Text>
               </TouchableOpacity>
             </View>
           </View>

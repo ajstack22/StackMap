@@ -246,7 +246,7 @@ Use this checklist to track Wave 1 execution progress.
 ### 3F: Remaining Files (Optional - if time permits)
 
 **Files**:
-- `src/components/ActivityLibrary/ActivityLibrary.js` (24)
+- ~~`src/components/ActivityLibrary/ActivityLibrary.js` (24)~~ - REMOVED
 - `src/services/sync/encryptionServiceFixed.ts` (65)
 - Other files with <10 statements each
 

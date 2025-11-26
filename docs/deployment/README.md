@@ -14,10 +14,10 @@ QUAL → STAGE → BETA → PROD
 
 | Tier | Purpose | API Endpoint | Database | Platforms | Git State | Frequency |
 |------|---------|-------------|----------|-----------|-----------|-----------|
-| **QUAL** | Development testing | qual-api.stackmap.app | Qual DB | Web + Mobile | Allows uncommitted | Multiple/day |
-| **STAGE** | Internal validation | qual-api.stackmap.app | Qual DB | Mobile only | Allows uncommitted | Before beta |
-| **BETA** | Closed beta testing | beta-api.stackmap.app | Prod DB | Beta web + Mobile | Requires clean | 1-2/week |
-| **PROD** | Public release | api.stackmap.app | Prod DB | Web + Mobile | Requires clean | Weekly/bi-weekly |
+| **QUAL** | Development testing | stackmap.app/qual/api/sync | Qual DB | Web + Mobile | Allows uncommitted | Multiple/day |
+| **STAGE** | Internal validation | stackmap.app/qual/api/sync | Qual DB | Mobile only | Allows uncommitted | Before beta |
+| **BETA** | Closed beta testing | stackmap.app/beta/api/sync | Prod DB | Beta web + Mobile | Requires clean | 1-2/week |
+| **PROD** | Public release | stackmap.app/api/sync | Prod DB | Web + Mobile | Requires clean | Weekly/bi-weekly |
 
 ### Quick Start
 
@@ -129,15 +129,16 @@ QUAL → STAGE → BETA → PROD
 
 | Tier | Mobile Build Type | API Endpoint | Database | Web URL |
 |------|------------------|--------------|----------|---------|
-| **QUAL** | qual | https://qual-api.stackmap.app | Qual DB | stackmap.app/qual |
-| **STAGE** | stage | https://qual-api.stackmap.app | Qual DB | N/A (mobile only) |
-| **BETA** | beta | https://beta-api.stackmap.app | Prod DB | stackmap.app/qual (beta web) |
-| **PROD** | release | https://api.stackmap.app | Prod DB | stackmap.app |
+| **QUAL** | qual | https://stackmap.app/qual/api/sync | stachblx_stackmap_sync_qual | stackmap.app/qual |
+| **STAGE** | stage | https://stackmap.app/qual/api/sync | stachblx_stackmap_sync_qual | N/A (mobile only) |
+| **BETA** | beta | https://stackmap.app/beta/api/sync | stachblx_stackmap_sync | stackmap.app/beta |
+| **PROD** | release | https://stackmap.app/api/sync | stachblx_stackmap_sync | stackmap.app |
 
 **Key Points:**
 - STAGE uses qual DB but is a separate mobile build type
 - BETA switches to production database for real-world testing
-- Web beta still uses qual environment but connects to beta API
+- API directories on server: `/public_html/qual/api/sync/`, `/public_html/beta/api/sync/`, `/public_html/api/sync/`
+- Server-side config.php files contain DB credentials (not in git)
 
 ## 📱 Platform Deployment Details
 
@@ -347,14 +348,14 @@ Both platforms use a single identifier for distribution tiers (stage/beta/prod):
 - Android: Gradle flavors + Play Store tracks + display names
 
 ### API Endpoints by Tier
-- **QUAL:** `https://qual-api.stackmap.app/api/sync/` (Qual DB)
-- **STAGE:** `https://qual-api.stackmap.app/api/sync/` (Qual DB)
-- **BETA:** `https://beta-api.stackmap.app/api/sync/` (Prod DB)
-- **PROD:** `https://api.stackmap.app/api/sync/` (Prod DB)
+- **QUAL:** `https://stackmap.app/qual/api/sync/` (stachblx_stackmap_sync_qual)
+- **STAGE:** `https://stackmap.app/qual/api/sync/` (stachblx_stackmap_sync_qual)
+- **BETA:** `https://stackmap.app/beta/api/sync/` (stachblx_stackmap_sync)
+- **PROD:** `https://stackmap.app/api/sync/` (stachblx_stackmap_sync)
 
 ### Web URLs
 - **QUAL Web:** `https://stackmap.app/qual/`
-- **BETA Web:** `https://stackmap.app/qual/` (uses beta API endpoint)
+- **BETA Web:** `https://stackmap.app/beta/`
 - **PROD Web:** `https://stackmap.app/`
 
 ### Build Types (Mobile)

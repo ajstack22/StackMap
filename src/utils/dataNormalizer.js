@@ -51,6 +51,24 @@ const normalizeActivityIconField = (activity) => {
 };
 
 
+/**
+ * Assign sortIndex to library activities that don't have one.
+ * For migration: activities without sortIndex get their array position.
+ * Activities without sortIndexModifiedAt are treated as timestamp 0 (lowest priority).
+ */
+const normalizeActivitySortIndexes = (activities) => {
+  if (!activities || !Array.isArray(activities)) return;
+
+  activities.forEach((activity, index) => {
+    // Only assign sortIndex if it's missing (don't overwrite existing)
+    if (typeof activity.sortIndex !== 'number') {
+      activity.sortIndex = index;
+      // No sortIndexModifiedAt means this is migrated data (treated as 0 in conflict resolution)
+    }
+  });
+};
+
+
 export const normalizeUser = (user) => {
   if (!user) return user;
 
@@ -142,6 +160,8 @@ export const normalizeSyncData = (data) => {
       normalized.library.categories.forEach(category => {
         if (category.activities && Array.isArray(category.activities)) {
           category.activities = category.activities.map(normalizeActivity);
+          // Ensure sortIndex is assigned to activities for sync ordering
+          normalizeActivitySortIndexes(category.activities);
         }
       });
     } else if (typeof normalized.library.categories === 'object') {
@@ -150,6 +170,8 @@ export const normalizeSyncData = (data) => {
         const category = normalized.library.categories[categoryId];
         if (category && category.activities && Array.isArray(category.activities)) {
           category.activities = category.activities.map(normalizeActivity);
+          // Ensure sortIndex is assigned to activities for sync ordering
+          normalizeActivitySortIndexes(category.activities);
         }
       });
     }

@@ -150,7 +150,6 @@ import {
   FAB,
   EditModeToolbar,
   Logo,
-  ActivityLibrary,
   CelebrationView,
   ActivityModal,
   PreferencesModal,
@@ -168,11 +167,12 @@ import {
   SyncPreviewModal,
 } from './src/components';
 import EditModeList from './src/components/EditModeList';
-import { EMPTY_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
+import { EMPTY_CATEGORIES } from './src/constants';
 import OnboardingUserCentered from './src/components/Onboarding/OnboardingUserCentered';
 // SyncDiagnostic removed - test component no longer needed
 import ShareView from './src/components/ShareView/ShareView';
 import PinModal from './src/components/Modals/PinModal';
+import CategoryPickerModal from './src/components/Modals/CategoryPickerModal';
 import { STACKMAP_LIBRARY } from './src/constants/stackMapLibrary';
 
 // Component imports verified - all components are properly imported
@@ -311,8 +311,7 @@ const App = () => {
   const [showUserModal, setShowUserModal] = useState(false);
   const [showUserDayModal, setShowUserDayModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
-  const [showActivityLibrary, setShowActivityLibrary] = useState(false);
-  // Removed - now using Zustand store
+  // Removed showActivityLibrary - now using Zustand store
 
   // Force ScrollView recalculation on Android modals
   const [editingActivity, setEditingActivity] = useState(null);
@@ -366,6 +365,8 @@ const App = () => {
   const [showSyncPreviewModal, setShowSyncPreviewModal] = useState(false);
   const [syncPreviewPhrase, setSyncPreviewPhrase] = useState(null);
   const [showOnboardingImport, setShowOnboardingImport] = useState(false);
+  const [showCategoryPickerModal, setShowCategoryPickerModal] = useState(false);
+  const [pendingLibraryActivity, setPendingLibraryActivity] = useState(null);
   const [onboardingImportData, setOnboardingImportData] = useState(null);
 
   // Sync initialization state for visual feedback
@@ -2538,38 +2539,66 @@ const App = () => {
     setNewPosition('');
   };
 
-  const addActivityToLibrary = activity => {
+  // Show category picker when user clicks "Add to Library"
+  const handleShowCategoryPicker = (activity) => {
+    setPendingLibraryActivity(activity);
+    setShowCategoryPickerModal(true);
+  };
+
+  // Create a new category and return its ID (for use with addActivityToNewCategory)
+  const handleCreateLibraryCategory = (categoryName) => {
+    const newCategoryId = `category-${Date.now()}`;
+    return newCategoryId;
+  };
+
+  // Add activity to a specific library category
+  const addActivityToLibrary = (activity, categoryId = 'my-templates', categoryName = 'My Templates', isNewCategory = false) => {
     // Initialize with empty categories if none exist
     let categories = library?.categories || EMPTY_CATEGORIES;
 
     // If library?.categories was null or empty array, set it to default
     if (!library?.categories || library?.categories.length === 0) {
-
-      categories = EMPTY_CATEGORIES;
-      updateLibraryCategories(EMPTY_CATEGORIES);
+      categories = [...EMPTY_CATEGORIES];
     }
 
     // Create a new array to avoid mutating state
-    const updatedCategories = [...categories];
+    let updatedCategories = [...categories];
 
-    // Find My Templates category
-    let myTemplatesIndex = updatedCategories.findIndex(
-      cat => cat.id === 'my-templates',
+    // If this is a new category, create it first
+    if (isNewCategory && categoryId && categoryName) {
+      updatedCategories.push({
+        id: categoryId,
+        name: categoryName,
+        activities: [],
+      });
+    }
+
+    // Find target category
+    let targetCategoryIndex = updatedCategories.findIndex(
+      cat => cat.id === categoryId,
     );
 
-    // If My Templates doesn't exist, create it
-    if (myTemplatesIndex === -1) {
+    // If target category doesn't exist, fall back to My Templates
+    if (targetCategoryIndex === -1) {
+      targetCategoryIndex = updatedCategories.findIndex(
+        cat => cat.id === 'my-templates',
+      );
+      categoryName = 'My Templates';
+    }
 
+    // If My Templates doesn't exist either, create it
+    if (targetCategoryIndex === -1) {
       updatedCategories.push({
         id: 'my-templates',
         name: 'My Templates',
         icon: '⭐',
         activities: [],
       });
-      myTemplatesIndex = updatedCategories.length - 1;
+      targetCategoryIndex = updatedCategories.length - 1;
+      categoryName = 'My Templates';
     }
 
-    if (myTemplatesIndex !== -1) {
+    if (targetCategoryIndex !== -1) {
       // Create a template from the activity
       const template = {
         id: `template-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -2578,11 +2607,11 @@ const App = () => {
         description: activity.description || '',
       };
 
-      // Add to My Templates
-      updatedCategories[myTemplatesIndex] = {
-        ...updatedCategories[myTemplatesIndex],
+      // Add to target category
+      updatedCategories[targetCategoryIndex] = {
+        ...updatedCategories[targetCategoryIndex],
         activities: [
-          ...(updatedCategories[myTemplatesIndex].activities || []),
+          ...(updatedCategories[targetCategoryIndex].activities || []),
           template,
         ],
       };
@@ -2601,14 +2630,23 @@ const App = () => {
         });
       }, 10000);
 
-      showToast({ message: 'Added to My Templates' });
+      showToast({ message: `Added to ${categoryName}` });
 
     } else {
-      showToast({ message: 'Could not find My Templates category' });
+      showToast({ message: 'Could not find category' });
       if (__DEV__) {
-        console.error('My Templates category not found in:', categories);
+        console.error('Target category not found in:', categories);
       }
     }
+  };
+
+  // Handle category selection from picker modal
+  const handleCategorySelected = (categoryId, categoryName, isNewCategory = false) => {
+    if (pendingLibraryActivity) {
+      addActivityToLibrary(pendingLibraryActivity, categoryId, categoryName, isNewCategory);
+      setPendingLibraryActivity(null);
+    }
+    setShowCategoryPickerModal(false);
   };
 
   // Handle adding user from AddUserModal
@@ -4122,7 +4160,6 @@ Users: ${userNames} (${userCount} total)
       // Close all modals
       setShowAddUserModal(false);
       setShowEmojiPicker(false);
-      setShowActivityLibrary(false);
       setShowActivityModal(false);
       setShowUserModal(false);
       setShowUserDayModal(false);
@@ -4659,7 +4696,7 @@ Users: ${userNames} (${userCount} total)
                   setActivityTime(item.time || '');
                   setShowActivityModal(true);
                 }}
-                onLibrary={addActivityToLibrary}
+                onLibrary={handleShowCategoryPicker}
                 onToggle={item => toggleActivity(item.id)}
                 onDelete={item => {
                   // For iOS, the EditModeListItem will handle Alert.alert
@@ -5207,102 +5244,7 @@ Users: ${userNames} (${userCount} total)
       )}
 
       {/* EditModeSettingsModal removed - functionality distributed to specific modals */}
-
-      {/* Activity Library Modal */}
-      <ActivityLibrary
-        visible={showActivityLibrary}
-        onClose={() => setShowActivityLibrary(false)}
-        showToast={showToast}
-        categories={library?.categories}
-        onSaveCategories={updateLibraryCategories}
-        stackMapLibrary={library}
-        myLibrary={library}
-        onCopyGroupToMyLibrary={() => {}}
-        onSelectActivity={async activity => {
-          // Get device ID for enhanced activity IDs
-          const deviceId = await encryptionService.getDeviceId();
-
-          // Create a new activity from the template with unique ID
-          const newActivity = {
-            ...activity,
-            id: `${deviceId}-${Date.now()}-${Math.random()
-              .toString(36)
-              .substr(2, 9)}`,
-            text: activity.name || activity.text || '', // Map 'name' to 'text' for consistency
-            description: activity.description || '', // Explicitly preserve description
-            completed: false,
-            pinned: false,
-            modifiedAt: Date.now(), // Add timestamp for sync conflict resolution
-          };
-
-          const updatedActivities = [...activities, newActivity];
-
-          // Update the current day's activities
-          const updatedUsers = {
-            ...users,
-            [currentUser]: {
-              ...users[currentUser],
-              days: {
-                ...users[currentUser].days,
-                [currentDay]: {
-                  ...users[currentUser].days?.[currentDay],
-                  activities: updatedActivities,
-                },
-              },
-            },
-          };
-
-          setUsers(updatedUsers);
-          // Activities already updated through setUsers
-          showToast({
-            message: `✅ Added: ${activity.icon} ${newActivity.text}`,
-            duration: 2000,
-          });
-        }}
-        onSelectMultipleActivities={async activitiesToAdd => {
-          // Get device ID for enhanced activity IDs
-          const deviceId = await encryptionService.getDeviceId();
-
-          // Create all new activities at once
-          const newActivities = activitiesToAdd.map((activity, index) => ({
-            ...activity,
-            id: `${deviceId}-${Date.now()}-${index}-${Math.random()
-              .toString(36)
-              .substr(2, 9)}`,
-            text: activity.name || activity.text || '', // Map 'name' to 'text' for consistency
-            description: activity.description || '', // Explicitly preserve description
-            completed: false,
-            pinned: false,
-          }));
-
-          // Ensure we don't have any gaps in the activities array
-          const validActivities = activities.filter(a => a && !a.deleted);
-          const updatedActivities = [...validActivities, ...newActivities];
-
-          // Update the current day's activities
-          const updatedUsers = {
-            ...users,
-            [currentUser]: {
-              ...users[currentUser],
-              days: {
-                ...users[currentUser].days,
-                [currentDay]: {
-                  ...users[currentUser].days?.[currentDay],
-                  activities: updatedActivities,
-                },
-              },
-            },
-          };
-
-          setUsers(updatedUsers);
-          // Activities already updated through setUsers
-          showToast({
-            message: `✅ Added ${newActivities.length} activities`,
-            duration: 2000,
-          });
-        }}
-        theme={theme}
-      />
+      {/* ActivityLibrary removed - replaced by ActivityManagementModal */}
 
       {/* Privacy Policy Modal */}
       <PrivacyModal
@@ -5691,6 +5633,20 @@ Users: ${userNames} (${userCount} total)
           onPinComplete={() => {}}
         />
       )}
+
+      {/* Category Picker Modal for "Add to Library" */}
+      <CategoryPickerModal
+        visible={showCategoryPickerModal}
+        onClose={() => {
+          setShowCategoryPickerModal(false);
+          setPendingLibraryActivity(null);
+        }}
+        onSelect={handleCategorySelected}
+        onCreateCategory={handleCreateLibraryCategory}
+        categories={library?.categories || EMPTY_CATEGORIES}
+        theme={theme}
+        activityName={pendingLibraryActivity?.text || pendingLibraryActivity?.name || pendingLibraryActivity?.title || 'Activity'}
+      />
     </>
   );
 
