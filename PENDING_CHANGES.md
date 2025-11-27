@@ -1,3 +1,92 @@
+## Chore: Q4 2025 patch/minor dependency updates
+
+### Changes Made:
+
+- Updated 74+ packages to latest patch/minor versions within semver ranges
+- Key updates include:
+  - @babel/core, @babel/preset-env, @babel/runtime (7.27.x → 7.28.x)
+  - webpack (5.99.9 → 5.103.0)
+  - react-native-gesture-handler (2.27.1 → 2.29.1)
+  - react-native-svg (15.12.0 → 15.15.0)
+  - react-native-safe-area-context (5.6.1 → 5.6.2)
+  - react-native-vector-icons (10.2.0 → 10.3.0)
+  - react-native-qrcode-svg (6.3.15 → 6.3.20)
+  - react-native-vision-camera (4.7.2 → 4.7.3)
+  - mysql2, redis, express-rate-limit, joi (patch updates)
+  - @types/react (19.1.8 → 19.2.7)
+  - eslint-plugin-react-hooks (6.1.0 → 6.1.1)
+  - jest-environment-jsdom (30.1.2 → 30.2.0)
+
+### Technical Details:
+
+- No breaking changes - all updates within semver minor/patch ranges
+- TypeScript check passes
+- Web build compiles successfully
+- Note: react-native-vector-icons deprecated in favor of per-icon packages (future migration)
+
+### Files Changed:
+
+- `package-lock.json` - Updated dependency versions
+
+### Testing:
+
+- `npm run typecheck` passes
+- `npm run build:web` compiles successfully
+- No functional changes to application behavior
+
+### User Impact:
+
+- **Performance**: Latest bug fixes and optimizations from dependencies
+- **Breaking Changes**: None
+- **Migration Required**: None
+
+### Deployment Notes:
+
+- Routine maintenance update
+- Safe for all platforms (iOS, Android, Web)
+
+---
+
+## Security: Fix Q4 2025 quarterly review vulnerabilities
+
+### Changes Made:
+
+- Fixed 2 security vulnerabilities identified in quarterly package review
+- body-parser: DoS vulnerability when URL encoding is used (moderate severity)
+- node-forge: ASN.1 unbounded recursion, OID integer truncation, validator desync (high severity, dev-only)
+
+### Technical Details:
+
+- Ran `npm audit fix --legacy-peer-deps` to resolve peer dependency conflicts
+- body-parser updated from 2.2.0 to 2.2.1 (via express dependency)
+- node-forge updated to patched version (via webpack-dev-server → selfsigned)
+- No breaking changes - patch-level updates only
+
+### Files Changed:
+
+- `package-lock.json` - Updated dependency versions
+
+### Testing:
+
+- `npm audit` returns 0 vulnerabilities
+- Existing tests pass (pre-existing test issues with react-native-svg mocking unrelated)
+- No functional changes to application behavior
+
+### User Impact:
+
+- **Security**: Production server protected against body-parser DoS attack
+- **Security**: Development environment protected against ASN.1 parsing attacks
+- **Breaking Changes**: None
+- **Migration Required**: None
+
+### Deployment Notes:
+
+- Security patch - recommended for immediate deployment
+- No backend changes required
+- Safe for all platforms (iOS, Android, Web)
+
+---
+
 ## Feat: Split Activities button into Add + Library toolbar buttons (Story B)
 
 ### Changes Made:
