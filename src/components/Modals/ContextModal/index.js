@@ -1,1 +1,1 @@
-export { default as ContextModal } from './ContextModal';
+export { default as ContextModal } from './ContextModalV2';

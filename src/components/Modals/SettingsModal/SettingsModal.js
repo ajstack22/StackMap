@@ -17,11 +17,12 @@ import { SPACING } from '../../../constants';
 
 // Note: Draggable functionality has been removed in favor of button-based reordering
 
-const DEFAULT_TOOLBAR_ORDER = ['data', 'access', 'day', 'activities'];
+const DEFAULT_TOOLBAR_ORDER = ['data', 'access', 'complete', 'library', 'add'];
 
 const TOOLBAR_BUTTONS = {
-  activities: { label: 'Activities', icon: 'add-photo-alternate' },
-  day: { label: 'Day', icon: 'event' },
+  add: { label: 'Add', icon: 'add-circle' },
+  library: { label: 'Library', icon: 'bookmark' },
+  complete: { label: 'Complete', icon: 'check-circle' },
   access: { label: 'Access', icon: 'security' },
   data: { label: 'Data', icon: 'source' },
 };
@@ -47,6 +48,9 @@ const SettingsModal = ({
   onSaveBannerPosition,
   onSaveDisplayMode,
   onSaveCelebration,
+  // Day mode settings
+  dayMode,
+  setDayMode,
 }) => {
   // Native modules removed - using standard components
 
@@ -106,20 +110,22 @@ const SettingsModal = ({
   }, []);
 
   useEffect(() => {
+    let newOrder;
+
     if (currentOrder && currentOrder.length) {
       // Map old IDs to new ones if needed
       const idMap = {
         users: 'access',
         share: 'data',
-        complete: 'day',
-        plan: 'day',
-        library: 'activities',
-        add: 'activities',
+        day: 'complete', // Migrate 'day' to 'complete'
+        plan: 'complete', // Also map old 'plan' to 'complete'
+        activities: 'add', // Map old 'activities' to 'add'
+        new: 'add', // Map 'new' to 'add' for any existing configs
         sort: null, // Remove old sort button
       };
 
       // Filter and map the order
-      const filteredOrder = currentOrder
+      let filteredOrder = currentOrder
         .map(id => {
           // Filter out special buttons
           if (id === 'settings' || id === 'more' || id === 'sort') return null;
@@ -128,18 +134,34 @@ const SettingsModal = ({
         })
         .filter(id => id && TOOLBAR_BUTTONS[id]); // Remove nulls and invalid IDs
 
+      // Add any missing buttons from DEFAULT_TOOLBAR_ORDER
+      // This handles migration when new buttons are added (like 'library')
+      DEFAULT_TOOLBAR_ORDER.forEach(id => {
+        if (!filteredOrder.includes(id)) {
+          // Insert new buttons at their default position
+          const defaultIndex = DEFAULT_TOOLBAR_ORDER.indexOf(id);
+          filteredOrder.splice(defaultIndex, 0, id);
+        }
+      });
+
       // On Android tablets, force default if we get a suspicious result
       if (Platform.OS === 'android' && filteredOrder.length < 3) {
-        setButtonOrder(DEFAULT_TOOLBAR_ORDER);
+        newOrder = DEFAULT_TOOLBAR_ORDER;
       } else {
-        setButtonOrder(
-          filteredOrder.length ? filteredOrder : DEFAULT_TOOLBAR_ORDER,
-        );
+        newOrder = filteredOrder.length ? filteredOrder : DEFAULT_TOOLBAR_ORDER;
       }
     } else {
       // Reset to default if no custom order
-      setButtonOrder(DEFAULT_TOOLBAR_ORDER);
+      newOrder = DEFAULT_TOOLBAR_ORDER;
     }
+
+    // Only update if the order actually changed (prevents infinite loops)
+    setButtonOrder(prevOrder => {
+      if (JSON.stringify(prevOrder) === JSON.stringify(newOrder)) {
+        return prevOrder; // No change, return same reference
+      }
+      return newOrder;
+    });
   }, [currentOrder]);
 
   const handleBannerPositionChange = position => {
@@ -430,6 +452,46 @@ const SettingsModal = ({
               </View>
               <Text style={styles.settingDescription}>
                 Position of the StackMap banner
+              </Text>
+
+              {/* Day Mode Section */}
+              <Text style={styles.sectionTitle}>Day Mode</Text>
+              <View style={styles.toggleContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.toggle,
+                    dayMode === 'today' && styles.toggleActive,
+                  ]}
+                  onPress={() => setDayMode('today')}
+                >
+                  <Text
+                    style={[
+                      styles.toggleText,
+                      dayMode === 'today' && styles.toggleTextActive,
+                    ]}
+                  >
+                    Today Only
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.toggle,
+                    dayMode === 'both' && styles.toggleActive,
+                  ]}
+                  onPress={() => setDayMode('both')}
+                >
+                  <Text
+                    style={[
+                      styles.toggleText,
+                      dayMode === 'both' && styles.toggleTextActive,
+                    ]}
+                  >
+                    Both Days
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.settingDescription}>
+                Show just today or both today and tomorrow
               </Text>
 
               {/* Divider */}

@@ -1,3 +1,62 @@
+## Feat: Split Activities button into Add + Library toolbar buttons (Story B)
+
+### Changes Made:
+
+- Split single "Activities" toolbar button into two separate buttons: "Add" and "Library"
+- Created AddActivityModal component (standalone modal for creating new activities)
+- Created ActivityLibraryModal component (standalone modal for browsing activity library)
+- Updated EditModeToolbar with new button configurations
+- Updated SettingsModal button order to include add/library instead of activities
+- Toolbar now shows 5 buttons: Add, Library, Day, Access, Data
+
+### Technical Details:
+
+- **New Components**:
+  - `/src/components/Modals/AddActivityModal/` - Wrapper for AddTabContent
+  - `/src/components/Modals/ActivityLibraryModal/` - Wrapper for LibraryTabContent
+- **Reused existing code**: Both modals reuse existing tab content components (AddTabContent.js, LibraryTabContent.js)
+- **Backward compatibility**: Old 'activities' button order will map to 'add' via SettingsModal migration
+- **Button order**: DEFAULT_TOOLBAR_ORDER updated from ['data', 'access', 'day', 'activities'] to ['data', 'access', 'day', 'library', 'add']
+
+### Files Created:
+
+- `/src/components/Modals/AddActivityModal/AddActivityModal.js`
+- `/src/components/Modals/AddActivityModal/index.js`
+- `/src/components/Modals/ActivityLibraryModal/ActivityLibraryModal.js`
+- `/src/components/Modals/ActivityLibraryModal/index.js`
+
+### Files Modified:
+
+- `/src/components/EditModeToolbar/EditModeToolbar.js` - Split activities into new + library buttons
+- `/src/components/Modals/SettingsModal/SettingsModal.js` - Updated DEFAULT_TOOLBAR_ORDER and TOOLBAR_BUTTONS
+- `/src/components/index.js` - Added exports for new modals
+- `/App.js` - Added modal states, handlers, and rendered new modals
+
+### Testing:
+
+- Enter edit mode
+- Verify 5 toolbar buttons visible: Add, Library, Day, Access, Data
+- Tap "Add" - verify Add Activity modal opens
+- Create an activity - verify it adds to today
+- Tap "Library" - verify Activity Library modal opens
+- Select activity from library - verify it adds to today
+- Check Settings > Button Order includes new buttons
+
+### User Impact:
+
+- **Improved UX**: Two clear actions instead of tabbed modal
+- **Faster access**: Direct access to create or browse without switching tabs
+- **Breaking Changes**: None (old button orders auto-migrate)
+- **Migration Required**: None
+
+### Deployment Notes:
+
+- New feature - no backend changes required
+- Fully backward compatible
+- Safe for all platforms (iOS, Android, Web)
+
+---
+
 ## Cleanup: Remove dead ActivityLibrary code (44 files)
 
 ### Changes Made:

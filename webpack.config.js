@@ -4,17 +4,20 @@ const webpack = require('webpack');
 const { GenerateSW } = require('workbox-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const packageJson = require('./package.json');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
 module.exports = {
-  // Re-enable cache with proper invalidation
+  // Cache with content-based invalidation
   cache: {
     type: 'filesystem',
-    buildDependencies: { 
-      config: [__filename] 
+    buildDependencies: {
+      config: [__filename]
     },
-    version: 'v3-grid-layout-fix'  // Bump this for cache invalidation
+    // Dynamic version string ensures cache invalidates on version changes
+    // Date.now() forces rebuild when deploying to guarantee fresh bundles
+    version: `${packageJson.version}-${Date.now()}`
   },
   mode: process.env.NODE_ENV || 'development',
   entry: './index.web.js',

@@ -342,10 +342,12 @@ describe('version utilities', () => {
       expect(BUILD_VERSION).toMatch(/^\d{4}\.\d{2}\.\d{2}\.\d+$/);
     });
 
-    it.skip('should have the expected static value', () => {
+    it('should be a non-empty string in version format', () => {
       const { BUILD_VERSION } = require('../version');
 
-      expect(BUILD_VERSION).toBe('2025.09.16.3');
+      // BUILD_VERSION changes frequently, so just validate format
+      expect(BUILD_VERSION).toBeTruthy();
+      expect(BUILD_VERSION.split('.')).toHaveLength(4);
     });
   });
 

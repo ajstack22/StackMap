@@ -34,7 +34,6 @@ function getBuildType() {
       if (BuildConfigModule && BuildConfigModule.BUILD_TYPE_ENV) {
         const buildType = BuildConfigModule.BUILD_TYPE_ENV.toLowerCase();
         if (['qual', 'stage', 'beta', 'prod'].includes(buildType)) {
-          console.log('[BuildConfig] Android BuildConfigModule.BUILD_TYPE_ENV:', buildType);
           return buildType;
         }
       }
@@ -61,13 +60,11 @@ function getBuildType() {
       if (BuildConfigModule && BuildConfigModule.BUILD_TYPE_ENV) {
         const buildType = BuildConfigModule.BUILD_TYPE_ENV.toLowerCase();
         if (['qual', 'stage', 'beta', 'prod'].includes(buildType)) {
-          console.log('[BuildConfig] iOS BuildConfigModule.BUILD_TYPE_ENV:', buildType);
           return buildType;
         }
       }
     } catch (e) {
       // BuildConfig not available, fall through to other methods
-      console.warn('[BuildConfig] Failed to read iOS BuildConfigModule:', e);
     }
   }
 

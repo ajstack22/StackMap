@@ -130,7 +130,7 @@ class MinimalSyncService {
           }
         }
       } else {
-        console.log('[Sync] No existing sync ID found');
+        // No existing sync ID found
         this.isEnabled = false;
       }
     } catch (error) {
@@ -924,20 +924,15 @@ class MinimalSyncService {
       clearInterval(this.pullInterval);
     }
 
-    console.log('[Sync] Starting periodic pull (first pull in 30 seconds)');
-
     // DON'T pull immediately - let app finish loading
     // First pull will happen after interval delay
     this.pullInterval = setInterval(() => {
-      const now = new Date().toLocaleTimeString();
-      console.log(`[Sync] Periodic pull at ${now}`);
       this.pullAndNotify();
     }, this.pullIntervalDuration);
   }
 
   // Add new method for manual immediate pull (when needed)
   async pullImmediately() {
-    console.log('[Sync] Manual immediate pull requested');
     return await this.pullAndNotify();
   }
   

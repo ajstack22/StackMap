@@ -18,6 +18,54 @@ if [ -z "$APP_NAME" ]; then
 fi
 
 # ============================================
+# Build Artifact Verification
+# ============================================
+
+# Verify web build artifacts have been updated
+# Returns the bundle hash for logging/comparison
+verify_web_build_artifacts() {
+    local project_root=$(get_project_root)
+    local bundle_dir="$project_root/web/build"
+
+    log_step "Verifying web build artifacts..."
+
+    # Check that bundle directory exists
+    if [ ! -d "$bundle_dir" ]; then
+        log_error "Build directory not found: $bundle_dir"
+        return 1
+    fi
+
+    # Find the main bundle file (with contenthash)
+    local bundle_file=$(ls -t "$bundle_dir"/bundle.*.js 2>/dev/null | head -1)
+
+    if [ -z "$bundle_file" ]; then
+        # Fallback to bundle.js without hash
+        bundle_file="$bundle_dir/bundle.js"
+    fi
+
+    if [ ! -f "$bundle_file" ]; then
+        log_error "Bundle file not found in: $bundle_dir"
+        return 1
+    fi
+
+    # Calculate hash and get metadata
+    local bundle_hash=$(md5 -q "$bundle_file" 2>/dev/null || md5sum "$bundle_file" | cut -d' ' -f1)
+    local bundle_size=$(du -h "$bundle_file" | cut -f1)
+    local bundle_mtime=$(stat -f "%Sm" -t "%Y-%m-%d %H:%M:%S" "$bundle_file" 2>/dev/null || stat -c "%y" "$bundle_file" 2>/dev/null | cut -d. -f1)
+
+    log_success "Web bundle verified:"
+    log_info "  File: $(basename "$bundle_file")"
+    log_info "  Hash: $bundle_hash"
+    log_info "  Size: $bundle_size"
+    log_info "  Modified: $bundle_mtime"
+
+    # Store hash for comparison (optional - can be used to verify changes)
+    export LAST_BUNDLE_HASH="$bundle_hash"
+
+    return 0
+}
+
+# ============================================
 # Web Deployment Verification
 # ============================================
 
@@ -336,6 +384,7 @@ run_full_verification() {
 
     # Verify web deployment if applicable
     if echo "$platforms" | grep -q "web"; then
+        verify_web_build_artifacts || verification_failed=true
         verify_web_deployment "$tier" || verification_failed=true
         check_web_health "$tier" || verification_failed=true
     fi
@@ -360,6 +409,7 @@ run_full_verification() {
 }
 
 # Export functions
+export -f verify_web_build_artifacts
 export -f verify_web_deployment verify_mobile_builds
 export -f verify_ios_build verify_android_build
 export -f verify_version_updates verify_git_commits

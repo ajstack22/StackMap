@@ -14,7 +14,7 @@ export { TabbedModal, TabContent } from './TabbedModal';
 export { default as TimePicker } from './TimePicker';
 
 // Import modal components directly to avoid re-export issues
-import ContextModal from './Modals/ContextModal/ContextModal';
+import ContextModal from './Modals/ContextModal/ContextModalV2';
 import ActivityModal from './Modals/ActivityModal/ActivityModal';
 import PreferencesModal from './Modals/PreferencesModal/PreferencesModal';
 import PinModal from './Modals/PinModal/PinModal';
@@ -26,10 +26,12 @@ import ConflictResolutionModal from './ConflictResolutionModal/ConflictResolutio
 import DataModal from './Modals/DataModal/DataModal';
 import SettingsModal from './Modals/SettingsModal/SettingsModal';
 import ConfirmModal from './Modals/ConfirmModal/ConfirmModal';
-import DayManagementModal from './Modals/DayManagementModal/DayManagementModal';
+import CompleteDayModal from './Modals/CompleteDayModal/CompleteDayModal';
 import ActivityManagementModal from './Modals/ActivityManagementModal/ActivityManagementModal';
 import AccessModal from './Modals/AccessModal/AccessModal';
 import SyncPreviewModal from './Modals/SyncPreviewModal/SyncPreviewModal';
+import AddActivityModal from './Modals/AddActivityModal/AddActivityModal';
+import ActivityLibraryModal from './Modals/ActivityLibraryModal/ActivityLibraryModal';
 
 // Export the imported modal components
 export {
@@ -45,8 +47,10 @@ export {
   DataModal,
   SettingsModal,
   ConfirmModal,
-  DayManagementModal,
+  CompleteDayModal,
   ActivityManagementModal,
   AccessModal,
   SyncPreviewModal,
+  AddActivityModal,
+  ActivityLibraryModal,
 };

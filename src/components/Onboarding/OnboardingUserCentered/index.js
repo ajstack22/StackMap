@@ -360,8 +360,7 @@ const OnboardingUserCentered = ({
         throw new Error('Valid 32-character recovery phrase is required');
       }
 
-      // PHASE 1 DIAGNOSTIC: Set isSyncing flag to prevent race condition
-      console.log('[PHASE1] Setting isSyncing=true before data import');
+      // Set isSyncing flag to prevent race condition
       if (syncStoreIntegration) {
         syncStoreIntegration.isSyncing = true;
       }
@@ -405,36 +404,19 @@ const OnboardingUserCentered = ({
 
                 // Skip deleted users
                 if (user.deleted) {
-                  console.log('[OnboardingSync] Skipping deleted user:', user.id);
                   return false;
                 }
 
                 return true;
               });
 
-            // Log successful import for debugging
-            console.log('[OnboardingSync] Successfully imported users:', {
-              count: syncedUsers.length,
-              users: syncedUsers.map(u => ({
-                id: u.id,
-                name: u.name,
-                hasIcon: !!u.icon,
-                hasDays: !!u.days,
-                hasActivities: !!u.activities,
-                daysKeys: u.days ? Object.keys(u.days) : [],
-                activitiesType: typeof u.activities
-              }))
-            });
-
             if (syncedUsers.length > 0) {
               setUsers(syncedUsers);
               setImportResult(result);
               setUserJourney(prev => ({ ...prev, syncEnabled: true }));
 
-              // PHASE 1 DIAGNOSTIC: Wait for AsyncStorage flush, then reset flag
-              console.log('[PHASE1] Waiting 2000ms for AsyncStorage flush...');
+              // Wait for AsyncStorage flush, then reset flag
               await new Promise(resolve => setTimeout(resolve, 2000));
-              console.log('[PHASE1] Resetting isSyncing=false after flush');
               if (syncStoreIntegration) {
                 syncStoreIntegration.isSyncing = false;
               }
@@ -457,10 +439,8 @@ const OnboardingUserCentered = ({
         setImportResult(result);
         setUserJourney(prev => ({ ...prev, syncEnabled: true }));
 
-        // PHASE 1 DIAGNOSTIC: Wait for AsyncStorage flush, then reset flag
-        console.log('[PHASE1] Waiting 2000ms for AsyncStorage flush...');
+        // Wait for AsyncStorage flush, then reset flag
         await new Promise(resolve => setTimeout(resolve, 2000));
-        console.log('[PHASE1] Resetting isSyncing=false after flush');
         if (syncStoreIntegration) {
           syncStoreIntegration.isSyncing = false;
         }
@@ -493,12 +473,6 @@ const OnboardingUserCentered = ({
         syncEnabled: userJourney.syncEnabled,
         recoveryPhrase: userJourney.syncEnabled ? (generatedSyncCode || recoveryPhrase) : null,
       };
-
-      console.log('[OnboardingSync] Completing onboarding with importedData:', {
-        userCount: Object.keys(importResult.data.users || {}).length,
-        hasCurrentUser: !!importResult.data.currentUser,
-        hasLibrary: !!importResult.data.library
-      });
 
       onComplete(onboardingData);
     } else {

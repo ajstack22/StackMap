@@ -162,10 +162,12 @@ import {
   AccessModal,
   SettingsModal,
   ConfirmModal,
-  DayManagementModal,
+  CompleteDayModal,
   ActivityManagementModal,
   SyncPreviewModal,
 } from './src/components';
+import AddActivityModal from './src/components/Modals/AddActivityModal';
+import ActivityLibraryModal from './src/components/Modals/ActivityLibraryModal';
 import EditModeList from './src/components/EditModeList';
 import { EMPTY_CATEGORIES } from './src/constants';
 import OnboardingUserCentered from './src/components/Onboarding/OnboardingUserCentered';
@@ -356,12 +358,13 @@ const App = () => {
   const [accessModalActiveTab, setAccessModalActiveTab] = useState(0);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   // Sync diagnostic state removed - test component no longer needed
-  const [showDayManagementModal, setShowDayManagementModal] = useState(false);
-  const [dayManagementActiveTab, setDayManagementActiveTab] = useState(0);
+  const [showCompleteDayModal, setShowCompleteDayModal] = useState(false);
   const [showActivityManagementModal, setShowActivityManagementModal] =
     useState(false);
   const [activityManagementActiveTab, setActivityManagementActiveTab] =
     useState(0);
+  const [showAddActivityModal, setShowAddActivityModal] = useState(false);
+  const [showActivityLibraryModal, setShowActivityLibraryModal] = useState(false);
   const [showSyncPreviewModal, setShowSyncPreviewModal] = useState(false);
   const [syncPreviewPhrase, setSyncPreviewPhrase] = useState(null);
   const [showOnboardingImport, setShowOnboardingImport] = useState(false);
@@ -4968,24 +4971,9 @@ Users: ${userNames} (${userCount} total)
               onSupport={() => setShowSupportModal(true)}
               toolbarOrder={toolbarOrder}
               moreButtonPosition={moreButtonPosition}
-              onDayManagement={tab => {
-                setDayManagementActiveTab(tab === 'plan' ? 0 : 1);
-                // Use setTimeout to ensure state update happens first
-                setTimeout(() => {
-                  setShowDayManagementModal(true);
-                }, 0);
-              }}
-              onActivityManagement={tab => {
-
-                const tabIndex = tab === 'add' ? 0 : 1;
-
-                setActivityManagementActiveTab(tabIndex);
-                // Use setTimeout to ensure state update happens first
-                setTimeout(() => {
-
-                  setShowActivityManagementModal(true);
-              }, 0);
-            }}
+              onCompleteDay={() => setShowCompleteDayModal(true)}
+              onAddActivity={() => setShowAddActivityModal(true)}
+              onActivityLibrary={() => setShowActivityLibraryModal(true)}
             theme={theme}
             position={'top'}
             onAnimationComplete={() => {
@@ -5090,24 +5078,9 @@ Users: ${userNames} (${userCount} total)
               onSupport={() => setShowSupportModal(true)}
               toolbarOrder={toolbarOrder}
               moreButtonPosition={moreButtonPosition}
-              onDayManagement={tab => {
-                setDayManagementActiveTab(tab === 'plan' ? 0 : 1);
-                // Use setTimeout to ensure state update happens first
-                setTimeout(() => {
-                  setShowDayManagementModal(true);
-                }, 0);
-              }}
-              onActivityManagement={tab => {
-
-                const tabIndex = tab === 'add' ? 0 : 1;
-
-                setActivityManagementActiveTab(tabIndex);
-                // Use setTimeout to ensure state update happens first
-                setTimeout(() => {
-
-                  setShowActivityManagementModal(true);
-              }, 0);
-            }}
+              onCompleteDay={() => setShowCompleteDayModal(true)}
+              onAddActivity={() => setShowAddActivityModal(true)}
+              onActivityLibrary={() => setShowActivityLibraryModal(true)}
             theme={theme}
             position={'bottom'}
             onAnimationComplete={() => {
@@ -5304,26 +5277,13 @@ Users: ${userNames} (${userCount} total)
         onUserChange={userId => {
           setCurrentUser(userId);
           if (users[userId]?.settings?.theme) {
-            const theme = users[userId].settings.theme;
-            if (theme) setCurrentTheme(theme);
+            const userTheme = users[userId].settings.theme;
+            if (userTheme) setCurrentTheme(userTheme);
           }
         }}
-        onSave={contextData => {
-          // Save context data for the selected user
-          const userToSave = contextData.user || currentUser;
-          const updatedContextData = {
-            ...userContextData,
-            [userToSave]: contextData,
-          };
-          setUserContextData(updatedContextData);
-          // User context is now persisted automatically through Zustand
-          showToast({ message: 'Context saved!' });
-
-          // Only close modal if it's not an auto-save
-          if (!contextData.autoSave) {
-            setShowUserDayModal(false);
-          }
-        }}
+        dayMode={dayMode}
+        currentDay={currentDay}
+        onDayChange={day => setCurrentDay(day)}
       />
 
       {/* Sync Loading Indicator */}
@@ -5490,34 +5450,21 @@ Users: ${userNames} (${userCount} total)
         onSaveBannerPosition={saveBannerPositionPreference}
         onSaveDisplayMode={saveDisplayModePreference}
         onSaveCelebration={saveCelebrationPreference}
+        // Day mode settings
+        dayMode={dayMode}
+        setDayMode={setDayMode}
       />
 
-      {/* Day Management Modal */}
-      <DayManagementModal
-        visible={showDayManagementModal}
-        onClose={() => setShowDayManagementModal(false)}
+      {/* Complete Day Modal */}
+      <CompleteDayModal
+        visible={showCompleteDayModal}
+        onClose={() => setShowCompleteDayModal(false)}
         theme={theme}
         activities={users[currentUser]?.days?.today?.activities || []}
-        completedCount={(users[currentUser]?.days?.today?.activities || []).filter(a => a.completed).length}
-        totalCount={(users[currentUser]?.days?.today?.activities || []).length}
         onCompleteDay={handleCompleteDayConfirm}
         showToast={showToast}
         users={users}
         currentUser={currentUser}
-        initialActiveTab={dayManagementActiveTab}
-        dayMode={dayMode}
-        setDayMode={setDayMode}
-        onSelectUserDay={(userId, day) => {
-          setCurrentUser(userId);
-          setCurrentDay(day);
-          const dayActivities = users[userId]?.days?.[day]?.activities || [];
-          // Activities are now derived from users state, no need to set them separately
-          // Load the selected user's theme
-          if (users[userId]?.settings?.theme) {
-            const theme = users[userId].settings.theme;
-            if (theme) setCurrentTheme(theme);
-          }
-        }}
       />
 
 
@@ -5613,6 +5560,109 @@ Users: ${userNames} (${userCount} total)
         myLibrary={library}
         onSaveToMyLibrary={() => {}}
       />
+
+      {/* Add Activity Modal */}
+      {showAddActivityModal && (
+        <AddActivityModal
+          visible={showAddActivityModal}
+          onClose={() => setShowAddActivityModal(false)}
+          theme={theme}
+          showToast={showToast}
+          onAddActivity={async activity => {
+            // Get device ID for enhanced activity IDs
+            const deviceId = await encryptionService.getDeviceId();
+
+            const newActivity = {
+              id: `${deviceId}-${Date.now()}-${Math.random()
+                .toString(36)
+                .substr(2, 9)}`,
+              text: activity.name || activity.text,
+              description: activity.description || '',
+              icon: activity.icon,
+              completed: false,
+              pinned: false,
+              deleted: false,
+              type: 'task',
+              modifiedAt: Date.now(),
+              ...(activity.isPersonal && { isPersonal: true }),
+            };
+            updateUserActivities(currentUser, currentDay, [
+              ...activities,
+              newActivity,
+            ]);
+            showToast({
+              message: `Added "${newActivity.text}" to today's activities`,
+            });
+            setShowAddActivityModal(false);
+          }}
+        />
+      )}
+
+      {/* Activity Library Modal */}
+      {showActivityLibraryModal && (
+        <ActivityLibraryModal
+          visible={showActivityLibraryModal}
+          onClose={() => setShowActivityLibraryModal(false)}
+          theme={theme}
+          categories={library?.categories}
+          showToast={showToast}
+          onSaveCategories={updateLibraryCategories}
+          stackMapLibrary={STACKMAP_LIBRARY}
+          myLibrary={library}
+          onSelectActivity={async activity => {
+            // Get device ID for enhanced activity IDs
+            const deviceId = await encryptionService.getDeviceId();
+
+            const newActivity = {
+              id: `${deviceId}-${Date.now()}-${Math.random()
+                .toString(36)
+                .substr(2, 9)}`,
+              text: activity.name || activity.text,
+              description: activity.description || '',
+              icon: activity.icon || DEFAULT_ACTIVITY_EMOJI,
+              completed: false,
+              pinned: false,
+              deleted: false,
+              type: 'task',
+              modifiedAt: Date.now(),
+            };
+            updateUserActivities(currentUser, currentDay, [
+              ...activities,
+              newActivity,
+            ]);
+            showToast({
+              message: `Added "${newActivity.text}" to today's activities`,
+            });
+          }}
+          onSelectMultipleActivities={async activitiesToAdd => {
+            // Get device ID for enhanced activity IDs
+            const deviceId = await encryptionService.getDeviceId();
+
+            // Create all new activities at once
+            const newActivities = activitiesToAdd.map((activity, index) => ({
+              id: `${deviceId}-${Date.now()}-${index}-${Math.random()
+                .toString(36)
+                .substr(2, 9)}`,
+              text: activity.name || activity.text || '',
+              description: activity.description || '',
+              icon: activity.icon || DEFAULT_ACTIVITY_EMOJI,
+              completed: false,
+              pinned: false,
+              deleted: false,
+              type: 'task',
+            }));
+
+            // Add all new activities at once
+            updateUserActivities(currentUser, currentDay, [
+              ...activities,
+              ...newActivities,
+            ]);
+            showToast({
+              message: `Added ${newActivities.length} activities to today!`,
+            });
+          }}
+        />
+      )}
 
       {/* PIN Modal for Edit Mode - Standalone for when not in Users & Security modal */}
       {showPinModal && !showAccessModal && (

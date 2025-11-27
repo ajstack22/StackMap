@@ -124,8 +124,9 @@ const renderMoreButton = (
 
 // Helper function to get action configurations
 const getActionConfigurations = (
-  onActivityManagement,
-  onDayManagement,
+  onAddActivity,
+  onActivityLibrary,
+  onCompleteDay,
   onUsers,
   onData,
   onCustomize,
@@ -133,15 +134,20 @@ const getActionConfigurations = (
   theme
 ) => {
   return {
-    activities: {
-      label: 'Activities',
-      icon: 'add-photo-alternate',
-      onPress: () => onActivityManagement && onActivityManagement('add'),
+    add: {
+      label: 'Add',
+      icon: 'add-circle',
+      onPress: () => onAddActivity && onAddActivity(),
     },
-    day: {
-      label: 'Day',
-      icon: 'event',
-      onPress: () => onDayManagement && onDayManagement('plan'),
+    library: {
+      label: 'Library',
+      icon: 'bookmark',
+      onPress: () => onActivityLibrary && onActivityLibrary(),
+    },
+    complete: {
+      label: 'Complete',
+      icon: 'check-circle',
+      onPress: () => onCompleteDay && onCompleteDay(),
     },
     access: {
       label: 'Access',
@@ -182,7 +188,7 @@ const getVisibleAndOverflowActions = (
   theme
 ) => {
   // Default order if none provided
-  const defaultOrder = ['data', 'access', 'day', 'activities'];
+  const defaultOrder = ['data', 'access', 'complete', 'library', 'add'];
 
   // Validate toolbar order
   const validIds = Object.keys(actionMap);
@@ -274,8 +280,9 @@ const EditModeToolbar = ({
   onExit,
   onData,
   onUsers,
-  onDayManagement,
-  onActivityManagement,
+  onCompleteDay,
+  onAddActivity,
+  onActivityLibrary,
   onCustomize,
   onSupport,
   theme,
@@ -368,8 +375,9 @@ const EditModeToolbar = ({
   }, [visible, position, onAnimationComplete]);
 
   const actionMap = getActionConfigurations(
-    onActivityManagement,
-    onDayManagement,
+    onAddActivity,
+    onActivityLibrary,
+    onCompleteDay,
     onUsers,
     onData,
     onCustomize,
