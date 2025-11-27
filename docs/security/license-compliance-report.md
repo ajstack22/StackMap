@@ -1,7 +1,7 @@
 # License Compliance Report
 
-**Date:** 2025-10-02
-**Total Production Dependencies:** 605 packages
+**Date:** 2025-11-27 (Updated Q4 2025)
+**Total Production Dependencies:** 528 packages
 
 ## Summary
 
@@ -12,13 +12,13 @@
 
 | License | Count | Status |
 |---------|-------|--------|
-| MIT | 496 | ✅ Approved |
-| ISC | 41 | ✅ Approved |
+| MIT | 497 | ✅ Approved |
+| ISC | 42 | ✅ Approved |
 | BSD-3-Clause | 30 | ✅ Approved |
-| Apache-2.0 | 15 | ✅ Approved |
+| Apache-2.0 | 16 | ✅ Approved |
 | BSD-2-Clause | 11 | ✅ Approved |
 | Unlicense | 2 | ✅ Approved |
-| UNLICENSED | 1 | ⚠️ Review |
+| UNLICENSED | 1 | ℹ️ StackMap itself (private) |
 | Python-2.0 | 1 | ✅ Approved |
 | CC-BY-4.0 | 1 | ✅ Approved |
 | 0BSD | 1 | ✅ Approved |
@@ -120,6 +120,9 @@ All production dependencies use permissive licenses compatible with:
 
 ---
 
-*Generated: 2025-10-02*
+*Generated: 2025-11-27*
 *Tool: license-checker*
 *Scan Type: Production dependencies only*
+
+---
+**See also:** [Quarterly Package Review Q4 2025](./quarterly-package-review-2025-Q4.md)
