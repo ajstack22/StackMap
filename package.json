@@ -1,6 +1,6 @@
 {
   "name": "StackMap",
-  "version": "2025.12.02.7",
+  "version": "2025.12.02.10",
   "private": true,
   "scripts": {
     "postinstall": "patch-package",
