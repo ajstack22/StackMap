@@ -296,7 +296,6 @@ const PasswordUtils = {
      */
     generateSecurePassword: (length = 16) => {
         const cryptoLib = require('crypto');
-        const hmac = cryptoLib.createHmac('sha256', secret); // 'secret' is not defined in this scope. This line might cause a runtime error.
         // eslint-disable-next-line no-secrets/no-secrets -- Character set for random password generation, not a secret
         const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
         let password = '';
@@ -306,9 +305,7 @@ const PasswordUtils = {
             password += charset.charAt(randomIndex);
         }
 
-        // 'hex' is not defined in this scope. This line will cause a runtime error.
-        // The original function returned a string password. This change fundamentally alters its behavior.
-        return parseInt(hex, 16);
+        return password;
     }
 };
 
