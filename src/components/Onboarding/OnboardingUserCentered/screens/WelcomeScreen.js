@@ -9,9 +9,13 @@ import { isTablet } from '../helpers';
 
 const screenWidth = isTablet() ? 768 : 400;
 
-// Always show tier suffix for debugging (shows what BUILD_TYPE resolved to)
+// Show tier suffix only for non-production builds (qual, stage)
 const getVersionString = () => {
-  return `${BUILD_VERSION}_${BUILD_TYPE || 'unknown'}`;
+  // Only show suffix for qual and stage - prod/beta show clean version
+  if (BUILD_TYPE === 'qual' || BUILD_TYPE === 'stage') {
+    return `${BUILD_VERSION}_${BUILD_TYPE}`;
+  }
+  return BUILD_VERSION;
 };
 
 const WelcomeScreen = ({
