@@ -3,10 +3,16 @@ import { View, TouchableOpacity, Platform } from 'react-native';
 import { Text } from '../../../Typography';
 import Logo from '../../../Logo/Logo';
 import { BUILD_VERSION } from '../../../../utils/version';
+import { BUILD_TYPE } from '../../../../config/buildConfig';
 import { styles } from '../styles';
 import { isTablet } from '../helpers';
 
 const screenWidth = isTablet() ? 768 : 400;
+
+// Always show tier suffix for debugging (shows what BUILD_TYPE resolved to)
+const getVersionString = () => {
+  return `${BUILD_VERSION}_${BUILD_TYPE || 'unknown'}`;
+};
 
 const WelcomeScreen = ({
   theme,
@@ -69,7 +75,7 @@ const WelcomeScreen = ({
       </View>
 
       <View style={styles.versionContainer}>
-        <Text style={styles.versionText}>v{BUILD_VERSION}</Text>
+        <Text style={styles.versionText}>v{getVersionString()}</Text>
       </View>
     </>
   </View>

@@ -51,20 +51,23 @@ function getBuildType() {
       const { NativeModules } = require('react-native');
 
       // Try to read from Info.plist via RNCConfig or custom module
-      // For now, we'll use a simple approach with react-native-config if available
-      // Otherwise, fall through to __DEV__ detection
-
-      // Alternative: Read directly from bundle's Info.plist
-      // This requires a native module which we'll add
       const BuildConfigModule = NativeModules.BuildConfigModule;
+
+      // Debug: Log what we're getting from native module
+      console.log('[BuildConfig] iOS Native Module:', JSON.stringify(BuildConfigModule));
+
       if (BuildConfigModule && BuildConfigModule.BUILD_TYPE_ENV) {
         const buildType = BuildConfigModule.BUILD_TYPE_ENV.toLowerCase();
+        console.log('[BuildConfig] iOS BUILD_TYPE_ENV from native:', buildType);
+        console.log('[BuildConfig] iOS DISPLAY_NAME from native:', BuildConfigModule.DISPLAY_NAME);
         if (['qual', 'stage', 'beta', 'prod'].includes(buildType)) {
           return buildType;
         }
+      } else {
+        console.log('[BuildConfig] iOS BuildConfigModule missing or no BUILD_TYPE_ENV');
       }
     } catch (e) {
-      // BuildConfig not available, fall through to other methods
+      console.warn('[BuildConfig] iOS native module error:', e);
     }
   }
 

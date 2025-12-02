@@ -19,3 +19,6 @@ BUILD_TYPE_ENV = beta
 // Code signing (use app-store for TestFlight distribution)
 CODE_SIGN_STYLE = Automatic
 DEVELOPMENT_TEAM = 84W9WSYQQB
+
+// Swift compilation flag for build type detection (compile-time constant)
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) BETA

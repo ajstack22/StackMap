@@ -447,7 +447,8 @@ const OnboardingUserCentered = ({
 
         animateStepTransition('syncSuccess');
       } else {
-        throw new Error('Failed to import sync data');
+        // Include the actual error from joinSync for debugging
+        throw new Error(result?.error || 'Failed to import sync data');
       }
     } catch (error) {
       setImportError(error.message || 'Failed to import sync data');

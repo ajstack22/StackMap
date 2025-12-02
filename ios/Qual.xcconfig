@@ -20,3 +20,6 @@ BUILD_TYPE_ENV = qual
 CODE_SIGN_IDENTITY = Apple Development
 CODE_SIGN_STYLE = Automatic
 DEVELOPMENT_TEAM = 84W9WSYQQB
+
+// Swift compilation flag for build type detection (compile-time constant)
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) QUAL

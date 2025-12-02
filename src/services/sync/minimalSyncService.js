@@ -399,23 +399,22 @@ class MinimalSyncService {
 
 
   async joinSync(recoveryPhrase) {
-    
     // Clean recovery phrase (remove any spaces for consistency)
     const cleanPhrase = recoveryPhrase.replace(/[\s-]+/g, '');
-    
+
     // Store the cleaned recovery phrase
     this.recoveryPhrase = cleanPhrase;
-    
+
     // Generate sync ID from recovery phrase
     this.syncId = await this.generateSyncId(cleanPhrase);
-    
+
     // Initialize encryption
     await this.initializeEncryption(cleanPhrase, this.syncId);
-    
+
     // Use encryption service's device ID
     this.deviceId = await encryptionService.getDeviceId();
-    
-    
+
+
     try {
       // Use timestamp endpoint for joining (POST request)
       const url = `${this.API_BASE}/join_timestamp.php`;
@@ -427,15 +426,15 @@ class MinimalSyncService {
           device_id: this.deviceId
         })
       });
-      
+
       // Check response status first
       if (!response.ok) {
         const text = await response.text();
-        throw new Error(`Server error ${response.status}: ${text.substring(0, 200)}`);
+        throw new Error(`Server error ${response.status} [${url}]: ${text.substring(0, 200)}`);
       }
-      
+
       const result = await response.json();
-      
+
       if (result.success) {
         if (result.latest_record && result.latest_record.encrypted_blob) {
           // We have data - decrypt and use it

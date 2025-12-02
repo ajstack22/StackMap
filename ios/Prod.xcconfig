@@ -19,3 +19,6 @@ BUILD_TYPE_ENV = prod
 // Code signing (use app-store for App Store distribution)
 CODE_SIGN_STYLE = Automatic
 DEVELOPMENT_TEAM = 84W9WSYQQB
+
+// Swift compilation flag for build type detection (compile-time constant)
+// PROD is the default (no flag needed - handled by #else in Swift)

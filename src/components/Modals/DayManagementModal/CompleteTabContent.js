@@ -254,8 +254,13 @@ const CompleteTabContent = ({
   return (
     <>
       <ScrollView
+        style={Platform.OS === 'android' ? { flex: 1 } : undefined}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[{ flexGrow: 1 }, styles.scrollContainer]}
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
+        scrollEventThrottle={16}
+        bounces={Platform.OS === 'ios'}
       >
         <View style={styles.contentSection}>
           {/* Header Panel - Using formPanel style to match Plan tab */}

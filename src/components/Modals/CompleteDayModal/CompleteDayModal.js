@@ -7,12 +7,11 @@ import {
   Platform,
   StatusBar,
   StyleSheet,
-  Dimensions,
 } from 'react-native';
 import { Text } from '../../Typography';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import CompleteTabContent from '../DayManagementModal/CompleteTabContent';
-import { SPACING, TYPOGRAPHY, THEMES } from '../../../constants';
+import { SPACING, TYPOGRAPHY } from '../../../constants';
 
 /**
  * CompleteDayModal - Single-purpose modal for completing the day
@@ -52,7 +51,7 @@ const CompleteDayModal = ({
       statusBarTranslucent={true}
       onRequestClose={onClose}
     >
-      <View style={styles.outerContainer}>
+      <View style={[styles.modalContainer, { backgroundColor: theme.light }]}>
         {Platform.OS === 'android' && (
           <StatusBar
             backgroundColor={theme.primary}
@@ -60,43 +59,41 @@ const CompleteDayModal = ({
             translucent={false}
           />
         )}
-        <View style={[styles.container, { backgroundColor: theme.light }]}>
-          {Platform.OS === 'android' && (
-            <View
-              style={{
-                backgroundColor: theme.primary,
-                height: StatusBar.currentHeight || 24,
-              }}
-            />
-          )}
+        {Platform.OS === 'android' && (
+          <View
+            style={{
+              backgroundColor: theme.primary,
+              height: StatusBar.currentHeight || 24,
+            }}
+          />
+        )}
 
-          <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.primary }]}>
-            {/* Header */}
-            <View style={[styles.header, { backgroundColor: theme.primary }]}>
-              <View style={styles.headerLeft}>
-                <Icon name="check-circle" size={24} color="white" style={styles.headerIcon} />
-                <Text style={styles.headerTitle}>Complete Day</Text>
+        {/* Header in SafeAreaView */}
+        <SafeAreaView style={{ backgroundColor: theme.primary }}>
+          <View style={[styles.header, { backgroundColor: theme.primary }]}>
+            <View style={styles.headerLeft}>
+              <Icon name="check-circle" size={24} color="white" style={styles.headerIcon} />
+              <Text style={styles.headerTitle}>Complete Day</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <View style={styles.closeCircle}>
+                <Icon name="close" size={20} color="white" />
               </View>
-              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <View style={styles.closeCircle}>
-                  <Icon name="close" size={20} color="white" />
-                </View>
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
 
-            {/* Content - Reuse CompleteTabContent */}
-            <View style={[styles.content, { backgroundColor: theme.light }]}>
-              <CompleteTabContent
-                theme={theme}
-                activities={activities}
-                onCompleteDay={handleCompleteDay}
-                loading={loading}
-                showToast={showToast}
-                currentUser={currentUser}
-                users={users}
-              />
-            </View>
-          </SafeAreaView>
+        {/* Content outside SafeAreaView for proper Android scrolling */}
+        <View style={[styles.content, { backgroundColor: theme.light }]}>
+          <CompleteTabContent
+            theme={theme}
+            activities={activities}
+            onCompleteDay={handleCompleteDay}
+            loading={loading}
+            showToast={showToast}
+            currentUser={currentUser}
+            users={users}
+          />
         </View>
       </View>
     </Modal>
@@ -104,13 +101,7 @@ const CompleteDayModal = ({
 };
 
 const styles = StyleSheet.create({
-  outerContainer: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
-  safeArea: {
+  modalContainer: {
     flex: 1,
   },
   header: {

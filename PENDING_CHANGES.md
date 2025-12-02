@@ -1,3 +1,46 @@
+## Fix: iOS Stage/Beta builds using wrong API endpoint (hitting PROD instead of QUAL)
+
+### Changes Made:
+
+- Fixed iOS release builds falling back to PROD API instead of using correct environment-specific API
+- Root cause: Swift native module wasn't registering correctly with React Native 0.80 Legacy Architecture
+- Solution: Rewrote BuildConfigModule as pure Objective-C (eliminates Swift bridging complexity)
+
+### Technical Details:
+
+- Deleted `BuildConfigModule.swift` (Swift bridging was failing silently)
+- Rewrote `BuildConfigModule.m` as complete Objective-C module using `RCT_EXPORT_MODULE()`
+- Uses `constantsToExport` to expose BUILD_TYPE_ENV derived from CFBundleDisplayName
+- `requiresMainQueueSetup` returns YES (required for constants export)
+- This is the documented, reliable pattern for Legacy Architecture native modules
+
+### Files Changed:
+
+- `ios/StackMapNative/BuildConfigModule.m` - Rewritten as complete Obj-C module
+- `ios/StackMapNative/BuildConfigModule.swift` - DELETED
+- `src/components/Onboarding/OnboardingUserCentered/index.js` - Show actual error from joinSync
+- `src/components/Onboarding/OnboardingUserCentered/screens/WelcomeScreen.js` - Show tier suffix in version
+- `src/config/buildConfig.js` - Added debug logging for native module
+- `src/services/sync/minimalSyncService.js` - Include API URL in error messages
+
+### Testing:
+
+- Deploy to Stage and verify sync import works on iPad
+- Version on onboarding screen should show "_stage" suffix (e.g., v2025.12.02.3_stage)
+- If still showing "_prod", native module is still not working
+
+### User Impact:
+
+- **Fixed**: iOS Stage/Beta users can now join syncs (were getting "Database connection failed" from wrong API)
+- **Breaking Changes**: None
+- **Migration Required**: None
+
+### Deployment Notes:
+
+- Deploy to Stage --ios to verify fix
+
+---
+
 ## Chore: Q4 2025 patch/minor dependency updates
 
 ### Changes Made:

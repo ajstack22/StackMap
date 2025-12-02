@@ -82,8 +82,8 @@ android {
         applicationId "com.stackmapnative"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 251126001
-        versionName "25.11.26"
+        versionCode 251202004
+        versionName "25.12.02"
 
         // Handle react-native-camera product flavor dimension
         missingDimensionStrategy 'react-native-camera', 'general'

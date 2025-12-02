@@ -1,0 +1,15 @@
+Custom Library Groups
+
+• Save activities to any library group - no longer limited to "My Templates"
+• Create new groups on the fly when saving an activity
+• Reorder activities within groups using up/down arrows
+• Activity order syncs across all your devices
+
+Improved Toolbar
+
+• Split "Activities" into separate "Add" and "Library" buttons
+• Faster access to create new activities or browse your library
+
+Bug Fixes
+
+• Improved cross-device sync reliability
