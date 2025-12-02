@@ -1743,7 +1743,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-safe-area-context (5.6.1):
+  - react-native-safe-area-context (5.6.2):
     - React-Core
   - React-NativeModulesApple (0.80.1):
     - boost
@@ -2225,7 +2225,7 @@ PODS:
     - React-Core
   - RNFS (2.20.0):
     - React-Core
-  - RNGestureHandler (2.27.1):
+  - RNGestureHandler (2.29.1):
     - boost
     - DoubleConversion
     - fast_float
@@ -2254,9 +2254,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - RNSVG (15.12.0):
+  - RNSVG (15.15.0):
     - React-Core
-  - RNVectorIcons (10.2.0):
+  - RNVectorIcons (10.3.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -2286,11 +2286,11 @@ PODS:
     - SocketRocket
     - Yoga
   - SocketRocket (0.7.1)
-  - VisionCamera (4.7.2):
-    - VisionCamera/Core (= 4.7.2)
-    - VisionCamera/React (= 4.7.2)
-  - VisionCamera/Core (4.7.2)
-  - VisionCamera/React (4.7.2):
+  - VisionCamera (4.7.3):
+    - VisionCamera/Core (= 4.7.3)
+    - VisionCamera/React (= 4.7.3)
+  - VisionCamera/Core (4.7.3)
+  - VisionCamera/React (4.7.3):
     - React-Core
   - Yoga (0.0.0)
 
@@ -2610,7 +2610,7 @@ SPEC CHECKSUMS:
   react-native-mmkv: bf4747d65be520ae2dfa36933045f5a70fee4d9b
   react-native-netinfo: cec9c4e86083cb5b6aba0e0711f563e2fbbff187
   react-native-pager-view: 4aa04e4a76be68dc67f5ba3df2e1981b1c7d0f85
-  react-native-safe-area-context: 2243039f43d10cb1ea30ec5ac57fc6d1448413f4
+  react-native-safe-area-context: 6c8805194166a9d6b3e53ba69ca76756c9bfb052
   React-NativeModulesApple: 983f3483ef0a3446b56d490f09d579fba2442e17
   React-oscompat: 114036cd8f064558c9c1a0c04fc9ae5e1453706a
   React-perflogger: e7287fee27c16e3c8bd4d470f2361572b63be16b
@@ -2645,11 +2645,11 @@ SPEC CHECKSUMS:
   RNCAsyncStorage: b44e8a4e798c3e1f56bffccd0f591f674fb9198f
   RNCClipboard: f6679d470d0da2bce2a37b0af7b9e0bf369ecda5
   RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
-  RNGestureHandler: 4e0ee6a1f04f5ac8d70c87d3c761d40a50964172
-  RNSVG: e17f99a7d2774ef99018dfed91e812e058fdbcdf
-  RNVectorIcons: 3406e3096f8858508d293d066c6850e97d5497d2
+  RNGestureHandler: 89b413dc3dd1ce8070d0db44269cabe5649f736c
+  RNSVG: 65f2884c000517b3bd926ac58429013923b0735f
+  RNVectorIcons: 8e1a217a0a0bb1e8b07063c8ec0787defa1a208b
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
-  VisionCamera: 30b358b807324c692064f78385e9a732ce1bebfe
+  VisionCamera: 7187b3dac1ff3071234ead959ce311875748e14f
   Yoga: daa1e4de4b971b977b23bc842aaa3e135324f1f3
 
 PODFILE CHECKSUM: 12969f387ea9d79470d38a54078e429c6a19aacc
