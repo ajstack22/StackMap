@@ -139,7 +139,9 @@ beforeAll(() => {
     if (
       args[0]?.includes?.('VirtualizedLists') ||
       args[0]?.includes?.('useNativeDriver') ||
-      args[0]?.includes?.('Animated')
+      args[0]?.includes?.('Animated') ||
+      args[0]?.includes?.('[BuildConfig]') ||
+      args[0]?.includes?.('[Sync]')
     ) {
       return;
     }
