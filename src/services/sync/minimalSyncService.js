@@ -301,11 +301,11 @@ class MinimalSyncService {
   }
 
 
-  async createSync(testData) {
-    
+  async createSync(testData, providedRecoveryPhrase = null) {
+
     try {
-      // Generate recovery phrase
-      this.recoveryPhrase = encryptionService.generateRecoveryPhrase();
+      // Use provided phrase (from onboarding) or generate new one
+      this.recoveryPhrase = providedRecoveryPhrase || encryptionService.generateRecoveryPhrase();
       
       // Generate sync ID from recovery phrase
       this.syncId = await this.generateSyncId(this.recoveryPhrase);

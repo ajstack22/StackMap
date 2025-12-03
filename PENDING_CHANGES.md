@@ -1,36 +1,39 @@
-## Fix: ESLint errors blocking deployment + version sync
+## Fix: Onboarding sync uses wrong recovery phrase
 
 ### Changes Made:
 
-- Fixed 2 ESLint errors in `src/services/api/dev/config/security.js`:
-  - Removed undefined `secret` variable reference in unused HMAC call
-  - Fixed `generateSecurePassword` to return the generated password (was returning undefined `hex`)
-- Added `vendor/` to `.eslintignore` to exclude Ruby gem files from linting
-- Synced version across all platforms for fresh deployment
+- Fixed critical bug where onboarding displayed one recovery phrase but created sync with a different one
+- User would copy phrase A, but sync was created with phrase B, causing "sync not found" on other devices
+- Root cause: `joinSync()` 404 fallback called `createSync()` without passing the user's recovery phrase
 
 ### Technical Details:
 
-- The `generateSecurePassword` function was dead code (never called) with bugs
-- Vendor bundle files from Ruby gems were causing false ESLint errors
-- No functional changes to application behavior
+- `minimalSyncService.createSync()` now accepts optional `providedRecoveryPhrase` parameter
+- `syncStoreIntegration.createSync()` passes phrase through to minimalSync
+- `joinSync()` 404 fallback now passes the recovery phrase: `createSync(recoveryPhrase)`
 
 ### Files Changed:
 
-- `.eslintignore` - Added vendor/ exclusion
-- `src/services/api/dev/config/security.js` - Fixed generateSecurePassword function
+- `src/services/sync/minimalSyncService.js` - Accept optional recovery phrase in createSync()
+- `src/services/sync/syncStoreIntegration.js` - Pass recovery phrase through createSync() and 404 fallback
+- `ios/StackMapNative.xcodeproj/project.pbxproj` - Version codes from prod deployment
+- `ios/StackMapNative/Info.plist` - Version info from prod deployment
 
 ### Testing:
 
-- `npx eslint . --ext .js,.jsx,.ts,.tsx --quiet` returns 0 errors
-- No functional changes to test
+1. Fresh install → complete onboarding with sync enabled
+2. Copy the displayed recovery phrase
+3. Fresh install on different device/browser
+4. Enter the copied phrase → should successfully join sync
 
 ### User Impact:
 
-- **No functional changes** - build/deployment fix only
+- **Bug Fix**: Recovery phrase shown during onboarding now matches the actual sync
 - **Breaking Changes**: None
 - **Migration Required**: None
 
 ### Deployment Notes:
 
-- Unblocks all deployment tiers
-- Safe for all platforms (iOS, Android, Web)
+- Low risk - changes are additive (new optional parameter)
+- Backward compatible - existing calls without phrase still work
+- Only affects new sync creation path, not existing syncs

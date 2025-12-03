@@ -362,10 +362,10 @@ class SyncStoreIntegration {
   }
 
 
-  async createSync() {
-    
+  async createSync(providedRecoveryPhrase = null) {
+
     const currentState = this.getCurrentState();
-    const result = await minimalSync.createSync(currentState);
+    const result = await minimalSync.createSync(currentState, providedRecoveryPhrase);
     
     if (result.success) {
       
@@ -429,9 +429,9 @@ class SyncStoreIntegration {
       );
       
       if (is404) {
-        // Sync group doesn't exist, create it with the recovery phrase
-        // This will use the same sync ID derived from the recovery phrase
-        const createResult = await this.createSync();
+        // Sync group doesn't exist, create it WITH the provided recovery phrase
+        // This ensures the displayed phrase matches the one used for sync
+        const createResult = await this.createSync(recoveryPhrase);
         
         if (createResult) {
           return { ...createResult, isNewSync: true };
