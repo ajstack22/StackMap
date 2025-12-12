@@ -1,7 +1,7 @@
 // @ts-check
 import React, { useState } from 'react';
 import { Text } from '../../Typography';
-import { View, TouchableOpacity, Platform, Alert } from 'react-native';
+import { View, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
 import { ModalButton } from '../../ModalUtilities';
@@ -31,46 +31,6 @@ const loadFileSystemModules = () => {
   return { RNFS, DocumentPicker };
 };
 
-// Helper function to format file display name
-const formatFileDisplayName = (file) => {
-  const match = file.name.match(
-    // eslint-disable-next-line security/detect-unsafe-regex -- Simple date/time pattern on bounded filename input
-    /stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/,
-  );
-  let displayName = file.name;
-
-  if (match) {
-    const date = match[1];
-    const time = match[2] ? match[2].replace(/-/g, ':') : '';
-    displayName = time ? `${date} at ${time}` : date;
-    const sizeKB = Math.round(file.size / 1024);
-    displayName += ` (${sizeKB} KB)`;
-  }
-
-  return displayName;
-};
-
-// Helper function to show Android file picker
-const showAndroidFilePicker = (uniqueFiles, loadFile, setInternalLoading) => {
-  const filesToShow = uniqueFiles.length > 2 ? uniqueFiles.slice(0, 2) : uniqueFiles;
-  const fileOptions = filesToShow.map(f => ({
-    text: formatFileDisplayName(f),
-    onPress: () => loadFile(f),
-  }));
-
-  const title = uniqueFiles.length > 2
-    ? `Found ${uniqueFiles.length} backups. Showing 2 most recent:`
-    : `Found ${uniqueFiles.length} StackMap backups:`;
-
-  Alert.alert('Select Backup to Import', title, [
-    ...fileOptions,
-    {
-      text: 'Cancel',
-      style: 'cancel',
-      onPress: () => setInternalLoading(false),
-    },
-  ]);
-};
 
 /**
  * DataImport Component
@@ -84,104 +44,6 @@ const DataImport = ({
   disabled = false,
 }) => {
   const [internalLoading, setInternalLoading] = useState(false);
-
-  // Search for StackMap JSON files in Android directories
-  const searchAndroidFiles = async (modules) => {
-    let jsonFiles = [];
-
-    const searchPaths = [
-      modules.RNFS.DownloadDirectoryPath,
-      modules.RNFS.ExternalDirectoryPath,
-      `${modules.RNFS.ExternalDirectoryPath}/Documents`,
-      modules.RNFS.DocumentDirectoryPath,
-    ];
-
-    for (const path of searchPaths) {
-      try {
-        const files = await modules.RNFS.readDir(path);
-        const foundFiles = files.filter(
-          f =>
-            f.name.endsWith('.json') &&
-            f.name.toLowerCase().includes('stackmap'),
-        );
-        jsonFiles = jsonFiles.concat(foundFiles);
-      } catch (e) {
-        // Skip paths we can't access
-      }
-    }
-
-    // Remove duplicates based on file name and sort by modified time
-    const uniqueFiles = Array.from(
-      new Map(jsonFiles.map(f => [f.name, f])).values(),
-    );
-    uniqueFiles.sort((a, b) => b.mtime - a.mtime);
-
-    return uniqueFiles;
-  };
-
-  // Show help when no files found on Android
-  const showAndroidNoFilesHelp = (setInternalLoading) => {
-    Alert.alert(
-      'How to Import Your Data 📱',
-      'Your exported StackMap files are saved in the Downloads folder.\n\nTo access them:\n\n1. Open your phone\'s Files app\n2. Navigate to Downloads\n3. Look for files starting with "stackmap-export"\n4. You can open them with StackMap from there\n\nOr use the Export button first to create a backup file.',
-      [
-        {
-          text: 'Open Files App',
-          onPress: () => {
-            if (Platform.OS === 'android') {
-              const { Linking } = require('react-native');
-              Linking.openURL('content://com.android.documentsui.documents/root/downloads');
-            }
-          }
-        },
-        { text: 'OK', style: 'cancel' }
-      ],
-    );
-    setInternalLoading(false);
-  };
-
-  // Create file loader function for Android
-  const createAndroidFileLoader = (modules) => {
-    return async (file) => {
-      try {
-        const fileContent = await modules.RNFS.readFile(file.path, 'utf8');
-        const parsedData = await parseImportFile(fileContent, file);
-
-        if (parsedData) {
-          onFileSelected({
-            file: { name: file.name, path: file.path },
-            data: parsedData
-          });
-        }
-      } catch (error) {
-        onError('Failed to read file: ' + error.message);
-      }
-    };
-  };
-
-  // Handle Android file selection flow
-  const handleAndroidFileSelection = async (modules) => {
-    if (!modules.RNFS) {
-      throw new Error('File system not available');
-    }
-
-    const uniqueFiles = await searchAndroidFiles(modules);
-
-    if (uniqueFiles.length === 0) {
-      showAndroidNoFilesHelp(setInternalLoading);
-      return;
-    }
-
-    const loadFile = createAndroidFileLoader(modules);
-
-    if (uniqueFiles.length > 1) {
-      showAndroidFilePicker(uniqueFiles, loadFile, setInternalLoading);
-    } else {
-      await loadFile(uniqueFiles[0]);
-    }
-
-    setInternalLoading(false);
-  };
 
   // Read file content from DocumentPicker result
   const readDocumentPickerFile = async (result, modules) => {
@@ -229,17 +91,16 @@ const DataImport = ({
   };
 
   // Handle file selection
+  // NOTE: On Android 11+ (SDK 30+), scoped storage prevents directory scanning.
+  // We use DocumentPicker on all platforms for consistent, permission-safe file access.
   const handleSelectFile = async () => {
     const modules = loadFileSystemModules();
 
     try {
       setInternalLoading(true);
-
-      if (Platform.OS === 'android') {
-        await handleAndroidFileSelection(modules);
-      } else {
-        await handleDocumentPickerSelection(modules);
-      }
+      // Use DocumentPicker on all platforms (including Android)
+      // This uses Storage Access Framework which works with scoped storage
+      await handleDocumentPickerSelection(modules);
     } catch (error) {
       if (
         error.code !== modules.DocumentPicker?.errorCodes?.cancelled &&
@@ -285,7 +146,7 @@ const DataImport = ({
         <Text style={styles.standardTabTitle}>Import Data</Text>
         <Text style={styles.standardTabDescription}>
           {Platform.OS === 'android'
-            ? 'Will search Downloads folder for export files'
+            ? 'Select your StackMap export file from Downloads'
             : 'Import your saved StackMap data from a backup file'}
         </Text>
       </View>
@@ -294,9 +155,7 @@ const DataImport = ({
         <ModalButton
           theme={theme}
           variant="primary"
-          label={
-            Platform.OS === 'android' ? 'Search for Files' : 'Select File'
-          }
+          label="Select File"
           icon="folder-open"
           onPress={handleSelectFile}
           disabled={disabled || isLoading}
