@@ -14,10 +14,11 @@
 #   prod   - Production (everyone, App/Play Store)
 #
 # Options:
-#   --web      Deploy web only
-#   --ios      Deploy iOS only
-#   --android  Deploy Android only
-#   --all      Deploy all platforms (default)
+#   --web         Deploy web only
+#   --ios         Deploy iOS only
+#   --android     Deploy Android only
+#   --all         Deploy all platforms (default)
+#   --skip-tests  Skip quality gates/tests (QUAL only)
 #
 # Examples:
 #   ./scripts/deploy.sh qual           # Deploy qual (all platforms)
@@ -77,10 +78,11 @@ case "$TIER" in
         echo "  prod   - Production (everyone, App/Play Store)"
         echo ""
         echo "Options:"
-        echo "  --web      Deploy web only"
-        echo "  --ios      Deploy iOS only"
-        echo "  --android  Deploy Android only"
-        echo "  --all      Deploy all platforms (default)"
+        echo "  --web         Deploy web only"
+        echo "  --ios         Deploy iOS only"
+        echo "  --android     Deploy Android only"
+        echo "  --all         Deploy all platforms (default)"
+        echo "  --skip-tests  Skip quality gates/tests (QUAL only)"
         echo ""
         echo "Validation Levels:"
         echo "  QUAL:  Warnings only (allow deployment with issues)"
@@ -97,6 +99,7 @@ DEPLOY_WEB=false
 DEPLOY_IOS=false
 DEPLOY_ANDROID=false
 DEPLOY_ALL=false
+SKIP_TESTS=false
 
 if [ $# -eq 0 ]; then
     DEPLOY_ALL=true
@@ -116,11 +119,20 @@ for arg in "$@"; do
         --all)
             DEPLOY_ALL=true
             ;;
+        --skip-tests)
+            SKIP_TESTS=true
+            ;;
         *)
             log_warning "Unknown option: $arg"
             ;;
     esac
 done
+
+# --skip-tests is only allowed for qual tier
+if [ "$SKIP_TESTS" = true ] && [ "$TIER" != "qual" ]; then
+    log_error "--skip-tests is only allowed for QUAL tier"
+    exit 1
+fi
 
 # If --all, enable all platforms
 if [ "$DEPLOY_ALL" = true ]; then
@@ -196,8 +208,15 @@ echo ""
 
 log_header "🔍 Pre-Deployment Validation"
 
+# Determine if quality gates should run (skip if --skip-tests)
+RUN_QUALITY_GATES=true
+if [ "$SKIP_TESTS" = true ]; then
+    RUN_QUALITY_GATES=false
+    log_warning "Skipping quality gates (--skip-tests)"
+fi
+
 # Run full validation for the tier
-if ! run_full_validation "$TIER"; then
+if ! run_full_validation "$TIER" "$RUN_QUALITY_GATES"; then
     log_error "Pre-deployment validation failed"
     log_info "Fix the issues above and try again"
     exit 1
