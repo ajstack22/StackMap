@@ -5,6 +5,12 @@ import nacl from 'tweetnacl';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import pako from 'pako';
 import { Platform } from 'react-native';
+import { Buffer } from 'buffer';
+
+// Pure JS PBKDF2 for mobile platforms (works without native modules)
+// Web uses Web Crypto API for better performance
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const pbkdf2Lib = require('pbkdf2');
 
 // Base64 encoding from tweetnacl-util (this works fine)
 const util = require('tweetnacl-util');
@@ -133,28 +139,51 @@ class FixedEncryptionService {
       return this.keyCache[memoryCacheKey];
     }
 
-    
-    // Simple key derivation
     const phraseBytes = encodeUTF8(recoveryPhrase);
-    const combined = new Uint8Array(phraseBytes.length + saltBytes.length);
-    combined.set(phraseBytes);
-    combined.set(saltBytes, phraseBytes.length);
+    let derivedKey: Uint8Array;
 
-    // Hash multiple times
-    let key = nacl.hash(combined);
-    for (let i = 0; i < KEY_DERIVATION_ITERATIONS; i++) {
-      key = nacl.hash(key);
-      if (i % 10000 === 0 && i > 0) {
-        await new Promise(resolve => setTimeout(resolve, 0));
+    try {
+      // Try Web Crypto API first (web with HTTPS, or some Node.js versions)
+      if (Platform.OS === 'web' && typeof crypto !== 'undefined' && crypto.subtle) {
+        const keyMaterial = await crypto.subtle.importKey(
+          'raw',
+          phraseBytes,
+          'PBKDF2',
+          false,
+          ['deriveBits']
+        );
+        const bits = await crypto.subtle.deriveBits(
+          {
+            name: 'PBKDF2',
+            salt: saltBytes,
+            iterations: KEY_DERIVATION_ITERATIONS,
+            hash: 'SHA-512'
+          },
+          keyMaterial,
+          KEY_LENGTH * 8
+        );
+        derivedKey = new Uint8Array(bits);
+      } else {
+        // Use pure JS PBKDF2 (mobile, web without HTTPS, or tests)
+        const buffer = pbkdf2Lib.pbkdf2Sync(
+          Buffer.from(phraseBytes),
+          Buffer.from(saltBytes),
+          KEY_DERIVATION_ITERATIONS,
+          KEY_LENGTH,
+          'sha512'
+        );
+        derivedKey = new Uint8Array(buffer);
       }
+    } catch (error) {
+      console.error('[Encryption] Key derivation failed:', error);
+      throw new Error('Failed to derive encryption key');
     }
 
-    const derivedKey = key.slice(0, KEY_LENGTH);
     const result: DerivedKey = {
       key: derivedKey,
       salt: saltStr,
     };
-    
+
     this.keyCache[memoryCacheKey] = result;
     return result;
   }

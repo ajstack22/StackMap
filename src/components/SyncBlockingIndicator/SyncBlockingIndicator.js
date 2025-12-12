@@ -35,7 +35,9 @@ const SyncBlockingIndicator = ({ theme }) => {
       const shouldShowBlockingUI =
         status &&
         (syncService.isInitializing ||
+          status.isInitialSync || // NEW: Check for isInitialSync flag from joinSync
           status.phase === 'restoring' ||
+          status.phase === 'deriving_key' || // NEW: Always show for key derivation
           (status.phase === 'checking' &&
             !syncService.hasCompletedInitialSync));
 
@@ -43,6 +45,9 @@ const SyncBlockingIndicator = ({ theme }) => {
         setIsVisible(true);
 
         switch (status.phase) {
+          case 'deriving_key': // NEW: Key derivation phase
+            setStatusMessage('Preparing encryption keys...');
+            break;
           case 'checking':
             setStatusMessage('Checking for updates...');
             break;
@@ -54,6 +59,9 @@ const SyncBlockingIndicator = ({ theme }) => {
             break;
           case 'restoring':
             setStatusMessage('Restoring your activities...');
+            break;
+          case 'applying': // NEW: Applying state phase
+            setStatusMessage('Applying your data...');
             break;
           case 'merging':
             setStatusMessage('Merging changes...');
@@ -84,17 +92,19 @@ const SyncBlockingIndicator = ({ theme }) => {
       setProgress(value);
     };
 
-    // Override the syncService callbacks
-    const originalStatusChange = syncService.onStatusChange;
-    const originalProgressChange = syncService.onProgressChange;
-
-    syncService.onStatusChange = updateStatus;
-    syncService.onProgressChange = updateProgress;
+    // FIXED: Use proper listener registration instead of overwriting methods
+    // syncService.onStatusChange returns an unsubscribe function when called with a callback
+    const unsubscribeStatus = syncService.onStatusChange?.(updateStatus);
+    const unsubscribeProgress = syncService.onProgressChange?.(updateProgress);
 
     return () => {
-      // Restore original callbacks
-      syncService.onStatusChange = originalStatusChange;
-      syncService.onProgressChange = originalProgressChange;
+      // Properly unsubscribe using the returned functions
+      if (typeof unsubscribeStatus === 'function') {
+        unsubscribeStatus();
+      }
+      if (typeof unsubscribeProgress === 'function') {
+        unsubscribeProgress();
+      }
     };
   }, []);
 

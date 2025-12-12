@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Text } from '../../Typography';
 import {
   Modal,
@@ -9,6 +9,7 @@ import {
   Platform,
   Dimensions,
   StatusBar,
+  FlatList,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -55,6 +56,8 @@ const SettingsModal = ({
   // Native modules removed - using standard components
 
   const insets = useSafeAreaInsets();
+  const scrollRef = useRef(null);
+  const [scrollKey, setScrollKey] = useState(0);
   const [buttonOrder, setButtonOrder] = useState(() => {
     if (currentOrder && currentOrder.length) {
       const filtered = currentOrder.filter(
@@ -289,79 +292,8 @@ const SettingsModal = ({
     );
   };
 
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={false}
-      statusBarTranslucent={true}
-      onRequestClose={onClose}
-    >
-      {Platform.OS === 'android' && (
-        <StatusBar
-          backgroundColor={theme.primary}
-          barStyle="light-content"
-          translucent={false}
-        />
-      )}
-      <View style={[styles.modalContainer, { backgroundColor: theme.light }]}>
-        {Platform.OS === 'android' && (
-          <View
-            style={{
-              backgroundColor: theme.primary,
-              height: StatusBar.currentHeight || 24,
-            }}
-          />
-        )}
-        <SafeAreaView style={{ backgroundColor: theme.primary }}>
-          <View
-            style={[styles.modalHeader, { backgroundColor: theme.primary }]}
-          >
-            <View style={styles.headerLeft}>
-              <Icon
-                name="settings"
-                size={24}
-                color="white"
-                style={styles.headerIcon}
-              />
-              <Text style={styles.modalTitle}>Settings</Text>
-            </View>
-            <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Icon name="close" size={20} color="white" />
-              </View>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-
-        <View style={{ flex: 1, backgroundColor: theme.light }}>
-          <ScrollView
-            style={[
-              styles.modalContent,
-              Platform.OS === 'android' && { flex: 1 },
-            ]}
-            contentContainerStyle={{
-              paddingBottom: Platform.OS === 'android' ? 100 : 80,
-            }}
-            showsVerticalScrollIndicator={true}
-            showsHorizontalScrollIndicator={false}
-            nestedScrollEnabled={true}
-            removeClippedSubviews={false}
-            keyboardShouldPersistTaps="handled"
-            scrollEventThrottle={16}
-            bounces={Platform.OS === 'ios'}
-          >
-            {/* Single consolidated panel */}
-            <View style={styles.section}>
+  const renderContent = () => (
+    <View style={styles.section}>
               {/* Header */}
               <View style={styles.standardTabContainer}>
                 <Icon name="settings" size={48} color={theme.primary} />
@@ -764,8 +696,103 @@ const SettingsModal = ({
                 <Icon name="restore" size={20} color="#000" />
                 <Text style={styles.resetButtonText}>Reset to Defaults</Text>
               </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={false}
+      statusBarTranslucent={true}
+      onRequestClose={onClose}
+      onShow={() => {
+        // Force layout update on Android to fix scrolling
+        if (Platform.OS === 'android') {
+          setTimeout(() => {
+            setScrollKey(prev => prev + 1);
+          }, 0);
+        }
+      }}
+    >
+      {Platform.OS === 'android' && (
+        <StatusBar
+          backgroundColor={theme.primary}
+          barStyle="light-content"
+          translucent={false}
+        />
+      )}
+      <View style={[styles.modalContainer, { backgroundColor: theme.light }]}>
+        {Platform.OS === 'android' && (
+          <View
+            style={{
+              backgroundColor: theme.primary,
+              height: StatusBar.currentHeight || 24,
+            }}
+          />
+        )}
+        <SafeAreaView style={{ backgroundColor: theme.primary }}>
+          <View
+            style={[styles.modalHeader, { backgroundColor: theme.primary }]}
+          >
+            <View style={styles.headerLeft}>
+              <Icon
+                name="settings"
+                size={24}
+                color="white"
+                style={styles.headerIcon}
+              />
+              <Text style={styles.modalTitle}>Settings</Text>
             </View>
-          </ScrollView>
+            <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Icon name="close" size={20} color="white" />
+              </View>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+
+        <View style={{ flex: 1, backgroundColor: theme.light }}>
+          {Platform.OS === 'android' ? (
+            <FlatList
+              ref={scrollRef}
+              key={scrollKey}
+              data={[{ key: 'content' }]}
+              renderItem={() => (
+                <View style={[styles.modalContent, { flex: undefined }]}>
+                  {renderContent()}
+                </View>
+              )}
+              keyExtractor={item => item.key}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
+            />
+          ) : (
+            <ScrollView
+              style={styles.modalContent}
+              contentContainerStyle={{
+                paddingBottom: 80,
+              }}
+              showsVerticalScrollIndicator={true}
+              showsHorizontalScrollIndicator={false}
+              nestedScrollEnabled={true}
+              removeClippedSubviews={false}
+              keyboardShouldPersistTaps="handled"
+              scrollEventThrottle={16}
+              bounces={true}
+            >
+              {renderContent()}
+            </ScrollView>
+          )}
         </View>
         {Platform.OS === 'android' && (
           <View

@@ -24,6 +24,7 @@ class SyncStoreIntegration {
   constructor() {
     this.isInitialized = false;
     this.isSyncing = false;
+    this.isInitialSyncInProgress = false; // NEW: Blocks UI during initial sync
     this.lastPushTime = 0;
     this.changeDebounceTimer = null;
     this.changeDebounceDelay = 5000; // 5 seconds after changes
@@ -396,50 +397,60 @@ class SyncStoreIntegration {
 
 
   async joinSync(recoveryPhrase) {
-    
-    const result = await minimalSync.joinSync(recoveryPhrase);
-    
-    if (result.success) {
-      
-      // IMPORTANT: When joining a sync, we completely replace local data
-      // with remote data - no merging. This is intentional to ensure
-      // the device fully adopts the sync group's state.
-      if (result.data) {
-        await this.applyState(result.data);
-      }
-      
-      // Enable periodic sync
-      minimalSync.enableSync(this.handleDataReceived);
-      
-      // Subscribe to store changes if not already subscribed
-      if (!this.unsubscribers) {
-        this.subscribeToStores();
-      }
-      
-      this.isInitialized = true;
-      
-      return true;
-    } else {
-      // Check if the error is because sync doesn't exist (404)
-      const is404 = result.error && (
-        result.error.includes('404') || 
-        result.error.includes('not found') || 
-        result.error.includes('Sync group not found') || 
-        result.error.includes('does not exist')
-      );
-      
-      if (is404) {
-        // Sync group doesn't exist, create it WITH the provided recovery phrase
-        // This ensures the displayed phrase matches the one used for sync
-        const createResult = await this.createSync(recoveryPhrase);
-        
-        if (createResult) {
-          return { ...createResult, isNewSync: true };
+    // Set blocking flag IMMEDIATELY before any async operations
+    this.isInitialSyncInProgress = true;
+    this.notifyStatusListeners({ phase: 'deriving_key', isInitialSync: true });
+
+    try {
+      const result = await minimalSync.joinSync(recoveryPhrase);
+
+      if (result.success) {
+        this.notifyStatusListeners({ phase: 'applying', isInitialSync: true });
+
+        // IMPORTANT: When joining a sync, we completely replace local data
+        // with remote data - no merging. This is intentional to ensure
+        // the device fully adopts the sync group's state.
+        if (result.data) {
+          await this.applyState(result.data);
         }
+
+        // Enable periodic sync
+        minimalSync.enableSync(this.handleDataReceived);
+
+        // Subscribe to store changes if not already subscribed
+        if (!this.unsubscribers) {
+          this.subscribeToStores();
+        }
+
+        this.isInitialized = true;
+
+        return true;
+      } else {
+        // Check if the error is because sync doesn't exist (404)
+        const is404 = result.error && (
+          result.error.includes('404') ||
+          result.error.includes('not found') ||
+          result.error.includes('Sync group not found') ||
+          result.error.includes('does not exist')
+        );
+
+        if (is404) {
+          // Sync group doesn't exist, create it WITH the provided recovery phrase
+          // This ensures the displayed phrase matches the one used for sync
+          const createResult = await this.createSync(recoveryPhrase);
+
+          if (createResult) {
+            return { ...createResult, isNewSync: true };
+          }
+        }
+
+        // Only throw error if it's not a 404 or if create failed
+        throw new Error(result.error);
       }
-      
-      // Only throw error if it's not a 404 or if create failed
-      throw new Error(result.error);
+    } finally {
+      // Always reset the flag, even on error
+      this.isInitialSyncInProgress = false;
+      this.notifyStatusListeners({ phase: 'complete', isInitialSync: true });
     }
   }
 
@@ -1193,9 +1204,10 @@ class SyncStoreIntegration {
 
   /**
    * Is initializing (property)
+   * Returns true during initial sync to block UI
    */
   get isInitializing() {
-    return false; // We initialize synchronously
+    return this.isInitialSyncInProgress;
   }
 
   /**

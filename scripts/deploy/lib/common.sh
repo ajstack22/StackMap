@@ -145,6 +145,18 @@ confirm_deployment() {
     echo "$platforms"
     echo ""
 
+    # Skip confirmation in non-interactive mode
+    if [ "$DEPLOYMENT_NON_INTERACTIVE" = "true" ]; then
+        log_info "Non-interactive mode: proceeding with deployment"
+        return 0
+    fi
+
+    # Check if stdin is a terminal
+    if [ ! -t 0 ]; then
+        log_info "Non-interactive mode detected: proceeding with deployment"
+        return 0
+    fi
+
     read -p "Continue with deployment? (y/N) " -n 1 -r
     echo
 
