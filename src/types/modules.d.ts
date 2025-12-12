@@ -106,13 +106,14 @@ declare module 'react-native-mmkv' {
   }
 }
 
-// React Native Document Picker
-declare module 'react-native-document-picker' {
+// React Native Document Picker (RN 0.80+ compatible package)
+declare module '@react-native-documents/picker' {
   export interface DocumentPickerResponse {
     uri: string;
     type: string;
     name: string;
     size: number;
+    fileCopyUri?: string;
   }
 
   export interface DocumentPickerOptions {
@@ -143,6 +144,11 @@ declare module 'react-native-document-picker' {
     pptx: string;
     xls: string;
     xlsx: string;
+    json: string;
+  };
+
+  export const errorCodes: {
+    cancelled: string;
   };
 
   export class DocumentPickerError extends Error {

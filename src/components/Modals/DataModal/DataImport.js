@@ -21,7 +21,8 @@ const loadFileSystemModules = () => {
     } else {
       // Use native modules - wrap in try/catch for missing modules
       try {
-        DocumentPicker = require('react-native-document-picker');
+        // Use @react-native-documents/picker (RN 0.80+ compatible)
+        DocumentPicker = require('@react-native-documents/picker');
       } catch (e) {
         DocumentPicker = null;
       }

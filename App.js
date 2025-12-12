@@ -108,7 +108,8 @@ if (Platform.OS === 'web') {
 } else {
   // Use native modules for both iOS and Android
   try {
-    DocumentPicker = require('react-native-document-picker');
+    // Use @react-native-documents/picker (RN 0.80+ compatible)
+    DocumentPicker = require('@react-native-documents/picker');
   } catch (e) {
     if (__DEV__) {
       console.warn('DocumentPicker not available:', e);

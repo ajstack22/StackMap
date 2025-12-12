@@ -23,7 +23,7 @@ jest.mock('../../../utils/platformHelpers.web', () => ({
   },
 }), { virtual: true });
 
-jest.mock('react-native-document-picker', () => ({
+jest.mock('@react-native-documents/picker', () => ({
   pick: jest.fn(),
   types: { json: 'application/json' },
   errorCodes: { cancelled: 'cancelled' },
@@ -116,12 +116,12 @@ describe('DataImport', () => {
       />
     );
 
-    expect(getByText('Will search Downloads folder for export files')).toBeTruthy();
+    expect(getByText('Select your StackMap export file from Downloads')).toBeTruthy();
   });
 
   it('handles successful file selection on iOS', async () => {
     Platform.OS = 'ios';
-    const mockDocumentPicker = require('react-native-document-picker');
+    const mockDocumentPicker = require('@react-native-documents/picker');
     const mockRNFS = require('react-native-fs');
 
     const mockFileData = {
@@ -158,7 +158,7 @@ describe('DataImport', () => {
 
   it('handles file selection cancellation', async () => {
     Platform.OS = 'ios';
-    const mockDocumentPicker = require('react-native-document-picker');
+    const mockDocumentPicker = require('@react-native-documents/picker');
 
     const cancelError = new Error('User cancelled');
     cancelError.code = 'cancelled';
@@ -182,7 +182,7 @@ describe('DataImport', () => {
 
   it('handles invalid JSON file', async () => {
     Platform.OS = 'ios';
-    const mockDocumentPicker = require('react-native-document-picker');
+    const mockDocumentPicker = require('@react-native-documents/picker');
     const mockRNFS = require('react-native-fs');
 
     mockDocumentPicker.pick.mockResolvedValue([{
@@ -211,7 +211,7 @@ describe('DataImport', () => {
 
   it('handles file without version field', async () => {
     Platform.OS = 'ios';
-    const mockDocumentPicker = require('react-native-document-picker');
+    const mockDocumentPicker = require('@react-native-documents/picker');
     const mockRNFS = require('react-native-fs');
 
     const invalidData = { users: {} }; // Missing version field
@@ -240,7 +240,7 @@ describe('DataImport', () => {
 
   it('handles file with no importable data', async () => {
     Platform.OS = 'ios';
-    const mockDocumentPicker = require('react-native-document-picker');
+    const mockDocumentPicker = require('@react-native-documents/picker');
     const mockRNFS = require('react-native-fs');
 
     const emptyData = { version: '4.0' }; // No users, activities, or library

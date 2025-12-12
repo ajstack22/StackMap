@@ -79,7 +79,7 @@ const mockRNFS = {
   DocumentDirectoryPath: '/documents',
 };
 
-jest.mock('react-native-document-picker', () => mockDocumentPicker);
+jest.mock('@react-native-documents/picker', () => mockDocumentPicker);
 jest.mock('react-native-fs', () => mockRNFS);
 
 const mockTheme = {
