@@ -1,27 +1,30 @@
 # 🎯 CURRENT WORK - What We're Actually Building
 
-## Active Feature: Code Smell Reduction - Phase 3 (Oct 2025)
+## Active Work: Stabilization (Dec 2025)
 
-### What We're Building
-**Final push to SonarCloud gold standard (<500 code smells)**
+### What We're Doing
+**Fixing critical bugs discovered during incident recovery before resuming feature work**
 
-### Goal
-Reduce from ~700-900 smells → <500 smells via structural improvements
+### Priority List
+1. **Fix Android import/export** - Users cannot restore backups on Android
+2. **Fix "Open Files" button on Android** - Shows messaging apps instead of Files app
+3. **Add deployment safeguards** - Prevent direct server uploads, enforce deploy scripts
+4. **Resume code smell reduction** - After stabilization is complete
 
-### Strategy (3 Parallel Agents)
-1. **Agent 1**: Split large files (OnboardingUserCentered.js [1,893 lines], EmojiPicker.js [1,482 lines], DataModal.js [1,200 lines])
-2. **Agent 2**: Extract repeated JSX patterns into 5-8 reusable components
-3. **Agent 3**: Reduce cognitive complexity in 20-30 complex functions
+### Context
+On Dec 11, 2025, a cascading failure revealed several issues:
+- PROD web was broken due to Buffer import issue
+- Emergency fix was applied via direct SCP (bypassing deploy scripts)
+- Android import/export was discovered to be broken
+- Git state was left messy with unpushed commits
 
-### Atlas Prompt
-📖 **[atlas/prompts/CODE_SMELL_PHASE3.md](atlas/prompts/CODE_SMELL_PHASE3.md)** - Complete execution guide
+See `/Users/adamstack/.claude/plans/snug-juggling-umbrella.md` for the full stabilization plan.
 
-### Expected Impact
-- **-200 to -400 smells**
-- Achieve <500 code smells (SonarCloud gold standard)
-- No files >1,000 lines
-- 15-20 new reusable components
-- 30% reduction in average cognitive complexity
+### Next Up (After Stabilization)
+Resume Code Smell Reduction - Phase 3:
+- Split large files (OnboardingUserCentered.js, EmojiPicker.js, DataModal.js)
+- Extract repeated JSX patterns into reusable components
+- Reduce cognitive complexity in complex functions
 
 ---
 
