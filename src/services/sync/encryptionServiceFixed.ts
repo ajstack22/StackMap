@@ -5,12 +5,22 @@ import nacl from 'tweetnacl';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import pako from 'pako';
 import { Platform } from 'react-native';
-import { Buffer } from 'buffer';
 
-// Pure JS PBKDF2 for mobile platforms (works without native modules)
-// Web uses Web Crypto API for better performance
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const pbkdf2Lib = require('pbkdf2');
+// Lazy-loaded PBKDF2 for mobile only (avoids Buffer issues on web)
+// Web uses Web Crypto API instead
+let pbkdf2Lib: any = null;
+let BufferPolyfill: typeof Buffer | null = null;
+
+const getPbkdf2 = () => {
+  if (!pbkdf2Lib) {
+    // Only load on non-web platforms
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    pbkdf2Lib = require('pbkdf2');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    BufferPolyfill = require('buffer').Buffer;
+  }
+  return { pbkdf2Lib, Buffer: BufferPolyfill! };
+};
 
 // Base64 encoding from tweetnacl-util (this works fine)
 const util = require('tweetnacl-util');
@@ -165,9 +175,10 @@ class FixedEncryptionService {
         derivedKey = new Uint8Array(bits);
       } else {
         // Use pure JS PBKDF2 (mobile, web without HTTPS, or tests)
-        const buffer = pbkdf2Lib.pbkdf2Sync(
-          Buffer.from(phraseBytes),
-          Buffer.from(saltBytes),
+        const { pbkdf2Lib: pbkdf2, Buffer: Buf } = getPbkdf2();
+        const buffer = pbkdf2.pbkdf2Sync(
+          Buf.from(phraseBytes),
+          Buf.from(saltBytes),
           KEY_DERIVATION_ITERATIONS,
           KEY_LENGTH,
           'sha512'

@@ -77,6 +77,9 @@ module.exports = {
   },
   resolve: {
     extensions: ['.web.js', '.js', '.jsx', '.ts', '.tsx'],
+    fallback: {
+      buffer: require.resolve('buffer/'),
+    },
     alias: {
       // CRITICAL: Override react-native with our complete replacement
       // This catches ALL imports from 'react-native'
@@ -124,6 +127,7 @@ module.exports = {
     }),
     new webpack.ProvidePlugin({
       process: 'process/browser',
+      Buffer: ['buffer', 'Buffer'],
     }),
     new CopyWebpackPlugin({
       patterns: [

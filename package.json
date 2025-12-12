@@ -46,6 +46,7 @@
     "@react-native-community/netinfo": "^11.4.1",
     "@react-native/new-app-screen": "0.81.1",
     "bcrypt": "^6.0.0",
+    "buffer": "^6.0.3",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
