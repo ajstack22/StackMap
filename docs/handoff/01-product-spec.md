@@ -115,7 +115,7 @@ These change behavior, so decide explicitly rather than inheriting accidents:
 2. **Per-user theme switching** — keep (each member's color identity, recommended) or single device theme?
 3. **Celebration fixes** — the old "green" palette is actually pink (a bug), and the 21st theme (slate) was unselectable. Fix both, or reproduce faithfully for a child used to the current look? Recommendation: fix.
 4. **PIN scope** — old app gates Edit Mode only; the theme picker was *not* gated (a child can recolor the app). Gate settings/theme too?
-5. **Named routines?** The old app approximates recurring routines via pinning + templates. If the family wants "School Morning" as a switchable set, that's new scope — flag it now, don't retrofit.
+5. **Named routines?** The old app approximates recurring routines via pinning + templates. The family's real data (see `fixtures/stackmap-export-2026-08-15-sanitized.json`) shows they already do exactly this: library categories named **Weekday**, **Weekend**, **Places**, **Events** used as routine sets, loaded into the day via "Add All" — while `pinned` is false on every single activity (consistent with the pin UI being dead). If a first-class "load the Weekday routine" action is wanted, it's a small step from observed behavior: keep categories, make "Add All" prominent, and consider whether the pin toggle (§5 above) is even needed. Decide: pin-based carry-forward, category-based day loading, or both.
 6. **Time on activities** stays a display-only label (no alarms/notifications) unless the family asks otherwise.
 
 ## 7. What was documented but never real

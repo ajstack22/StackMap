@@ -93,7 +93,14 @@ Legacy user shape: `{ id, name, icon, days: { today: {activities: []}, tomorrow:
 - `settings.theme` is a theme *key* in new data but may be a raw hex color (e.g. `#2196F3`) in old data — map hex to the closest/matching theme key, default `stackBlue`.
 - `lastActive` is set once at creation and never updated; ignore.
 
-Legacy activity shape (superset): `{ id, text, icon, completed, pinned, modifiedAt, description?, time?, completedAt?, completedBy?, uncompletedAt?, uncompletedBy?, sortIndex?, orderChangedAt?, deleted?, deletedAt?, type?, isPersonal?, order?, createdAt?, activityType?, title?, name?, emoji? }`.
+Legacy activity shape (superset): `{ id, text, icon, completed, pinned, modifiedAt, description?, time?, completedAt?, completedBy?, uncompletedAt?, uncompletedBy?, sortIndex?, orderChangedAt?, deleted?, deletedAt?, type?, isPersonal?, order?, createdAt?, activityType?, addedToLibrary?, title?, name?, emoji? }`.
+
+Confirmed against the family's real export (sanitized copy: `docs/handoff/fixtures/stackmap-export-2026-08-15-sanitized.json`):
+- The user object can carry a leaked internal field **`dayToUpdate`** — ignore it.
+- **`addedToLibrary`** *is* persisted in real data (older builds wrote it) even though current code treats it as runtime-only — ignore it.
+- `createdAt`/`lastActive` can be **absent** from users, and `settings` can be partial (e.g. only `theme`) — require nothing beyond `id`/`name`/`icon`/`days`, and apply defaults for the rest.
+- `time` may be explicitly `null` — treat `null`, `""`, and absent the same.
+- Library `sortIndex` values can be duplicated or missing within a category — array order is authoritative; `sortIndex` is only a tiebreaker.
 
 PIN (not in the stores): Android MMKV instance `stackmap-pin-storage`, keys `secure_pin` (plaintext 4 digits) and `pin_disabled`. Not exported, not migratable — the family just sets a new PIN.
 

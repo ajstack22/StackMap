@@ -81,7 +81,7 @@ Where to find everything in this repo when a spec detail needs re-verification. 
 | Seed activity library | `src/constants/stackMapLibrary.js` | 60 curated activities incl. the Wellness set |
 | Theme hex values | `src/constants/theme.js` | Copy all 21 verbatim (fix nothing but the picker bug) |
 | Celebration palettes | `src/components/CelebrationManager/CelebrationManager.js` | Copy, but replace the pink "green" set |
-| Importer test fixtures | `data/demo-data-kids-export.json` (+ `-backup`), `archive/old-data/stackmap-export-2025-08-16-18-52-05.json` | Legacy-shape test data for the new importer |
+| Importer test fixtures | **`docs/handoff/fixtures/stackmap-export-2026-08-15-sanitized.json`** (the family's verified real export, sanitized — primary fixture; the unsanitized original/migration source stays outside git), plus `data/demo-data-kids-export.json` (+ `-backup`), `archive/old-data/stackmap-export-2025-08-16-18-52-05.json` | Legacy-shape test data for the new importer |
 | Old release keystore | `android/app/stackmap-release.keystore` — **not in git**; dev Mac only, passwords in its Keychain (services `stackmap-keystore-*`) | Only needed for the migration contingency (backup spec §5). Committed `stackmap-production-20251003-140513.aab` in repo root can verify the shipped cert |
 
 ## 5. Version archaeology (for the migration)
@@ -90,3 +90,4 @@ Where to find everything in this repo when a spec detail needs re-verification. 
 - SAF import fix commits (`4e2c104`, `c987103`, `c307a26`, `574b74e`) all land **after** that version — the installed app predates them.
 - Export at HEAD still uses the legacy Downloads write (`exportUtils.js handleAndroidExport`).
 - `CURRENT_WORK.md` (Dec 2025) confirms: "Fix Android import/export — Users cannot restore backups on Android."
+- **Resolution (Aug 15, 2026): export was verified working on a family device** — a sanitized copy is `docs/handoff/fixtures/stackmap-export-2026-08-15-sanitized.json`; the unsanitized original stays outside git. The migration contingency in the backup spec is reference-only now.

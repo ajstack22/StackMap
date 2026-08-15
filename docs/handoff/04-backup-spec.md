@@ -70,7 +70,11 @@ Validation on read (mirrors the old live rules, then normalizes):
 3. At least one of `users` / `activityCards` / `library` present, else "Export file contains no importable data".
 4. Sanity cap ~10 MB.
 
-Then apply every normalization rule from [02-data-model.md §5](./02-data-model.md): field aliases (`name`/`title`→`text`, `emoji`→`icon`), soft-deleted entries skipped, hex themes mapped to keys, `image:` icons replaced, `sortIndex` as ordering fallback, opaque IDs preserved, stale completion timestamps ignored in favor of `completed`. Real-world fixtures to test against: `data/demo-data-kids-export.json` (+ variants) — hand-authored files containing shapes live code never wrote (`order` fields, `modifiedAt: 0`, hex `settings.theme`, slug IDs). An importer that round-trips those files and a fresh old-app export is done.
+Then apply every normalization rule from [02-data-model.md §5](./02-data-model.md): field aliases (`name`/`title`→`text`, `emoji`→`icon`), soft-deleted entries skipped, hex themes mapped to keys, `image:` icons replaced, `sortIndex` as ordering fallback, opaque IDs preserved, stale completion timestamps ignored in favor of `completed`. Real-world fixtures to test against, in priority order:
+1. **`docs/handoff/fixtures/stackmap-export-2026-08-15-sanitized.json`** — the family's actual export with personal strings replaced by placeholders (see §5 for the legacy quirks it exhibits: `dayToUpdate`, persisted `addedToLibrary`, missing user timestamps, partial `settings`, stale completion metadata, duplicate/missing `sortIndex`, `time: null`).
+2. `data/demo-data-kids-export.json` (+ variants) — hand-authored files with shapes live code never wrote (`order` fields, `modifiedAt: 0`, hex `settings.theme`, slug IDs).
+
+An importer that round-trips all of these is done.
 
 ## 2. Automatic local backups (new)
 
@@ -98,17 +102,18 @@ Then apply every normalization rule from [02-data-model.md §5](./02-data-model.
 
 Set `android:allowBackup="true"` with `dataExtractionRules` including the Room DB and DataStore (exclude the PIN hash). The old app disabled this because sync was the safety net; a local-only app should take the free Google-transfer/device-migration coverage. This is a convenience layer, not the backup system — the JSON files remain the source of truth.
 
-## 5. Migration off the old app ⚠️
+## 5. Migration off the old app — ✅ RESOLVED
 
-**The risk:** the family's installed build is `versionCode 251211003` (versionName `25.12.11`, Dec 2025). At HEAD of this repo:
-- The **import** side was fixed (SAF document picker) in commits dated *after* that build — so the installed app predates the fix, and `CURRENT_WORK.md` (Dec 2025) records "Users cannot restore backups on Android".
-- The **export** side is *still* a raw `react-native-fs` write to `DownloadDirectoryPath` even at HEAD — a legacy-storage pattern that generally fails under targetSdk 35 on modern Android.
+**Status (Aug 15, 2026):** export was verified working on a real family device. A sanitized copy (names, school/place names, and medical notes replaced with placeholders; every structural detail preserved) is checked in at **`docs/handoff/fixtures/stackmap-export-2026-08-15-sanitized.json`** as the primary importer test fixture. The unsanitized original is the actual migration source and lives outside git in the family's own storage — keep it safe, and export again after any meaningful data change so the migration snapshot stays fresh. Until the new app ships, export again after any meaningful data change so the migration snapshot stays fresh.
 
-So the obvious plan — "export from the old app, import into the new one" — may fail at step one. Do this **before** building the new app:
+What that real file confirms and adds to the compatibility contract (all folded into §1 and the data-model normalization rules):
+- Envelope matches the documented v4 shape exactly (number `4`, all sections present, pretty-printed).
+- **`dayToUpdate`** appears on the user object (a leaked internal update-helper field) — ignore it on import.
+- **`addedToLibrary: false`** is persisted on every activity in real data (despite being runtime-only in current code) — ignore it.
+- User objects may **lack `createdAt`/`lastActive`** and carry a **partial `settings`** (this one has only `theme`) — no user field beyond `id`/`name`/`icon`/`days` may be required.
+- Stale completion metadata is real: activities with `completed: false` still carrying `completedAt`/`completedBy`. Only `completed` is authoritative.
+- Library templates can have **duplicate or missing `sortIndex`** values — array order is the primary ordering; `sortIndex` is at best a tiebreaker.
+- Activity IDs embed two different historical device IDs — IDs are opaque; never derive meaning from them.
+- `time` can be explicitly `null`; treat `null` and `""` and absent identically.
 
-1. **Test on a real family device now**: old app → Edit Mode → Data → Export. If a `stackmap-export-*.json` lands in Downloads, copy it somewhere safe immediately (email it to yourself, Drive, anywhere). Migration risk over.
-2. **If export fails**, options in order of preference:
-   a. **Patch the old app once**: this repo + the original release keystore (`android/app/stackmap-release.keystore`, alias `stackmap` — gitignored, lives on the dev Mac with passwords in its Keychain) can build an updated APK with a MediaStore/SAF-based export fix and install it *in place* (same signature + higher versionCode preserves data). Requires that keystore — **confirm it still exists**; also confirm which lineage shipped (a committed `stackmap-production-20251003-140513.aab` in the repo root can verify the signing cert).
-   b. **`adb backup` is not available** (`allowBackup="false"`) and release builds block `run-as` — there is no side door.
-   c. **Manual re-entry**: the data set is small (≤5 users, a day or two of activities each, some templates); an evening of typing is a legitimate fallback.
-3. Whichever path produces a JSON file, that file becomes the new app's first import — and its importer test fixture.
+**Original risk analysis (kept for reference):** the installed build (`versionCode 251211003`, Dec 2025) predates the SAF import fix, and export at HEAD still uses a raw `react-native-fs` write to `DownloadDirectoryPath` — a legacy pattern expected to fail under targetSdk 35. In practice it worked on the family's device. Had it failed, the fallback was to patch the old app in place using the original release keystore (`android/app/stackmap-release.keystore`, alias `stackmap`, on the dev Mac); `adb backup` was never an option (`allowBackup="false"`), and manual re-entry was the last resort.

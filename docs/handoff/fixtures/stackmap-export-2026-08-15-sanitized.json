@@ -1,0 +1,807 @@
+{
+  "version": 4,
+  "exportDate": "2026-08-15T18:18:31.895Z",
+  "exportedItems": {
+    "users": true,
+    "activityCards": true,
+    "activityLibrary": true
+  },
+  "users": {
+    "user_1": {
+      "id": "user_1",
+      "name": "Kiddo",
+      "icon": "🦖",
+      "days": {
+        "today": {
+          "activities": [
+            {
+              "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1783945810422-570a3ywcm",
+              "text": "Wake Up",
+              "description": "Time to start the day!",
+              "icon": "🌅",
+              "completed": true,
+              "pinned": false,
+              "deleted": false,
+              "type": "task",
+              "modifiedAt": 1783946189309,
+              "addedToLibrary": false,
+              "orderChangedAt": 1783946169316,
+              "sortIndex": 0,
+              "completedAt": 1783946189309,
+              "completedBy": "76db2eddb20bf2985dfb3d4f866d6eaa"
+            },
+            {
+              "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1783945811636-3mbfsm6pu",
+              "text": "Eat Breakfast",
+              "description": "Kiddo, it's ready!",
+              "icon": "🥞",
+              "completed": true,
+              "pinned": false,
+              "deleted": false,
+              "type": "task",
+              "modifiedAt": 1783948073080,
+              "addedToLibrary": false,
+              "orderChangedAt": 1783946169316,
+              "sortIndex": 1,
+              "uncompletedAt": 1783946192754,
+              "uncompletedBy": "76db2eddb20bf2985dfb3d4f866d6eaa",
+              "completedAt": 1783948073080,
+              "completedBy": "76db2eddb20bf2985dfb3d4f866d6eaa"
+            },
+            {
+              "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1783945813948-o1xesdhma",
+              "text": "Get Dressed",
+              "description": "Pick today's outfit",
+              "icon": "👕",
+              "completed": false,
+              "pinned": false,
+              "deleted": false,
+              "type": "task",
+              "modifiedAt": 1783946192201,
+              "addedToLibrary": false,
+              "orderChangedAt": 1783946169316,
+              "sortIndex": 2,
+              "uncompletedAt": 1783946192201,
+              "uncompletedBy": "76db2eddb20bf2985dfb3d4f866d6eaa"
+            },
+            {
+              "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1783945931601-m29i54a4p",
+              "text": "Go to Playgroup",
+              "description": "Go play",
+              "icon": "🤝",
+              "completed": false,
+              "pinned": false,
+              "deleted": false,
+              "type": "task",
+              "modifiedAt": 1783945973695,
+              "addedToLibrary": false,
+              "orderChangedAt": 1783946169316,
+              "sortIndex": 3,
+              "time": null
+            },
+            {
+              "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1783945820501-dsebtyvjd",
+              "text": "Daddy will pick you up",
+              "description": "Level complete!",
+              "icon": "🧔",
+              "completed": false,
+              "pinned": false,
+              "deleted": false,
+              "type": "task",
+              "modifiedAt": 1783945820501,
+              "addedToLibrary": false,
+              "orderChangedAt": 1783946169316,
+              "sortIndex": 4
+            },
+            {
+              "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1783946157311-x1j315av1",
+              "text": "Playdate",
+              "description": "Let's play!",
+              "icon": "🫛",
+              "completed": false,
+              "pinned": false,
+              "deleted": false,
+              "type": "task",
+              "modifiedAt": 1783946157311,
+              "addedToLibrary": false,
+              "orderChangedAt": 1783946169316,
+              "sortIndex": 5
+            },
+            {
+              "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1783945821138-2hi070ajh",
+              "text": "Eat Dinner",
+              "description": "Family meal time",
+              "icon": "🍽️",
+              "completed": false,
+              "pinned": false,
+              "deleted": false,
+              "type": "task",
+              "modifiedAt": 1783945821138,
+              "addedToLibrary": false,
+              "orderChangedAt": 1783946169316,
+              "sortIndex": 6
+            },
+            {
+              "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1783946067010-fmkcyy0qj",
+              "text": "Swim Lessons",
+              "description": "",
+              "icon": "🏊‍♀️",
+              "completed": false,
+              "pinned": false,
+              "deleted": false,
+              "type": "task",
+              "modifiedAt": 1783946067010,
+              "addedToLibrary": false,
+              "orderChangedAt": 1783946169316,
+              "sortIndex": 7
+            },
+            {
+              "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1771354452151-3e7xppobb",
+              "text": "Wear Eye Patch",
+              "description": "Like a pirate!",
+              "icon": "🏴‍☠️",
+              "completed": false,
+              "pinned": false,
+              "deleted": false,
+              "type": "task",
+              "modifiedAt": 1783912035752,
+              "addedToLibrary": false,
+              "orderChangedAt": 1783946169316,
+              "sortIndex": 8,
+              "uncompletedAt": 1779905811233,
+              "uncompletedBy": "76db2eddb20bf2985dfb3d4f866d6eaa",
+              "completedAt": 1783912035752,
+              "completedBy": "76db2eddb20bf2985dfb3d4f866d6eaa"
+            },
+            {
+              "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1771354693635-qv8k5g5l4",
+              "text": "Play Nintendo",
+              "description": "Is that Rabbid Yoshi?",
+              "icon": "🦖",
+              "completed": false,
+              "pinned": false,
+              "deleted": false,
+              "type": "task",
+              "modifiedAt": 1783912040466,
+              "addedToLibrary": false,
+              "orderChangedAt": 1783946169316,
+              "sortIndex": 9,
+              "uncompletedAt": 1779905812867,
+              "uncompletedBy": "76db2eddb20bf2985dfb3d4f866d6eaa",
+              "time": null,
+              "completedAt": 1783912040466,
+              "completedBy": "76db2eddb20bf2985dfb3d4f866d6eaa"
+            },
+            {
+              "id": "ffaf053d53de910c15e86f6ce786e2a7-1764595621129-8-tiuvqjwkg",
+              "text": "Brush Teeth",
+              "description": "Before bed cleaning",
+              "icon": "🦷",
+              "completed": false,
+              "pinned": false,
+              "deleted": false,
+              "type": "task",
+              "addedToLibrary": false,
+              "orderChangedAt": 1783946169316,
+              "sortIndex": 10,
+              "modifiedAt": 1783912185893,
+              "uncompletedAt": 1779905818470,
+              "uncompletedBy": "76db2eddb20bf2985dfb3d4f866d6eaa",
+              "completedAt": 1783912185893,
+              "completedBy": "76db2eddb20bf2985dfb3d4f866d6eaa"
+            },
+            {
+              "id": "ffaf053d53de910c15e86f6ce786e2a7-1764595621129-9-pgu56pmb8",
+              "text": "Daddy Hug!",
+              "description": "Squeeze!",
+              "icon": "🤗",
+              "completed": false,
+              "pinned": false,
+              "deleted": false,
+              "type": "task",
+              "addedToLibrary": false,
+              "orderChangedAt": 1783946169316,
+              "sortIndex": 11,
+              "modifiedAt": 1783912190331,
+              "uncompletedAt": 1779905819863,
+              "uncompletedBy": "76db2eddb20bf2985dfb3d4f866d6eaa",
+              "completedAt": 1783912190331,
+              "completedBy": "76db2eddb20bf2985dfb3d4f866d6eaa"
+            },
+            {
+              "id": "ffaf053d53de910c15e86f6ce786e2a7-1764595621129-10-0ebap8f88",
+              "text": "Bedtime",
+              "description": "Sweet dreams",
+              "icon": "🌙",
+              "completed": false,
+              "pinned": false,
+              "deleted": false,
+              "type": "task",
+              "addedToLibrary": false,
+              "orderChangedAt": 1783946169316,
+              "sortIndex": 12,
+              "modifiedAt": 1783912191351,
+              "uncompletedAt": 1779905820384,
+              "uncompletedBy": "76db2eddb20bf2985dfb3d4f866d6eaa",
+              "completedAt": 1783912191351,
+              "completedBy": "76db2eddb20bf2985dfb3d4f866d6eaa"
+            }
+          ]
+        },
+        "tomorrow": {
+          "activities": []
+        }
+      },
+      "deleted": false,
+      "dayToUpdate": "today",
+      "settings": {
+        "theme": "sapphire"
+      }
+    }
+  },
+  "currentDay": "today",
+  "currentUser": "user_1",
+  "activityCards": [
+    {
+      "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1783945810422-570a3ywcm",
+      "text": "Wake Up",
+      "description": "Time to start the day!",
+      "icon": "🌅",
+      "completed": true,
+      "pinned": false,
+      "deleted": false,
+      "type": "task",
+      "modifiedAt": 1783946189309,
+      "addedToLibrary": false,
+      "orderChangedAt": 1783946169316,
+      "sortIndex": 0,
+      "completedAt": 1783946189309,
+      "completedBy": "76db2eddb20bf2985dfb3d4f866d6eaa"
+    },
+    {
+      "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1783945811636-3mbfsm6pu",
+      "text": "Eat Breakfast",
+      "description": "Kiddo, it's ready!",
+      "icon": "🥞",
+      "completed": true,
+      "pinned": false,
+      "deleted": false,
+      "type": "task",
+      "modifiedAt": 1783948073080,
+      "addedToLibrary": false,
+      "orderChangedAt": 1783946169316,
+      "sortIndex": 1,
+      "uncompletedAt": 1783946192754,
+      "uncompletedBy": "76db2eddb20bf2985dfb3d4f866d6eaa",
+      "completedAt": 1783948073080,
+      "completedBy": "76db2eddb20bf2985dfb3d4f866d6eaa"
+    },
+    {
+      "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1783945813948-o1xesdhma",
+      "text": "Get Dressed",
+      "description": "Pick today's outfit",
+      "icon": "👕",
+      "completed": false,
+      "pinned": false,
+      "deleted": false,
+      "type": "task",
+      "modifiedAt": 1783946192201,
+      "addedToLibrary": false,
+      "orderChangedAt": 1783946169316,
+      "sortIndex": 2,
+      "uncompletedAt": 1783946192201,
+      "uncompletedBy": "76db2eddb20bf2985dfb3d4f866d6eaa"
+    },
+    {
+      "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1783945931601-m29i54a4p",
+      "text": "Go to Playgroup",
+      "description": "Go play",
+      "icon": "🤝",
+      "completed": false,
+      "pinned": false,
+      "deleted": false,
+      "type": "task",
+      "modifiedAt": 1783945973695,
+      "addedToLibrary": false,
+      "orderChangedAt": 1783946169316,
+      "sortIndex": 3,
+      "time": null
+    },
+    {
+      "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1783945820501-dsebtyvjd",
+      "text": "Daddy will pick you up",
+      "description": "Level complete!",
+      "icon": "🧔",
+      "completed": false,
+      "pinned": false,
+      "deleted": false,
+      "type": "task",
+      "modifiedAt": 1783945820501,
+      "addedToLibrary": false,
+      "orderChangedAt": 1783946169316,
+      "sortIndex": 4
+    },
+    {
+      "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1783946157311-x1j315av1",
+      "text": "Playdate",
+      "description": "Let's play!",
+      "icon": "🫛",
+      "completed": false,
+      "pinned": false,
+      "deleted": false,
+      "type": "task",
+      "modifiedAt": 1783946157311,
+      "addedToLibrary": false,
+      "orderChangedAt": 1783946169316,
+      "sortIndex": 5
+    },
+    {
+      "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1783945821138-2hi070ajh",
+      "text": "Eat Dinner",
+      "description": "Family meal time",
+      "icon": "🍽️",
+      "completed": false,
+      "pinned": false,
+      "deleted": false,
+      "type": "task",
+      "modifiedAt": 1783945821138,
+      "addedToLibrary": false,
+      "orderChangedAt": 1783946169316,
+      "sortIndex": 6
+    },
+    {
+      "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1783946067010-fmkcyy0qj",
+      "text": "Swim Lessons",
+      "description": "",
+      "icon": "🏊‍♀️",
+      "completed": false,
+      "pinned": false,
+      "deleted": false,
+      "type": "task",
+      "modifiedAt": 1783946067010,
+      "addedToLibrary": false,
+      "orderChangedAt": 1783946169316,
+      "sortIndex": 7
+    },
+    {
+      "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1771354452151-3e7xppobb",
+      "text": "Wear Eye Patch",
+      "description": "Like a pirate!",
+      "icon": "🏴‍☠️",
+      "completed": false,
+      "pinned": false,
+      "deleted": false,
+      "type": "task",
+      "modifiedAt": 1783912035752,
+      "addedToLibrary": false,
+      "orderChangedAt": 1783946169316,
+      "sortIndex": 8,
+      "uncompletedAt": 1779905811233,
+      "uncompletedBy": "76db2eddb20bf2985dfb3d4f866d6eaa",
+      "completedAt": 1783912035752,
+      "completedBy": "76db2eddb20bf2985dfb3d4f866d6eaa"
+    },
+    {
+      "id": "76db2eddb20bf2985dfb3d4f866d6eaa-1771354693635-qv8k5g5l4",
+      "text": "Play Nintendo",
+      "description": "Is that Rabbid Yoshi?",
+      "icon": "🦖",
+      "completed": false,
+      "pinned": false,
+      "deleted": false,
+      "type": "task",
+      "modifiedAt": 1783912040466,
+      "addedToLibrary": false,
+      "orderChangedAt": 1783946169316,
+      "sortIndex": 9,
+      "uncompletedAt": 1779905812867,
+      "uncompletedBy": "76db2eddb20bf2985dfb3d4f866d6eaa",
+      "time": null,
+      "completedAt": 1783912040466,
+      "completedBy": "76db2eddb20bf2985dfb3d4f866d6eaa"
+    },
+    {
+      "id": "ffaf053d53de910c15e86f6ce786e2a7-1764595621129-8-tiuvqjwkg",
+      "text": "Brush Teeth",
+      "description": "Before bed cleaning",
+      "icon": "🦷",
+      "completed": false,
+      "pinned": false,
+      "deleted": false,
+      "type": "task",
+      "addedToLibrary": false,
+      "orderChangedAt": 1783946169316,
+      "sortIndex": 10,
+      "modifiedAt": 1783912185893,
+      "uncompletedAt": 1779905818470,
+      "uncompletedBy": "76db2eddb20bf2985dfb3d4f866d6eaa",
+      "completedAt": 1783912185893,
+      "completedBy": "76db2eddb20bf2985dfb3d4f866d6eaa"
+    },
+    {
+      "id": "ffaf053d53de910c15e86f6ce786e2a7-1764595621129-9-pgu56pmb8",
+      "text": "Daddy Hug!",
+      "description": "Squeeze!",
+      "icon": "🤗",
+      "completed": false,
+      "pinned": false,
+      "deleted": false,
+      "type": "task",
+      "addedToLibrary": false,
+      "orderChangedAt": 1783946169316,
+      "sortIndex": 11,
+      "modifiedAt": 1783912190331,
+      "uncompletedAt": 1779905819863,
+      "uncompletedBy": "76db2eddb20bf2985dfb3d4f866d6eaa",
+      "completedAt": 1783912190331,
+      "completedBy": "76db2eddb20bf2985dfb3d4f866d6eaa"
+    },
+    {
+      "id": "ffaf053d53de910c15e86f6ce786e2a7-1764595621129-10-0ebap8f88",
+      "text": "Bedtime",
+      "description": "Sweet dreams",
+      "icon": "🌙",
+      "completed": false,
+      "pinned": false,
+      "deleted": false,
+      "type": "task",
+      "addedToLibrary": false,
+      "orderChangedAt": 1783946169316,
+      "sortIndex": 12,
+      "modifiedAt": 1783912191351,
+      "uncompletedAt": 1779905820384,
+      "uncompletedBy": "76db2eddb20bf2985dfb3d4f866d6eaa",
+      "completedAt": 1783912191351,
+      "completedBy": "76db2eddb20bf2985dfb3d4f866d6eaa"
+    }
+  ],
+  "library": {
+    "categories": [
+      {
+        "id": "my-templates",
+        "name": "My Templates",
+        "icon": "⭐",
+        "activities": [
+          {
+            "id": "template-1762005208281-6xpchsg0h",
+            "text": "Go to School",
+            "icon": "🏫",
+            "description": "Go see your teacher",
+            "sortIndex": 0
+          },
+          {
+            "id": "template-1762472050130-r2hkugzj9",
+            "text": "Go to Costco",
+            "icon": "🥶",
+            "description": "Go in the cold!",
+            "sortIndex": 1
+          },
+          {
+            "id": "template-1762005219309-h5aluqxdc",
+            "text": "Daddy will pick you up",
+            "icon": "🏠",
+            "description": "Time to go home",
+            "sortIndex": 1
+          },
+          {
+            "id": "template-1762486261304-cyun1nmxb",
+            "text": "Wear Eye Patch",
+            "icon": "🏴‍☠️",
+            "description": "Like a pirate!",
+            "sortIndex": 2
+          },
+          {
+            "id": "template-1762521075697-rmezri4oi",
+            "text": "Daddy will pick you up",
+            "icon": "🧔‍♂️",
+            "description": "Level Complete!",
+            "sortIndex": 3
+          },
+          {
+            "id": "template-1762572733258-zstyidwkb",
+            "text": "Mommy will pick you up",
+            "icon": "👩🏻‍⚕️",
+            "description": "Level Complete!",
+            "sortIndex": 4
+          },
+          {
+            "id": "template-1762572877539-r1c07fsp7",
+            "text": "Tablet Time",
+            "icon": "📱",
+            "description": "Let's read with the monsters",
+            "sortIndex": 5
+          },
+          {
+            "id": "template-1775702017069-uw1jbp25s",
+            "text": "Wear Eye Patch",
+            "icon": "🏴‍☠️",
+            "description": "Like a pirate!"
+          },
+          {
+            "id": "template-1775702023850-uzhi6kfq7",
+            "text": "Pick up toys",
+            "icon": "🚕",
+            "description": "It's time to clean up! (15 minutes)"
+          }
+        ]
+      },
+      {
+        "id": "category-1764089402577",
+        "name": "Weekday",
+        "activities": [
+          {
+            "id": "template-1764089402577-oo1e3ohbm",
+            "text": "Wake Up",
+            "icon": "🌅",
+            "description": "Time to start the day!",
+            "sortIndex": 0,
+            "sortIndexModifiedAt": 1764328610183
+          },
+          {
+            "id": "template-1764097394557-fsyuxb3kq",
+            "text": "Eat Breakfast",
+            "icon": "🥞",
+            "description": "Kiddo, it's ready!",
+            "sortIndex": 1,
+            "sortIndexModifiedAt": 1764328610183
+          },
+          {
+            "id": "template-1764089408902-xb94rtx0j",
+            "text": "Get Dressed",
+            "icon": "👕",
+            "description": "Pick today's outfit",
+            "sortIndex": 2,
+            "sortIndexModifiedAt": 1764328610183
+          },
+          {
+            "id": "template-1764098006466-uuyb6uwsm",
+            "text": "Go to School",
+            "icon": "🏫",
+            "description": "Let's go see your teacher",
+            "sortIndex": 3,
+            "sortIndexModifiedAt": 1764328610183
+          },
+          {
+            "id": "template-1764098003486-hspw7exdh",
+            "text": "Daddy will pick you up",
+            "icon": "🧔",
+            "description": "Level complete!",
+            "sortIndex": 5,
+            "sortIndexModifiedAt": 1764328610183
+          },
+          {
+            "id": "template-1764097406595-345a33e0d",
+            "text": "Eat Dinner",
+            "icon": "🍽️",
+            "description": "Family meal time",
+            "sortIndex": 6,
+            "sortIndexModifiedAt": 1764328610183
+          },
+          {
+            "id": "template-1764097417891-9hyts2lsj",
+            "text": "Put on Pajamas",
+            "icon": "👔",
+            "description": "Comfy sleep clothes",
+            "sortIndex": 7,
+            "sortIndexModifiedAt": 1764328610183
+          },
+          {
+            "id": "template-1764328444169-vebgbuks4",
+            "text": "Take medicine",
+            "icon": "💊",
+            "description": "As prescribed",
+            "sortIndex": 8,
+            "sortIndexModifiedAt": 1764328610183
+          },
+          {
+            "id": "template-1764097422587-f590p5iwd",
+            "text": "Brush Teeth",
+            "icon": "🦷",
+            "description": "Before bed cleaning",
+            "sortIndex": 9,
+            "sortIndexModifiedAt": 1764328610183
+          },
+          {
+            "id": "template-1764097462898-g0szijedc",
+            "text": "Daddy Hug!",
+            "icon": "🤗",
+            "description": "Squeeze!",
+            "sortIndex": 10,
+            "sortIndexModifiedAt": 1764328610183
+          },
+          {
+            "id": "template-1764097430829-m5vc9667w",
+            "text": "Bedtime",
+            "icon": "🌙",
+            "description": "Sweet dreams",
+            "sortIndex": 11,
+            "sortIndexModifiedAt": 1764328610183
+          }
+        ]
+      },
+      {
+        "id": "category-1764089444350",
+        "name": "Weekend",
+        "activities": [
+          {
+            "id": "template-1764089444350-yhoduc3dp",
+            "text": "Wake Up",
+            "icon": "🌅",
+            "description": "Time to start the day!",
+            "sortIndex": 0,
+            "sortIndexModifiedAt": 1764328630138
+          },
+          {
+            "id": "template-1764097396659-7hx5l591l",
+            "text": "Eat Breakfast",
+            "icon": "🥞",
+            "description": "Kiddo, it's ready!",
+            "sortIndex": 1,
+            "sortIndexModifiedAt": 1764328630138
+          },
+          {
+            "id": "template-1764328587550-4tb8y9xfx",
+            "text": "Get dressed",
+            "icon": "👕",
+            "description": "Get ready for the day!",
+            "sortIndex": 2,
+            "sortIndexModifiedAt": 1764328630138
+          },
+          {
+            "id": "template-1764097402499-e9i3sltt0",
+            "text": "Eat Lunch",
+            "icon": "🍽️",
+            "description": "Yum yum!",
+            "sortIndex": 3,
+            "sortIndexModifiedAt": 1764328630138
+          },
+          {
+            "id": "template-1764097408555-5xk8vivao",
+            "text": "Eat Dinner",
+            "icon": "🍽️",
+            "description": "Family meal time",
+            "sortIndex": 4,
+            "sortIndexModifiedAt": 1764328630138
+          },
+          {
+            "id": "template-1764097419592-unvr6k0pu",
+            "text": "Put on Pajamas",
+            "icon": "👔",
+            "description": "Comfy sleep clothes",
+            "sortIndex": 5,
+            "sortIndexModifiedAt": 1764328630138
+          },
+          {
+            "id": "template-1764328447138-jt4tm1sgq",
+            "text": "Take medicine",
+            "icon": "💊",
+            "description": "As prescribed",
+            "sortIndex": 6,
+            "sortIndexModifiedAt": 1764328630138
+          },
+          {
+            "id": "template-1764328410299-ku43nps24",
+            "text": "Brush Teeth",
+            "icon": "🪥",
+            "description": "Brush them up and down!",
+            "sortIndex": 7,
+            "sortIndexModifiedAt": 1764328630138
+          },
+          {
+            "id": "template-1764097464867-12n8xur9p",
+            "text": "Daddy Hug!",
+            "icon": "🤗",
+            "description": "Squeeze!",
+            "sortIndex": 8,
+            "sortIndexModifiedAt": 1764328630138
+          },
+          {
+            "id": "template-1764097432956-hw5umm74u",
+            "text": "Bedtime",
+            "icon": "🌙",
+            "description": "Sweet dreams",
+            "sortIndex": 9,
+            "sortIndexModifiedAt": 1764328630138
+          }
+        ]
+      },
+      {
+        "id": "category-1764351182057",
+        "name": "Places",
+        "activities": [
+          {
+            "id": "template-1764351182057-x8tc02elv",
+            "text": "Go to Grandma's House",
+            "icon": "👵🏻",
+            "description": "Let's go play!",
+            "sortIndex": 0
+          },
+          {
+            "id": "template-1764797007271-oudcefu3j",
+            "text": "Come Home",
+            "icon": "🏠",
+            "description": "Let's wait for Mommy",
+            "sortIndex": 1
+          }
+        ]
+      },
+      {
+        "id": "category-1764430343714",
+        "name": "Events",
+        "activities": [
+          {
+            "id": "template-1764430343714-dorsqz4ln",
+            "text": "Mommy will go to work",
+            "icon": "👩🏻‍⚕️",
+            "description": "Say \"Bye Mommy!\"",
+            "sortIndex": 0
+          },
+          {
+            "id": "template-1764430357299-orem83a36",
+            "text": "Mommy will come home",
+            "icon": "👩🏻‍⚕️",
+            "description": "Level Complete!",
+            "sortIndex": 1
+          },
+          {
+            "id": "template-1765237417036-gla8s8jot",
+            "text": "Open Advent Gift",
+            "icon": "🎁",
+            "description": "Today is #7!",
+            "sortIndex": 2
+          }
+        ]
+      },
+      {
+        "id": "category-1764458870190",
+        "name": "Activities",
+        "activities": [
+          {
+            "id": "template-1764458870190-kyzb1prj5",
+            "text": "Play in the snow!",
+            "icon": "❄️",
+            "description": "Let's throw snowballs",
+            "sortIndex": 0
+          },
+          {
+            "id": "template-1764595600868-ppnzm5apo",
+            "text": "Play Kirby Fighters 2",
+            "icon": "⚡",
+            "description": "Kiddo will be Zan Partisanne!",
+            "sortIndex": 1
+          },
+          {
+            "id": "template-1764903556080-upau4qopu",
+            "text": "Take a shower",
+            "icon": "🚿",
+            "description": "Gotta get clean!",
+            "sortIndex": 2
+          },
+          {
+            "id": "template-1765237403065-m9pfxlfue",
+            "text": "Play Need for Speed",
+            "icon": "🚓",
+            "description": "Pursue a Mazda!",
+            "sortIndex": 3
+          },
+          {
+            "id": "template-1775702009504-ze0cf2p9d",
+            "text": "Play math games",
+            "icon": "🧟",
+            "description": "Teach My Monster or Endless Numbers (30 minutes)"
+          }
+        ]
+      }
+    ],
+    "userAddedActivityIds": []
+  },
+  "libraryTemplates": [],
+  "globalSettings": {
+    "currentTheme": "sapphire",
+    "bannerPosition": "top",
+    "defaultView": "normal",
+    "displayMode": "numbers",
+    "enableDayManagement": true,
+    "pinEnabled": false
+  }
+}
