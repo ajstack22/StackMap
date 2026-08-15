@@ -32,8 +32,8 @@ Activity = emoji icon + short text + optional description + optional time label
 - **Normal mode** (the child's view): a vertical list/grid of activity cards for the active user's current day. Tapping a card toggles completion. That's the whole surface.
 - **Edit mode** (the grown-up's view, optionally gated by a 4-digit PIN): manage activities (add/edit/delete/reorder), users, the template library, settings, and backups.
 - **"Routine"** in this app means the whole day's list — there is no named-routine entity. Completing *all* activities is "completing the routine" (fireworks).
-- **Pinned** means "survives the daily reset": when the day is completed, pinned activities stay (reset to unchecked) and copy forward to the new Tomorrow; unpinned ones are swept away. Pinning is the recurring-item mechanism.
-- **Complete Day** is the manual daily-reset ritual. There is deliberately **no automatic midnight rollover** in the old app (see open decisions, §6).
+- **Recurring routines** come from the Library: categories like *Weekday* / *Weekend* act as routine sets, loaded into the day with **Load routine**. (The old app's `pinned` carry-forward mechanism is dropped — decision D5 — because the family never used it; its UI was dead code.)
+- **Complete Day** is the daily-reset ritual: review, clear the day, promote Tomorrow's plan. The old app had **no automatic rollover**; the rebuild auto-*prompts* on a new calendar day (decision D1) but never resets silently.
 
 ## 3. On-screen vocabulary (use these exact words)
 
@@ -71,7 +71,7 @@ Open app → active user's Today. Tap a card → it restyles in the user's theme
 Edit FAB → (PIN if set) → edit list replaces the cards. Per row: edit, move up/down, toggle complete, save to Library, delete (with undo). Toolbar: **Add**, **Library**, **Complete** (Day), **Access** (users + PIN), **Data** (backup), **Settings**.
 
 ### J4 — End the day (Complete Day)
-Toolbar → Complete. Review buckets: *Will Be Removed* (unpinned), *Keep for Today* (pinned, reset to unchecked), *Moving from Tomorrow* (tomorrow's plan promotes to today), *Keep & Copy Forward* (pinned copies seed the new tomorrow). Tap cards to move them between buckets. Confirm.
+Toolbar → Complete (or accept the new-day auto-prompt, D1). Review two buckets: *Will Be Removed* (everything in Today, the default) and *Keep for Today* (reset to unchecked); *Moving from Tomorrow* promotes tomorrow's plan. Tap cards to flip between remove/keep. Confirm, then optionally **Load routine** to fill the fresh day from a library category.
 
 ### J5 — Plan tomorrow (opt-in)
 Settings → Day Mode: **Both Days**. The Context switcher gains Today/Tomorrow selection; edit Tomorrow's list the same way; Complete Day pulls it into Today.
@@ -101,22 +101,26 @@ Automatic: the app continuously writes versioned JSON backups to a family-chosen
 - Custom PNG sticker icons (already feature-flagged off; importer must still tolerate `image:` icon values in old data)
 - Camera permission + QR scanners (sync-only), all server code in the repo
 
-### Decide-per-item (documented as built, but dead or broken in the old app)
-- **Pin toggle UI**: the `pinned` field drives Complete Day, but no shipped UI can set it — so in practice everything lands in "Will Be Removed". **Recommendation: add a pin toggle to the edit-mode row** (this restores the designed behavior).
-- **Sounds**: `soundEnabled` setting exists; no sound has ever played. Recommendation: drop the setting, or actually implement a soft completion sound. Don't ship a dead toggle.
-- **Haptics**: stubbed out in the old app (a stale permission comment). Recommendation: light haptic on completion toggle and reorder; trivial in Compose.
-- **The 60-activity built-in library** ("StackMap Library": Morning/Food/Play/Afternoon/Evening/Wellness): good content, general-audience browse UI. Recommendation: ship it as optional seed data for My Library rather than a separate read-only catalog.
+### Resolved (were dead or broken in the old app — see §6 for the decisions)
+- **Pinning**: dropped (D5) — replaced by Load-routine from library categories.
+- **Sounds**: dropped (D7).
+- **Haptics**: implemented lightly (D8).
+- **The 60-activity built-in library** ("StackMap Library": Morning/Food/Play/Afternoon/Evening/Wellness): ship as optional seed data for My Library rather than a separate read-only catalog.
 
-## 6. Open product decisions for the family
+## 6. Product decisions — DECIDED (Aug 2026)
 
-These change behavior, so decide explicitly rather than inheriting accidents:
+Recommendations adopted as decisions; each was chosen from evidence in the code and the family's real data. Veto any of them before the corresponding feature is built, not after.
 
-1. **Automatic day rollover?** The old app *never* resets at midnight — checkmarks persist until someone runs Complete Day. Options: keep manual-only (the designed ritual), auto-prompt on first open of a new calendar day ("Yesterday isn't completed — complete it now?"), or full auto-reset. Recommendation: **auto-prompt**; it preserves the ritual while preventing stale days.
-2. **Per-user theme switching** — keep (each member's color identity, recommended) or single device theme?
-3. **Celebration fixes** — the old "green" palette is actually pink (a bug), and the 21st theme (slate) was unselectable. Fix both, or reproduce faithfully for a child used to the current look? Recommendation: fix.
-4. **PIN scope** — old app gates Edit Mode only; the theme picker was *not* gated (a child can recolor the app). Gate settings/theme too?
-5. **Named routines?** The old app approximates recurring routines via pinning + templates. The family's real data (see `fixtures/stackmap-export-2026-08-15-sanitized.json`) shows they already do exactly this: library categories named **Weekday**, **Weekend**, **Places**, **Events** used as routine sets, loaded into the day via "Add All" — while `pinned` is false on every single activity (consistent with the pin UI being dead). If a first-class "load the Weekday routine" action is wanted, it's a small step from observed behavior: keep categories, make "Add All" prominent, and consider whether the pin toggle (§5 above) is even needed. Decide: pin-based carry-forward, category-based day loading, or both.
-6. **Time on activities** stays a display-only label (no alarms/notifications) unless the family asks otherwise.
+| # | Decision | Rationale |
+|---|---|---|
+| D1 | **Day rollover: auto-prompt.** On first foreground of a new calendar day, if Today has completions or Tomorrow has content, prompt "Start a new day?" → opens the Complete Day review. Never silently deletes; manual Complete Day still available anytime. | Preserves the designed ritual, prevents the stale-checkmarks failure mode the old app had. |
+| D2 | **Per-user themes: keep.** Switching users recolors the app to that user's theme. | Real behavior families rely on; each member's color identity. |
+| D3 | **Fix the bugs, don't reproduce them.** Real greens in the "green" celebration palette; all 21 themes (incl. slate) selectable. | They're defects, not character. |
+| D4 | **PIN gates Edit Mode *and* the theme picker/settings.** User/day switching (Context) stays open — that's the child's legitimate surface. | The old ungated palette FAB let a child recolor the app; everything mutating lives behind the PIN. |
+| D5 | **Routines are loaded from library categories; pinning is dropped entirely.** A prominent **"Load routine"** action fills the day from a category (the old "Add All", promoted to a first-class verb). The `pinned` field is not in the new model (tolerated and ignored on import; written as `false` in exports for compatibility). Complete Day simplifies accordingly (see behavior spec §4). | The family's real data: `pinned` is false on every activity (the pin UI was dead code), while Weekday/Weekend/Places/Events categories already function as routines via Add All. Build what they actually do. |
+| D6 | **Activity time stays a display-only label.** No alarms, no notifications, no parsing. | Matches the calm, no-rigid-times product model. |
+| D7 | **`soundEnabled` is dropped.** No sound setting ships; if completion sounds are ever wanted, that's a new feature request. | The setting never did anything in the old app; don't ship a dead toggle. |
+| D8 | **Haptics: yes.** Light tick on completion toggle and reorder. | Stubbed-but-intended in the old app; free in Compose. |
 
 ## 7. What was documented but never real
 

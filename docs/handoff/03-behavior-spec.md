@@ -6,7 +6,7 @@ Behavior of every kept surface, as verified in the shipped code (not the stale d
 
 - **Banner** (header strip, `theme.primary`): logo + "StackMap" wordmark + the **user pill** — a white rounded pill showing the active user's emoji + name (in edit mode it shows the day: "Today"/"Tomorrow" instead). Banner position is a setting (`top` default, or `bottom`); status bar and (on the old app) the Android navigation bar are tinted to match the theme. The logo is a code-drawn three-stacked-bars SVG (32×20 viewBox: bars 24×3.6, 24×3.6, 24×8.4, white) — redraw it in Compose, don't rasterize.
 - **Two FABs**, opposite corners on the banner-adjacent edge:
-  - Palette FAB → theme picker. ⚠️ In the old app this was **not** PIN-gated (family decision whether to gate it).
+  - Palette FAB → theme picker, **PIN-gated** (decision D4 — the old app left it open and a child could recolor the app).
   - Edit FAB → toggles Edit Mode (PIN modal first if a PIN is set). While in edit mode it turns red (`#f56565`) with an "exit edit" icon.
 - **Page background**: `theme.light`. All modals slide up full-screen or near-full-screen.
 - **Toast**: bottom pill in `theme.primary`, white text, ~3s auto-dismiss, optional action button (used for delete Undo).
@@ -45,9 +45,9 @@ Tapping the user pill opens **Context**: "Select Context — Choose which user a
 **List** replaces the cards: one row per activity (white card, max-width ~800 dp, centered):
 - Row content: emoji + title (1 line) + description (1 line) + a prominent circular **Edit** (pencil) button in `theme.primary`.
 - Actions row: **▲/▼ reorder** (one position per tap, disabled at ends, ~44 dp touch targets), position/time badge (per `displayMode`), **✓ toggle**, **bookmark = Save to Library**, **trash = Delete** (red `#e53e3e`).
-- Tapping the row body does nothing (only buttons act). Reordering animates (~250 ms spring on Android).
-- **Add a pin toggle here** (new — see product spec §5): pinned state must be settable or Complete Day degenerates.
-- Empty day in edit mode: show "Tap Add to create an activity" (the old app showed a blank area — a bug).
+- Tapping the row body does nothing (only buttons act). Reordering animates (~250 ms spring on Android). Light haptic on toggle and reorder (D8).
+- No pin control — pinning is dropped (D5); recurring content comes from **Load routine** (below).
+- Empty day in edit mode: show "Tap Add to create an activity" plus a **Load routine** shortcut (the old app showed a blank area — a bug).
 
 **Toolbar** (opposite edge from the banner, slides in ~200 ms): fixed order **Add, Library, Complete, Access, Data, Settings** (customizable order is dropped).
 
@@ -56,7 +56,7 @@ Fields: **Activity Name** (required — inline error "Activity name is required"
 
 ### Library
 Two sections in one modal:
-- **My Library**: user categories, **My Templates** first then alphabetical. Per template: **+** (adds a copy to the current user's current day), reorder ▲/▼, delete (confirm). Per category: **Add All** (batch-adds every template), rename + delete for custom categories only (My Templates is immutable). Search filters template text/icon and category names.
+- **My Library**: user categories, **My Templates** first then alphabetical. Per template: **+** (adds a copy to the current user's current day), reorder ▲/▼, delete (confirm). Per category: **Load routine** (batch-adds every template — the old "Add All", promoted to the primary verb per D5; this is how Weekday/Weekend-style routines fill a day), rename + delete for custom categories only (My Templates is immutable). Search filters template text/icon and category names.
 - **Seed library** (if kept per product spec §5): the 60 curated activities (Morning/Food/Play/Afternoon/Evening/Wellness groups) from `src/constants/stackMapLibrary.js`, offered as importable seed content.
 - **Save to Library** (bookmark in edit list): category picker, My Templates first; "Create New Group" inline (≤50 chars; case-insensitive duplicate silently reuses the existing category). Confirmation: brief filled-bookmark state / toast "Added to <category>".
 
@@ -64,19 +64,21 @@ Two sections in one modal:
 - **Users tab**: rows (emoji, name, "Active" badge). Tap = switch user (+ theme). Edit (name/icon). Delete with confirm ("…will permanently remove the user and all their activity cards") — hidden for the last user. **Add User** hidden at 5 users. Name required; no length cap; duplicates allowed.
 - **PIN tab**: Add PIN (enter twice), Change Code (verify old → new twice), Remove PIN (confirm). Copy: "Remember your PIN! If forgotten, you'll need to reset the app data." Exactly 4 digits.
 
-### Complete Day
+### Complete Day (simplified per D5 — no pinning)
+Entry: toolbar **Complete**, or the new-day auto-prompt (D1: on first foreground of a new calendar day, if Today has completions or Tomorrow has content, offer "Start a new day?"; never reset silently).
+
 Modal buckets built from the current user's **Today** list:
-1. **Will Be Removed** — unpinned activities ("These activities will be permanently deleted").
-2. **Keep for Today** (or **Keep & Copy Forward** when Tomorrow has content) — pinned activities.
+1. **Will Be Removed** — everything in Today, by default ("These activities will be permanently deleted").
+2. **Keep for Today** — anything the user taps over from bucket 1 (kept, reset to unchecked).
 3. **Moving from Tomorrow** — Tomorrow's entire list (shown only if non-empty).
 
 Tap any card to flip it between remove ↔ keep. Confirm →
 ```
 newToday    = kept (each reset to completed=false) + tomorrow's activities
-newTomorrow = copies of kept-pinned activities (fresh ids, completed=false)   // only when Tomorrow was non-empty
-removed     = gone permanently
+newTomorrow = empty
+removed     = gone permanently (an automatic backup snapshot precedes the commit)
 ```
-Exits edit mode; toast "Day completed! Activities reorganized." Only affects the current user — each member completes their own day.
+Then offer **Load routine** to fill the fresh day from a library category. Exits edit mode; toast "Day completed!" Only affects the current user — each member completes their own day. (The old app's third bucket — pinned activities copying forward to the new Tomorrow — is gone with pinning; a routine reloads in one tap instead.)
 
 ### Settings
 Keep: **Banner Position** (Top/Bottom), **Day Mode** (Today Only / Both Days), **Activity Display** (None / Numbers / Time), **Task Celebration** + **Routine Celebration** (chip rows: none, random, rainbow, blue, orange, pink, purple, gold, green). All auto-save. Theme lives in the separate palette-FAB picker (grid of 21 colored circles, active check-marked, per-user).

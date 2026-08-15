@@ -31,9 +31,8 @@ Constraints: max **5** users; the last remaining user cannot be deleted. Old app
 | `time` | String? | Display-only label, `"HH:MM AM"` 12-hour zero-padded format (e.g. `07:30 PM`). Never parsed, never sorted on, no alarms. |
 | `completed` | Boolean | The only authoritative completion flag. |
 | `completedAt` | Instant? | Set on complete, cleared on uncomplete. Keep if a "when" display is ever wanted; otherwise optional. |
-| `pinned` | Boolean | Survives Complete Day (see behavior spec). |
 
-Dropped from the legacy activity (sync-only or dead): `completedBy`, `uncompletedAt`, `uncompletedBy`, `modifiedAt`, `sortIndex`, `orderChangedAt`, `deleted`/`deletedAt` (undo can be in-memory), `type`, `isPersonal`, `addedToLibrary` (was runtime-only), `order` (was never written), legacy aliases `title`/`name`/`emoji`.
+Dropped from the legacy activity (sync-only, dead, or superseded by decision D5): `pinned` (pinning is dropped — tolerated/ignored on import, written as `false` in exports), `completedBy`, `uncompletedAt`, `uncompletedBy`, `modifiedAt`, `sortIndex`, `orderChangedAt`, `deleted`/`deletedAt` (undo can be in-memory), `type`, `isPersonal`, `addedToLibrary` (runtime-only in current code but persisted in real data), `order` (was never written), legacy aliases `title`/`name`/`emoji`.
 
 ### Library
 ```

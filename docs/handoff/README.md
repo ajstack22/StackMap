@@ -23,7 +23,7 @@ This package is everything a developer (human or AI) needs to build that app fro
 
 Read in order for a full picture; each stands alone for reference.
 
-1. **[01-product-spec.md](./01-product-spec.md)** — What the app is, who it's for, the interaction model, on-screen vocabulary, core user journeys, keep/drop feature lists, and the open product decisions the family must make.
+1. **[01-product-spec.md](./01-product-spec.md)** — What the app is, who it's for, the interaction model, on-screen vocabulary, core user journeys, keep/drop feature lists, and the **decided** product questions (D1–D8, adopted Aug 2026 — vetoable before the corresponding feature is built).
 2. **[02-data-model.md](./02-data-model.md)** — The clean data model for the new app, the legacy persisted model it descends from, and the normalization rules needed to read old data.
 3. **[03-behavior-spec.md](./03-behavior-spec.md)** — Pixel-and-behavior spec for every kept screen and interaction: day view, completion + celebrations, edit mode, library, user management, Complete Day, settings, PIN, theming, typography, Android system behaviors.
 4. **[04-backup-spec.md](./04-backup-spec.md)** — The backup system: v4 file-format compatibility contract, automatic backup design (new), manual export/import, restore flows, and the **data-migration plan off the old app — read the risk section first.**

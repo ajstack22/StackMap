@@ -28,7 +28,7 @@ One JSON format serves automatic backups, manual exports, and old-app files. It 
       "days": {
         "today": { "activities": [
           { "id": "...", "text": "Brush Teeth", "icon": "🦷", "description": "",
-            "completed": true, "completedAt": 1723731234567, "pinned": true, "time": "07:30 AM" }
+            "completed": true, "completedAt": 1723731234567, "pinned": false, "time": "07:30 AM" }
         ]},
         "tomorrow": { "activities": [] }
       }
@@ -57,7 +57,7 @@ Writing rules (all exist so the **old app could read the file if ever needed**, 
 - `version` is the JSON **number** `4` (one legacy validator required strict `=== 4`).
 - Always include `users`, `library` (with `categories` array + `userAddedActivityIds: []`), `libraryTemplates: []`, and `globalSettings` — the strict legacy validator required all of them.
 - `activityCards` is redundant (cards live inside users) but include it for compatibility.
-- Activity/user fields use canonical names only: `text`, `icon`, `name`. Timestamps epoch-ms. Omit sync-era fields.
+- Activity/user fields use canonical names only: `text`, `icon`, `name`. Timestamps epoch-ms. Omit sync-era fields. Write `pinned: false` on every activity (the new app has no pinning — decision D5 — but the old reader expects the key).
 - The old exporter hardcoded `defaultView/displayMode/enableDayManagement` in `globalSettings` regardless of real settings; keep writing those constants — nothing ever read them.
 - Filename: `stackmap-export-YYYY-MM-DD-HH-MM-SS.json` (local time) for manual exports; `stackmap-backup-YYYY-MM-DD-HH-MM-SS.json` for automatic backups (distinct prefix keeps the folder legible; the importer accepts any name).
 - PIN is never written to any file (only the `pinEnabled` boolean).
