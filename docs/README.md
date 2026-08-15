@@ -11,6 +11,10 @@ Welcome to the StackMap documentation. This guide will help you navigate our com
 ./scripts/qual_deploy.sh or prod_deploy.sh
 ```
 
+## 📦 Family Rebuild Handoff (Aug 2026)
+
+**Planning the native Android rebuild?** Start with the [Handoff Package](./handoff/README.md) — a verified-against-code blueprint for rebuilding StackMap as a Kotlin/Compose, Android-only, family-focused app with local backup (no sync, no store). It supersedes the rest of this tree for that effort.
+
 ## 📚 Documentation Structure
 
 ### Core Documentation
