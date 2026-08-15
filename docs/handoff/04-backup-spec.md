@@ -6,7 +6,7 @@ Backup is the app's only safety net (no sync, no cloud, no store). Three layers:
 2. **Manual export / import** (kept, format-compatible with the old app)
 3. **Android Auto Backup** (OS-level, was explicitly disabled in the old app — enable it)
 
-Plus §5: the one-time **migration off the old app**, which has a real failure risk — read it before building anything.
+Plus §5: the one-time **migration off the old app** — resolved (a verified export exists), with the legacy quirks it taught us.
 
 ## 1. The file format: v4 compatibility contract
 
@@ -104,7 +104,7 @@ Set `android:allowBackup="true"` with `dataExtractionRules` including the Room D
 
 ## 5. Migration off the old app — ✅ RESOLVED
 
-**Status (Aug 15, 2026):** export was verified working on a real family device. A sanitized copy (names, school/place names, and medical notes replaced with placeholders; every structural detail preserved) is checked in at **`docs/handoff/fixtures/stackmap-export-2026-08-15-sanitized.json`** as the primary importer test fixture. The unsanitized original is the actual migration source and lives outside git in the family's own storage — keep it safe, and export again after any meaningful data change so the migration snapshot stays fresh. Until the new app ships, export again after any meaningful data change so the migration snapshot stays fresh.
+**Status (Aug 15, 2026):** export was verified working on a real family device. A sanitized copy (names, school/place names, and medical notes replaced with placeholders; every structural detail preserved) is checked in at **`docs/handoff/fixtures/stackmap-export-2026-08-15-sanitized.json`** as the primary importer test fixture. The unsanitized original is the actual migration source and lives outside git in the family's own storage — keep it safe, and until the new app ships, export again after any meaningful data change so the migration snapshot stays fresh.
 
 What that real file confirms and adds to the compatibility contract (all folded into §1 and the data-model normalization rules):
 - Envelope matches the documented v4 shape exactly (number `4`, all sections present, pretty-printed).

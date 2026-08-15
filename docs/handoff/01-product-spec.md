@@ -26,7 +26,7 @@ Family
      └─ Tomorrow  ── ordered list of Activities   (optional, off by default)
 
 Activity = emoji icon + short text + optional description + optional time label
-         + completed flag + pinned flag
+         + completed flag
 ```
 
 - **Normal mode** (the child's view): a vertical list/grid of activity cards for the active user's current day. Tapping a card toggles completion. That's the whole surface.
@@ -44,7 +44,7 @@ Activity = emoji icon + short text + optional description + optional time label
 | Whole day's list | the day / **Routine** (only in "Routine Celebration") | schedule |
 | Days | **Today** / **Tomorrow** only | dates, weekdays |
 | Daily reset | **Complete Day** | — |
-| Recurring item | **Pinned** ("Keep for Today", "Keep & Copy Forward") | — |
+| Recurring set | **Routine** — a library category loaded via **Load routine** | pinned (dropped, D5) |
 | Management mode | **Edit Mode** | admin, parent mode |
 | Template store | **Library**; personal category **My Templates** (⭐) | — |
 | User/day switcher | **Context** ("Select User", "Select Day") | — |
@@ -85,7 +85,7 @@ Automatic: the app continuously writes versioned JSON backups to a family-chosen
 - Tap-to-complete activity cards (emoji + text + optional description + check circle + optional number/time badge)
 - Task & routine celebrations, per-user color themes (all 21, including the previously hidden `slate`), reduce-motion respect
 - Users (max 5) with emoji identity; Context switcher; per-user theme follows the active user
-- Today/Tomorrow model, pinning, Complete Day ritual
+- Today/Tomorrow model and the Complete Day ritual (simplified per D5)
 - Edit Mode with PIN gate; button-based reordering
 - Personal Library (My Templates + custom categories) with save-to-library and add-from-library
 - Settings: day mode, activity display badges (none/numbers/time), banner position, celebrations
