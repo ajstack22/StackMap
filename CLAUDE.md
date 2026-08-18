@@ -116,8 +116,8 @@ StackMap uses the **Atlas Framework** for structured development workflows. Choo
 ```
 **Four-Tier Strategy:** QUAL (multiple/day) → STAGE (internal validation) → BETA (1-2/week) → PROD (weekly/bi-weekly)
 **API Endpoints:**
-- QUAL/STAGE: `stackmap.app/qual/api/sync` → `stachblx_stackmap_sync_qual` DB
-- BETA/PROD: `stackmap.app/beta/api/sync` and `stackmap.app/api/sync` → `stachblx_stackmap_sync` DB
+- QUAL/STAGE: `stackmap.app/qual/api/sync` → `<cpanel-user>_stackmap_sync_qual` DB
+- BETA/PROD: `stackmap.app/beta/api/sync` and `stackmap.app/api/sync` → `<cpanel-user>_stackmap_sync` DB
 - Server paths: `/public_html/{qual,beta}/api/sync/` (config.php has DB creds, not in git)
 **Commit Messages:** Update `PENDING_CHANGES.md` before deploying for descriptive commit messages
 **iOS Production:** Now fully automated! No manual Xcode steps required - builds, uploads, and prepares for review

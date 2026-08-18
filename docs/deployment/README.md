@@ -129,10 +129,10 @@ QUAL → STAGE → BETA → PROD
 
 | Tier | Mobile Build Type | API Endpoint | Database | Web URL |
 |------|------------------|--------------|----------|---------|
-| **QUAL** | qual | https://stackmap.app/qual/api/sync | stachblx_stackmap_sync_qual | stackmap.app/qual |
-| **STAGE** | stage | https://stackmap.app/qual/api/sync | stachblx_stackmap_sync_qual | N/A (mobile only) |
-| **BETA** | beta | https://stackmap.app/beta/api/sync | stachblx_stackmap_sync | stackmap.app/beta |
-| **PROD** | release | https://stackmap.app/api/sync | stachblx_stackmap_sync | stackmap.app |
+| **QUAL** | qual | https://stackmap.app/qual/api/sync | <cpanel-user>_stackmap_sync_qual | stackmap.app/qual |
+| **STAGE** | stage | https://stackmap.app/qual/api/sync | <cpanel-user>_stackmap_sync_qual | N/A (mobile only) |
+| **BETA** | beta | https://stackmap.app/beta/api/sync | <cpanel-user>_stackmap_sync | stackmap.app/beta |
+| **PROD** | release | https://stackmap.app/api/sync | <cpanel-user>_stackmap_sync | stackmap.app |
 
 **Key Points:**
 - STAGE uses qual DB but is a separate mobile build type
@@ -348,10 +348,10 @@ Both platforms use a single identifier for distribution tiers (stage/beta/prod):
 - Android: Gradle flavors + Play Store tracks + display names
 
 ### API Endpoints by Tier
-- **QUAL:** `https://stackmap.app/qual/api/sync/` (stachblx_stackmap_sync_qual)
-- **STAGE:** `https://stackmap.app/qual/api/sync/` (stachblx_stackmap_sync_qual)
-- **BETA:** `https://stackmap.app/beta/api/sync/` (stachblx_stackmap_sync)
-- **PROD:** `https://stackmap.app/api/sync/` (stachblx_stackmap_sync)
+- **QUAL:** `https://stackmap.app/qual/api/sync/` (<cpanel-user>_stackmap_sync_qual)
+- **STAGE:** `https://stackmap.app/qual/api/sync/` (<cpanel-user>_stackmap_sync_qual)
+- **BETA:** `https://stackmap.app/beta/api/sync/` (<cpanel-user>_stackmap_sync)
+- **PROD:** `https://stackmap.app/api/sync/` (<cpanel-user>_stackmap_sync)
 
 ### Web URLs
 - **QUAL Web:** `https://stackmap.app/qual/`

@@ -80,6 +80,12 @@ android/fastlane/*.mobileprovision
 # Bundle artifact
 *.jsbundle
 
+# Mobile build artifacts - NEVER COMMIT THESE!
+*.aab
+*.apk
+*.ipa
+*.dSYM.zip
+
 # Ruby / CocoaPods
 **/Pods/
 /vendor/bundle/
