@@ -80,9 +80,9 @@ StackMap uses the **Atlas Framework** for structured development workflows. Choo
 **Phases:** Research → Story → Plan → Adversarial Review → Implement → Test → Validate → Cleanup → Deploy
 
 **📖 Quick Reference:** See [docs/ATLAS_QUICK_REFERENCE.md](./docs/ATLAS_QUICK_REFERENCE.md) ⭐ **START HERE**
-**📖 Detailed Tiers:** See [atlas/docs/WORKFLOW_TIERS.md](./atlas/docs/WORKFLOW_TIERS.md)
+**📖 Detailed Tiers:** See `atlas/docs/WORKFLOW_TIERS.md` (local checkout only, not in git)
 **📖 Integration Guide:** See [docs/ATLAS_INTEGRATION.md](./docs/ATLAS_INTEGRATION.md)
-**🔧 Agent Specs:** See [.claude/agents/](../.claude/agents/)
+**🔧 Agent Specs:** See `.claude/agents/` (local checkout only, not in git)
 
 ---
 
@@ -274,7 +274,7 @@ cd android && ./gradlew clean
 ---
 
 ## 📝 BEFORE ANY CHANGES
-1. **Choose Atlas Workflow Tier** (Quick/Standard/Full) - see [Workflow Tiers](./atlas/docs/WORKFLOW_TIERS.md)
+1. **Choose Atlas Workflow Tier** (Quick/Standard/Full) - see [Atlas Skills](./atlas-skills/README.md)
 2. Check `/docs/` directory for existing documentation
 3. Check git history: `git log -p --grep="<feature>"`
 4. Test on ALL platforms if changing shared code
@@ -303,7 +303,7 @@ StackMap has specialized agents in `.claude/agents/`:
 - [New Developer Guide](./docs/onboarding/new-developer-guide.md)
 - [Full Deployment Guide](./docs/deployment/README.md)
 - [Testing Guides](./docs/testing/README.md)
-- [Troubleshooting](./TROUBLESHOOTING.md)
+- [Troubleshooting](./docs/TROUBLESHOOTING.md)
 
 ### Feature Documentation
 - [Feature Documentation](./docs/features/README.md)
@@ -313,7 +313,7 @@ StackMap has specialized agents in `.claude/agents/`:
 ### Atlas Workflow System ⭐
 - **[Atlas Quick Reference](./docs/ATLAS_QUICK_REFERENCE.md)** - Cheat sheet (START HERE!)
 - [Atlas Integration Guide](./docs/ATLAS_INTEGRATION.md) - StackMap-specific workflows
-- [Workflow Tiers](./atlas/docs/WORKFLOW_TIERS.md) - Quick/Standard/Full detailed guide
-- [Agent Workflow Guide](./atlas/docs/AGENT_WORKFLOW.md) - Complete 9-phase workflow
-- [Atlas README](./atlas/README.md) - Framework overview
-- [Agent Definitions](./.claude/agents/) - Specialized agent specs
+- **[Atlas Skills](./atlas-skills/README.md)** - Executable skills system (replaces the legacy tiers)
+
+> The legacy `atlas/` framework and `.claude/agents/` specs are local-only and
+> intentionally excluded from git, so they are not browsable in this repo.

@@ -300,7 +300,7 @@ echo "Verification complete!"
 
 ## Next Steps After Verification
 
-1. Document findings in IMPLEMENTATION_SUMMARY.md
+1. Document findings in `PENDING_CHANGES.md`
 2. Update deployment docs with verification requirements
 3. Add pre-deployment checklist item: "Verify BUILD_TYPE propagation"
 4. Consider adding automated E2E test that checks API endpoint

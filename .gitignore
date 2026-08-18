@@ -175,9 +175,11 @@ tsconfig.tsbuildinfo
 .sonar/
 .last-sonar-analysis
 
-# Environment files
+# Environment files - NEVER COMMIT THESE!
 .env
 *.env
+.env.*
+!.env.example
 .stackmap-env
 .manylla-env
 atlas/
