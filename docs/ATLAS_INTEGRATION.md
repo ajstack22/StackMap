@@ -444,9 +444,10 @@ Atlas deployment phase expects you to update this file:
 ## Getting Help
 
 ### Atlas Framework Questions
-- [Atlas README](../atlas/README.md)
-- [Workflow Tiers](../atlas/docs/WORKFLOW_TIERS.md)
-- [Agent Workflow Guide](../atlas/docs/AGENT_WORKFLOW.md)
+- [Atlas Skills](../atlas-skills/README.md) - the executable skills system
+
+> The legacy `atlas/` framework is local-only and intentionally excluded from
+> git, so it is not browsable in this repo.
 
 ### StackMap-Specific Questions
 - [CLAUDE.md](../CLAUDE.md) - Main development guide

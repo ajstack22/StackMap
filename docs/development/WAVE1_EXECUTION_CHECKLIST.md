@@ -7,7 +7,6 @@ Use this checklist to track Wave 1 execution progress.
 
 ## Pre-Flight Checks
 
-- [ ] Read `/PRODUCTION_READINESS_SUMMARY.md` (5 min)
 - [ ] Read `/docs/development/PRE_PRODUCTION_CLEANUP_PLAN.md` sections 1.1-1.3 (10 min)
 - [ ] Create branch: `git checkout -b cleanup/wave-1-prod-blockers`
 - [ ] Verify current status:
@@ -452,7 +451,6 @@ If you find issues:
 
 ### Status Board
 After completion, update status:
-- `PRODUCTION_READINESS_SUMMARY.md` → Change from 🔴 RED to 🟡 YELLOW
 - Note: Will be 🟢 GREEN after Wave 2 (SonarCloud + unused code)
 
 ---
@@ -519,7 +517,6 @@ When Wave 1 is complete:
 ## Resources
 
 - **Full Plan**: `/docs/development/PRE_PRODUCTION_CLEANUP_PLAN.md`
-- **Summary**: `/PRODUCTION_READINESS_SUMMARY.md`
 - **Project Guide**: `/CLAUDE.md`
 - **Deployment Guide**: `/docs/deployment/README.md`
 

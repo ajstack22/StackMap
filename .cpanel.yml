@@ -1,6 +1,0 @@
----
-deployment:
-  tasks:
-    - export DEPLOYPATH=/home/stachblx/public_html/qual
-    # Simple direct deployment - just set deployment path
-    # cPanel will handle the file sync when set up with correct deployment path

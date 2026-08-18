@@ -70,11 +70,6 @@ Complete four-tier deployment system:
 - Launch screen generation
 - Icon troubleshooting
 
-### **archived-scripts/** - Deprecated Scripts
-- Historical reference only (37+ archived scripts)
-- Old deployment scripts superseded by 4-tier system
-- `reports/` - Historical refactor reports
-
 ---
 
 ## 🚀 Four-Tier Deployment System

@@ -16,7 +16,7 @@
 2. Type "Remote-SSH: Connect to Host..."
 3. Enter your connection string:
    ```
-   stachblx@your-server.com -p 22
+   <cpanel-user>@your-server.com -p 22
    ```
 4. Enter your password when prompted
 
@@ -31,7 +31,7 @@
 Host stackmap-cpanel
     HostName your-server.com
     Port 22
-    User stachblx
+    User <cpanel-user>
 ```
 
 5. Save the file
@@ -57,9 +57,9 @@ When you first connect, VS Code will:
 Once connected:
 
 1. **Open a folder**: Click "Open Folder" and navigate to:
-   - `/home/stachblx/qual` - Your staging site
-   - `/home/stachblx/public_html` - Your production site
-   - `/home/stachblx` - Your home directory
+   - `/home/<cpanel-user>/qual` - Your staging site
+   - `/home/<cpanel-user>/public_html` - Your production site
+   - `/home/<cpanel-user>` - Your home directory
 
 2. **Terminal Access**: 
    - Press `` Ctrl+` `` to open integrated terminal
@@ -99,15 +99,15 @@ Once connected:
     "folders": [
         {
             "name": "📦 Qual (Staging)",
-            "uri": "vscode-remote://ssh-remote+stackmap-cpanel/home/stachblx/qual"
+            "uri": "vscode-remote://ssh-remote+stackmap-cpanel/home/<cpanel-user>/qual"
         },
         {
             "name": "🌐 Production",
-            "uri": "vscode-remote://ssh-remote+stackmap-cpanel/home/stachblx/public_html"
+            "uri": "vscode-remote://ssh-remote+stackmap-cpanel/home/<cpanel-user>/public_html"
         },
         {
             "name": "🔧 Scripts",
-            "uri": "vscode-remote://ssh-remote+stackmap-cpanel/home/stachblx/scripts"
+            "uri": "vscode-remote://ssh-remote+stackmap-cpanel/home/<cpanel-user>/scripts"
         }
     ],
     "settings": {
@@ -130,12 +130,12 @@ To avoid entering your password every time:
 
 2. **Copy to server**:
    ```bash
-   ssh-copy-id -p 22 stachblx@your-server.com
+   ssh-copy-id -p 22 <cpanel-user>@your-server.com
    ```
 
 3. **Test connection**:
    ```bash
-   ssh -p 22 stachblx@your-server.com
+   ssh -p 22 <cpanel-user>@your-server.com
    ```
 
 ## Troubleshooting

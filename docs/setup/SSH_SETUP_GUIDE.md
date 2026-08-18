@@ -23,7 +23,7 @@ ssh -p 2222 username@your-server.com
 
 ### Example for your setup
 ```bash
-ssh stachblx@your-cpanel-server.com -p 22
+ssh <cpanel-user>@your-cpanel-server.com -p 22
 ```
 
 ## Method 2: First Time Setup
@@ -38,7 +38,7 @@ ssh stachblx@your-cpanel-server.com -p 22
    - **HostGator**: Port 2222, use cPanel username
    - **SiteGround**: Port 18765, use cPanel username
    - **GoDaddy**: Port 22, may need to enable first
-   - **Namecheap**: Port 21098, use cPanel username
+   - **Namecheap**: uses a non-standard SSH port -- see your hosting control panel
 
 3. **Test Connection**:
    ```bash
@@ -107,7 +107,7 @@ Save this as `~/.ssh/config` for easy access:
 Host stackmap
     HostName your-server.com
     Port 22
-    User stachblx
+    User <cpanel-user>
 ```
 
 Then you can just type:
@@ -163,7 +163,7 @@ Create this script locally as `connect-stackmap.sh`:
 ```bash
 #!/bin/bash
 echo "Connecting to StackMap cPanel..."
-ssh -p 22 stachblx@your-server.com
+ssh -p 22 <cpanel-user>@your-server.com
 ```
 
 Make it executable:
